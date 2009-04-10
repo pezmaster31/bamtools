@@ -34,8 +34,6 @@ int main(int argc, char* argv[]) {
 
 	string refName;
 	int refID;
-	unsigned int leftBound;
-	unsigned int rightBound;
 
 	int alignmentCount;
 
@@ -182,11 +180,11 @@ int main(int argc, char* argv[]) {
 	}
 
 	// set left boundary
-	leftBound = 500;
+	unsigned int leftBound = 500;
 
 	// set right boundary - either user-specified number to set a discrete region
 	//                      OR you can query the BamReader for the end of the reference
-	rightBound = references.at(refID).RefLength;
+	unsigned int rightBound = references.at(refID).RefLength;
 
 	cerr << endl;
 	cerr << "Iterating over alignments on reference: " << refName << " from " << leftBound << " to ref end (" << rightBound << ")" << endl;

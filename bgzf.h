@@ -12,13 +12,30 @@
 #ifndef __BGZF_H
 #define __BGZF_H
 
-#include <stdint.h>
 #include <stdio.h>
 #include "zlib.h"
-#include <stdbool.h>
-//#include "zutil.h"
 
-//typedef int8_t bool;
+#ifdef WIN32
+#include <io.h>
+
+typedef char                 int8_t;
+typedef unsigned char       uint8_t;
+typedef short               int16_t;
+typedef unsigned short     uint16_t;
+typedef int                 int32_t;
+typedef unsigned int       uint32_t;
+typedef long long           int64_t;
+typedef unsigned long long uint64_t;
+
+#define ftello(a)     _ftelli64(a)
+#define fseeko(a,b,c) _fseeki64(a,b,c)
+#define strcasecmp    _stricmp
+#define open          _open
+#define fdopen        _fdopen
+#else
+#include <stdint.h>
+#include <stdbool.h>
+#endif
 
 typedef struct {
     int file_descriptor;

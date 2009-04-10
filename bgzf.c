@@ -12,14 +12,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "bgzf.h"
 
+#ifdef WIN32
+
+#else
+#include <unistd.h>
 extern off_t ftello(FILE *stream);
 extern int fseeko(FILE *stream, off_t offset, int whence);
+#endif
 
 typedef int8_t byte;
 
@@ -86,7 +91,7 @@ BGZF*
 open_read(int fd)
 {
     FILE* file = fdopen(fd, "r");
-    BGZF* fp = malloc(sizeof(BGZF));
+    BGZF* fp = (BGZF*)malloc(sizeof(BGZF));
     fp->file_descriptor = fd;
     fp->open_mode = 'r';
     fp->owned_file = 0;
@@ -107,7 +112,7 @@ BGZF*
 open_write(int fd)
 {
     FILE* file = fdopen(fd, "w");
-    BGZF* fp = malloc(sizeof(BGZF));
+    BGZF* fp = (BGZF*)malloc(sizeof(BGZF));
     fp->file_descriptor = fd;
     fp->open_mode = 'w';
     fp->owned_file = 0;
@@ -161,7 +166,7 @@ deflate_block(BGZF* fp, int block_length)
     // Deflate the block in fp->uncompressed_block into fp->compressed_block.
     // Also adds an extra field that stores the compressed block length.
 
-    byte* buffer = fp->compressed_block;
+    byte* buffer = (byte*)fp->compressed_block;
     int buffer_size = fp->compressed_block_size;
 
     // Init gzip header
@@ -192,9 +197,9 @@ deflate_block(BGZF* fp, int block_length)
         z_stream zs;
         zs.zalloc = NULL;
         zs.zfree = NULL;
-        zs.next_in = fp->uncompressed_block;
+        zs.next_in = (Bytef*)fp->uncompressed_block;
         zs.avail_in = input_length;
-        zs.next_out = (void*)&buffer[BLOCK_HEADER_LENGTH];
+        zs.next_out = (Bytef*)&buffer[BLOCK_HEADER_LENGTH];
         zs.avail_out = buffer_size - BLOCK_HEADER_LENGTH - BLOCK_FOOTER_LENGTH;
 
         int status = deflateInit2(&zs, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
@@ -238,7 +243,7 @@ deflate_block(BGZF* fp, int block_length)
 
     packInt16((uint8_t*)&buffer[16], compressed_length-1);
     uint32_t crc = crc32(0L, NULL, 0L);
-    crc = crc32(crc, fp->uncompressed_block, input_length);
+    crc = crc32(crc, (Bytef*)fp->uncompressed_block, input_length);
     packInt32((uint8_t*)&buffer[compressed_length-8], crc);
     packInt32((uint8_t*)&buffer[compressed_length-4], input_length);
 
@@ -250,7 +255,7 @@ deflate_block(BGZF* fp, int block_length)
             return -1;
         }
         memcpy(fp->uncompressed_block,
-               fp->uncompressed_block + input_length,
+               (char*)fp->uncompressed_block + input_length,
                remaining);
     }
     fp->block_offset = remaining;
@@ -266,9 +271,9 @@ inflate_block(BGZF* fp, int block_length)
     z_stream zs;
     zs.zalloc = NULL;
     zs.zfree = NULL;
-    zs.next_in = fp->compressed_block + 18;
+    zs.next_in = (Bytef*)fp->compressed_block + 18;
     zs.avail_in = block_length - 16;
-    zs.next_out = fp->uncompressed_block;
+    zs.next_out = (Bytef*)fp->uncompressed_block;
     zs.avail_out = fp->uncompressed_block_size;
 
     int status = inflateInit2(&zs, GZIP_WINDOW_BITS);
@@ -357,7 +362,7 @@ bgzf_read(BGZF* fp, void* data, int length)
     }
 
     int bytes_read = 0;
-    byte* output = data;
+    byte* output = (byte*)data;
     while (bytes_read < length) {
         int available = fp->block_length - fp->block_offset;
         if (available <= 0) {
@@ -370,7 +375,7 @@ bgzf_read(BGZF* fp, void* data, int length)
             }
         }
         int copy_length = min(length-bytes_read, available);
-        byte* buffer = fp->uncompressed_block;
+        byte* buffer = (byte*)fp->uncompressed_block;
         memcpy(output, buffer + fp->block_offset, copy_length);
         fp->block_offset += copy_length;
         output += copy_length;
@@ -415,12 +420,12 @@ bgzf_write(BGZF* fp, const void* data, int length)
         fp->uncompressed_block = malloc(fp->uncompressed_block_size);
     }
 
-    const byte* input = data;
+    const byte* input = (byte*)data;
     int block_length = fp->uncompressed_block_size;
     int bytes_written = 0;
     while (bytes_written < length) {
         int copy_length = min(block_length - fp->block_offset, length - bytes_written);
-        byte* buffer = fp->uncompressed_block;
+        byte* buffer = (byte*)fp->uncompressed_block;
         memcpy(buffer + fp->block_offset, input, copy_length);
         fp->block_offset += copy_length;
         input += copy_length;

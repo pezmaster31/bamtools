@@ -3,6 +3,9 @@
 // Marth Lab, Deptartment of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
+// The BGZF routines were adapted from the bgzf.c code developed at the Broad
+// Institute.
+// ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
 

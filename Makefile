@@ -32,4 +32,4 @@ BamConversion: lib BamWriter.o BamConversionMain.o
 	$(CXX) $(CXXFLAGS) -o $@ BamWriter.o BamConversionMain.o $(LIBS) -L. -lbambc
 
 clean:
-		rm -fr gmon.out *.o *.a a.out $(PROG) *~
+		rm -fr gmon.out *.o *.a a.out $(PROG) BamConversion *~

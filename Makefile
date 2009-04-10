@@ -1,6 +1,6 @@
 CC=		gcc
 CXX=		g++
-CFLAGS=		-Wall -pg -O3 -m64
+CFLAGS=		-Wall -O3
 CXXFLAGS=	$(CFLAGS)
 DFLAGS=		-D_IOLIB=2 #-D_NDEBUG
 OBJS=		BamReader.o bgzf.o

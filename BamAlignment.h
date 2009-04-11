@@ -7,6 +7,9 @@
 #ifndef BAMALIGNMENT_H
 #define BAMALIGNMENT_H
 
+#include <string.h>
+#include <stdlib.h>
+
 #ifdef WIN32
 typedef char                 int8_t;
 typedef unsigned char       uint8_t;

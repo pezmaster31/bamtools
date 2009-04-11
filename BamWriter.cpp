@@ -357,13 +357,8 @@ void BamWriter::SaveAlignment(const BamAlignment& al) {
 	EncodeQuerySequence(al.QueryBases, encodedQuery);
 	const unsigned int encodedQueryLen = encodedQuery.size();
 
-	// create our read group tag
-	// TODO: add read group tag support when it shows up in the BamAlignment struct
-	//string readGroupTag;
-	//const unsigned int readGroupTagLen = 3 + mReadGroupLUT[al.ReadGroupCode].NameLen + 1;
-	//readGroupTag.resize(readGroupTagLen);
-	//char* pReadGroupTag = (char*)readGroupTag.data();
-	//sprintf(pReadGroupTag, "RGZ%s", mReadGroupLUT[al.ReadGroupCode].Name);
+	// store the tag data length
+	const unsigned int tagDataLength = al.TagData.size();
 
 	// assign the BAM core data
 	unsigned int buffer[8];
@@ -377,7 +372,7 @@ void BamWriter::SaveAlignment(const BamAlignment& al) {
 	buffer[7] = al.InsertSize;
 
 	// write the block size
-	const unsigned int dataBlockSize = nameLen + packedCigarLen + encodedQueryLen + queryLen /* + readGroupTagLen*/;
+	const unsigned int dataBlockSize = nameLen + packedCigarLen + encodedQueryLen + queryLen + tagDataLength;
 	const unsigned int blockSize = BAM_CORE_SIZE + dataBlockSize;
 
 	BgzfWrite((char*)&blockSize, SIZEOF_INT);
@@ -401,6 +396,5 @@ void BamWriter::SaveAlignment(const BamAlignment& al) {
 	BgzfWrite(pBaseQualities, queryLen);
 
 	// write the read group tag
-	// TODO: add read group tag support when it shows up in the BamAlignment struct
-	//BgzfWrite(readGroupTag.c_str(), readGroupTagLen);
+	BgzfWrite(al.TagData.data(), tagDataLength);
 }

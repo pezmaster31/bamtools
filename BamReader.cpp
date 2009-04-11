@@ -536,6 +536,10 @@ bool BamReader::LoadNextAlignment(BamAlignment& bAlignment) {
 	// set up destination buffers for character data
 	uint8_t*  allCharData = (uint8_t*)calloc(sizeof(uint8_t), dataLength);
 	uint32_t* cigarData   = (uint32_t*)(allCharData+queryNameLength);
+
+	const unsigned int tagDataOffset = (numCigarOperations * 4) + queryNameLength + (querySequenceLength + 1) / 2 + querySequenceLength;
+	const unsigned int tagDataLen = dataLength - tagDataOffset;
+	char* tagData = ((char*)allCharData) + tagDataOffset;
 	
 	// get character data - make sure proper data size was read
 	if (bam_read(m_file, allCharData, dataLength) != dataLength) { return false; }
@@ -543,11 +547,12 @@ bool BamReader::LoadNextAlignment(BamAlignment& bAlignment) {
 
 		bytesRead += dataLength;
 
-		// clear out bases, qualities, aligned bases, and CIGAR
+		// clear out bases, qualities, aligned bases, CIGAR, and tag data
 		bAlignment.QueryBases.clear();
 		bAlignment.Qualities.clear();
 		bAlignment.AlignedBases.clear();
 		bAlignment.CigarData.clear();
+		bAlignment.TagData.clear();
 
 		// save name
 		bAlignment.Name = (string)((const char*)(allCharData));
@@ -612,7 +617,11 @@ bool BamReader::LoadNextAlignment(BamAlignment& bAlignment) {
 								 break;
 				}
 			}
-		}       
+		}
+
+		// read in the tag data
+		bAlignment.TagData.resize(tagDataLen);
+		memcpy((char*)bAlignment.TagData.data(), tagData, tagDataLen);
 	}
 	free(allCharData);
 

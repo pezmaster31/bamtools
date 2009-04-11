@@ -149,11 +149,12 @@ int main(int argc, char* argv[]) {
 					cout << "Type: " << (*cigarIter).Type << "\tLength: " << (*cigarIter).Length << endl;
 				}
 
-				cout << "Tags: " << endl;
-				vector<string>::const_iterator tagIter = bAlignment.Tags.begin();
-				vector<string>::const_iterator tagEnd  = bAlignment.Tags.end();
-				for ( ; tagIter != tagEnd; ++tagIter ) {
-					cout << (*tagIter) << endl;
+				if(!bAlignment.TagData.empty()) {
+				  cout << "Tag data is present." << endl;
+				  string readGroup;
+				  if(bAlignment.GetReadGroup(readGroup)) {
+				    cout << "- read group: " << readGroup << endl;
+				  }
 				}
 			}
 		}

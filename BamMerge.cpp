@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
 	BamAlignment ba;
 	
 	unsigned int ac1 = 0;
-	while(reader1.GetNextAlignment(ba) && ac1 < 400) {
+	while(reader1.GetNextAlignment(ba)) {
 	  writer.SaveAlignment(ba);
 	  ac1++;
 	}
@@ -165,7 +165,7 @@ int main(int argc, char* argv[]) {
 	//   assign re-coded refId
 	//   write alignment
 	int ac2 = 0;
-	while(reader2.GetNextAlignment(ba) && ac2 < 400) {
+	while(reader2.GetNextAlignment(ba) ) {
 	  ac2++;
 
 	  // retrieve original refId

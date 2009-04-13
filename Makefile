@@ -31,5 +31,9 @@ BamReaderTest:lib BamReaderMain.o
 BamConversion: lib BamWriter.o BamConversionMain.o
 	$(CXX) $(CXXFLAGS) -o $@ BamWriter.o BamConversionMain.o $(LIBS) -L. -lbambc
 
+BamMerge: lib BamMerge.o
+		$(CXX) $(CXXFLAGS) -o $@ BamWriter.o BamMerge.o $(LIBS) -L. -lbambc
+
+
 clean:
 		rm -fr gmon.out *.o *.a a.out $(PROG) BamConversion *~

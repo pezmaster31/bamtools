@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <map>
 #include "BamReader.h"
@@ -8,19 +9,25 @@ using namespace std;
 int main(int argc, char* argv[]) {
 
 	for (int a=0; a<argc; a++) {
-		cout <<  argv[a] << " ";
-  }
-  cout << endl;
+		cout << argv[a] << " ";
+	}
+	cout << endl;
   
-  if(argc != 4) {
-		cout << "USAGE: " << argv[0] << " <input BAM file 1> <input BAM file 1> <output BAM file>" << endl;
+	if(argc < 4) {
+		cout << "USAGE: " << argv[0] << " <input BAM file 1> <input BAM file 1> <output BAM file> [<maxReads>]" << endl;
 		exit(1);
 	}
 
 	// localize our arguments
-	const char* inputFilename1  = argv[1];
-	const char* inputFilename2  = argv[2];
+	const char* inputFilename1 = argv[1];
+	const char* inputFilename2 = argv[2];
 	const char* outputFilename = argv[3];
+	unsigned int Nmax=0;
+	if (argc>4) {
+		const char* cmaxRead = argv[4];
+		Nmax = atoi(cmaxRead);
+	}
+      
 
 	// open our BAM reader1 for input file 1
 	BamReader reader1;
@@ -41,7 +48,7 @@ int main(int argc, char* argv[]) {
 		cout << "ERROR: Unable to open the BAM file 1 (" << inputFilename2 << ")." << endl;
 		exit(1);
 	}
-	
+
 	// retrieve the header text from both files
 	string samHeader1 = reader1.GetHeaderText();
 	string samHeader2 = reader2.GetHeaderText();
@@ -50,150 +57,149 @@ int main(int argc, char* argv[]) {
 	RefVector referenceSequences1 = reader1.GetReferenceData();
 	RefVector referenceSequences2 = reader2.GetReferenceData();
 
+  // merged referenceSequences
+  RefVector referenceSequences12;
+  
 	// process reference sequences from file 1
 	map<string, unsigned int, less<string> > refLengthMap;
 	map<string, unsigned int, less<string> > refIdMap;
 	map<string, RefData, less<string> > refDataMap;
- 
+	
 	cerr << "Reference list from file 1" << endl;
 	unsigned int refCounter = 0;
-	for (RefVector::const_iterator refIter = referenceSequences1.begin();
-	     refIter != referenceSequences1.end(); refIter++) {
+	for (RefVector::const_iterator refIter = referenceSequences1.begin(); efIter != referenceSequences1.end(); refIter++) {
 
-	  // retrieve
-	  RefData rd = *refIter;
+		// retrieve
+		RefData rd = *refIter;
 
-	  // get member data
-	  string refName = rd.RefName;
-	  unsigned int refLength = rd.RefLength;
-	  int refId = reader1.GetRefID(refName);
+		// get member data
+		string refName = rd.RefName;
+		unsigned int refLength = rd.RefLength;
+		int refId = reader1.GetRefID(refName);
 
-	  // report
-	  cerr << "  refName=" << refName << " refId=" << refId << endl;
+		// report
+		cerr << " refName=" << refName << " refId=" << refId << endl;
 
-	  // store in maps
-	  refLengthMap[refName] = refLength;
-	  refIdMap[refName] = refCounter;
-	  refDataMap[refName] = rd;
-	
-	  // increment ref count
-	  refCounter++;
+		// store in maps
+		refLengthMap[refName] = refLength;
+		refIdMap[refName] = refCounter;
+		refDataMap[refName] = rd;
+
+		// add this to merged refVector
+		referenceSequences12.push_back(rd);
+
+		// increment ref count
+		refCounter++;
 	}
 
-	// process reference sequences from file 1
-	map<unsigned int, unsigned int, less<unsigned int> > recodedRefId;
+	// map file 2 refId to merged refID
+	map<unsigned int, unsigned int, less<unsigned int> > mapRefId12;
 
 	cerr << "Reference list from file 2" << endl;
-	for (RefVector::const_iterator refIter = referenceSequences2.begin();
-	     refIter != referenceSequences2.end(); refIter++) {
+	for (RefVector::const_iterator refIter = referenceSequences2.begin(); refIter != referenceSequences2.end(); refIter++) {
 
-	  // retrieve
-	  RefData rd = *refIter;
+		// retrieve
+		RefData rd = *refIter;
 
-	  // get member data
-	  string refName = rd.RefName;
-	  unsigned int refLength = rd.RefLength;
-	  int refId = reader2.GetRefID(refName);
+		// get member data
+		string refName = rd.RefName;
+		unsigned int refLength = rd.RefLength;
+		int refId = reader2.GetRefID(refName);
 
-	  // report
-	  cerr << "  refName=" << refName << " refId=" << refId << endl;
+		// report
+		cerr << " refName=" << refName << " refId=" << refId << endl;
 
-	  // if refName already in map, check ref length
-	  if (refLengthMap.count(refName) > 0) {
-	    
-	    // check if length is the same
-	    if (refLengthMap[refName] != refLength) {
-	      cerr << "Refernce name in two files with inconsistent lengths: " << refName << " ... exiting." << endl;
-	      exit(1);
-	    }
+		// if refName already in map, check ref length
+		if (refLengthMap.count(refName) > 0) {
 
-	    // make ref id recoding entry
-	    unsigned int refIdNew = refIdMap[refName];
-	    recodedRefId[refId] = refIdNew;
-	  }
-	  // otherwise make new refId and RefData
-	  else {
-	    // store in maps
-	    refLengthMap[refName] = refLength;
-	    refIdMap[refName] = refCounter;
-	    refDataMap[refName] = rd;
-	
-	    // make ref id recoding entry
-	    recodedRefId[refId] = refCounter;
+			// check if length is the same
+			if (refLengthMap[refName] != refLength) {
+				cerr << "Refernce name in two files with inconsistent lengths: " << refName << " ... exiting." << endl;
+				exit(1);
+			}
 
-	    // increment ref count
-	    refCounter++;
-	  }
+			// make ref id recoding entry
+			unsigned int refIdNew = refIdMap[refName];
+			mapRefId12[refId] = refIdNew;
+
+		} else {
+			// otherwise make new refId and RefData
+			// store in maps
+			refLengthMap[refName] = refLength;
+			refIdMap[refName] = refCounter;
+			refDataMap[refName] = rd;
+
+			// make ref id recoding entry
+			mapRefId12[refId] = refCounter;
+
+			// add this to merged refVector
+			referenceSequences12.push_back(rd);
+
+			// increment ref count
+			refCounter++;
+		}
 	}
 
-	// make new referenceSequences vector
-	RefVector referenceSequences3;
-	unsigned rc = 0;
-	for (map<string, RefData, less<string> >::const_iterator rdIter = refDataMap.begin();
-	     rdIter != refDataMap.end(); rdIter++) {
-	  RefData rd = rdIter->second;
-	  referenceSequences3.push_back(rd);
-	  cerr << "Adding RefData for refName=" << rd.RefName << " refId=" << rc << endl;
-	  rc++;
-	}
-	cerr << "Length of referenceSequences vector=" << referenceSequences3.size() << endl;
-	
+	cerr << "Length of referenceSequences vector=" << referenceSequences12.size() << endl;
 
 	// open output bam file and write:
-	//   empty header
-	//   new referenceSequences3 vector
+	// empty header
 	string samHeader3 = "";
 
 	BamWriter writer;
-	writer.Open(outputFilename, samHeader3, referenceSequences3);
+	writer.Open(outputFilename, samHeader3, referenceSequences12);
 
 	// iterate through alignments from file 1 and write them unchanged
 	BamAlignment ba;
-	
+
+	bool keepgoing=true;
 	unsigned int ac1 = 0;
-	while(reader1.GetNextAlignment(ba)) {
-	  writer.SaveAlignment(ba);
-	  ac1++;
+	while(reader1.GetNextAlignment(ba) && keepgoing ) {
+		writer.SaveAlignment(ba);
+		ac1++;
+		keepgoing=(Nmax<1)||(ac1<Nmax);
 	}
-	
+
 	cerr << "Write " << ac1 << " " << inputFilename1 << " records to " << outputFilename << endl;
 
 	// close input file 1
 	reader1.Close();
 
 	// iterate through alignments from file 2 and:
-	//   assign re-coded refId
-	//   write alignment
-	int ac2 = 0;
-	while(reader2.GetNextAlignment(ba) ) {
-	  ac2++;
+	// assign re-coded refId
+	// write alignment
+	keepgoing=true;
+	unsigned int ac2 = 0;
+	while(reader2.GetNextAlignment(ba)&&keepgoing ) {
+		ac2++;
+		keepgoing=(Nmax<1)||(ac2<Nmax);
 
-	  // retrieve original refId
-	  unsigned int refId = ba.RefID;
-	  
-	  // check if original refId is in recoding table... bomb if not
-	  if (recodedRefId.count(refId) <= 0) {
-	    cerr << "Alignment in file 2 has inconsistent reference sequence ID... exiting." << endl;
-	    exit(1);
-	  }
+		// retrieve original refId
+		unsigned int refId = ba.RefID;
 
-	  // assign new refId
-	  ba.RefID = recodedRefId[refId];
+		// check if original refId is in recoding table... bomb if not
+		if (mapRefId12.count(refId) <= 0) {
+			cerr << "Alignment in file 2 has inconsistent reference sequence ID... exiting." << endl;
+			exit(1);
+		}
 
-	  //	  cerr << "  recoding refId=" << refId << " to refId=" << recodedRefId[refId] << endl;
+		// assign new refId
+		ba.RefID = mapRefId12[refId];
 
-	  writer.SaveAlignment(ba);
+		// cerr << " recoding refId=" << refId << " to refId=" << recodedRefId[refId] << endl;
+
+		writer.SaveAlignment(ba);
 	}
 
 	cerr << "Write " << ac2 << " " << inputFilename2 << " records to " << outputFilename << endl;
-	
+
 	// close input file 2
 	reader2.Close();
 
 	// close output file
 	writer.Close();
 
-	cerr << "Total " << ac1+ac2 <<  " records to " << outputFilename << endl;
+	cerr << "Total " << ac1+ac2 << " records to " << outputFilename << endl;
 
 	// return
 	return 0;

@@ -301,7 +301,7 @@ int64_t BamReader::GetOffset(int refID, unsigned int left) {
 	free(bins);
 
 	// there should be at least 1
-	if(regionChunks.size() > 0) { return -1; }
+	if(regionChunks.size() == 0) { return -1; }
 
 	// sort chunks by start position
 	sort ( regionChunks.begin(), regionChunks.end(), LookupKeyCompare<uint64_t, uint64_t>() );

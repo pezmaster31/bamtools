@@ -2,7 +2,7 @@
 
 // Derek Barnett
 // Marth Lab, Boston College
-// Last modified: 6 April 2009
+// Last modified: 23 April 2009
 
 #include "BamReader.h"
 #include <iostream>
@@ -153,7 +153,10 @@ bool BamReader::Jump(int refID, unsigned int left) {
 		m_currentRefID = refID;
 		m_currentLeft  = left;
 		m_isRegionSpecified = true;
-		return ( bam_seek(m_file, GetOffset(m_currentRefID, m_currentLeft), SEEK_SET) == 0 );
+		
+		int64_t offset = GetOffset(m_currentRefID, m_currentLeft);
+		if ( offset == -1 ) { return false; }
+		else { return ( bam_seek(m_file, offset, SEEK_SET) == 0 ); }
 	}
 	return false;
 }
@@ -238,7 +241,7 @@ uint32_t BamReader::CalculateAlignmentEnd(const unsigned int& position, const ve
 	return alignEnd;
 }
 
-uint64_t BamReader::GetOffset(int refID, unsigned int left) {
+int64_t BamReader::GetOffset(int refID, unsigned int left) {
 
 	//  make space for bins
 	uint16_t* bins = (uint16_t*)calloc(MAX_BIN, 2); 		
@@ -298,7 +301,7 @@ uint64_t BamReader::GetOffset(int refID, unsigned int left) {
 	free(bins);
 
 	// there should be at least 1
-	assert(regionChunks.size() > 0);
+	if(regionChunks.size() > 0) { return -1; }
 
 	// sort chunks by start position
 	sort ( regionChunks.begin(), regionChunks.end(), LookupKeyCompare<uint64_t, uint64_t>() );
@@ -323,7 +326,7 @@ uint64_t BamReader::GetOffset(int refID, unsigned int left) {
 	}
 
 	// return beginning file offset of first chunk for region
-	return regionChunks.at(0).first;
+	return (int64_t)regionChunks.at(0).first;
 }
 
 bool BamReader::IsOverlap(BamAlignment& bAlignment) {

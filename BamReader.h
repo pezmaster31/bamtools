@@ -33,7 +33,7 @@
 
 // Derek Barnett
 // Marth Lab, Boston College
-// Last modified: 6 April 2009
+// Last modified: 23 April 2009
 
 #ifndef BAMREADER_H
 #define BAMREADER_H
@@ -205,7 +205,7 @@ class BamReader {
 	private:
 		int      BinsFromRegion(int, unsigned int, uint16_t[MAX_BIN]);
 		uint32_t CalculateAlignmentEnd(const unsigned int&, const vector<CigarOp>&);
-		uint64_t GetOffset(int, unsigned int);
+		int64_t  GetOffset(int, unsigned int);
 		bool     IsOverlap(BamAlignment&);
 		bool     LoadHeader(void);
 		bool     LoadIndex(void);

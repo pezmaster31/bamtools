@@ -1,10 +1,16 @@
-// BamReader.cpp
-
-// Derek Barnett
-// Marth Lab, Boston College
-// Last modified: 23 April 2009
+// ***************************************************************************
+// BamReader (c) 2009 Derek Barnett
+// Marth Lab, Deptartment of Biology, Boston College
+// All rights reserved.
+// ---------------------------------------------------------------------------
+// Provides the basic functionality for reading BAM files
+// ***************************************************************************
 
 #include "BamReader.h"
+//#include "STLUtilities.h"
+
+#include <cstring>
+
 #include <iostream>
 using std::cerr;
 using std::endl;
@@ -13,194 +19,185 @@ using std::endl;
 const char* BamReader::DNA_LOOKUP   = "=ACMGRSVTWYHKDBN";
 const char* BamReader::CIGAR_LOOKUP = "MIDNSHP";
 
-BamReader::BamReader(const char* filename, const char* indexFilename) 
-	: m_filename( (char*)filename )
-	, m_indexFilename( (char*)indexFilename )
-	, m_file(0)
-	, m_index(NULL)
-	, m_headerText("")
-	, m_isOpen(false)
+// constructor
+BamReader::BamReader(void)
+	: m_index(NULL)
 	, m_isIndexLoaded(false)
+	, m_alignmentsBeginOffset(0)
 	, m_isRegionSpecified(false)
-	, m_isCalculateAlignedBases(true)
 	, m_currentRefID(0)
 	, m_currentLeft(0)
-	, m_alignmentsBeginOffset(0)
-{
-	Open();
-}
+{ }
 
+// destructor
 BamReader::~BamReader(void) {
-
-	// close file
-	if ( m_isOpen ) { Close(); }
+	m_headerText.clear();
+	ClearIndex();
+	Close();
 }
 
-// open BAM file
-bool BamReader::Open(void) {
+// checks BGZF block header
+bool BamReader::BgzfCheckBlockHeader(char* header) {
 
-	if (!m_isOpen && m_filename != NULL ) {
-
-		// open file
-		m_file = bam_open(m_filename, "r"); 
-		
-		// get header info && index info
-		if ( (m_file != NULL) && LoadHeader() ) {
-
-			// save file offset where alignments start
-			m_alignmentsBeginOffset = bam_tell(m_file);
-			
-			// set open flag
-			m_isOpen = true;
-		}
-
-		// try to open (and load) index data, if index file given
-		if ( m_indexFilename != NULL ) {
-			OpenIndex();
-		}
-	}
-
-	return m_isOpen;
+	return (header[0] == GZIP_ID1 &&
+            header[1] == (char)GZIP_ID2 &&
+            header[2] == Z_DEFLATED &&
+            (header[3] & FLG_FEXTRA) != 0 &&
+            BgzfUnpackUnsignedShort(&header[10]) == BGZF_XLEN &&
+            header[12] == BGZF_ID1 &&
+            header[13] == BGZF_ID2 &&
+            BgzfUnpackUnsignedShort(&header[14]) == BGZF_LEN);
 }
 
-bool BamReader::OpenIndex(void) {
-
-	if ( m_indexFilename && !m_isIndexLoaded ) {
-		m_isIndexLoaded = LoadIndex();
-	}
-	return m_isIndexLoaded;
+// closes the BAM file
+void BamReader::BgzfClose(void) {
+	m_BGZF.IsOpen = false;
+	fclose(m_BGZF.Stream);
 }
 
-// close BAM file
-bool BamReader::Close(void) {
+// de-compresses the current block
+int BamReader::BgzfInflateBlock(int blockLength) {
 	
-	if (m_isOpen) {
+	// Inflate the block in m_BGZF.CompressedBlock into m_BGZF.UncompressedBlock
+    z_stream zs;
+    zs.zalloc    = NULL;
+    zs.zfree     = NULL;
+    zs.next_in   = (Bytef*)m_BGZF.CompressedBlock + 18;
+    zs.avail_in  = blockLength - 16;
+    zs.next_out  = (Bytef*)m_BGZF.UncompressedBlock;
+    zs.avail_out = m_BGZF.UncompressedBlockSize;
 
-		// close file
-		int ret = bam_close(m_file);
-		
-		// delete index info
-		if ( m_index != NULL) { delete m_index; }
+    int status = inflateInit2(&zs, GZIP_WINDOW_BITS);
+    if (status != Z_OK) {
+        printf("inflateInit failed\n");
+        exit(1);
+    }
 
-		// clear open flag
-		m_isOpen = false;
+    status = inflate(&zs, Z_FINISH);
+    if (status != Z_STREAM_END) {
+        inflateEnd(&zs);
+        printf("inflate failed\n");
+        exit(1);
+    }
 
-		// clear index flag
-		m_isIndexLoaded = false;
+    status = inflateEnd(&zs);
+    if (status != Z_OK) {
+        printf("inflateEnd failed\n");
+        exit(1);
+    }
 
-		// clear region flag
-		m_isRegionSpecified = false;
+    return zs.total_out;
+}
 
-		// return success/fail of bam_close
-		return (ret == 0);
-	} 
+// opens the BAM file for reading
+void BamReader::BgzfOpen(const string& filename) {
 
+	m_BGZF.Stream = fopen(filename.c_str(), "rb");
+	if(!m_BGZF.Stream) {
+		cerr << "ERROR: Unable to open the BAM file " << filename << "for reading." << endl;
+		exit(1);
+	}
+
+	m_BGZF.IsOpen = true;
+}
+
+// reads BGZF data into buffer
+unsigned int BamReader::BgzfRead(char* data, const unsigned int dataLength) {
+
+    if (dataLength == 0) { return 0; }
+
+	char* output = data;
+    unsigned int numBytesRead = 0;
+    while (numBytesRead < dataLength) {
+
+        int bytesAvailable = m_BGZF.BlockLength - m_BGZF.BlockOffset;
+        if (bytesAvailable <= 0) {
+            if ( BgzfReadBlock() != 0 ) { return -1; }
+            bytesAvailable = m_BGZF.BlockLength - m_BGZF.BlockOffset;
+            if ( bytesAvailable <= 0 ) { break; }
+        }
+
+		char* buffer   = m_BGZF.UncompressedBlock;
+        int copyLength = min( (int)(dataLength-numBytesRead), bytesAvailable );
+        memcpy(output, buffer + m_BGZF.BlockOffset, copyLength);
+
+        m_BGZF.BlockOffset += copyLength;
+        output             += copyLength;
+        numBytesRead       += copyLength;
+    }
+
+    if ( m_BGZF.BlockOffset == m_BGZF.BlockLength ) {
+		m_BGZF.BlockAddress = ftello64(m_BGZF.Stream);						
+        m_BGZF.BlockOffset  = 0;
+        m_BGZF.BlockLength  = 0;
+    }
+
+	return numBytesRead;
+}
+
+int BamReader::BgzfReadBlock(void) {
+
+    char    header[BLOCK_HEADER_LENGTH];
+    int64_t blockAddress = ftello(m_BGZF.Stream);
+
+    int count = fread(header, 1, sizeof(header), m_BGZF.Stream);
+	if (count == 0) {
+        m_BGZF.BlockLength = 0;
+        return 0;
+    }
+
+    if (count != sizeof(header)) {
+        printf("read block failed - count != sizeof(header)\n");
+        return -1;
+    }
+
+    if (!BgzfCheckBlockHeader(header)) {
+        printf("read block failed - CheckBgzfBlockHeader() returned false\n");
+        return -1;
+    }
+
+    int blockLength = BgzfUnpackUnsignedShort(&header[16]) + 1;
+    char* compressedBlock = m_BGZF.CompressedBlock;
+    memcpy(compressedBlock, header, BLOCK_HEADER_LENGTH);
+    int remaining = blockLength - BLOCK_HEADER_LENGTH;
+
+    count = fread(&compressedBlock[BLOCK_HEADER_LENGTH], 1, remaining, m_BGZF.Stream);
+    if (count != remaining) {
+        printf("read block failed - count != remaining\n");
+        return -1;
+    }
+
+    count = BgzfInflateBlock(blockLength);
+    if (count < 0) { return -1; }
+
+    if (m_BGZF.BlockLength != 0) {
+        m_BGZF.BlockOffset = 0;
+    }
+
+    m_BGZF.BlockAddress = blockAddress;
+    m_BGZF.BlockLength  = count;
+    return 0;
+}
+
+// move file pointer to specified offset
+bool BamReader::BgzfSeek(int64_t position) {
+
+	int     blockOffset  = (position & 0xFFFF);
+    int64_t blockAddress = (position >> 16) & 0xFFFFFFFFFFFFLL;
+    if (fseeko(m_BGZF.Stream, blockAddress, SEEK_SET) != 0) {
+        printf("ERROR: Unable to seek in BAM file\n");
+		exit(1);
+    }
+
+    m_BGZF.BlockLength  = 0;
+    m_BGZF.BlockAddress = blockAddress;
+    m_BGZF.BlockOffset  = blockOffset;
 	return true;
 }
 
-// get BAM filename
-const char* BamReader::Filename(void) const { 
-	return (const char*)m_filename; 
-}
-
-// set BAM filename
-void BamReader::SetFilename(const char* filename) {
-	m_filename = (char*)filename;
-}
-
-// get BAM Index filename
-const char* BamReader::IndexFilename(void) const { 
-	return (const char*)m_indexFilename; 
-}
-
-// set BAM Index filename
-void BamReader::SetIndexFilename(const char* indexFilename) {
-	m_indexFilename = (char*)indexFilename;
-}
-
-// return full header text
-const string BamReader::GetHeaderText(void) const { 
-	return m_headerText; 
-}
-
-// return number of reference sequences in BAM file
-const int BamReader::GetReferenceCount(void) const { 
-	return m_references.size();
-}
-
-// get RefID from reference name
-const int BamReader::GetRefID(string refName) const { 
-	
-	vector<string> refNames;
-	RefVector::const_iterator refIter = m_references.begin();
-    RefVector::const_iterator refEnd  = m_references.end();
-    for ( ; refIter != refEnd; ++refIter) {
-		refNames.push_back( (*refIter).RefName );
-    }
-
-	// return 'index-of' refName (if not found, returns refNames.size())
-	return Index( refNames.begin(), refNames.end(), refName );
-}
-
-const RefVector BamReader::GetReferenceData(void) const {
-	return m_references;
-}
-
-bool BamReader::Jump(int refID, unsigned int left) {
-
-	// if index available, and region is valid
-	if ( m_isIndexLoaded && m_references.at(refID).RefHasAlignments && (left <= m_references.at(refID).RefLength) ) { 
-		m_currentRefID = refID;
-		m_currentLeft  = left;
-		m_isRegionSpecified = true;
-		
-		int64_t offset = GetOffset(m_currentRefID, m_currentLeft);
-		if ( offset == -1 ) { return false; }
-		else { return ( bam_seek(m_file, offset, SEEK_SET) == 0 ); }
-	}
-	return false;
-}
-
-bool BamReader::Rewind(void) {
-
-	int refID = 0;
-	int refCount = m_references.size();
-	for ( ; refID < refCount; ++refID ) {
-		if ( m_references.at(refID).RefHasAlignments ) { break; } 
-	}
-
-	m_currentRefID = refID;
-	m_currentLeft = 0;
-	m_isRegionSpecified = false;
-
-	return ( bam_seek(m_file, m_alignmentsBeginOffset, SEEK_SET) == 0 );
-}	
-
-// get next alignment from specified region
-bool BamReader::GetNextAlignment(BamAlignment& bAlignment) {
-
-	// try to load 'next' read
-	if ( LoadNextAlignment(bAlignment) ) {
-
-		// if specified region, check for region overlap
-		if ( m_isRegionSpecified ) {
-
-			// if overlap, return true
-			if ( IsOverlap(bAlignment) ) { return true; }
-			// if not, try the next alignment
-			else { return GetNextAlignment(bAlignment); }
-		} 
-
-		// not using region, valid read detected, return success
-		else { return true; }
-	}
-
-	// no valid alignment to load
-	return false;
-}
-
-void BamReader::SetCalculateAlignedBases(bool flag) {
-	m_isCalculateAlignedBases = flag;
+// get file position in BAM file
+int64_t BamReader::BgzfTell(void) {
+	return ( (m_BGZF.BlockAddress << 16) | (m_BGZF.BlockOffset & 0xFFFF) );
 }
 
 int BamReader::BinsFromRegion(int refID, unsigned int left, uint16_t list[MAX_BIN]) {
@@ -225,108 +222,152 @@ int BamReader::BinsFromRegion(int refID, unsigned int left, uint16_t list[MAX_BI
 	return i;
 }
 
-uint32_t BamReader::CalculateAlignmentEnd(const unsigned int& position, const vector<CigarOp>& cigarData) {
+unsigned int BamReader::CalculateAlignmentEnd(const unsigned int& position, const vector<CigarOp>& cigarData) {
 
 	// initialize alignment end to starting position
-	uint32_t alignEnd = position;
+	unsigned int alignEnd = position;
 
 	// iterate over cigar operations
 	vector<CigarOp>::const_iterator cigarIter = cigarData.begin();
 	vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
 	for ( ; cigarIter != cigarEnd; ++cigarIter) {
-		if ( (*cigarIter).Type == 'M' || (*cigarIter).Type == 'D' || (*cigarIter).Type == 'N') {
+		char cigarType = (*cigarIter).Type;
+		if ( cigarType == 'M' || cigarType == 'D' || cigarType == 'N' ) {
 			alignEnd += (*cigarIter).Length;
 		}
 	}
 	return alignEnd;
 }
 
+void BamReader::ClearIndex(void) {
+
+	if ( m_index ) {
+		// iterate over references
+		vector<RefIndex*>::iterator refIter = m_index->begin();
+		vector<RefIndex*>::iterator refEnd  = m_index->end();
+		for ( ; refIter != refEnd; ++refIter) {
+			RefIndex* aRef = (*refIter);
+			if ( aRef ) {
+				// clear out BAM bins
+				if ( aRef->first ) {
+					BinVector::iterator binIter = (aRef->first)->begin();
+					BinVector::iterator binEnd  = (aRef->first)->end();
+					for ( ; binIter != binEnd; ++binIter ) {
+						ChunkVector* chunks = (*binIter).second;
+						if ( chunks ) { delete chunks; }
+					}
+					delete aRef->first;
+				}
+				// clear BAM linear offsets
+				if ( aRef->second ) { delete aRef->second; }
+				delete aRef;
+			}
+		}
+		delete m_index;
+	}
+}
+
+// closes the BAM file
+void BamReader::Close(void) {
+	if(m_BGZF.IsOpen) { BgzfClose(); }
+	if(m_index)       { delete m_index; m_index = NULL; }
+	m_isRegionSpecified = false;
+}
+
+const string BamReader::GetHeaderText(void) const {
+	return m_headerText;
+}
+
+const int BamReader::GetReferenceCount(void) const {
+	return m_references.size();
+}
+
+const RefVector BamReader::GetReferenceData(void) const {
+	return m_references;
+}
+
+const int BamReader::GetReferenceID(const string& refName) const {
+
+	// retrieve names from reference data
+	vector<string> refNames;
+	RefVector::const_iterator refIter = m_references.begin();
+    RefVector::const_iterator refEnd  = m_references.end();
+    for ( ; refIter != refEnd; ++refIter) {
+		refNames.push_back( (*refIter).RefName );
+    }
+
+	// return 'index-of' refName ( if not found, returns refNames.size() )
+	return Index( refNames.begin(), refNames.end(), refName );
+}
+
+// get next alignment (from specified region, if given)
+bool BamReader::GetNextAlignment(BamAlignment& bAlignment) {
+
+	// if valid alignment available
+	if ( LoadNextAlignment(bAlignment) ) {
+		
+		// if region not specified, return success
+		if ( !m_isRegionSpecified ) { return true; }
+		
+		// load next alignment until region overlap is found
+		while ( !IsOverlap(bAlignment) ) {
+			// if no valid alignment available (likely EOF) return failure
+			if ( !LoadNextAlignment(bAlignment) ) { return false; }
+		}
+		
+		// return success (alignment found that overlaps region)
+		return true;
+	} 
+	
+	// no valid alignment
+	else { return false; }
+}
+
 int64_t BamReader::GetOffset(int refID, unsigned int left) {
 
-	//  make space for bins
-	uint16_t* bins = (uint16_t*)calloc(MAX_BIN, 2); 		
-	
-	// returns number of bins overlapping (left, right)
-	// stores indices of those bins in 'bins'
-	int numBins = BinsFromRegion(refID, left, bins);				
+	// calculate which bins overlap this region
+	uint16_t* bins = (uint16_t*)calloc(MAX_BIN, 2);
+	int numBins = BinsFromRegion(refID, left, bins);
 
-	// access index data for refID
+	// get bins for this reference
 	RefIndex* refIndex = m_index->at(refID);
-
-	// get list of BAM bins for this reference sequence
 	BinVector* refBins = refIndex->first;
 
-	sort( refBins->begin(), refBins->end(), LookupKeyCompare<uint32_t, ChunkVector*>() );
-
-	// declare ChunkVector
-	ChunkVector regionChunks;
-
-	// declaure LinearOffsetVector
+	// get minimum offset to consider
 	LinearOffsetVector* linearOffsets = refIndex->second;
-
-	// some sort of linear offset vs bin index voodoo... not completely sure what's going here
 	uint64_t minOffset = ((left>>BAM_LIDX_SHIFT) >= linearOffsets->size()) ? 0 : linearOffsets->at(left>>BAM_LIDX_SHIFT);
 
-	BinVector::iterator binBegin = refBins->begin();
-	BinVector::iterator binEnd   = refBins->end();
-
-	// iterate over bins overlapping region, count chunks
-	for (int i = 0; i < numBins; ++i) {
-		
-		// look for bin with ID=bin[i]
-		BinVector::iterator binIter = binBegin;
-
-		for ( ; binIter != binEnd; ++binIter ) {
-		
-			// if found, increment n_off by number of chunks for each bin
-			if ( (*binIter).first == (uint32_t)bins[i] ) { 
-				
-				// iterate over chunks in that bin
-				ChunkVector* binChunks = (*binIter).second;
-				
-				ChunkVector::iterator chunkIter = binChunks->begin();
-				ChunkVector::iterator chunkEnd  = binChunks->end();
-				for ( ; chunkIter != chunkEnd; ++chunkIter) {
-				
-					// if right bound of pair is greater than min_off (linear offset value), store pair
-					if ( (*chunkIter).second > minOffset) { 
-						regionChunks.push_back( (*chunkIter) ); 
-					}
-				}
+	// store offsets to beginning of alignment 'chunks' 
+	std::vector<int64_t> chunkStarts;
+	
+	// reference bin iterators
+	BinVector::const_iterator binIter;
+	BinVector::const_iterator binBegin = refBins->begin();
+	BinVector::const_iterator binEnd   = refBins->end();
+	
+	// store all alignment 'chunk' starts for bins in this region
+	for (int i = 0; i < numBins; ++i ) {
+		binIter = lower_bound(binBegin, binEnd, bins[i], LookupKeyCompare<uint32_t, ChunkVector*>() );
+		if ( (binIter != binEnd) && ( (*binIter).first == bins[i]) ) {
+			ChunkVector* binChunks = (*binIter).second;
+			ChunkVector::const_iterator chunkIter = binChunks->begin();
+			ChunkVector::const_iterator chunkEnd  = binChunks->end();
+			for ( ; chunkIter != chunkEnd; ++chunkIter) {
+				if ( (*chunkIter).second > minOffset ) {
+					chunkStarts.push_back( (*chunkIter).first );
+				}	
 			}
 		}
 	}
-
-	// clean up temp array
-	free(bins);
-
-	// there should be at least 1
-	if(regionChunks.size() == 0) { return -1; }
-
-	// sort chunks by start position
-	sort ( regionChunks.begin(), regionChunks.end(), LookupKeyCompare<uint64_t, uint64_t>() );
-
-	// resolve overlaps between adjacent blocks; this may happen due to the merge in indexing
-	int numOffsets = regionChunks.size();	
-	for (int i = 1; i < numOffsets; ++i) {
-		if ( regionChunks.at(i-1).second >= regionChunks.at(i).first ) {
-			regionChunks.at(i-1).second = regionChunks.at(i).first;
-		}
-	}
 	
-	// merge adjacent chunks
-	int l = 0;
-	for (int i = 1; i < numOffsets; ++i) {
-		// if adjacent, expand boundaries of (merged) chunk
-		if ( (regionChunks.at(l).second>>16) == (regionChunks.at(i).first>>16) ) {
-			regionChunks.at(l).second = regionChunks.at(i).second;
-		}
-		// else, move on to next (merged) chunk index
-		else { regionChunks.at(++l) = regionChunks.at(i); }
-	}
-
-	// return beginning file offset of first chunk for region
-	return (int64_t)regionChunks.at(0).first;
+	// clean up memory
+	free(bins);
+	
+	// if no alignments found
+	if ( chunkStarts.empty() ) { return -1; }
+	
+	// else return smallest offset for alignment starts 
+	else { return *min_element(chunkStarts.begin(), chunkStarts.end()); }
 }
 
 bool BamReader::IsOverlap(BamAlignment& bAlignment) {
@@ -337,92 +378,65 @@ bool BamReader::IsOverlap(BamAlignment& bAlignment) {
 	// read starts after left boundary
 	if ( bAlignment.Position >= m_currentLeft) { return true; }
 
-	// get alignment end
-	uint32_t alignEnd = CalculateAlignmentEnd(bAlignment.Position, bAlignment.CigarData);
-
 	// return whether alignment end overlaps left boundary
-	return ( alignEnd >= m_currentLeft );
+	return ( CalculateAlignmentEnd(bAlignment.Position, bAlignment.CigarData) >= m_currentLeft );
 }
 
-bool BamReader::LoadHeader(void) {
+bool BamReader::Jump(int refID, unsigned int left) {
 
+	// if index available, and region is valid
+	if ( (m_index->size() != 0) && m_references.at(refID).RefHasAlignments && (left <= m_references.at(refID).RefLength) ) { 
+		m_currentRefID = refID;
+		m_currentLeft  = left;
+		m_isRegionSpecified = true;
+		
+		int64_t offset = GetOffset(m_currentRefID, m_currentLeft);
+		if ( offset == -1 ) { return false; }
+		else { return BgzfSeek(offset); }
+	}
+	return false;
+}
+
+void BamReader::LoadHeaderData(void) {
+	
 	// check to see if proper BAM header
-	char buf[4];
-	if (bam_read(m_file, buf, 4) != 4) { return false; }
-	if (strncmp(buf, "BAM\001", 4)) {
-		fprintf(stderr, "wrong header type!\n");
-		return false;
+	char buffer[4];
+	if (BgzfRead(buffer, 4) != 4) { 
+		printf("Could not read header type\n");
+		exit(1); 
+	}
+	if (strncmp(buffer, "BAM\001", 4)) {
+		printf("wrong header type!\n");
+		exit(1);
 	}
 	
 	// get BAM header text length
-	int32_t headerTextLength;
-	bam_read(m_file, &headerTextLength, 4);
+	BgzfRead(buffer, 4);
+	const unsigned int headerTextLength = BgzfUnpackUnsignedInt(buffer);
 
 	// get BAM header text
 	char* headerText = (char*)calloc(headerTextLength + 1, 1);
-	bam_read(m_file, headerText, headerTextLength);
+	BgzfRead(headerText, headerTextLength);
 	m_headerText = (string)((const char*)headerText);
 	
 	// clean up calloc-ed temp variable
 	free(headerText);
-
-	// get number of reference sequences
-	int32_t numberRefSeqs;
-	bam_read(m_file, &numberRefSeqs, 4);
-	if (numberRefSeqs == 0) { return false; }
-
-	m_references.reserve((int)numberRefSeqs);
-	
-	// reference variables
-	int32_t  refNameLength;
-	char*    refName;
-	uint32_t refLength;
-
-	// iterate over all references in header
-	for (int i = 0; i != numberRefSeqs; ++i) {
-
-		// get length of reference name
-		bam_read(m_file, &refNameLength, 4);
-		refName = (char*)calloc(refNameLength, 1);
-
-		// get reference name and reference sequence length
-		bam_read(m_file, refName, refNameLength);
-		bam_read(m_file, &refLength, 4);
-
-		// store data for reference
-		RefData aReference;
-		aReference.RefName   = (string)((const char*)refName);
-		aReference.RefLength = refLength;
-		m_references.push_back(aReference);
-
-		// clean up calloc-ed temp variable
-		free(refName);
-	}
-	
-	return true;
 }
 
-bool BamReader::LoadIndex(void) {
-
-	// check to see if index file exists
-	FILE* indexFile;
-	if ( ( indexFile = fopen(m_indexFilename, "r") ) == 0 ) {
-		fprintf(stderr, "The alignment is not indexed. Please run SAMtools \'index\' command first.\n");
-		return false;
-	}
+void BamReader::LoadIndexData(FILE* indexStream) {
 
 	// see if index is valid BAM index
 	char magic[4];
-	fread(magic, 1, 4, indexFile);
+	fread(magic, 1, 4, indexStream);
 	if (strncmp(magic, "BAI\1", 4)) {
-		fprintf(stderr, "Problem with index - wrong \'magic\' number.\n");
-		fclose(indexFile);
-		return false;
+		printf("Problem with index file - invalid format.\n");
+		fclose(indexStream);
+		exit(1);
 	}
 
 	// get number of reference sequences
 	uint32_t numRefSeqs;
-	fread(&numRefSeqs, 4, 1, indexFile);
+	fread(&numRefSeqs, 4, 1, indexStream);
 	
 	// intialize BamIndex data structure
 	m_index = new BamIndex;
@@ -433,7 +447,7 @@ bool BamReader::LoadIndex(void) {
 		
 		// get number of bins for this reference sequence
 		int32_t numBins;
-		fread(&numBins, 4, 1, indexFile);
+		fread(&numBins, 4, 1, indexStream);
 		
 		if (numBins > 0) { m_references.at(i).RefHasAlignments = true; }
 
@@ -446,11 +460,11 @@ bool BamReader::LoadIndex(void) {
 			
 			// get binID 
 			uint32_t binID;
-			fread(&binID, 4, 1, indexFile);
+			fread(&binID, 4, 1, indexStream);
 			
 			// get number of regionChunks in this bin
 			uint32_t numChunks;
-			fread(&numChunks, 4, 1, indexFile);
+			fread(&numChunks, 4, 1, indexStream);
 			
 			// intialize ChunkVector
 			ChunkVector* regionChunks = new ChunkVector;
@@ -462,22 +476,28 @@ bool BamReader::LoadIndex(void) {
 				// get chunk boundaries (left, right) 
 				uint64_t left;
 				uint64_t right;
-				fread(&left, 8, 1, indexFile);
-				fread(&right, 8, 1, indexFile);
+				fread(&left, 8, 1, indexStream);
+				fread(&right, 8, 1, indexStream);
 				
 				// save ChunkPair
 				regionChunks->push_back( ChunkPair(left, right) );
 			}
 			
+			// sort chunks for this bin
+			sort( regionChunks->begin(), regionChunks->end(), LookupKeyCompare<uint64_t, uint64_t>() );
+
 			// save binID, chunkVector for this bin
 			bins->push_back( BamBin(binID, regionChunks) );
 		}
 		
+		// sort bins by binID
+		sort(bins->begin(), bins->end(), LookupKeyCompare<uint32_t, ChunkVector*>() );
+
 		// load linear index for this reference sequence
 		
 		// get number of linear offsets
 		int32_t numLinearOffsets;
-		fread(&numLinearOffsets, 4, 1, indexFile);
+		fread(&numLinearOffsets, 4, 1, indexStream);
 		
 		// intialize LinearOffsetVector
 		LinearOffsetVector* linearOffsets = new LinearOffsetVector;
@@ -487,179 +507,233 @@ bool BamReader::LoadIndex(void) {
 		for (int j = 0; j < numLinearOffsets; ++j) {
 			// get a linear offset
 			uint64_t linearOffset;
-			fread(&linearOffset, 8, 1, indexFile);
+			fread(&linearOffset, 8, 1, indexStream);
 			// store linear offset
 			linearOffsets->push_back(linearOffset);
 		}
 		
+		// sort linear offsets
+		sort( linearOffsets->begin(), linearOffsets->end() );
+
 		// store index data for that reference sequence
 		m_index->push_back( new RefIndex(bins, linearOffsets) );
 	}
 	
 	// close index file (.bai) and return
-	fclose(indexFile);
-	return true;
+	fclose(indexStream);
 }
 
 bool BamReader::LoadNextAlignment(BamAlignment& bAlignment) {
 
-	// check valid alignment block header data
-	int32_t block_len;
-	int32_t ret;
-	uint32_t x[8];
-
-	int32_t bytesRead = 0;
-
 	// read in the 'block length' value, make sure it's not zero
-	if ( (ret = bam_read(m_file, &block_len, 4)) == 0 )        { return false; }
-	bytesRead += 4;
+	char buffer[4];
+	BgzfRead(buffer, 4);
+	const unsigned int blockLength = BgzfUnpackUnsignedInt(buffer);
+	if ( blockLength == 0 ) { return false; }
 
-	// read in core alignment data, make the right size of data was read 
-	if ( bam_read(m_file, x, BAM_CORE_SIZE) != BAM_CORE_SIZE ) { return false; }
+	// keep track of bytes read as method progresses
+	int bytesRead = 4;
+
+	// read in core alignment data, make sure the right size of data was read 
+	char x[BAM_CORE_SIZE];
+	if ( BgzfRead(x, BAM_CORE_SIZE) != BAM_CORE_SIZE ) { return false; }
 	bytesRead += BAM_CORE_SIZE;
 
-	// set BamAlignment 'core' data
-	bAlignment.RefID         = x[0]; 
-	bAlignment.Position      = x[1];
-	bAlignment.Bin           = x[2]>>16; 
-	bAlignment.MapQuality    = x[2]>>8&0xff; 
-	bAlignment.AlignmentFlag = x[3]>>16; 
-	bAlignment.MateRefID     = x[5]; 
-	bAlignment.MatePosition  = x[6]; 
-	bAlignment.InsertSize    = x[7];
+	// set BamAlignment 'core' data and character data lengths
+	unsigned int tempValue;
+	unsigned int queryNameLength;
+	unsigned int numCigarOperations;
+	unsigned int querySequenceLength;
 
-	// fetch & store often-used lengths for character data parsing
-	unsigned int queryNameLength     = x[2]&0xff;
-	unsigned int numCigarOperations  = x[3]&0xffff;
-	unsigned int querySequenceLength = x[4];
+	bAlignment.RefID    = BgzfUnpackUnsignedInt(&x[0]);
+	bAlignment.Position = BgzfUnpackUnsignedInt(&x[4]);
+
+	tempValue             = BgzfUnpackUnsignedInt(&x[8]);		
+	bAlignment.Bin        = tempValue >> 16;
+	bAlignment.MapQuality = tempValue >> 8 & 0xff;
+	queryNameLength       = tempValue & 0xff;
+
+	tempValue                = BgzfUnpackUnsignedInt(&x[12]);	
+	bAlignment.AlignmentFlag = tempValue >> 16;
+	numCigarOperations       = tempValue & 0xffff;
+
+	querySequenceLength     = BgzfUnpackUnsignedInt(&x[16]);
+	bAlignment.MateRefID    = BgzfUnpackUnsignedInt(&x[20]);
+	bAlignment.MatePosition = BgzfUnpackUnsignedInt(&x[24]);
+	bAlignment.InsertSize   = BgzfUnpackUnsignedInt(&x[28]);
+
+	// calculate lengths/offsets
+	const unsigned int dataLength      = blockLength - BAM_CORE_SIZE;
+	const unsigned int cigarDataOffset = queryNameLength;
+	const unsigned int seqDataOffset   = cigarDataOffset + (numCigarOperations * 4);
+	const unsigned int qualDataOffset  = seqDataOffset + (querySequenceLength+1)/2;
+	const unsigned int tagDataOffset   = qualDataOffset + querySequenceLength;
+	const unsigned int tagDataLen      = dataLength - tagDataOffset;
 	
-	// get length of character data
-	int dataLength = block_len - BAM_CORE_SIZE;
-
 	// set up destination buffers for character data
-	uint8_t*  allCharData = (uint8_t*)calloc(sizeof(uint8_t), dataLength);
-	uint32_t* cigarData   = (uint32_t*)(allCharData+queryNameLength);
-
-	const unsigned int tagDataOffset = (numCigarOperations * 4) + queryNameLength + (querySequenceLength + 1) / 2 + querySequenceLength;
-	const unsigned int tagDataLen = dataLength - tagDataOffset;
-	char* tagData = ((char*)allCharData) + tagDataOffset;
+	char* allCharData   = (char*)calloc(sizeof(char), dataLength);
+	uint32_t* cigarData = (uint32_t*)(allCharData + cigarDataOffset);
+	char* seqData       = ((char*)allCharData) + seqDataOffset;
+	char* qualData      = ((char*)allCharData) + qualDataOffset;
+	char* tagData       = ((char*)allCharData) + tagDataOffset;
 	
 	// get character data - make sure proper data size was read
-	if (bam_read(m_file, allCharData, dataLength) != dataLength) { return false; }
+	if ( BgzfRead(allCharData, dataLength) != dataLength) { return false; }
 	else {
-
+		
 		bytesRead += dataLength;
-
-		// clear out bases, qualities, aligned bases, CIGAR, and tag data
+		
+		// clear out any previous string data
+		bAlignment.Name.clear();
 		bAlignment.QueryBases.clear();
 		bAlignment.Qualities.clear();
 		bAlignment.AlignedBases.clear();
 		bAlignment.CigarData.clear();
 		bAlignment.TagData.clear();
-
+		
 		// save name
 		bAlignment.Name = (string)((const char*)(allCharData));
 		
-		// save bases
-		char singleBase[2];
-		uint8_t* s = ( allCharData + (numCigarOperations*4) + queryNameLength);
-		for (unsigned int i = 0; i < querySequenceLength; ++i) { 
-			// numeric to char conversion
-			sprintf( singleBase, "%c", DNA_LOOKUP[ ( ( s[(i/2)] >> (4*(1-(i%2)))) & 0xf ) ] );
-			// append character data to Bases
-			bAlignment.QueryBases.append( (const char*)singleBase );
+		// save query sequence
+		for (unsigned int i = 0; i < querySequenceLength; ++i) { 	
+			char singleBase = DNA_LOOKUP[ ( ( seqData[(i/2)] >> (4*(1-(i%2)))) & 0xf ) ];
+			bAlignment.QueryBases.append( 1, singleBase );
 		}
 		
 		// save sequence length
 		bAlignment.Length = bAlignment.QueryBases.length();
 		
 		// save qualities
-		char singleQuality[4];
-		uint8_t* t = ( allCharData + (numCigarOperations*4) + queryNameLength + (querySequenceLength + 1)/2);
 		for (unsigned int i = 0; i < querySequenceLength; ++i) { 
-			// numeric to char conversion
-			sprintf( singleQuality, "%c", ( t[i]+33 ) ); 
-			// append character data to Qualities
-			bAlignment.Qualities.append( (const char*)singleQuality );
+			char singleQuality = (char)(qualData[i]+33);			// conversion from QV to FASTQ character
+			bAlignment.Qualities.append( 1, singleQuality );
 		}
 		
 		// save CIGAR-related data;
 		int k = 0;
 		for (unsigned int i = 0; i < numCigarOperations; ++i) {
-
+			
 			// build CigarOp struct
 			CigarOp op;
 			op.Length = (cigarData[i] >> BAM_CIGAR_SHIFT);
 			op.Type   = CIGAR_LOOKUP[ (cigarData[i] & BAM_CIGAR_MASK) ];
-
+			
 			// save CigarOp
 			bAlignment.CigarData.push_back(op);
-
-			// can skip this step if user wants to ignore
-			if (m_isCalculateAlignedBases) {
-
-				// build AlignedBases string
-				switch (op.Type) {
-					
-					case ('M') : 
-					case ('I') : bAlignment.AlignedBases.append( bAlignment.QueryBases.substr(k, op.Length) ); 	// for 'M', 'I' - write bases
-					case ('S') : k += op.Length;                                                     			// for 'S' - skip over query bases
-								 break;
-					
-					case ('D') : 
-					case ('P') : bAlignment.AlignedBases.append( op.Length, '*' );	// for 'D', 'P' - write padding;
-								 break;
-					
-					case ('N') : bAlignment.AlignedBases.append( op.Length, 'N' );  // for 'N' - write N's, skip bases in query sequence
-								 k += op.Length;
-								 break;
-
-					case ('H') : break; 											// for 'H' - do nothing, move to next op
-					
-					default    : assert(false);	// shouldn't get here
-								 break;
-				}
+			
+			// build AlignedBases string
+			switch (op.Type) {
+				
+				case ('M') : 
+				case ('I') : bAlignment.AlignedBases.append( bAlignment.QueryBases.substr(k, op.Length) ); 	// for 'M', 'I' - write bases
+				case ('S') : k += op.Length;                                                     			// for 'S' - skip over query bases
+							 break;
+							 
+				case ('D') : 
+				case ('P') : bAlignment.AlignedBases.append( op.Length, '*' );	// for 'D', 'P' - write padding;
+							 break;
+							 
+				case ('N') : bAlignment.AlignedBases.append( op.Length, 'N' );  // for 'N' - write N's, skip bases in query sequence
+							 k += op.Length;
+							 break;
+							 
+				case ('H') : break; 											// for 'H' - do nothing, move to next op
+							 
+				default    : printf("ERROR: Invalid Cigar op type\n");			// shouldn't get here
+							 exit(1);
 			}
 		}
-
+		
 		// read in the tag data
 		bAlignment.TagData.resize(tagDataLen);
 		memcpy((char*)bAlignment.TagData.data(), tagData, tagDataLen);
 	}
+
 	free(allCharData);
-
-/*
-	// (optional) read tag parsing data
-	string tag;
-	char data;
-	int i = 0;
-
-	// still data to read (auxiliary tags)
-	while ( bytesRead < block_len ) {
-
-		if ( bam_read(m_file, &data, 1) == 1 ) { 
-			
-			++bytesRead;
-
-			if (bytesRead == block_len && data != '\0') {
-				fprintf(stderr, "ERROR: Invalid termination of tag info at end of alignment block.\n");
-				exit(1);
-			}
-
-			tag.append(1, data);
-			if ( data == '\0' ) {
-				bAlignment.Tags.push_back(tag);
-				tag = "";
-				i = 0;
-			} else {
-				if ( (i == 1) && (i == 2) ) { tag.append(1, ':'); }
-				++i;
-			}
-		} else {
-			fprintf(stderr, "ERROR: Could not read tag info.\n");
-			exit(1);
-		}
-	}
-*/
 	return true;
 }
+
+void BamReader::LoadReferenceData(void) {
+
+	// get number of reference sequences
+	char buffer[4];
+	BgzfRead(buffer, 4);
+	const unsigned int numberRefSeqs = BgzfUnpackUnsignedInt(buffer);
+	if (numberRefSeqs == 0) { return; }
+	m_references.reserve((int)numberRefSeqs);
+	
+	// iterate over all references in header
+	for (unsigned int i = 0; i != numberRefSeqs; ++i) {
+
+		// get length of reference name
+		BgzfRead(buffer, 4);
+		const unsigned int refNameLength = BgzfUnpackUnsignedInt(buffer);
+		char* refName = (char*)calloc(refNameLength, 1);
+		
+		// get reference name and reference sequence length
+		BgzfRead(refName, refNameLength);
+		BgzfRead(buffer, 4);
+		const unsigned int refLength = BgzfUnpackUnsignedInt(buffer);
+		
+		// store data for reference
+		RefData aReference;
+		aReference.RefName   = (string)((const char*)refName);
+		aReference.RefLength = refLength;
+		m_references.push_back(aReference);
+		
+		// clean up calloc-ed temp variable
+		free(refName);
+	}
+}
+
+// opens BAM file (and index)
+void BamReader::Open(const string& filename, const string& indexFilename) {
+
+	// open the BGZF file for reading, retrieve header text & reference data
+	BgzfOpen(filename);
+	LoadHeaderData();	
+	LoadReferenceData();
+
+	// store file offset of first alignment
+	m_alignmentsBeginOffset = BgzfTell();
+
+	// open index file & load index data (if exists)
+	OpenIndex(indexFilename);
+}
+
+void BamReader::OpenIndex(const string& indexFilename) {
+
+	// if index file exists
+	if (!indexFilename.empty()) {
+
+		// open index
+		FILE* indexStream = fopen(indexFilename.c_str(), "rb");
+		
+		// abort on error
+		if(!indexStream) {
+			cerr << "ERROR: Unable to open the BAM index file " << indexFilename << "for reading." << endl;
+			exit(1);
+		}
+	
+		// build up index data structure
+		LoadIndexData(indexStream);
+	}
+}
+
+bool BamReader::Rewind(void) {
+
+	// find first reference that has alignments in the BAM file
+	int refID = 0;
+	int refCount = m_references.size();
+	for ( ; refID < refCount; ++refID ) {
+		if ( m_references.at(refID).RefHasAlignments ) { break; } 
+	}
+
+	// store default bounds for first alignment
+	m_currentRefID = refID;
+	m_currentLeft = 0;
+	m_isRegionSpecified = false;
+
+	// return success/failure of seek
+	return BgzfSeek(m_alignmentsBeginOffset);
+}	

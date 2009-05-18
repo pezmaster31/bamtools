@@ -17,12 +17,7 @@ int main(int argc, char* argv[]) {
 
 	// open our BAM reader
 	BamReader reader;
-	reader.SetFilename(inputFilename);
-
-	if(!reader.Open()) {
-		cout << "ERROR: Unable to open the BAM file (" << inputFilename << ")." << endl;
-		exit(1);
-	}
+	reader.Open(inputFilename);
 
 	// retrieve the SAM header text
 	string samHeader = reader.GetHeaderText();

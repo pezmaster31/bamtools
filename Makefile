@@ -1,39 +1,18 @@
-CC=		gcc
 CXX=		g++
-CFLAGS=		-Wall -O3
-CXXFLAGS=	$(CFLAGS)
-DFLAGS=		-D_IOLIB=2 #-D_NDEBUG
-OBJS=		BamReader.o bgzf.o
-PROG=		BamReaderTest
-INCLUDES=       
-ARFLAGS=	-crs
+CXXFLAGS=	-Wall -O3
+PROG=		BamReaderTest BamConversion
 LIBS=		-lz
-SUBDIRS=	.
 
-.SUFFIXES:.c .cpp .o
+all: $(PROG)
 
-.c.o:
-		$(CC) -c $(CFLAGS) $(DFLAGS) $(INCLUDES) $< -o $@
+BamReaderTest: BamReader.o BamReaderMain.o
+	$(CXX) $(CXXFLAGS) -o $@ BamReader.o BamReaderMain.o $(LIBS)
 
-.cpp.o:
-		$(CXX) -c $(CXXFLAGS) $(DFLAGS) $(INCLUDES) $< -o $@
+BamConversion: BamReader.o BamWriter.o BamConversionMain.o
+	$(CXX) $(CXXFLAGS) -o $@ BamReader.o BamWriter.o BamConversionMain.o $(LIBS)
 
-all: $(PROG) BamConversion
-
-lib:libbambc.a
-
-libbambc.a:$(OBJS)
-		$(AR) $(ARFLAGS) $@ $(OBJS)
-
-BamReaderTest:lib BamReaderMain.o
-		$(CXX) $(CXXFLAGS) -o $@ BamReaderMain.o $(LIBS) -L. -lbambc
-
-BamConversion: lib BamWriter.o BamConversionMain.o
-	$(CXX) $(CXXFLAGS) -o $@ BamWriter.o BamConversionMain.o $(LIBS) -L. -lbambc
-
-BamMerge: lib BamMerge.o
-		$(CXX) $(CXXFLAGS) -o $@ BamWriter.o BamMerge.o $(LIBS) -L. -lbambc
-
+BamMerge: BamReader.o BamWriter.o BamMerge.o
+	$(CXX) $(CXXFLAGS) -o $@ BamReader.o BamWriter.o BamMerge.o $(LIBS)
 
 clean:
-		rm -fr gmon.out *.o *.a a.out $(PROG) BamConversion *~
+		rm -fr gmon.out *.o *.a a.out *~

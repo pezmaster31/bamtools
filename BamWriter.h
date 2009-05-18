@@ -57,6 +57,8 @@ using namespace std;
 #define SIZEOF_INT 4
 
 // define our BZGF structure
+#ifndef BGZF_DATA
+#define BGZF_DATA
 struct BgzfData {
 	unsigned int UncompressedBlockSize;
 	unsigned int CompressedBlockSize;
@@ -95,6 +97,7 @@ struct BgzfData {
 		if(UncompressedBlock) delete [] UncompressedBlock;
 	}
 };
+#endif	// BGZF_DATA
 
 class BamWriter {
 public:

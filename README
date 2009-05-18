@@ -2,10 +2,27 @@
 README
 ----------------
 
-Copy the 4 header files (*.h) and the library file (libbambc.a) to your directory.
 
-When you compile your program, add this to the g++ command:
+Significant re-write of BamReader API as of 5/18/2009:
+-------------------------------------------------------
+No longer using bgzf.h/.c
+No longer using libbambc.a library
+No longer using STL Utilities
+Minor changes to API syntax in opening BAM files with BamReader - see BamReader.h for details
 
-           -lz -L. -lbambc
 
-and you should be good to go.  (Those are lower case l's, as in 'lion'.)
+Compile instructions
+----------------------
+Short version:
+See Makefile for compilation example.
+
+Longer version:
+Copy BamAlignment.h, BamReader.* and/or BamWriter.* to working directory.
+#include "BamReader.h" and/or "BamWriter.h"
+Use standard compile commands, including the "-lz" parameter to access zlib functionality.
+(Note that "-L. -lbambc" are no longer necessary and WILL CAUSE PROBLEMS for compiler/linker )
+
+
+Feel free to email me or pop by my desk with any questions, comments, suggestions, etc.
+  - Derek 
+

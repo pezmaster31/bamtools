@@ -1,18 +1,15 @@
 CXX=		g++
 CXXFLAGS=	-Wall -O3
-PROG=		BamReaderTest BamConversion
+PROG=		BamDump BamTrim
 LIBS=		-lz
 
 all: $(PROG)
 
-BamReaderTest: BamReader.o BamReaderMain.o
-	$(CXX) $(CXXFLAGS) -o $@ BamReader.o BamReaderMain.o $(LIBS)
+BamDump: BamReader.o BamDumpMain.o
+	$(CXX) $(CXXFLAGS) -o $@ BamReader.o BamDumpMain.o $(LIBS)
 
-BamConversion: BamReader.o BamWriter.o BamConversionMain.o
-	$(CXX) $(CXXFLAGS) -o $@ BamReader.o BamWriter.o BamConversionMain.o $(LIBS)
-
-BamMerge: BamReader.o BamWriter.o BamMerge.o
-	$(CXX) $(CXXFLAGS) -o $@ BamReader.o BamWriter.o BamMerge.o $(LIBS)
+BamTrim: BamReader.o BamWriter.o BamTrimMain.o
+	$(CXX) $(CXXFLAGS) -o $@ BamReader.o BamWriter.o BamTrimMain.o $(LIBS)
 
 clean:
-		rm -fr gmon.out *.o *.a a.out *~
+	rm -fr gmon.out *.o *.a a.out *~

@@ -1,7 +1,9 @@
 // ***************************************************************************
-// BamWriter (c) 2009 Michael Strömberg
-// Marth Lab, Deptartment of Biology, Boston College
+// BamWriter.cpp (c) 2009 Michael Strömberg, Derek Barnett
+// Marth Lab, Department of Biology, Boston College
 // All rights reserved.
+// ---------------------------------------------------------------------------
+// Last modified: 24 June 2009 (DB)
 // ---------------------------------------------------------------------------
 // The BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -10,6 +12,8 @@
 // ***************************************************************************
 
 #include "BamWriter.h"
+using namespace BamTools;
+using namespace std;
 
 // constructor
 BamWriter::BamWriter(void)

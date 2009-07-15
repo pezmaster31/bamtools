@@ -1,19 +1,20 @@
 // ***************************************************************************
-// BamReader (c) 2009 Derek Barnett
-// Marth Lab, Deptartment of Biology, Boston College
+// BamReader.cpp (c) 2009 Derek Barnett, Michael Strömberg
+// Marth Lab, Department of Biology, Boston College
 // All rights reserved.
+// ---------------------------------------------------------------------------
+// Last modified: 15 July 2009 (DB)
+// ---------------------------------------------------------------------------
+// The BGZF routines were adapted from the bgzf.c code developed at the Broad
+// Institute.
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
 
+// BamTools includes
 #include "BamReader.h"
-//#include "STLUtilities.h"
-
-#include <cstring>
-
-#include <iostream>
-using std::cerr;
-using std::endl;
+using namespace BamTools;
+using namespace std;
 
 // static character constants
 const char* BamReader::DNA_LOOKUP   = "=ACMGRSVTWYHKDBN";
@@ -31,8 +32,6 @@ BamReader::BamReader(void)
 
 // destructor
 BamReader::~BamReader(void) {
-	m_headerText.clear();
-	ClearIndex();
 	Close();
 }
 
@@ -46,7 +45,8 @@ bool BamReader::BgzfCheckBlockHeader(char* header) {
             BgzfUnpackUnsignedShort(&header[10]) == BGZF_XLEN &&
             header[12] == BGZF_ID1 &&
             header[13] == BGZF_ID2 &&
-            BgzfUnpackUnsignedShort(&header[14]) == BGZF_LEN);
+            BgzfUnpackUnsignedShort(&header[14]) == BGZF_LEN
+		   );
 }
 
 // closes the BAM file
@@ -94,7 +94,7 @@ void BamReader::BgzfOpen(const string& filename) {
 
 	m_BGZF.Stream = fopen(filename.c_str(), "rb");
 	if(!m_BGZF.Stream) {
-		cerr << "ERROR: Unable to open the BAM file " << filename << "for reading." << endl;
+		printf("ERROR: Unable to open the BAM file %s for reading.\n", filename.c_str() );
 		exit(1);
 	}
 
@@ -254,23 +254,27 @@ void BamReader::ClearIndex(void) {
 					BinVector::iterator binEnd  = (aRef->first)->end();
 					for ( ; binIter != binEnd; ++binIter ) {
 						ChunkVector* chunks = (*binIter).second;
-						if ( chunks ) { delete chunks; }
+						if ( chunks ) { delete chunks; chunks = NULL;}
 					}
 					delete aRef->first;
+					aRef->first = NULL;
 				}
 				// clear BAM linear offsets
-				if ( aRef->second ) { delete aRef->second; }
+				if ( aRef->second ) { delete aRef->second; aRef->second = NULL; }
 				delete aRef;
+				aRef = NULL;
 			}
 		}
 		delete m_index;
+		m_index = NULL;
 	}
 }
 
 // closes the BAM file
 void BamReader::Close(void) {
-	if(m_BGZF.IsOpen) { BgzfClose(); }
-	if(m_index)       { delete m_index; m_index = NULL; }
+	if(m_BGZF.IsOpen) { BgzfClose(); }	
+	ClearIndex();
+	m_headerText.clear();
 	m_isRegionSpecified = false;
 }
 
@@ -382,12 +386,12 @@ bool BamReader::IsOverlap(BamAlignment& bAlignment) {
 	return ( CalculateAlignmentEnd(bAlignment.Position, bAlignment.CigarData) >= m_currentLeft );
 }
 
-bool BamReader::Jump(int refID, unsigned int left) {
+bool BamReader::Jump(int refID, unsigned int position) {
 
 	// if index available, and region is valid
-	if ( (m_index->size() != 0) && m_references.at(refID).RefHasAlignments && (left <= m_references.at(refID).RefLength) ) { 
+	if ( (m_index->size() != 0) && m_references.at(refID).RefHasAlignments && (position <= m_references.at(refID).RefLength) ) { 
 		m_currentRefID = refID;
-		m_currentLeft  = left;
+		m_currentLeft  = position;
 		m_isRegionSpecified = true;
 		
 		int64_t offset = GetOffset(m_currentRefID, m_currentLeft);
@@ -629,8 +633,10 @@ bool BamReader::LoadNextAlignment(BamAlignment& bAlignment) {
 				case ('S') : k += op.Length;                                                     			// for 'S' - skip over query bases
 							 break;
 							 
-				case ('D') : 
-				case ('P') : bAlignment.AlignedBases.append( op.Length, '*' );	// for 'D', 'P' - write padding;
+				case ('D') : bAlignment.AlignedBases.append( op.Length, '-' );	// for 'D' - write gap character
+							 break;
+							
+				case ('P') : bAlignment.AlignedBases.append( op.Length, '*' );	// for 'P' - write padding character;
 							 break;
 							 
 				case ('N') : bAlignment.AlignedBases.append( op.Length, 'N' );  // for 'N' - write N's, skip bases in query sequence
@@ -711,7 +717,7 @@ void BamReader::OpenIndex(const string& indexFilename) {
 		
 		// abort on error
 		if(!indexStream) {
-			cerr << "ERROR: Unable to open the BAM index file " << indexFilename << "for reading." << endl;
+			printf("ERROR: Unable to open the BAM index file %s for reading.\n", indexFilename.c_str() );
 			exit(1);
 		}
 	

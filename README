@@ -1,28 +1,37 @@
----------------
-README
-----------------
+------------------------------------------------------------
+    README
+------------------------------------------------------------
 
+BamTools: a C++ API for reading/writing BAM files.
 
-Significant re-write of BamReader API as of 5/18/2009:
--------------------------------------------------------
-No longer using bgzf.h/.c
-No longer using libbambc.a library
-No longer using STL Utilities
-Minor changes to API syntax in opening BAM files with BamReader - see BamReader.h for details
+The API consists of 2 main modules - BamReader and BamWriter. As you would expect, 
+BamReader provides read-access to BAM files, while BamWriter does the writing of BAM
+files. BamReader provides an interface for random-access (jumping) in a BAM file.
+ 
+An additional file, BamAux.h, is included as well.  
+This file contains the common data structures and typedefs used throught the API.
 
+------------------------------------------------------------
 
-Compile instructions
-----------------------
-Short version:
-See Makefile for compilation example.
+To use this API, you simply need to do 3 things:
 
-Longer version:
-Copy BamAlignment.h, BamReader.* and/or BamWriter.* to working directory.
-#include "BamReader.h" and/or "BamWriter.h"
-Use standard compile commands, including the "-lz" parameter to access zlib functionality.
-(Note that "-L. -lbambc" are no longer necessary and WILL CAUSE PROBLEMS for compiler/linker )
+    1 - Drop the BamTools files somewhere the compiler can find them.
+	    (i.e. in source directory, or somewhere in include path)
+	
+	2 - Import BamTools API with the following lines of code
+	    
+	    #include "BamReader.h"     // as needed
+		#include "BamWriter.h"     // as needed
+	    using namespace BamTools;
+		
+	3 - Compile with '-lz' ('l' as in 'lion') to access ZLIB compression library
 
+See any included programs and Makefile for more specific compiling/usage examples.
+See documentation & comments in header files for API details. 
 
-Feel free to email me or pop by my desk with any questions, comments, suggestions, etc.
-  - Derek 
+------------------------------------------------------------
 
+Feel free to contact me with any questions, comments, suggestions, bug reports, etc.
+  - Derek Barnett
+  
+http://sourceforge.net/projects/bamtools

@@ -1,5 +1,5 @@
 ------------------------------------------------------------
-    README
+README : BAMTOOLS
 ------------------------------------------------------------
 
 BamTools: a C++ API for reading/writing BAM files.
@@ -16,15 +16,14 @@ This file contains the common data structures and typedefs used throught the API
 To use this API, you simply need to do 3 things:
 
     1 - Drop the BamTools files somewhere the compiler can find them.
-	    (i.e. in source directory, or somewhere in include path)
-	
-	2 - Import BamTools API with the following lines of code
-	    
-	    #include "BamReader.h"     // as needed
-		#include "BamWriter.h"     // as needed
-	    using namespace BamTools;
-		
-	3 - Compile with '-lz' ('l' as in 'lion') to access ZLIB compression library
+        (i.e. in source directory, or somewhere in include path)
+
+    2 - Import BamTools API with the following lines of code
+        #include "BamReader.h"     // as needed
+        #include "BamWriter.h"     // as needed
+        using namespace BamTools;
+    	
+    3 - Compile with '-lz' ('l' as in 'lion') to access ZLIB compression library
 
 See any included programs and Makefile for more specific compiling/usage examples.
 See documentation & comments in header files for API details. 

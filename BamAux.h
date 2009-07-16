@@ -70,7 +70,7 @@ namespace BamTools {
 	const int DEFAULT_BLOCK_SIZE  = 65536;
 
 	// BAM constants
-	const int BAM_CORE_SIZE   = 32;
+	const unsigned int BAM_CORE_SIZE = 32;
 	const int BAM_CMATCH      = 0;
 	const int BAM_CINS        = 1;
 	const int BAM_CDEL        = 2;

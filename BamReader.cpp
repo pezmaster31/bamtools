@@ -22,7 +22,8 @@ const char* BamReader::CIGAR_LOOKUP = "MIDNSHP";
 
 // constructor
 BamReader::BamReader(void)
-	: m_index(NULL)
+	: m_BGZF(NULL)
+	, m_index(NULL)
 	, m_isIndexLoaded(false)
 	, m_alignmentsBeginOffset(0)
 	, m_isRegionSpecified(false)
@@ -51,8 +52,9 @@ bool BamReader::BgzfCheckBlockHeader(char* header) {
 
 // closes the BAM file
 void BamReader::BgzfClose(void) {
-	m_BGZF.IsOpen = false;
-	fclose(m_BGZF.Stream);
+	fflush(m_BGZF->Stream);
+	fclose(m_BGZF->Stream);
+	m_BGZF->IsOpen = false;
 }
 
 // de-compresses the current block
@@ -62,10 +64,10 @@ int BamReader::BgzfInflateBlock(int blockLength) {
     z_stream zs;
     zs.zalloc    = NULL;
     zs.zfree     = NULL;
-    zs.next_in   = (Bytef*)m_BGZF.CompressedBlock + 18;
+    zs.next_in   = (Bytef*)m_BGZF->CompressedBlock + 18;
     zs.avail_in  = blockLength - 16;
-    zs.next_out  = (Bytef*)m_BGZF.UncompressedBlock;
-    zs.avail_out = m_BGZF.UncompressedBlockSize;
+    zs.next_out  = (Bytef*)m_BGZF->UncompressedBlock;
+    zs.avail_out = m_BGZF->UncompressedBlockSize;
 
     int status = inflateInit2(&zs, GZIP_WINDOW_BITS);
     if (status != Z_OK) {
@@ -92,13 +94,13 @@ int BamReader::BgzfInflateBlock(int blockLength) {
 // opens the BAM file for reading
 void BamReader::BgzfOpen(const string& filename) {
 
-	m_BGZF.Stream = fopen(filename.c_str(), "rb");
-	if(!m_BGZF.Stream) {
+	m_BGZF->Stream = fopen(filename.c_str(), "rb");
+	if(!m_BGZF->Stream) {
 		printf("ERROR: Unable to open the BAM file %s for reading.\n", filename.c_str() );
 		exit(1);
 	}
 
-	m_BGZF.IsOpen = true;
+	m_BGZF->IsOpen = true;
 }
 
 // reads BGZF data into buffer
@@ -107,29 +109,29 @@ unsigned int BamReader::BgzfRead(char* data, const unsigned int dataLength) {
     if (dataLength == 0) { return 0; }
 
 	char* output = data;
-    unsigned int numBytesRead = 0;
-    while (numBytesRead < dataLength) {
+    	unsigned int numBytesRead = 0;
+    	while (numBytesRead < dataLength) {
 
-        int bytesAvailable = m_BGZF.BlockLength - m_BGZF.BlockOffset;
+        int bytesAvailable = m_BGZF->BlockLength - m_BGZF->BlockOffset;
         if (bytesAvailable <= 0) {
             if ( BgzfReadBlock() != 0 ) { return -1; }
-            bytesAvailable = m_BGZF.BlockLength - m_BGZF.BlockOffset;
+            bytesAvailable = m_BGZF->BlockLength - m_BGZF->BlockOffset;
             if ( bytesAvailable <= 0 ) { break; }
         }
 
-		char* buffer   = m_BGZF.UncompressedBlock;
+	char* buffer   = m_BGZF->UncompressedBlock;
         int copyLength = min( (int)(dataLength-numBytesRead), bytesAvailable );
-        memcpy(output, buffer + m_BGZF.BlockOffset, copyLength);
+        memcpy(output, buffer + m_BGZF->BlockOffset, copyLength);
 
-        m_BGZF.BlockOffset += copyLength;
+        m_BGZF->BlockOffset += copyLength;
         output             += copyLength;
         numBytesRead       += copyLength;
     }
 
-    if ( m_BGZF.BlockOffset == m_BGZF.BlockLength ) {
-		m_BGZF.BlockAddress = ftello64(m_BGZF.Stream);						
-        m_BGZF.BlockOffset  = 0;
-        m_BGZF.BlockLength  = 0;
+    if ( m_BGZF->BlockOffset == m_BGZF->BlockLength ) {
+	m_BGZF->BlockAddress = ftello(m_BGZF->Stream);						
+        m_BGZF->BlockOffset  = 0;
+        m_BGZF->BlockLength  = 0;
     }
 
 	return numBytesRead;
@@ -138,11 +140,11 @@ unsigned int BamReader::BgzfRead(char* data, const unsigned int dataLength) {
 int BamReader::BgzfReadBlock(void) {
 
     char    header[BLOCK_HEADER_LENGTH];
-    int64_t blockAddress = ftello(m_BGZF.Stream);
+    int64_t blockAddress = ftello(m_BGZF->Stream);
 
-    int count = fread(header, 1, sizeof(header), m_BGZF.Stream);
+    int count = fread(header, 1, sizeof(header), m_BGZF->Stream);
 	if (count == 0) {
-        m_BGZF.BlockLength = 0;
+        m_BGZF->BlockLength = 0;
         return 0;
     }
 
@@ -157,11 +159,11 @@ int BamReader::BgzfReadBlock(void) {
     }
 
     int blockLength = BgzfUnpackUnsignedShort(&header[16]) + 1;
-    char* compressedBlock = m_BGZF.CompressedBlock;
+    char* compressedBlock = m_BGZF->CompressedBlock;
     memcpy(compressedBlock, header, BLOCK_HEADER_LENGTH);
     int remaining = blockLength - BLOCK_HEADER_LENGTH;
 
-    count = fread(&compressedBlock[BLOCK_HEADER_LENGTH], 1, remaining, m_BGZF.Stream);
+    count = fread(&compressedBlock[BLOCK_HEADER_LENGTH], 1, remaining, m_BGZF->Stream);
     if (count != remaining) {
         printf("read block failed - count != remaining\n");
         return -1;
@@ -170,12 +172,12 @@ int BamReader::BgzfReadBlock(void) {
     count = BgzfInflateBlock(blockLength);
     if (count < 0) { return -1; }
 
-    if (m_BGZF.BlockLength != 0) {
-        m_BGZF.BlockOffset = 0;
+    if (m_BGZF->BlockLength != 0) {
+        m_BGZF->BlockOffset = 0;
     }
 
-    m_BGZF.BlockAddress = blockAddress;
-    m_BGZF.BlockLength  = count;
+    m_BGZF->BlockAddress = blockAddress;
+    m_BGZF->BlockLength  = count;
     return 0;
 }
 
@@ -183,21 +185,21 @@ int BamReader::BgzfReadBlock(void) {
 bool BamReader::BgzfSeek(int64_t position) {
 
 	int     blockOffset  = (position & 0xFFFF);
-    int64_t blockAddress = (position >> 16) & 0xFFFFFFFFFFFFLL;
-    if (fseeko(m_BGZF.Stream, blockAddress, SEEK_SET) != 0) {
+    	int64_t blockAddress = (position >> 16) & 0xFFFFFFFFFFFFLL;
+    	if (fseeko(m_BGZF->Stream, blockAddress, SEEK_SET) != 0) {
         printf("ERROR: Unable to seek in BAM file\n");
 		exit(1);
-    }
+    	}
 
-    m_BGZF.BlockLength  = 0;
-    m_BGZF.BlockAddress = blockAddress;
-    m_BGZF.BlockOffset  = blockOffset;
+    	m_BGZF->BlockLength  = 0;
+    	m_BGZF->BlockAddress = blockAddress;
+    	m_BGZF->BlockOffset  = blockOffset;
 	return true;
 }
 
 // get file position in BAM file
 int64_t BamReader::BgzfTell(void) {
-	return ( (m_BGZF.BlockAddress << 16) | (m_BGZF.BlockOffset & 0xFFFF) );
+	return ( (m_BGZF->BlockAddress << 16) | (m_BGZF->BlockOffset & 0xFFFF) );
 }
 
 int BamReader::BinsFromRegion(int refID, unsigned int left, uint16_t list[MAX_BIN]) {
@@ -272,7 +274,12 @@ void BamReader::ClearIndex(void) {
 
 // closes the BAM file
 void BamReader::Close(void) {
-	if(m_BGZF.IsOpen) { BgzfClose(); }	
+	
+	if (m_BGZF!=NULL && m_BGZF->IsOpen) { 
+		BgzfClose();
+		delete m_BGZF;
+		m_BGZF = NULL; 
+	}	
 	ClearIndex();
 	m_headerText.clear();
 	m_isRegionSpecified = false;
@@ -409,6 +416,7 @@ void BamReader::LoadHeaderData(void) {
 		printf("Could not read header type\n");
 		exit(1); 
 	}
+
 	if (strncmp(buffer, "BAM\001", 4)) {
 		printf("wrong header type!\n");
 		exit(1);
@@ -696,6 +704,7 @@ void BamReader::LoadReferenceData(void) {
 void BamReader::Open(const string& filename, const string& indexFilename) {
 
 	// open the BGZF file for reading, retrieve header text & reference data
+	m_BGZF = new BgzfData;
 	BgzfOpen(filename);
 	LoadHeaderData();	
 	LoadReferenceData();

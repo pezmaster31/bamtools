@@ -204,7 +204,7 @@ namespace BamTools {
 		
 		// aligment file & index file data
 		private:
-			BgzfData    m_BGZF;
+			BgzfData*   m_BGZF;
 			std::string m_headerText;
 			BamIndex*   m_index;
 			RefVector   m_references;

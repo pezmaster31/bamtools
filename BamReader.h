@@ -181,6 +181,8 @@ namespace BamTools {
 			static inline unsigned int BgzfUnpackUnsignedInt(char* buffer);
 			// unpacks a buffer into an unsigned short
 			static inline unsigned short BgzfUnpackUnsignedShort(char* buffer);
+			// unpacks a buffer into a signed int
+			static inline signed int BgzfUnpackSignedInt(char* buffer);
 			// calculate bins that overlap region ( left to reference end for now )
 			int BinsFromRegion(int, unsigned int, uint16_t[MAX_BIN]);
 			// calculates alignment end position based on starting position and provided CIGAR operations
@@ -242,6 +244,16 @@ namespace BamTools {
 		union { unsigned short value; unsigned char valueBuffer[sizeof(unsigned short)];} un;
 		un.valueBuffer[0] = buffer[0];
 		un.valueBuffer[1] = buffer[1];
+		return un.value;
+	}
+	
+	// unpacks a buffer into a signed int
+	inline signed int BamReader::BgzfUnpackSignedInt(char* buffer) {
+		union { signed int value; unsigned char valueBuffer[sizeof(signed int)]; } un;
+		un.valueBuffer[0] = buffer[0];
+		un.valueBuffer[1] = buffer[1];
+		un.valueBuffer[2] = buffer[2];
+		un.valueBuffer[3] = buffer[3];
 		return un.value;
 	}
 

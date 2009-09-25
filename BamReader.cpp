@@ -572,7 +572,8 @@ bool BamReader::LoadNextAlignment(BamAlignment& bAlignment) {
 	querySequenceLength     = BgzfUnpackUnsignedInt(&x[16]);
 	bAlignment.MateRefID    = BgzfUnpackUnsignedInt(&x[20]);
 	bAlignment.MatePosition = BgzfUnpackUnsignedInt(&x[24]);
-	bAlignment.InsertSize   = BgzfUnpackUnsignedInt(&x[28]);
+	//bAlignment.InsertSize   = BgzfUnpackUnsignedInt(&x[28]);
+	bAlignment.InsertSize   = BgzfUnpackSignedInt(&x[28]);
 
 	// calculate lengths/offsets
 	const unsigned int dataLength      = blockLength - BAM_CORE_SIZE;

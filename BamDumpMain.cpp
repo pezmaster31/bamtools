@@ -50,6 +50,7 @@ int main(int argc, char* argv[]) {
 // Spit out basic BamAlignment data 
 void PrintAlignment(const BamAlignment& alignment) {
 	cout << "---------------------------------" << endl;
-	cout << "Name: " << alignment.Name << endl;
-	cout << "Aligned to: " << alignment.RefID << ":" << alignment.Position << endl;
+	cout << "Name: "       << alignment.Name << endl;
+	cout << "Aligned to: " << alignment.RefID;
+	cout << ":"            << alignment.Position << endl;
 }

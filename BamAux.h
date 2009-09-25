@@ -280,7 +280,8 @@ namespace BamTools {
 			std::vector<CigarOp> CigarData; //!< CIGAR operations for this alignment
 			unsigned int MateRefID;         //!< ID number for reference sequence where alignment's mate was aligned
 			unsigned int MatePosition;      //!< Position (0-based) where alignment's mate starts
-			unsigned int InsertSize;        //!< Mate-pair insert size
+			//unsigned int InsertSize;        //!< Mate-pair insert size
+			signed int   InsertSize;		//!< Mate-pair insert size
 		
 		// Alignment flag query constants
 		private:

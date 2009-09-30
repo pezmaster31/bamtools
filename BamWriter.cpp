@@ -203,7 +203,7 @@ void BamWriter::CreatePackedCigar(const vector<CigarOp>& cigarOperations, string
 
 	// initialize
 	const unsigned int numCigarOperations = cigarOperations.size();
-	packedCigar.resize(numCigarOperations * SIZEOF_INT);
+	packedCigar.resize(numCigarOperations * BT_SIZEOF_INT);
 
 	// pack the cigar data into the string
 	unsigned int* pPackedCigar = (unsigned int*)packedCigar.data();
@@ -315,14 +315,14 @@ void BamWriter::Open(const string& filename, const string& samHeader, const RefV
 
 	// write the SAM header text length
 	const unsigned int samHeaderLen = samHeader.size();
-	BgzfWrite((char*)&samHeaderLen, SIZEOF_INT);
+	BgzfWrite((char*)&samHeaderLen, BT_SIZEOF_INT);
 
 	// write the SAM header text
 	if(samHeaderLen > 0) BgzfWrite(samHeader.data(), samHeaderLen);
 
 	// write the number of reference sequences
 	const unsigned int numReferenceSequences = referenceSequences.size();
-	BgzfWrite((char*)&numReferenceSequences, SIZEOF_INT);
+	BgzfWrite((char*)&numReferenceSequences, BT_SIZEOF_INT);
 
 	// =============================
 	// write the sequence dictionary
@@ -333,13 +333,13 @@ void BamWriter::Open(const string& filename, const string& samHeader, const RefV
 
 		// write the reference sequence name length
 		const unsigned int referenceSequenceNameLen = rsIter->RefName.size() + 1;
-		BgzfWrite((char*)&referenceSequenceNameLen, SIZEOF_INT);
+		BgzfWrite((char*)&referenceSequenceNameLen, BT_SIZEOF_INT);
 
 		// write the reference sequence name
 		BgzfWrite(rsIter->RefName.c_str(), referenceSequenceNameLen);
 
 		// write the reference sequence length
-		BgzfWrite((char*)&rsIter->RefLength, SIZEOF_INT);
+		BgzfWrite((char*)&rsIter->RefLength, BT_SIZEOF_INT);
 	}
 }
 
@@ -379,7 +379,7 @@ void BamWriter::SaveAlignment(const BamAlignment& al) {
 	const unsigned int dataBlockSize = nameLen + packedCigarLen + encodedQueryLen + queryLen + tagDataLength;
 	const unsigned int blockSize = BAM_CORE_SIZE + dataBlockSize;
 
-	BgzfWrite((char*)&blockSize, SIZEOF_INT);
+	BgzfWrite((char*)&blockSize, BT_SIZEOF_INT);
 
 	// write the BAM core
 	BgzfWrite((char*)&buffer, BAM_CORE_SIZE);

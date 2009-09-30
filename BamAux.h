@@ -87,7 +87,7 @@ namespace BamTools {
 	const int BAM_LIDX_SHIFT    = 14;
 
 	// Explicit variable sizes
-	const int SIZEOF_INT = 4;
+	const int BT_SIZEOF_INT = 4;
 	
 	struct BgzfData {
 		unsigned int UncompressedBlockSize;

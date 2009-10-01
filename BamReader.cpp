@@ -384,10 +384,10 @@ int64_t BamReader::GetOffset(int refID, unsigned int left) {
 bool BamReader::IsOverlap(BamAlignment& bAlignment) {
 
 	// if on different reference sequence, quit
-	if ( bAlignment.RefID != (unsigned int)m_currentRefID ) { return false; }
+	if ( bAlignment.RefID != m_currentRefID ) { return false; }
 
 	// read starts after left boundary
-	if ( bAlignment.Position >= m_currentLeft) { return true; }
+	if ( bAlignment.Position >= (signed int) m_currentLeft) { return true; }
 
 	// return whether alignment end overlaps left boundary
 	return ( CalculateAlignmentEnd(bAlignment.Position, bAlignment.CigarData) >= m_currentLeft );

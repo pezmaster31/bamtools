@@ -557,8 +557,10 @@ bool BamReader::LoadNextAlignment(BamAlignment& bAlignment) {
 	unsigned int numCigarOperations;
 	unsigned int querySequenceLength;
 
-	bAlignment.RefID    = BgzfUnpackUnsignedInt(&x[0]);
-	bAlignment.Position = BgzfUnpackUnsignedInt(&x[4]);
+	//bAlignment.RefID    = BgzfUnpackUnsignedInt(&x[0]);
+	//bAlignment.Position = BgzfUnpackUnsignedInt(&x[4]);
+	bAlignment.RefID    = BgzfUnpackSignedInt(&x[0]);
+	bAlignment.Position = BgzfUnpackSignedInt(&x[4]);
 
 	tempValue             = BgzfUnpackUnsignedInt(&x[8]);		
 	bAlignment.Bin        = tempValue >> 16;
@@ -570,9 +572,11 @@ bool BamReader::LoadNextAlignment(BamAlignment& bAlignment) {
 	numCigarOperations       = tempValue & 0xffff;
 
 	querySequenceLength     = BgzfUnpackUnsignedInt(&x[16]);
-	bAlignment.MateRefID    = BgzfUnpackUnsignedInt(&x[20]);
-	bAlignment.MatePosition = BgzfUnpackUnsignedInt(&x[24]);
+	//bAlignment.MateRefID    = BgzfUnpackUnsignedInt(&x[20]);
+	//bAlignment.MatePosition = BgzfUnpackUnsignedInt(&x[24]);
 	//bAlignment.InsertSize   = BgzfUnpackUnsignedInt(&x[28]);
+	bAlignment.MateRefID    = BgzfUnpackSignedInt(&x[20]);
+	bAlignment.MatePosition = BgzfUnpackSignedInt(&x[24]);
 	bAlignment.InsertSize   = BgzfUnpackSignedInt(&x[28]);
 
 	// calculate lengths/offsets

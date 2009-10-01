@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 24 June 2009 (DB)
+// Last modified: 1 October 2009 (DB)
 // ---------------------------------------------------------------------------
 // The BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -272,16 +272,20 @@ namespace BamTools {
 			std::string  AlignedBases;      //!< 'Aligned' sequence (includes any indels, padding, clipping) 
 			std::string  Qualities;         //!< FASTQ qualities (ASCII characters, not numeric values)
 			std::string  TagData;           //!< Tag data (accessor methods will pull the requested information out)
-			unsigned int RefID;             //!< ID number for reference sequence
-			unsigned int Position;          //!< Position (0-based) where alignment starts 
+			//unsigned int RefID;             //!< ID number for reference sequence
+			//unsigned int Position;          //!< Position (0-based) where alignment starts 
+			signed int RefID;             //!< ID number for reference sequence (-1)
+			signed int Position;          //!< Position (0-based) where alignment starts (-1) 
 			unsigned int Bin;               //!< Bin in BAM file where this alignment resides
 			unsigned int MapQuality;        //!< Mapping quality score 
 			unsigned int AlignmentFlag;     //!< Alignment bit-flag - see Is<something>() methods for available queries
 			std::vector<CigarOp> CigarData; //!< CIGAR operations for this alignment
-			unsigned int MateRefID;         //!< ID number for reference sequence where alignment's mate was aligned
-			unsigned int MatePosition;      //!< Position (0-based) where alignment's mate starts
+			//unsigned int MateRefID;         //!< ID number for reference sequence where alignment's mate was aligned
+			//unsigned int MatePosition;      //!< Position (0-based) where alignment's mate starts
 			//unsigned int InsertSize;        //!< Mate-pair insert size
-			signed int   InsertSize;		//!< Mate-pair insert size
+			signed int MateRefID;         //!< ID number for reference sequence where alignment's mate was aligned (-1)
+			signed int MatePosition;      //!< Position (0-based) where alignment's mate starts (-1)
+			signed int InsertSize;		  //!< Mate-pair insert size(0)
 		
 		// Alignment flag query constants
 		private:

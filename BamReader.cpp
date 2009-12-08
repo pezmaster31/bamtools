@@ -174,8 +174,8 @@ BamReader::BamReaderPrivate::~BamReaderPrivate(void) {
 int BamReader::BamReaderPrivate::BinsFromRegion(int refID, int left, uint16_t list[MAX_BIN]) {
 
     // get region boundaries
-    int32_t begin = left;
-    int32_t end   = References.at(refID).RefLength - 1;
+    uint32_t begin = (unsigned int)left;
+    uint32_t end   = (unsigned int)References.at(refID).RefLength - 1;
 
     // initialize list, bin '0' always a valid bin
     int i = 0;
@@ -421,7 +421,7 @@ int64_t BamReader::BamReaderPrivate::GetOffset(int refID, int left) {
 
     // get minimum offset to consider
     const LinearOffsetVector& offsets = refIndex.Offsets;
-    uint64_t minOffset = ( (left>>BAM_LIDX_SHIFT) >= offsets.size() ) ? 0 : offsets.at(left>>BAM_LIDX_SHIFT);
+    uint64_t minOffset = ( (unsigned int)(left>>BAM_LIDX_SHIFT) >= offsets.size() ) ? 0 : offsets.at(left>>BAM_LIDX_SHIFT);
 
     // store offsets to beginning of alignment 'chunks'
     std::vector<int64_t> chunkStarts;

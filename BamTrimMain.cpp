@@ -64,8 +64,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	// convert boundary arguments to numeric values
-	unsigned int leftBound  = (unsigned int) atoi( leftBound_str.c_str()  );
-	unsigned int rightBound = (unsigned int) atoi( rightBound_str.c_str() );
+	int leftBound  = (int) atoi( leftBound_str.c_str()  );
+	int rightBound = (int) atoi( rightBound_str.c_str() );
 	
 	// attempt jump to range of interest
 	if ( reader.Jump(refID, leftBound) ) {

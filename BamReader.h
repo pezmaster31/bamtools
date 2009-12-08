@@ -39,7 +39,7 @@ class BamReader {
         // close BAM file
         void Close(void);
         // performs random-access jump to reference, position
-        bool Jump(int refID, unsigned int position = 0);
+        bool Jump(int refID, int position = 0);
         // opens BAM file (and optional BAM index file, if provided)
         void Open(const std::string& filename, const std::string& indexFilename = "");
         // returns file pointer to beginning of alignments

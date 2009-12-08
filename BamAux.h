@@ -230,9 +230,9 @@ struct CigarOp {
 
 struct RefData {
     // data members
-    std::string  RefName;          // Name of reference sequence
-    unsigned int RefLength;        // Length of reference sequence
-    bool         RefHasAlignments; // True if BAM file contains alignments mapped to reference sequence
+    std::string RefName;          // Name of reference sequence
+    int         RefLength;        // Length of reference sequence
+    bool        RefHasAlignments; // True if BAM file contains alignments mapped to reference sequence
     // constructor
     RefData(void)
         : RefLength(0)

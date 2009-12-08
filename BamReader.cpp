@@ -40,9 +40,9 @@ struct BamReader::BamReaderPrivate {
     string    IndexFilename;
 
     // user-specified region values
-    bool         IsRegionSpecified;
-    int          CurrentRefID;
-    unsigned int CurrentLeft;
+    bool IsRegionSpecified;
+    int  CurrentRefID;
+    int  CurrentLeft;
 
     // BAM character constants
     const char* DNA_LOOKUP;
@@ -60,7 +60,7 @@ struct BamReader::BamReaderPrivate {
 
     // flie operations
     void Close(void);
-    bool Jump(int refID, unsigned int position = 0);
+    bool Jump(int refID, int position = 0);
     void Open(const string& filename, const string& indexFilename = "");
     bool Rewind(void);
 
@@ -83,11 +83,11 @@ struct BamReader::BamReaderPrivate {
     // *** reading alignments and auxiliary data *** //
 
     // calculate bins that overlap region ( left to reference end for now )
-    int BinsFromRegion(int, unsigned int, uint16_t[MAX_BIN]);
+    int BinsFromRegion(int refID, int left, uint16_t[MAX_BIN]);
     // calculates alignment end position based on starting position and provided CIGAR operations
-    unsigned int CalculateAlignmentEnd(const unsigned int& position, const std::vector<CigarOp>& cigarData);
+    int CalculateAlignmentEnd(const int& position, const std::vector<CigarOp>& cigarData);
     // calculate file offset for first alignment chunk overlapping 'left'
-    int64_t GetOffset(int refID, unsigned int left);
+    int64_t GetOffset(int refID, int left);
     // checks to see if alignment overlaps current region
     bool IsOverlap(BamAlignment& bAlignment);
     // retrieves header text from BAM file
@@ -134,7 +134,7 @@ BamReader::~BamReader(void) {
 
 // file operations
 void BamReader::Close(void) { d->Close(); }
-bool BamReader::Jump(int refID, unsigned int position) { return d->Jump(refID, position); }
+bool BamReader::Jump(int refID, int position) { return d->Jump(refID, position); }
 void BamReader::Open(const string& filename, const string& indexFilename) { d->Open(filename, indexFilename); }
 bool BamReader::Rewind(void) { return d->Rewind(); }
 
@@ -171,11 +171,11 @@ BamReader::BamReaderPrivate::~BamReaderPrivate(void) {
 }
 
 // calculate bins that overlap region ( left to reference end for now )
-int BamReader::BamReaderPrivate::BinsFromRegion(int refID, unsigned int left, uint16_t list[MAX_BIN]) {
+int BamReader::BamReaderPrivate::BinsFromRegion(int refID, int left, uint16_t list[MAX_BIN]) {
 
     // get region boundaries
-    uint32_t begin = left;
-    uint32_t end   = References.at(refID).RefLength - 1;
+    int32_t begin = left;
+    int32_t end   = References.at(refID).RefLength - 1;
 
     // initialize list, bin '0' always a valid bin
     int i = 0;
@@ -238,7 +238,7 @@ bool BamReader::BamReaderPrivate::BuildIndex(void) {
         // if lastCoordinate greater than BAM position - file not sorted properly
         else if ( lastCoordinate > bAlignment.Position ) {
             printf("BAM file not properly sorted:\n");
-            printf("Alignment %s : %u > %u on reference (id = %d)", bAlignment.Name.c_str(), lastCoordinate, bAlignment.Position, bAlignment.RefID);
+            printf("Alignment %s : %d > %d on reference (id = %d)", bAlignment.Name.c_str(), lastCoordinate, bAlignment.Position, bAlignment.RefID);
             exit(1);
         }
 
@@ -324,10 +324,10 @@ bool BamReader::BamReaderPrivate::BuildIndex(void) {
 }
 
 // calculates alignment end position based on starting position and provided CIGAR operations
-unsigned int BamReader::BamReaderPrivate::CalculateAlignmentEnd(const unsigned int& position, const vector<CigarOp>& cigarData) {
+int BamReader::BamReaderPrivate::CalculateAlignmentEnd(const int& position, const vector<CigarOp>& cigarData) {
 
     // initialize alignment end to starting position
-    unsigned int alignEnd = position;
+    int alignEnd = position;
 
     // iterate over cigar operations
     vector<CigarOp>::const_iterator cigarIter = cigarData.begin();
@@ -361,9 +361,12 @@ bool BamReader::BamReaderPrivate::CreateIndex(void) {
     // clear out index
     ClearIndex();
 
+	// build (& save) index from BAM file
     bool ok = true;
     ok &= BuildIndex();
     ok &= WriteIndex();
+
+	// return success/fail
     return ok;
 }
 
@@ -406,7 +409,7 @@ bool BamReader::BamReaderPrivate::GetNextAlignment(BamAlignment& bAlignment) {
 }
 
 // calculate closest indexed file offset for region specified
-int64_t BamReader::BamReaderPrivate::GetOffset(int refID, unsigned int left) {
+int64_t BamReader::BamReaderPrivate::GetOffset(int refID, int left) {
 
     // calculate which bins overlap this region
     uint16_t* bins = (uint16_t*)calloc(MAX_BIN, 2);
@@ -508,14 +511,14 @@ bool BamReader::BamReaderPrivate::IsOverlap(BamAlignment& bAlignment) {
     if ( bAlignment.RefID != CurrentRefID ) { return false; }
 
     // read starts after left boundary
-    if ( bAlignment.Position >= (int32_t)CurrentLeft) { return true; }
+    if ( bAlignment.Position >= CurrentLeft) { return true; }
 
     // return whether alignment end overlaps left boundary
     return ( CalculateAlignmentEnd(bAlignment.Position, bAlignment.CigarData) >= CurrentLeft );
 }
 
 // jumps to specified region(refID, leftBound) in BAM file, returns success/fail
-bool BamReader::BamReaderPrivate::Jump(int refID, unsigned int position) {
+bool BamReader::BamReaderPrivate::Jump(int refID, int position) {
 
     // if data exists for this reference and position is valid    
     if ( References.at(refID).RefHasAlignments && (position <= References.at(refID).RefLength) ) {
@@ -833,7 +836,7 @@ void BamReader::BamReaderPrivate::LoadReferenceData(void) {
         // get reference name and reference sequence length
         mBGZF.Read(refName, refNameLength);
         mBGZF.Read(buffer, 4);
-        const unsigned int refLength = BgzfData::UnpackUnsignedInt(buffer);
+        const int refLength = BgzfData::UnpackSignedInt(buffer);
 
         // store data for reference
         RefData aReference;

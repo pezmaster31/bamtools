@@ -4,31 +4,51 @@ README : BAMTOOLS
 
 BamTools: a C++ API for reading/writing BAM files.
 
+I.   Introduction
+II.  Usage
+III. Contact
+
+------------------------------------------------------------
+
+
+I. Introduction:
+
 The API consists of 2 main modules - BamReader and BamWriter. As you would expect, 
 BamReader provides read-access to BAM files, while BamWriter does the writing of BAM
-files. BamReader provides an interface for random-access (jumping) in a BAM file.
+files. BamReader provides an interface for random-access (jumping) in a BAM file,
+as well as generating BAM index files.
  
 An additional file, BamAux.h, is included as well.  
 This file contains the common data structures and typedefs used throught the API.
 
+BGZF.h & BGZF.cpp contain our implementation of the Broad Institute's 
+BGZF compression format.
+
+BamConversion, BamDump, and BamTrim are 3 'toy' examples on how the API can be used.
+
 ------------------------------------------------------------
+
+Usage : 
 
 To use this API, you simply need to do 3 things:
 
     1 - Drop the BamTools files somewhere the compiler can find them.
-        (i.e. in source directory, or somewhere in include path)
+        (i.e. in your source tree, or somewhere else in your include path)
 
     2 - Import BamTools API with the following lines of code
         #include "BamReader.h"     // as needed
         #include "BamWriter.h"     // as needed
         using namespace BamTools;
     	
-    3 - Compile with '-lz' ('l' as in 'lion') to access ZLIB compression library
+    3 - Compile with '-lz' ('l' as in Lima) to access ZLIB compression library
+	    (For VS users, I can provide you zlib headers - just contact me).
 
 See any included programs and Makefile for more specific compiling/usage examples.
-See documentation & comments in header files for API details. 
+See comments in the header files for more detailed API documentation. 
 
 ------------------------------------------------------------
+
+Contact :
 
 Feel free to contact me with any questions, comments, suggestions, bug reports, etc.
   - Derek Barnett

@@ -10,7 +10,6 @@ III. Contact
 
 ------------------------------------------------------------
 
-
 I. Introduction:
 
 The API consists of 2 main modules - BamReader and BamWriter. As you would expect, 
@@ -28,7 +27,7 @@ BamConversion, BamDump, and BamTrim are 3 'toy' examples on how the API can be u
 
 ------------------------------------------------------------
 
-Usage : 
+II. Usage : 
 
 To use this API, you simply need to do 3 things:
 
@@ -48,7 +47,7 @@ See comments in the header files for more detailed API documentation.
 
 ------------------------------------------------------------
 
-Contact :
+III. Contact :
 
 Feel free to contact me with any questions, comments, suggestions, bug reports, etc.
   - Derek Barnett

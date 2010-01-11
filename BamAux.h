@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 8 December 2009 (DB)
+// Last modified: 11 December 2009 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic constants, data structures, etc. for using BAM files
 // ***************************************************************************
@@ -21,6 +21,23 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+// Platform-specific type definitions
+#ifndef BAMTOOLS_TYPES
+#define BAMTOOLS_TYPES
+	#ifdef _MSC_VER
+			typedef char                 int8_t;
+			typedef unsigned char       uint8_t;
+			typedef short               int16_t;
+			typedef unsigned short     uint16_t;
+			typedef int                 int32_t;
+			typedef unsigned int       uint32_t;
+			typedef long long           int64_t;
+			typedef unsigned long long uint64_t;
+	#else
+			#include <stdint.h>
+	#endif
+#endif // BAMTOOLS_TYPES
 
 namespace BamTools {
 

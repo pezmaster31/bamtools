@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 8 December 2009 (DB)
+// Last modified: 11 January 2010 (DB)
 // ---------------------------------------------------------------------------
 // BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -40,8 +40,8 @@ BgzfData::BgzfData(void)
 
 // destructor
 BgzfData::~BgzfData(void) {
-    if(CompressedBlock)   delete [] CompressedBlock;
-    if(UncompressedBlock) delete [] UncompressedBlock;
+    if(CompressedBlock)   { delete[] CompressedBlock;   }
+    if(UncompressedBlock) { delete[] UncompressedBlock; }
 }
 
 // closes BGZF file
@@ -52,7 +52,7 @@ void BgzfData::Close(void) {
     IsOpen = false;
 
     // flush the current BGZF block
-    if ( IsWriteOnly ) { FlushBlock(); }
+    if (IsWriteOnly) { FlushBlock(); }
 
 	// write an empty block (as EOF marker)
 	int blockLength = DeflateBlock();
@@ -68,8 +68,6 @@ int BgzfData::DeflateBlock(void) {
 
     // initialize the gzip header
     char* buffer = CompressedBlock;
-    unsigned int bufferSize = CompressedBlockSize;
-
     memset(buffer, 0, 18);
     buffer[0]  = GZIP_ID1;
     buffer[1]  = (char)GZIP_ID2;
@@ -84,9 +82,11 @@ int BgzfData::DeflateBlock(void) {
     // loop to retry for blocks that do not compress enough
     int inputLength = BlockOffset;
     int compressedLength = 0;
+	unsigned int bufferSize = CompressedBlockSize;
 
     while(true) {
-
+		
+		// initialize zstream values
         z_stream zs;
         zs.zalloc    = NULL;
         zs.zfree     = NULL;
@@ -94,7 +94,7 @@ int BgzfData::DeflateBlock(void) {
         zs.avail_in  = inputLength;
         zs.next_out  = (Bytef*)&buffer[BLOCK_HEADER_LENGTH];
         zs.avail_out = bufferSize - BLOCK_HEADER_LENGTH - BLOCK_FOOTER_LENGTH;
-
+		
         // initialize the zlib compression algorithm
         if(deflateInit2(&zs, Z_DEFAULT_COMPRESSION, Z_DEFLATED, GZIP_WINDOW_BITS, Z_DEFAULT_MEM_LEVEL, Z_DEFAULT_STRATEGY) != Z_OK) {
             printf("ERROR: zlib deflate initialization failed.\n");
@@ -176,8 +176,8 @@ void BgzfData::FlushBlock(void) {
         if(numBytesWritten != blockLength) {
             printf("ERROR: Expected to write %u bytes during flushing, but wrote %u bytes.\n", blockLength, numBytesWritten);
             exit(1);
-        }
-
+		}
+		
         BlockAddress += blockLength;
     }
 }
@@ -218,6 +218,7 @@ int BgzfData::InflateBlock(const int& blockLength) {
 
 void BgzfData::Open(const string& filename, const char* mode) {
 
+	// determine open mode
     if ( strcmp(mode, "rb") == 0 ) {
         IsWriteOnly = false;
     } else if ( strcmp(mode, "wb") == 0) {
@@ -227,7 +228,21 @@ void BgzfData::Open(const string& filename, const char* mode) {
         exit(1);
     }
 
-    Stream = fopen(filename.c_str(), mode);
+	// open Stream to read to/write from file, stdin, or stdout
+	// stdin/stdout option contributed by Aaron Quinlan (2010-Jan-03)
+	if ( (filename != "stdin") && (filename != "stdout") ) {
+		// read/wrtie BGZF data to/from a file
+		Stream = fopen(filename.c_str(), mode);
+	}
+	else if ( (filename == "stdin") && (strcmp(mode, "rb") == 0 ) ) { 
+		// read BGZF data from stdin
+		Stream = freopen(NULL, mode, stdin);
+	}
+	else if ( (filename == "stdout") && (strcmp(mode, "wb") == 0) ) { 
+		// write BGZF data to stdout
+		Stream = freopen(NULL, mode, stdout);
+	}
+	
     if(!Stream) {
         printf("ERROR: Unable to open the BAM file %s\n", filename.c_str() );
         exit(1);

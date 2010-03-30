@@ -1,9 +1,9 @@
 // ***************************************************************************
-// BamAux.h (c) 2009 Derek Barnett, Michael Strömberg
+// BamAux.h (c) 2009 Derek Barnett, Michael Strï¿½mberg
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 11 Janaury 2010 (DB)
+// Last modified: 29 March 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic constants, data structures, etc. for using BAM files
 // ***************************************************************************
@@ -26,18 +26,18 @@
 // Platform-specific type definitions
 #ifndef BAMTOOLS_TYPES
 #define BAMTOOLS_TYPES
-	#ifdef _MSC_VER
-		typedef char                 int8_t;
-		typedef unsigned char       uint8_t;
-		typedef short               int16_t;
-		typedef unsigned short     uint16_t;
-		typedef int                 int32_t;
-		typedef unsigned int       uint32_t;
-		typedef long long           int64_t;
-		typedef unsigned long long uint64_t;
-	#else
-		#include <stdint.h>
-	#endif
+    #ifdef _MSC_VER
+        typedef char                 int8_t;
+        typedef unsigned char       uint8_t;
+        typedef short               int16_t;
+        typedef unsigned short     uint16_t;
+        typedef int                 int32_t;
+        typedef unsigned int       uint32_t;
+        typedef long long           int64_t;
+        typedef unsigned long long uint64_t;
+    #else
+        #include <stdint.h>
+    #endif
 #endif // BAMTOOLS_TYPES
 
 namespace BamTools {
@@ -91,9 +91,9 @@ struct BamAlignment {
         // Returns true if alignment is second mate on read
         bool IsSecondMate(void) const { return ( (AlignmentFlag & READ_2) != 0 ); }
 
-	// Manipulate alignment flag
-	public:
-		// Sets "PCR duplicate" bit 
+    // Manipulate alignment flag
+    public:
+        // Sets "PCR duplicate" bit 
         void SetIsDuplicate(bool ok) { if (ok) AlignmentFlag |= DUPLICATE; else AlignmentFlag &= ~DUPLICATE; }
         // Sets "failed quality control" bit
         void SetIsFailedQC(bool ok) { if (ok) AlignmentFlag |= QC_FAILED; else AlignmentFlag &= ~QC_FAILED; }
@@ -109,13 +109,13 @@ struct BamAlignment {
         void SetIsProperPair(bool ok) { if (ok) AlignmentFlag |= PROPER_PAIR; else AlignmentFlag &= ~PROPER_PAIR; }
         // Sets "alignment mapped to reverse strand" bit
         void SetIsReverseStrand(bool ok) { if (ok) AlignmentFlag |= REVERSE; else AlignmentFlag &= ~REVERSE; }
-		// Sets "position is primary alignment (determined by external app)"
+        // Sets "position is primary alignment (determined by external app)"
         void SetIsSecondaryAlignment(bool ok)  { if (ok) AlignmentFlag |= SECONDARY; else AlignmentFlag &= ~SECONDARY; }
         // Sets "alignment is second mate on read" bit
         void SetIsSecondMate(bool ok) { if (ok) AlignmentFlag |= READ_2; else AlignmentFlag &= ~READ_2; }
-		// Sets "alignment is mapped" bit
+        // Sets "alignment is mapped" bit
         void SetIsUnmapped(bool ok) { if (ok) AlignmentFlag |= UNMAPPED; else AlignmentFlag &= ~UNMAPPED; }
-		
+
     public:
 
         // get "RG" tag data
@@ -187,7 +187,7 @@ struct BamAlignment {
             if ( !foundEditDistanceTag ) { return false; }
 
             // assign the editDistance value
-            memcpy(&editDistance, pTagData, 1);
+            std::memcpy(&editDistance, pTagData, 1);
             return true;
         }
 
@@ -221,6 +221,12 @@ struct BamAlignment {
                             ++numBytesParsed;
                             ++pTagData;
                         }
+                        // ---------------------------
+                        // Added: 3-25-2010 DWB
+                        // Contributed: ARQ
+                        // Fixed: error parsing variable length tag data
+                        ++pTagData;
+                        // ---------------------------
                         break;
 
                 default:
@@ -274,7 +280,7 @@ struct CigarOp {
 struct RefData {
     // data members
     std::string RefName;          // Name of reference sequence
-    int         RefLength;        // Length of reference sequence
+    int32_t     RefLength;        // Length of reference sequence
     bool        RefHasAlignments; // True if BAM file contains alignments mapped to reference sequence
     // constructor
     RefData(void)
@@ -283,7 +289,7 @@ struct RefData {
     { }
 };
 
-typedef std::vector<RefData> RefVector;
+typedef std::vector<RefData>      RefVector;
 typedef std::vector<BamAlignment> BamAlignmentVector;
 
 // ----------------------------------------------------------------
@@ -322,6 +328,59 @@ struct ReferenceIndex {
 };
 
 typedef std::vector<ReferenceIndex> BamIndex;
+
+// ----------------------------------------------------------------
+// Added: 3-35-2010 DWB
+// Fixed: Routines to provide endian-correctness
+// ----------------------------------------------------------------
+
+// returns true if system is big endian
+inline bool SystemIsBigEndian(void) {
+   const uint16_t one = 0x0001;
+   return ((*(char*) &one) == 0 );
+}
+
+// swaps endianness of 16-bit value 'in place'
+inline void SwapEndian_16(uint16_t& x) {
+    x = ((x >> 8) | (x << 8));
+}
+
+// swaps endianness of 32-bit value 'in-place'
+inline void SwapEndian_32(uint32_t& value) {
+    x = ( (x >> 24) | 
+         ((x << 8) & 0x00FF0000) | 
+         ((x >> 8) & 0x0000FF00) | 
+          (x << 24)
+        );
+}
+
+// swaps endianness of 64-bit value 'in-place'
+inline void SwapEndian_64(uint64_t& value) {
+    x = ( (x >> 56) | 
+         ((x << 40) & 0x00FF000000000000) |
+         ((x << 24) & 0x0000FF0000000000) |
+         ((x << 8)  & 0x000000FF00000000) |
+         ((x >> 8)  & 0x00000000FF000000) |
+         ((x >> 24) & 0x0000000000FF0000) |
+         ((x >> 40) & 0x000000000000FF00) |
+          (x << 56)
+        );
+}
+
+inline void SwapEndian_16p(char* data) {
+    uint16_t& value = (uint16_t&)*data; 
+    SwapEndian_16(value);
+}
+
+inline void SwapEndian_32p(char* data) {
+    uint32_t& value = (uint32_t&)*data; 
+    SwapEndian_32(value);
+}
+
+inline void SwapEndian_64p(char* data) {
+    uint64_t& value = (uint64_t&)*data; 
+    SwapEndian_64(value);
+}
 
 } // namespace BamTools
 

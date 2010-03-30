@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 29 March 2010 (DB)
+// Last modified: 30 March 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic constants, data structures, etc. for using BAM files
 // ***************************************************************************
@@ -341,12 +341,24 @@ inline bool SystemIsBigEndian(void) {
 }
 
 // swaps endianness of 16-bit value 'in place'
+inline void SwapEndian_16(int16_t& x) {
+    x = ((x >> 8) | (x << 8));
+}
+
 inline void SwapEndian_16(uint16_t& x) {
     x = ((x >> 8) | (x << 8));
 }
 
 // swaps endianness of 32-bit value 'in-place'
-inline void SwapEndian_32(uint32_t& value) {
+inline void SwapEndian_32(int32_t& x) {
+    x = ( (x >> 24) | 
+         ((x << 8) & 0x00FF0000) | 
+         ((x >> 8) & 0x0000FF00) | 
+          (x << 24)
+        );
+}
+
+inline void SwapEndian_32(uint32_t& x) {
     x = ( (x >> 24) | 
          ((x << 8) & 0x00FF0000) | 
          ((x >> 8) & 0x0000FF00) | 
@@ -355,14 +367,26 @@ inline void SwapEndian_32(uint32_t& value) {
 }
 
 // swaps endianness of 64-bit value 'in-place'
-inline void SwapEndian_64(uint64_t& value) {
+inline void SwapEndian_64(int64_t& x) {
     x = ( (x >> 56) | 
-         ((x << 40) & 0x00FF000000000000) |
-         ((x << 24) & 0x0000FF0000000000) |
-         ((x << 8)  & 0x000000FF00000000) |
-         ((x >> 8)  & 0x00000000FF000000) |
-         ((x >> 24) & 0x0000000000FF0000) |
-         ((x >> 40) & 0x000000000000FF00) |
+         ((x << 40) & 0x00FF000000000000ll) |
+         ((x << 24) & 0x0000FF0000000000ll) |
+         ((x << 8)  & 0x000000FF00000000ll) |
+         ((x >> 8)  & 0x00000000FF000000ll) |
+         ((x >> 24) & 0x0000000000FF0000ll) |
+         ((x >> 40) & 0x000000000000FF00ll) |
+          (x << 56)
+        );
+}
+
+inline void SwapEndian_64(uint64_t& x) {
+    x = ( (x >> 56) | 
+         ((x << 40) & 0x00FF000000000000ll) |
+         ((x << 24) & 0x0000FF0000000000ll) |
+         ((x << 8)  & 0x000000FF00000000ll) |
+         ((x >> 8)  & 0x00000000FF000000ll) |
+         ((x >> 24) & 0x0000000000FF0000ll) |
+         ((x >> 40) & 0x000000000000FF00ll) |
           (x << 56)
         );
 }

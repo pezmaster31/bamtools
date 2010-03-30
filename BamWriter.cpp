@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 29 March 2010 (DB)
+// Last modified: 30 March 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -305,7 +305,7 @@ void BamWriter::BamWriterPrivate::SaveAlignment(const BamAlignment& al) {
         
         for (unsigned int i = 0; i < packedCigarLen; ++i) {
             if ( IsBigEndian ) { 
-              SwapEndian_32(cigarData[i]); 
+              SwapEndian_32p(&cigarData[i]); 
             }
         }
         
@@ -332,7 +332,7 @@ void BamWriter::BamWriterPrivate::SaveAlignment(const BamAlignment& al) {
         memcpy(tagData, al.TagData.data(), tagDataLength);
       
         int i = 0;
-        while ( i < tagDataLength ) {
+        while ( (unsigned int)i < tagDataLength ) {
             
             i += 2;                                 // skip tag type (e.g. "RG", "NM", etc)
             uint8_t type = toupper(tagData[i]);     // lower & upper case letters have same meaning 

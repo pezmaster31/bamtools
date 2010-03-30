@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 29 March 2010 (DB)
+// Last modified: 30 March 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -70,10 +70,7 @@ struct BamReader::BamReaderPrivate {
     bool GetNextAlignment(BamAlignment& bAlignment);
 
     // access auxiliary data
-    const string GetHeaderText(void) const;
-    const int GetReferenceCount(void) const;
-    const RefVector GetReferenceData(void) const;
-    const int GetReferenceID(const string& refName) const;
+    int GetReferenceID(const string& refName) const;
 
     // index operations
     bool CreateIndex(void);
@@ -144,10 +141,10 @@ bool BamReader::Rewind(void) { return d->Rewind(); }
 bool BamReader::GetNextAlignment(BamAlignment& bAlignment) { return d->GetNextAlignment(bAlignment); }
 
 // access auxiliary data
-const string    BamReader::GetHeaderText(void) const { return d->HeaderText; }
-const int       BamReader::GetReferenceCount(void) const { return d->References.size(); }
+const string BamReader::GetHeaderText(void) const { return d->HeaderText; }
+int BamReader::GetReferenceCount(void) const { return d->References.size(); }
 const RefVector BamReader::GetReferenceData(void) const { return d->References; }
-const int       BamReader::GetReferenceID(const string& refName) const { return d->GetReferenceID(refName); }
+int BamReader::GetReferenceID(const string& refName) const { return d->GetReferenceID(refName); }
 
 // index operations
 bool BamReader::CreateIndex(void) { return d->CreateIndex(); }
@@ -375,7 +372,7 @@ bool BamReader::BamReaderPrivate::CreateIndex(void) {
 }
 
 // returns RefID for given RefName (returns References.size() if not found)
-const int BamReader::BamReaderPrivate::GetReferenceID(const string& refName) const {
+int BamReader::BamReaderPrivate::GetReferenceID(const string& refName) const {
 
     // retrieve names from reference data
     vector<string> refNames;
@@ -717,13 +714,13 @@ bool BamReader::BamReaderPrivate::LoadNextAlignment(BamAlignment& bAlignment) {
     int bytesRead = 4;
 
     // read in core alignment data, make sure the right size of data was read
-    uint32_t x[8];
+    char x[BAM_CORE_SIZE];
     if ( mBGZF.Read(x, BAM_CORE_SIZE) != BAM_CORE_SIZE ) { return false; }
     bytesRead += BAM_CORE_SIZE;
 
     if ( IsBigEndian ) {
-        for ( int i = 0; i < 8; ++i ) { 
-          SwapEndian_32(x[i]); 
+        for ( int i = 0; i < BAM_CORE_SIZE; i+=sizeof(uint32_t) ) { 
+          SwapEndian_32p(&x[i]); 
         }
     }
     
@@ -734,21 +731,21 @@ bool BamReader::BamReaderPrivate::LoadNextAlignment(BamAlignment& bAlignment) {
     unsigned int querySequenceLength;
 
     bAlignment.RefID    = BgzfData::UnpackSignedInt(&x[0]);  
-    bAlignment.Position = BgzfData::UnpackSignedInt(&x[1]);
+    bAlignment.Position = BgzfData::UnpackSignedInt(&x[4]);
     
-    tempValue = BgzfData::UnpackUnsignedInt(&x[2]);
+    tempValue = BgzfData::UnpackUnsignedInt(&x[8]);
     bAlignment.Bin        = tempValue >> 16;
     bAlignment.MapQuality = tempValue >> 8 & 0xff;
     queryNameLength       = tempValue & 0xff;
 
-    tempValue = BgzfData::UnpackUnsignedInt(&x[3]);
+    tempValue = BgzfData::UnpackUnsignedInt(&x[12]);
     bAlignment.AlignmentFlag = tempValue >> 16;
     numCigarOperations       = tempValue & 0xffff;
 
-    querySequenceLength     = BgzfData::UnpackUnsignedInt(&x[4]);
-    bAlignment.MateRefID    = BgzfData::UnpackSignedInt(&x[5]);
-    bAlignment.MatePosition = BgzfData::UnpackSignedInt(&x[6]);
-    bAlignment.InsertSize   = BgzfData::UnpackSignedInt(&x[7]);
+    querySequenceLength     = BgzfData::UnpackUnsignedInt(&x[16]);
+    bAlignment.MateRefID    = BgzfData::UnpackSignedInt(&x[20]);
+    bAlignment.MatePosition = BgzfData::UnpackSignedInt(&x[24]);
+    bAlignment.InsertSize   = BgzfData::UnpackSignedInt(&x[28]);
     
     // calculate lengths/offsets
     const unsigned int dataLength      = blockLength - BAM_CORE_SIZE;
@@ -772,7 +769,7 @@ bool BamReader::BamReaderPrivate::LoadNextAlignment(BamAlignment& bAlignment) {
         bytesRead += dataLength;
 
         // clear out any previous string data
-        bAlignment.Name.clear(;)
+        bAlignment.Name.clear();
         bAlignment.QueryBases.clear();
         bAlignment.Qualities.clear();
         bAlignment.AlignedBases.clear();
@@ -875,7 +872,7 @@ bool BamReader::BamReaderPrivate::LoadNextAlignment(BamAlignment& bAlignment) {
         // -----------------------
         if ( IsBigEndian ) {
             int i = 0;
-            while ( i < tagDataLen ) {
+            while ( (unsigned int)i < tagDataLen ) {
                 
                 i += 2;                                 // skip tag type (e.g. "RG", "NM", etc)
                 uint8_t type = toupper(tagData[i]);     // lower & upper case letters have same meaning 

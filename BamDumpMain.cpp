@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
 	
 	BamAlignment bAlignment;
 	while (reader.GetNextAlignment(bAlignment)) {
-		PrintAlignment(bAlignment);
+            PrintAlignment(bAlignment);
 	}
 
 	reader.Close();
@@ -53,4 +53,9 @@ void PrintAlignment(const BamAlignment& alignment) {
 	cout << "Name: "       << alignment.Name << endl;
 	cout << "Aligned to: " << alignment.RefID;
 	cout << ":"            << alignment.Position << endl;
+        cout << "TagData:    " << alignment.TagData << endl;
+        
+        string readGroup;
+        cout << "ReadGroup:  " << ( alignment.GetReadGroup(readGroup) ? readGroup : "Unknown" ) << endl;
+        cout << endl;
 }

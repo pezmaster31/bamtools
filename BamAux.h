@@ -204,11 +204,11 @@ struct BamAlignment {
 
                 case 's':
                 case 'S':
-                case 'f':
                         numBytesParsed += 2;
                         pTagData       += 2;
                         break;
 
+                case 'f':
                 case 'i':
                 case 'I':
                         numBytesParsed += 4;

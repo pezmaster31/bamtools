@@ -143,7 +143,9 @@ struct BamAlignment {
                 }
 
                 // get the storage class and find the next tag
+                if (*pTagStorageType == '\0') { return false; }
                 SkipToNextTag( *pTagStorageType, pTagData, numBytesParsed );
+                if (*pTagData == '\0') { return false; }
             }
 
             // return if the read group tag was not present
@@ -181,7 +183,9 @@ struct BamAlignment {
                 }
 
                 // get the storage class and find the next tag
+                if (*pTagStorageType == '\0') { return false; }
                 SkipToNextTag( *pTagStorageType, pTagData, numBytesParsed );
+                if (*pTagData == '\0') { return false; }
             }
             // return if the edit distance tag was not present
             if ( !foundEditDistanceTag ) { return false; }

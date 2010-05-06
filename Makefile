@@ -1,6 +1,6 @@
 CXX=		g++
 CXXFLAGS=	-Wall -O3
-PROG=		BamConversion BamDump BamTrim
+PROG=		BamConversion BamDump BamTrim BamMultiMerge
 LIBS=		-lz
 
 all: $(PROG)
@@ -13,6 +13,9 @@ BamDump:  BGZF.o BamReader.o BamDumpMain.o
 
 BamTrim:  BGZF.o BamReader.o BamWriter.o BamTrimMain.o
 	$(CXX) $(CXXFLAGS) -o $@  BGZF.o BamReader.o BamWriter.o BamTrimMain.o $(LIBS)
+
+BamMultiMerge: BGZF.o BamMultiReader.o BamReader.o BamWriter.o BamMultiMergeMain.o
+	$(CXX) $(CXXFLAGS) -o $@ BGZF.o BamMultiReader.o BamReader.o BamWriter.o BamMultiMergeMain.o $(LIBS)
 
 clean:
 	rm -fr gmon.out *.o *.a a.out *~

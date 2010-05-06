@@ -71,7 +71,7 @@ struct BamReader::BamReaderPrivate {
     // "public" interface
     // -------------------------------
 
-    // flie operations
+    // file operations
     void Close(void);
     bool Jump(int refID, int position = 0);
     void Open(const string& filename, const string& indexFilename = "");
@@ -154,6 +154,7 @@ const string BamReader::GetHeaderText(void) const { return d->HeaderText; }
 int BamReader::GetReferenceCount(void) const { return d->References.size(); }
 const RefVector BamReader::GetReferenceData(void) const { return d->References; }
 int BamReader::GetReferenceID(const string& refName) const { return d->GetReferenceID(refName); }
+const std::string BamReader::GetFilename(void) const { return d->Filename; }
 
 // index operations
 bool BamReader::CreateIndex(void) { return d->CreateIndex(); }

@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include <boost/algorithm/string.hpp>
+#include <sstream>
 
 // BamTools includes
 #include "BGZF.h"
@@ -216,6 +216,7 @@ bool BamMultiReader::CreateIndexes(void) {
     return result;
 }
 
+// makes a virtual, unified header for all the bam files in the multireader
 const string BamMultiReader::GetUnifiedHeaderText(void) const {
 
     string mergedHeader = "";
@@ -226,10 +227,11 @@ const string BamMultiReader::GetUnifiedHeaderText(void) const {
 
         BamReader* reader = *it;
 
-        string header = reader->GetHeaderText();
-
+        stringstream header(reader->GetHeaderText());
         vector<string> lines;
-        boost::split(lines, header, boost::is_any_of("\n"));
+        string item;
+        while (getline(header, item))
+            lines.push_back(item);
 
         for (vector<string>::const_iterator it = lines.begin(); it != lines.end(); ++it) {
 

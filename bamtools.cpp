@@ -9,8 +9,8 @@
 // Std C/C++ includes
 #include <cstdlib>
 #include <iostream>
+#include <fstream>
 #include <string>
-#include <boost/algorithm/string.hpp>
 using namespace std;
 
 // BamTools includes
@@ -19,12 +19,13 @@ using namespace std;
 #include "BamMultiReader.h"
 using namespace BamTools;
 
-void usageSummary() {
-    cerr << "usage: bamtools <command> [options]" << endl
+void usageSummary(string cmdname) {
+    cerr << "usage: " << cmdname << " <command> [options]" << endl
          << "actions:" << endl
-         << "    index <bam file>" << endl
-         << "    merge <merged BAM file> [<BAM file> <BAM file> ...]" << endl
-         << "    dump [<BAM file> <BAM file> ...]" << endl;
+         << "    index <BAM file>   # generates BAM index <BAM file>.bai" << endl
+         << "    merge <merged BAM file> [<BAM file> <BAM file> ...]   # merges BAM files into a single file" << endl
+         << "    dump [<BAM file> <BAM file> ...]   # dumps alignment summaries to stdout" << endl
+         << "    header [<BAM file> <BAM file> ...]   # prints header, or unified header for BAM file or files" << endl;
          //<< "    trim <input BAM file> <input BAM index file> <output BAM file> <reference name> <leftBound> <rightBound>" << endl;
 }
 
@@ -33,7 +34,7 @@ void BamMerge(string outputFilename, vector<string> filenames) {
 
     BamMultiReader reader;
 
-    reader.Open(filenames);
+    reader.Open(filenames, false); // opens the files without checking for indexes
 
     string mergedHeader = reader.GetHeaderText();
 
@@ -93,32 +94,67 @@ void BamDump(vector<string> files) {
 
 }
 
+void BamDumpHeader(vector<string> files) {
+
+	BamMultiReader reader;
+	reader.Open(files, false);
+	
+    cout << reader.GetHeaderText() << endl;
+
+	reader.Close();
+
+}
+
 
 int main(int argc, char* argv[]) {
 
 	// validate argument count
-	if( argc < 2 ) {
-        usageSummary();
+	if( argc < 3 ) {
+        usageSummary(argv[0]);
 		exit(1);
 	}
 
     string command = argv[1];
     
     if (command == "index") {
+
         BamCreateIndex(argv[2]);
+
     } else if (command == "merge") {
+
         vector<string> files;
         string outputFile = argv[2];
+
+        // check if our output exists, and exit if so
+        ifstream output(outputFile.c_str());
+        if (output.good()) {
+            cerr << "ERROR: output file " << outputFile << " exists, exiting." << endl;
+            exit(1);
+        } else {
+            output.close();
+        }
+
         for (int i = 3; i<argc; ++i) {
             files.push_back(argv[i]);
         }
         BamMerge(outputFile, files);
+        
     } else if (command == "dump") {
+        
         vector<string> files;
         for (int i = 2; i<argc; ++i) {
             files.push_back(argv[i]);
         }
         BamDump(files);
+
+    } else if (command == "header") {
+
+        vector<string> files;
+        for (int i = 2; i<argc; ++i) {
+            files.push_back(argv[i]);
+        }
+        BamDumpHeader(files);
+
     }
 
 

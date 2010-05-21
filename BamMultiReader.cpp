@@ -88,7 +88,7 @@ void BamMultiReader::UpdateReferenceID(void) {
                 }
             }
         }
-        cerr << "updating reference id from " << CurrentRefID << " to " << nextRefID << endl;
+        //cerr << "updating reference id from " << CurrentRefID << " to " << nextRefID << endl;
         CurrentRefID = nextRefID;
     }
 }
@@ -119,7 +119,7 @@ bool BamMultiReader::GetNextAlignment(BamAlignment& nextAlignment) {
     // forward, and return it
     int i = 0, lowestPosition = -1, lowestAlignmentIndex = -1;
     BamAlignment* lowestAlignment = NULL;
-    for (vector<BamAlignment*>::iterator it = alignments.begin(); it != alignments.end(); ++it) {
+    for (vector<BamAlignment*>::const_iterator it = alignments.begin(); it != alignments.end(); ++it) {
         BamAlignment* ba = *it;
         if (readerStates.at(i) != END && 
                 ba->RefID == CurrentRefID && 
@@ -137,7 +137,7 @@ bool BamMultiReader::GetNextAlignment(BamAlignment& nextAlignment) {
     // else continue and load the next alignment
     bool r = (readers.at(lowestAlignmentIndex))->GetNextAlignment(*alignments.at(lowestAlignmentIndex));
     if (!r) {
-        cerr << "reached end of file " << readers.at(lowestAlignmentIndex)->GetFilename() << endl;
+        //cerr << "reached end of file " << readers.at(lowestAlignmentIndex)->GetFilename() << endl;
         readerStates.at(lowestAlignmentIndex) = END;  // set flag for end of file
     }
 
@@ -162,13 +162,17 @@ bool BamMultiReader::Jump(int refID, int position) {
 }
 
 // opens BAM files
-void BamMultiReader::Open(const vector<string> filenames) {
+void BamMultiReader::Open(const vector<string> filenames, bool openIndexes) {
     // for filename in filenames
     fileNames = filenames; // save filenames in our multireader
     for (vector<string>::const_iterator it = filenames.begin(); it != filenames.end(); ++it) {
         string filename = *it;
         BamReader* reader = new BamReader;
-        reader->Open(filename, filename + ".bai");
+        if (openIndexes) {
+            reader->Open(filename, filename + ".bai");
+        } else {
+            reader->Open(filename); // for merging, jumping is disallowed
+        }
         BamAlignment* alignment = new BamAlignment;
         reader->GetNextAlignment(*alignment);
         readers.push_back(reader); // tracks readers
@@ -176,6 +180,7 @@ void BamMultiReader::Open(const vector<string> filenames) {
         BamReaderState readerState = START;
         readerStates.push_back(readerState);
     }
+    ValidateReaders();
 }
 
 // Runs GetNextAlignment for all BAM readers; used during jumps
@@ -217,7 +222,7 @@ bool BamMultiReader::CreateIndexes(void) {
 }
 
 // makes a virtual, unified header for all the bam files in the multireader
-const string BamMultiReader::GetUnifiedHeaderText(void) const {
+const string BamMultiReader::GetHeaderText(void) const {
 
     string mergedHeader = "";
 
@@ -263,3 +268,57 @@ const string BamMultiReader::GetUnifiedHeaderText(void) const {
     return mergedHeader;
 }
 
+// ValidateReaders checks that all the readers point to BAM files representing
+// alignments against the same set of reference sequences, and that the
+// sequences are identically ordered.  If these checks fail the operation of
+// the multireader is undefined, so we force program exit.
+void BamMultiReader::ValidateReaders(void) const {
+    int firstRefCount = readers.front()->GetReferenceCount();
+    BamTools::RefVector firstRefData = readers.front()->GetReferenceData();
+    for (vector<BamReader*>::const_iterator it = readers.begin(); it != readers.end(); ++it) {
+        BamTools::RefVector currentRefData = (*it)->GetReferenceData();
+        BamTools::RefVector::const_iterator f = firstRefData.begin();
+        BamTools::RefVector::const_iterator c = currentRefData.begin();
+        if ((*it)->GetReferenceCount() != firstRefCount || firstRefData.size() != currentRefData.size()) {
+            cerr << "ERROR: mismatched number of references in " << (*it)->GetFilename()
+                      << " expected " << firstRefCount 
+                      << " reference sequences but only found " << (*it)->GetReferenceCount() << endl;
+            exit(1);
+        }
+        // this will be ok; we just checked above that we have identically-sized sets of references
+        // here we simply check if they are all, in fact, equal in content
+        while (f != firstRefData.end()) {
+            if (f->RefName != c->RefName || f->RefLength != c->RefLength) {
+                cerr << "ERROR: mismatched references found in " << (*it)->GetFilename()
+                          << " expected: " << endl;
+                for (BamTools::RefVector::const_iterator a = firstRefData.begin(); a != firstRefData.end(); ++a)
+                    cerr << a->RefName << " " << a->RefLength << endl;
+                cerr << "but found: " << endl;
+                for (BamTools::RefVector::const_iterator a = currentRefData.begin(); a != currentRefData.end(); ++a)
+                    cerr << a->RefName << " " << a->RefLength << endl;
+                exit(1);
+            }
+            ++f; ++c;
+        }
+    }
+}
+
+// NB: The following functions assume that we have identical references for all
+// BAM files.  We enforce this by invoking the above validation function
+// (ValidateReaders) to verify that our reference data is the same across all
+// files on Open, so we will not encounter a situation in which there is a
+// mismatch and we are still live.
+
+// returns the number of reference sequences
+const int BamMultiReader::GetReferenceCount(void) const {
+    return readers.front()->GetReferenceCount();
+}
+
+// returns vector of reference objects
+const BamTools::RefVector BamMultiReader::GetReferenceData(void) const {
+    return readers.front()->GetReferenceData();
+}
+
+const int BamMultiReader::GetReferenceID(const string& refName) const { 
+    return readers.front()->GetReferenceID(refName);
+}

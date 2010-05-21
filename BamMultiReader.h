@@ -48,7 +48,7 @@ class BamMultiReader {
         bool Jump(int refID, int position = 0);
         // opens BAM files (and optional BAM index files, if provided)
         //void Open(const vector<std::string&> filenames, const vector<std::string&> indexFilenames);
-        void Open(const vector<string> filenames);
+        void Open(const vector<string> filenames, bool openIndexes = true);
         // returns file pointers to beginning of alignments
         bool Rewind(void);
 
@@ -68,13 +68,15 @@ class BamMultiReader {
         // ----------------------
 
         // returns unified SAM header text for all files
-        const string GetUnifiedHeaderText(void) const;
+        const string GetHeaderText(void) const;
         // returns number of reference sequences
         const int GetReferenceCount(void) const;
         // returns vector of reference objects
         const BamTools::RefVector GetReferenceData(void) const;
         // returns reference id (used for BamMultiReader::Jump()) for the given reference name
-        //const int GetReferenceID(const std::string& refName) const;
+        const int GetReferenceID(const std::string& refName) const;
+        // validates that we have a congruent set of BAM files that are aligned against the same reference sequences
+        void ValidateReaders() const;
 
         // ----------------------
         // BAM index operations

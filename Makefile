@@ -1,6 +1,6 @@
 CXX=		g++
 CXXFLAGS=	-Wall -O3
-PROG= 		bamtools bamtools_test
+PROG= 		bamtools
 LIBS=		-lz
 OBJS=		BGZF.o BamReader.o BamWriter.o BamMultiReader.o bamtools.o
 

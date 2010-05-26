@@ -1,162 +1,116 @@
 // ***************************************************************************
-// bamtools.cpp (c) 2010 Erik Garrison
+// bamtools.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
+// ---------------------------------------------------------------------------
+// Last modified: 26 May 2010
 // ---------------------------------------------------------------------------
 // Integrates a number of BamTools functionalities into a single executable.
 // ***************************************************************************
 
 // Std C/C++ includes
-#include <cstdlib>
 #include <iostream>
-#include <fstream>
-#include <string>
-using namespace std;
 
 // BamTools includes
-#include "BamReader.h"
-#include "BamWriter.h"
-#include "BamMultiReader.h"
+#include "bamtools_coverage.h"
+#include "bamtools_dump.h"
+#include "bamtools_header.h"
+#include "bamtools_index.h"
+#include "bamtools_merge.h"
+#include "bamtools_sam.h"
+#include "bamtools_sort.h"
+#include "bamtools_stats.h"
+
+using namespace std;
 using namespace BamTools;
 
-void usageSummary(string cmdname) {
-    cerr << "usage: " << cmdname << " <command> [options]" << endl
-         << "actions:" << endl
-         << "    index <BAM file>   # generates BAM index <BAM file>.bai" << endl
-         << "    merge <merged BAM file> [<BAM file> <BAM file> ...]   # merges BAM files into a single file" << endl
-         << "    dump [<BAM file> <BAM file> ...]   # dumps alignment summaries to stdout" << endl
-         << "    header [<BAM file> <BAM file> ...]   # prints header, or unified header for BAM file or files" << endl;
-         //<< "    trim <input BAM file> <input BAM index file> <output BAM file> <reference name> <leftBound> <rightBound>" << endl;
-}
+// ------------------------------------------
+// bamtools subtool names
+static const string COVERAGE = "coverage";
+static const string DUMP     = "dump"; // <-- do we even want to keep this? I think 'bamtools sam' will be more useful anyway 
+                                       // nobody's going to want what was essentially an early, bloated, debugging output
+static const string HEADER   = "header";
+static const string INDEX    = "index";
+static const string MERGE    = "merge";
+static const string SAM      = "sam";
+static const string SORT     = "sort";
+static const string STATS    = "stats";
 
+// ------------------------------------------
+// bamtools help/version names
+static const string HELP       = "help";
+static const string LONG_HELP  = "--help";
+static const string SHORT_HELP = "-h";
 
-void BamMerge(string outputFilename, vector<string> filenames) {
+static const string VERSION       = "version";
+static const string LONG_VERSION  = "--version";
+static const string SHORT_VERSION = "-v";
 
-    BamMultiReader reader;
-
-    reader.Open(filenames, false); // opens the files without checking for indexes
-
-    string mergedHeader = reader.GetHeaderText();
-
-    RefVector references = reader.GetReferenceData();
-
-    // open BamWriter
-    BamWriter writer;
-    writer.Open( outputFilename.c_str(), mergedHeader, references);
-
-    BamAlignment bAlignment;
-    while (reader.GetNextAlignment(bAlignment)) {
-        // write to output file
-        writer.SaveAlignment(bAlignment);
+int Help(int argc, char* argv[]) {
+  
+    // 'bamtools help COMMAND'
+    if (argc > 2) {
+        if ( argv[2] == COVERAGE) return BamCoverageHelp();
+        if ( argv[2] == DUMP )    return BamDumpHelp();                 // keep?
+        if ( argv[2] == HEADER )  return BamHeaderHelp();
+        if ( argv[2] == INDEX )   return BamIndexHelp();
+        if ( argv[2] == MERGE )   return BamMergeHelp();
+        if ( argv[2] == SAM )     return BamSamHelp();
+        if ( argv[2] == SORT )    return BamSortHelp();
+        if ( argv[2] == STATS )   return BamStatsHelp();
     }
-
-    // close output file
-    writer.Close();
-    // close input files
-    reader.Close();
-
+     
+    // either 'bamtools help' or unrecognized argument after 'help'
+    cerr << endl;
+    cerr << "usage: bamtools [--help] COMMAND [ARGS]" << endl;
+    cerr << endl;
+    cerr << "Available bamtools commands:" << endl;
+    cerr << "\tcoverage\tPrints coverage statistics from the input BAM file" << endl;
+    cerr << "\tdump\t\tDump BAM file contents to text output" << endl;                          // keep?
+    cerr << "\theader\t\tPrints BAM header information" << endl;
+    cerr << "\tindex\t\tGenerates index for BAM file" << endl;
+    cerr << "\tmerge\t\tMerge multiple BAM files into single file" << endl;
+    cerr << "\tsam\t\tPrints the BAM file in SAM (text) format" << endl;
+    cerr << "\tsort\t\tSorts the BAM file according to some criteria" << endl;
+    cerr << "\tstats\t\tPrints some basic statistics from the input BAM file" << endl;
+    cerr << endl;
+    cerr << "See 'bamtools help COMMAND' for more information on a specific command." << endl;
+    cerr << endl;
+    
+    return 0;
 }
 
-void BamCreateIndex(const char* inputFilename) {
-
-	// open our BAM reader
-	BamReader reader;
-	reader.Open(inputFilename);
-
-    // create index file
-    reader.CreateIndex();
-
-	// close our file
-	reader.Close();
-
+int Version(void) {
+    cout << endl;
+    cout << "bamtools v0.x.xx" << endl;
+    cout << "Part of BamTools API and toolkit" << endl;
+    cout << "Primary authors: Derek Barnett, Erik Garrison, Michael Stromberg" << endl;
+    cout << "(c) 2009-2010 Marth Lab, Biology Dept., Boston College" << endl;
+    cout << endl;
+    return 0;
 }
-
-// Spit out basic BamAlignment data 
-void PrintAlignment(const BamAlignment& alignment) {
-	cout << "---------------------------------" << endl;
-	cout << "Name: "       << alignment.Name << endl;
-	cout << "Aligned to: " << alignment.RefID;
-	cout << ":"            << alignment.Position << endl;
-        cout << endl;
-}
-
-void BamDump(vector<string> files) {
-
-	BamMultiReader reader;
-	reader.Open(files);
-	
-	BamAlignment bAlignment;
-	while (reader.GetNextAlignment(bAlignment)) {
-            PrintAlignment(bAlignment);
-	}
-
-	reader.Close();
-
-}
-
-void BamDumpHeader(vector<string> files) {
-
-	BamMultiReader reader;
-	reader.Open(files, false);
-	
-    cout << reader.GetHeaderText() << endl;
-
-	reader.Close();
-
-}
-
 
 int main(int argc, char* argv[]) {
 
-	// validate argument count
-	if( argc < 3 ) {
-        usageSummary(argv[0]);
-		exit(1);
-	}
-
-    string command = argv[1];
+    // just 'bamtools'
+    if ( (argc == 1) ) return Help(argc, argv);
     
-    if (command == "index") {
-
-        BamCreateIndex(argv[2]);
-
-    } else if (command == "merge") {
-
-        vector<string> files;
-        string outputFile = argv[2];
-
-        // check if our output exists, and exit if so
-        ifstream output(outputFile.c_str());
-        if (output.good()) {
-            cerr << "ERROR: output file " << outputFile << " exists, exiting." << endl;
-            exit(1);
-        } else {
-            output.close();
-        }
-
-        for (int i = 3; i<argc; ++i) {
-            files.push_back(argv[i]);
-        }
-        BamMerge(outputFile, files);
+    // 'bamtools help', 'bamtools --help', or 'bamtools -h'
+    if ( (argv[1] == HELP) || (argv[1] == LONG_HELP) || (argv[1] == SHORT_HELP) ) return Help(argc, argv); 
+    
+    // 'bamtools version', 'bamtools --version', or 'bamtools -v'
+    if ( (argv[1] == VERSION) || (argv[1] == LONG_VERSION) || (argv[1] == SHORT_VERSION) ) return Version(); 
         
-    } else if (command == "dump") {
-        
-        vector<string> files;
-        for (int i = 2; i<argc; ++i) {
-            files.push_back(argv[i]);
-        }
-        BamDump(files);
-
-    } else if (command == "header") {
-
-        vector<string> files;
-        for (int i = 2; i<argc; ++i) {
-            files.push_back(argv[i]);
-        }
-        BamDumpHeader(files);
-
-    }
-
-
-	return 0;
+    // run desired sub-tool
+    if ( argv[1] == COVERAGE ) return RunBamCoverage(argc, argv);
+    if ( argv[1] == DUMP )     return RunBamDump(argc, argv);           // keep?
+    if ( argv[1] == HEADER )   return RunBamHeader(argc, argv);
+    if ( argv[1] == INDEX )    return RunBamIndex(argc, argv);
+    if ( argv[1] == MERGE )    return RunBamMerge(argc, argv); 
+    if ( argv[1] == SAM )      return RunBamSam(argc, argv);
+    if ( argv[1] == SORT )     return RunBamSort(argc, argv);
+    if ( argv[1] == STATS )    return RunBamStats(argc, argv);
+    
+    // unrecognized 2nd argument, print help
+    return Help(argc, argv);    
 }

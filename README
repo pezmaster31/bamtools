@@ -2,32 +2,71 @@
 README : BAMTOOLS
 ------------------------------------------------------------
 
-BamTools: a C++ API for reading/writing BAM files.
+BamTools: a C++ API & toolkit for reading/writing/manipulating BAM files.
 
-I.   Introduction
-II.  Usage
+I. Introduction
+    a. The API
+    b. The Toolkit
+
+II. Usage
+    a. The API
+    b. The Toolkit
+
 III. Contact
 
 ------------------------------------------------------------
 
 I. Introduction:
+BamTools provides both a programmer's API and an end-user's toolkit for handling 
+BAM files.  
 
+Ia. The API
 The API consists of 2 main modules - BamReader and BamWriter. As you would expect, 
 BamReader provides read-access to BAM files, while BamWriter does the writing of BAM
 files. BamReader provides an interface for random-access (jumping) in a BAM file,
 as well as generating BAM index files.
  
+BamMultiReader is an extra module that allows you to manage multiple open BAM file
+for reading. It provides some validation & bookkeeping under the hood to keep all 
+files sync'ed for 
+
 An additional file, BamAux.h, is included as well.  
 This file contains the common data structures and typedefs used throught the API.
 
 BGZF.h & BGZF.cpp contain our implementation of the Broad Institute's 
 BGZF compression format.
 
-BamConversion, BamDump, and BamTrim are 3 'toy' examples on how the API can be used.
+
+Ib. The Toolkit
+If you've been using BamTools since the early days, you'll notice that our 'toy' API 
+examples (BamConversion, BamDump, and BamTrim) are now gone.  In their place is a set 
+of features we hope you find useful.
+
+** More explanation here **
+
+usage: bamtools [--help] COMMAND [ARGS]
+
+Available bamtools commands:
+	coverage	Prints coverage statistics from the input BAM file	
+	dump		Dump BAM file contents to text output
+	header		Prints BAM header information
+	index		Generates index for BAM file
+	merge		Merge multiple BAM files into single file
+	sort		Sorts the BAM file according to some criteria
+	stats		Prints some basic statistics from the input BAM file
+
+See 'bamtools help COMMAND' for more information on a specific command.
+
+** Follow-up explanation here **
 
 ------------------------------------------------------------
 
 II. Usage : 
+
+** General usage information - perhaps explain common terms, point to SAM/BAM spec, etc **
+
+
+IIa. The API
 
 To use this API, you simply need to do 3 things:
 
@@ -45,6 +84,11 @@ To use this API, you simply need to do 3 things:
 See any included programs and Makefile for more specific compiling/usage examples.
 See comments in the header files for more detailed API documentation. 
 
+
+IIb. The Toolkit
+
+** More indepth overview for the toolkit commands **
+
 ------------------------------------------------------------
 
 III. Contact :
@@ -52,5 +96,9 @@ III. Contact :
 Feel free to contact me with any questions, comments, suggestions, bug reports, etc.
   - Derek Barnett
 
+Marth Lab
+Biology Dept., Boston College
+
 Email: barnetde@bc.edu  
-Project Website: http://sourceforge.net/projects/bamtools
+Project Websites: http://github.com/pezmaster31/bamtools   (ACTIVE SUPPORT)
+                  http://sourceforge.net/projects/bamtools (major updates only)

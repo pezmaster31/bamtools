@@ -27,13 +27,14 @@ int BamSamHelp(void) {
     // do we want to add a region specifier, eg 'chr2:1000..1500'? In this case, '--num' still makes sense (give me up to N alignments from this region)
   
     std::cerr << std::endl;
-    std::cerr << "usage:\tbamtools sam [--in BAM file] [--num N] [--no_header]" << std::endl;
-    std::cerr << "\t-i, --in\tInput BAM file to generate SAM-format\t\t\t[default=stdin]" << std::endl;
-    std::cerr << "\t-n, --num N\tOnly print up to N alignments from beginning of file\t\t[default=50*]" << endl;  
-    std::cerr << "\t--no_header\tOmits SAM header information from output (alignments only)\t[default=off]" << std::endl;
+    std::cerr << "usage:\tbamtools sam [--in FILE] [--num N] [--no_header]" << std::endl;
     std::cerr << std::endl;
-    std::cerr << "* - By default bamtools sam will print all alignments in SAM format." << std::endl;
-    std::cerr << "    However if '-n' or '--num' is included with no N, the default of 50 is used." << std::endl;
+    std::cerr << "\t--in FILE    Input BAM file to generate SAM-format                       [stdin]" << std::endl;
+    std::cerr << "\t--num N      Only print up to N alignments from beginning of file        [50*]" << endl;  
+    std::cerr << "\t--no_header  Omits SAM header information from output (alignments only)  [off]" << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "\t* - By default bamtools sam will print all alignments in SAM format." << std::endl;
+    std::cerr << "\t    However if '--num' is included with no N, the default of 50 is used." << std::endl;
     std::cerr << std::endl;
     return 0;
 }
@@ -86,10 +87,10 @@ int RunBamSam(int argc, char* argv[]) {
     GetOpt options(argc, argv, 1);
     
     std::string inputFilename;
-    options.addOption('i', "in", &inputFilename);
+    options.addOption("in", &inputFilename);
     
     std::string numberString;
-    options.addOptionalOption('n', "num", &numberString, "50");
+    options.addOptionalOption("num", &numberString, "50");
     
     bool isOmittingHeader;
     options.addSwitch("no_header", &isOmittingHeader);
@@ -98,8 +99,8 @@ int RunBamSam(int argc, char* argv[]) {
     if ( inputFilename.empty() ) { inputFilename = "stdin"; }
     
     // maxNumberOfAlignments = all (if nothing specified)
-    //                       = 50  (if '-n' or '--num' but no N)
-    //                       = N   (if '-n N' or '--num N') 
+    //                       = 50  (if '--num' but no N)
+    //                       = N   (if '--num N') 
     int maxNumberOfAlignments = -1;
     if ( !numberString.empty() ) { maxNumberOfAlignments = atoi(numberString.c_str()); }
      

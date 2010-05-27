@@ -65,14 +65,14 @@ int Help(int argc, char* argv[]) {
     cerr << "usage: bamtools [--help] COMMAND [ARGS]" << endl;
     cerr << endl;
     cerr << "Available bamtools commands:" << endl;
-    cerr << "\tcoverage\tPrints coverage statistics from the input BAM file" << endl;
-    cerr << "\tdump\t\tDump BAM file contents to text output" << endl;                          // keep?
-    cerr << "\theader\t\tPrints BAM header information" << endl;
-    cerr << "\tindex\t\tGenerates index for BAM file" << endl;
-    cerr << "\tmerge\t\tMerge multiple BAM files into single file" << endl;
-    cerr << "\tsam\t\tPrints the BAM file in SAM (text) format" << endl;
-    cerr << "\tsort\t\tSorts the BAM file according to some criteria" << endl;
-    cerr << "\tstats\t\tPrints some basic statistics from the input BAM file" << endl;
+    cerr << "\tcoverage  Prints coverage statistics from the input BAM file" << endl;
+    cerr << "\tdump      Dump BAM file contents to text output" << endl;                          // keep?
+    cerr << "\theader    Prints BAM header information" << endl;
+    cerr << "\tindex     Generates index for BAM file" << endl;
+    cerr << "\tmerge     Merge multiple BAM files into single file" << endl;
+    cerr << "\tsam       Prints the BAM file in SAM (text) format" << endl;
+    cerr << "\tsort      Sorts the BAM file according to some criteria" << endl;
+    cerr << "\tstats     Prints some basic statistics from the input BAM file" << endl;
     cerr << endl;
     cerr << "See 'bamtools help COMMAND' for more information on a specific command." << endl;
     cerr << endl;

@@ -27,9 +27,12 @@ namespace BamTools {
 
 int BamMergeHelp(void) { 
     std::cerr << std::endl;
-    std::cerr << "usage:\tbamtools merge [--out FILE] --in <BAM file1> [BAM file2] [BAM file3]..." << std::endl;
-    std::cerr << "\t--in\tInput BAM file(s)\t\t[at least 1 req'd]" << std::endl;
-    std::cerr << "\t--out\tDestination for merge results\t[default=stdout]" << std::endl;
+    std::cerr << "usage:\tbamtools merge [--out FILE] [--region REGION] [--in FILE [FILE] [FILE] ...] " << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "\t--in FILE        Input BAM file(s)                      [stdin]" << std::endl;
+    std::cerr << "\t--region REGION  Only keep alignments from this region. [all alignments]" << std::endl;
+    std::cerr << "\t                 REGION format - (eg chr2:1000..2000)" << std::endl;
+    std::cerr << "\t--out FILE       Destination for merge results          [stdout]" << std::endl;
     std::cerr << std::endl;
     return 0;
 }
@@ -43,12 +46,16 @@ int RunBamMerge(int argc, char* argv[]) {
     GetOpt options(argc, argv, 1);
     
     std::string outputFilename = "";
-    options.addOption('o', "out", &outputFilename);
+    options.addOption("out", &outputFilename);
     
     std::vector<std::string> inputFilenames;
     options.addVariableLengthOption("in", &inputFilenames);
     
+    std::string regionString;
+    options.addOption("region", &regionString);
+    
     if ( !options.parse() || inputFilenames.empty() ) return BamMergeHelp();   
+    if ( inputFilenames.empty() ) { inputFilenames.push_back("stdin"); }
     if ( outputFilename.empty() ) { outputFilename = "stdout"; }
     
     // opens the BAM files without checking for indexes
@@ -63,12 +70,20 @@ int RunBamMerge(int argc, char* argv[]) {
     BamWriter writer;
     writer.Open(outputFilename, mergedHeader, references);
 
-    // store alignments to output file
-    BamAlignment bAlignment;
-    while (reader.GetNextAlignment(bAlignment)) {
-        writer.SaveAlignment(bAlignment);
+    // if desired region provided
+    if ( !regionString.empty() ) {
+        // parse region string
+        // only get alignments from this region
+    } 
+    
+    // else get all alignments
+    else {
+        // store alignments to output file
+        BamAlignment bAlignment;
+        while (reader.GetNextAlignment(bAlignment)) {
+            writer.SaveAlignment(bAlignment);
+        }
     }
-
     // clean & exit
     reader.Close();
     writer.Close();

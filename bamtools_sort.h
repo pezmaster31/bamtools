@@ -21,9 +21,10 @@ namespace BamTools {
 
 int BamSortHelp(void) { 
     std::cerr << std::endl;
-    std::cerr << "usage:\tbamtools sort [--in BAM file] [--out sorted BAM file]" << std::endl;
-    std::cerr << "\t-i, --in\tInput BAM file to sort\t[default=stdin]" << std::endl;
-    std::cerr << "\t-o. --out\tDestination of sorted BAM file\t[default=stdout]" << std::endl;
+    std::cerr << "usage:\tbamtools sort [--in FILE] [--out FILE]" << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "\t--in FILE   Input BAM file to sort          [stdin]" << std::endl;
+    std::cerr << "\t--out FILE  Destination of sorted BAM file  [stdout]" << std::endl;
     std::cerr << std::endl;
     return 0;
 }
@@ -34,10 +35,10 @@ int RunBamSort(int argc, char* argv[]) {
     GetOpt options(argc, argv, 1);
     
     std::string inputFilename;
-    options.addOption('i', "in", &inputFilename);
+    options.addOption("in", &inputFilename);
     
     std::string outputFilename;
-    options.addOption('o', "out", &outputFilename);
+    options.addOption("out", &outputFilename);
     
     if ( !options.parse() ) return BamCoverageHelp();
     if ( inputFilename.empty() )  { inputFilename  = "stdin"; }

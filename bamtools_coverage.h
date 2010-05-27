@@ -24,8 +24,9 @@ namespace BamTools {
 
 int BamCoverageHelp(void) { 
     std::cerr << std::endl;
-    std::cerr << "usage:\tbamtools coverage [--in BAM file]" << std::endl;
-    std::cerr << "\t-i, --in\tInput BAM file to generate coverage stats\t[default=stdin]" << std::endl;
+    std::cerr << "usage:\tbamtools coverage [--in FILE]" << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "\t--in FILE  Input BAM file to generate coverage stats  [stdin]" << std::endl;
     std::cerr << std::endl;
     return 0;
 }
@@ -36,7 +37,7 @@ int RunBamCoverage(int argc, char* argv[]) {
     GetOpt options(argc, argv, 1);
     
     std::string inputFilename;
-    options.addOption('i', "in", &inputFilename);
+    options.addOption("in", &inputFilename);
     
     if ( !options.parse() ) return BamCoverageHelp();
     if ( inputFilename.empty() ) { inputFilename = "stdin"; }

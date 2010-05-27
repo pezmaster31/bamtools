@@ -22,9 +22,10 @@ namespace BamTools {
 
 int BamIndexHelp(void) { 
     std::cerr << std::endl;
-    std::cerr << "usage:\tbamtools index [--nclist] <BAM file>" << std::endl;
-    std::cerr << "\t--nclist\tUse NCList indexing scheme (faster?)\t[default=off] ** JUST HERE AS POSSIBLE SWITCH EXAMPLE FOR NOW **" << std::endl;
-    std::cerr << "\t<BAM file>\tInput BAM file to generate index from\t[req'd]" << std::endl;
+    std::cerr << "usage:\tbamtools index [--nclist] FILE" << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "\t--nclist  Use NCList indexing scheme (faster?)   [off] ** JUST HERE AS POSSIBLE SWITCH EXAMPLE FOR NOW **" << std::endl;
+    std::cerr << "\tFILE      Input BAM file to generate index from  [REQUIRED]" << std::endl;
     std::cerr << std::endl;
     return 0;
 }

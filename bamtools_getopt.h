@@ -48,6 +48,7 @@ class GetOpt {
     public:
         // add standard option with arguments ( -Wall, -O2, --type=foo )
         void addOption(const char shortName, const std::string& longName, std::string* value);
+        void addOption(const std::string& longName, std::string* value);
         
         // add an option whose argument is optional (eg --log may default to dumping to stderr, unless a file is specified )
         // must provide a default string 
@@ -178,6 +179,12 @@ void GetOpt::addOption(const char shortName, const std::string& longName, std::s
     opt.StringValue = value;
     saveOption(opt);
     *value = std::string();
+}
+
+// add standard option with arguments ( -Wall, -O2, --type=foo )
+inline
+void GetOpt::addOption(const std::string& longName, std::string* value) {
+    addOption(0, longName, value);
 }
 
 // add an option whose argument is optional (eg --log may default to dumping to stderr, unless a file is specified )

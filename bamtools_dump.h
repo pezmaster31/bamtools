@@ -27,8 +27,9 @@ namespace BamTools {
 
 int BamDumpHelp(void) { 
     std::cerr << std::endl;
-    std::cerr << "usage:\tbamtools dump [BAM file1] [BAM file2] [BAM file3]..." << std::endl;
-    std::cerr << "\t[BAM file]\tInput file(s) to dump alignment summaries from [default=stdin]" << std::endl;
+    std::cerr << "usage:\tbamtools dump [--in FILE [FILE] [FILE] ...]" << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "\t--in FILE  Input file(s) to dump alignment summaries from  [stdin]" << std::endl;
     std::cerr << std::endl;
     return 0;
 }

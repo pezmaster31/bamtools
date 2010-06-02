@@ -113,7 +113,6 @@ int CountTool::Run(int argc, char* argv[]) {
             // validate start ref & position
             
             int startRefID = reader.GetReferenceID(startChrom);
-            cout << "startRefID: " << startRefID << endl;
             
             // startRefID not found
             if ( startRefID == (int)references.size() ) {

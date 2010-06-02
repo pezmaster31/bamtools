@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 26 May 2010
+// Last modified: 1 June 2010
 // ---------------------------------------------------------------------------
 // Prints a BAM file in the text-based SAM format.
 // ***************************************************************************
@@ -11,135 +11,25 @@
 #ifndef BAMTOOLS_SAM_H
 #define BAMTOOLS_SAM_H
 
-#include <cstdlib>
-#include <iostream>
-#include <string>
-
-#include "BamReader.h"
-#include "bamtools_getopt.h"
+#include "bamtools_tool.h"
 
 namespace BamTools {
-
-int BamSamHelp(void) { 
   
-    // '--head' makes more sense than '--num' from a Unix perspective, but could be confusing with header info ?? 
-    // but this is also only the default case (from the beginning of the file)
-    // do we want to add a region specifier, eg 'chr2:1000..1500'? In this case, '--num' still makes sense (give me up to N alignments from this region)
+class SamTool : public AbstractTool {
   
-    std::cerr << std::endl;
-    std::cerr << "usage:\tbamtools sam [--in FILE] [--num N] [--no_header]" << std::endl;
-    std::cerr << std::endl;
-    std::cerr << "\t--in FILE    Input BAM file to generate SAM-format                       [stdin]" << std::endl;
-    std::cerr << "\t--num N      Only print up to N alignments from beginning of file        [50*]" << endl;  
-    std::cerr << "\t--no_header  Omits SAM header information from output (alignments only)  [off]" << std::endl;
-    std::cerr << std::endl;
-    std::cerr << "\t* - By default bamtools sam will print all alignments in SAM format." << std::endl;
-    std::cerr << "\t    However if '--num' is included with no N, the default of 50 is used." << std::endl;
-    std::cerr << std::endl;
-    return 0;
-}
-
-static RefVector references;
-
-void PrintSAM(const BamAlignment& a) {
+    public:
+        SamTool(void);
+        ~SamTool(void);
   
-    // tab-delimited
-    // <QNAME> <FLAG> <RNAME> <POS> <MAPQ> <CIGAR> <MRNM> <MPOS> <ISIZE> <SEQ> <QUAL> [ <TAG>:<VTYPE>:<VALUE> [...] ]
+    public:
+        int Help(void);
+        int Run(int argc, char* argv[]); 
+        
+    private:
+        struct SamSettings;
+        SamSettings* m_settings;
+};
   
-    // ******************************* //
-    // ** NOT FULLY IMPLEMENTED YET ** //
-    //******************************** //
-    //
-    // Todo : build CIGAR string
-    //        build TAG string
-    //        there are some quirks, per the spec, regarding when to use '=' or not
-    //
-    // ******************************* //
-    
-    //
-    // do validity check on RefID / MateRefID ??
-    //
-  
-    // build CIGAR string
-    std::string cigarString("CIGAR:NOT YET");
-  
-    // build TAG string
-    std::string tagString("TAG:NOT YET");
-  
-    // print BamAlignment to stdout in SAM format
-    std::cout << a.Name << '\t' 
-              << a.AlignmentFlag << '\t'
-              << references[a.RefID].RefName << '\t'
-              << a.Position << '\t'
-              << a.MapQuality << '\t'
-              << cigarString << '\t'
-              << ( a.IsPaired() ? references[a.MateRefID].RefName : "*" ) << '\t'
-              << ( a.IsPaired() ? a.MatePosition : 0 ) << '\t'
-              << ( a.IsPaired() ? a.InsertSize : 0 ) << '\t'
-              << a.QueryBases << '\t'
-              << a.Qualities << '\t'
-              << tagString << std::endl;
-}
-
-int RunBamSam(int argc, char* argv[]) {
-  
-    // else parse command line for args  
-    GetOpt options(argc, argv, 1);
-    
-    std::string inputFilename;
-    options.addOption("in", &inputFilename);
-    
-    std::string numberString;
-    options.addOptionalOption("num", &numberString, "50");
-    
-    bool isOmittingHeader;
-    options.addSwitch("no_header", &isOmittingHeader);
-    
-    if ( !options.parse() ) return BamCoverageHelp();
-    if ( inputFilename.empty() ) { inputFilename = "stdin"; }
-    
-    // maxNumberOfAlignments = all (if nothing specified)
-    //                       = 50  (if '--num' but no N)
-    //                       = N   (if '--num N') 
-    int maxNumberOfAlignments = -1;
-    if ( !numberString.empty() ) { maxNumberOfAlignments = atoi(numberString.c_str()); }
-     
-    // open our BAM reader
-    BamReader reader;
-    reader.Open(inputFilename);
-    
-    // if header desired, retrieve and print to stdout
-    if ( !isOmittingHeader ) {
-        std::string header = reader.GetHeaderText();
-        std::cout << header << std::endl;
-    }
-
-    // store reference data
-    references = reader.GetReferenceData();
-
-    // print all alignments to stdout in SAM format
-    if ( maxNumberOfAlignments < 0 ) {
-        BamAlignment ba;
-        while( reader.GetNextAlignment(ba) ) {
-            PrintSAM(ba);
-        }
-    }  
-    
-    // print first N alignments to stdout in SAM format
-    else {
-        BamAlignment ba;
-        int alignmentsPrinted = 0;
-        while ( reader.GetNextAlignment(ba) && (alignmentsPrinted < maxNumberOfAlignments) ) {
-            PrintSAM(ba);
-            ++alignmentsPrinted;
-        }
-    }
-    
-    // clean & exit
-    reader.Close();
-    return 0;
-}
-
 } // namespace BamTools
 
 #endif // BAMTOOLS_SAM_H

@@ -3,58 +3,36 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 26 May 2010
+// Last modified: 1 June 2010
 // ---------------------------------------------------------------------------
-// Prints general statistics for a single BAM file
+// Prints general statistics for a single BAM file.
 //
-// ** Expand to multiple??
+// ** Expand to multiple? **
 //
 // ***************************************************************************
 
 #ifndef BAMTOOLS_STATS_H
 #define BAMTOOLS_STATS_H
 
-#include <iostream>
-#include <string>
-
-#include "BamReader.h"
-#include "bamtools_getopt.h"
+#include "bamtools_tool.h"
 
 namespace BamTools {
-
-int BamStatsHelp(void) { 
-    std::cerr << std::endl;
-    std::cerr << "usage:\tbamtools stats [--in FILE]" << std::endl;
-    std::cerr << std::endl;
-    std::cerr << "\t--in FILE  Input BAM file to calculate general stats  [stdin]" << std::endl;
-    std::cerr << std::endl;
-    return 0;
-}
-
-int RunBamStats(int argc, char* argv[]) {
   
-    // else parse command line for args  
-    GetOpt options(argc, argv, 1);
-    
-    std::string inputFilename;
-    options.addOption("in", &inputFilename);
-    
-    if ( !options.parse() ) return BamStatsHelp();
-    if ( inputFilename.empty() ) { inputFilename = "stdin"; }
-    
-    // open our BAM reader
-//     BamReader reader;
-//     reader.Open(inputFilename);
-    
-    // calculate general stats
-    std::cerr << "Calculating general stats for " << inputFilename << std::endl;
-    std::cerr << "FEATURE NOT YET IMPLEMENTED!" << std::endl;
-    
-    // clean & exit
-//     reader.Close();
-    return 0;
-}
-
+class StatsTool : public AbstractTool {
+  
+    public:
+        StatsTool(void);
+        ~StatsTool(void);
+  
+    public:
+        int Help(void);
+        int Run(int argc, char* argv[]); 
+        
+    private:
+        struct StatsSettings;
+        StatsSettings* m_settings;
+};
+  
 } // namespace BamTools
 
 #endif // BAMTOOLS_STATS_H

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 26 May 2010
+// Last modified: 1 June 2010
 // ---------------------------------------------------------------------------
 // Integrates a number of BamTools functionalities into a single executable.
 // ***************************************************************************
@@ -12,8 +12,8 @@
 #include <iostream>
 
 // BamTools includes
+#include "bamtools_count.h"
 #include "bamtools_coverage.h"
-#include "bamtools_dump.h"
 #include "bamtools_header.h"
 #include "bamtools_index.h"
 #include "bamtools_merge.h"
@@ -26,9 +26,8 @@ using namespace BamTools;
 
 // ------------------------------------------
 // bamtools subtool names
+static const string COUNT    = "count";
 static const string COVERAGE = "coverage";
-static const string DUMP     = "dump"; // <-- do we even want to keep this? I think 'bamtools sam' will be more useful anyway 
-                                       // nobody's going to want what was essentially an early, bloated, debugging output
 static const string HEADER   = "header";
 static const string INDEX    = "index";
 static const string MERGE    = "merge";
@@ -46,40 +45,48 @@ static const string VERSION       = "version";
 static const string LONG_VERSION  = "--version";
 static const string SHORT_VERSION = "-v";
 
+// ------------------------------------------
+// Print help info
 int Help(int argc, char* argv[]) {
   
     // 'bamtools help COMMAND'
+    AbstractTool* tool(0);
     if (argc > 2) {
-        if ( argv[2] == COVERAGE) return BamCoverageHelp();
-        if ( argv[2] == DUMP )    return BamDumpHelp();                 // keep?
-        if ( argv[2] == HEADER )  return BamHeaderHelp();
-        if ( argv[2] == INDEX )   return BamIndexHelp();
-        if ( argv[2] == MERGE )   return BamMergeHelp();
-        if ( argv[2] == SAM )     return BamSamHelp();
-        if ( argv[2] == SORT )    return BamSortHelp();
-        if ( argv[2] == STATS )   return BamStatsHelp();
+        if ( argv[2] == COUNT )    tool = new CountTool;
+        if ( argv[2] == COVERAGE ) tool = new CoverageTool;
+        if ( argv[2] == HEADER )   tool = new HeaderTool;
+        if ( argv[2] == INDEX )    tool = new IndexTool;
+        if ( argv[2] == MERGE )    tool = new MergeTool;
+        if ( argv[2] == SAM )      tool = new SamTool;
+        if ( argv[2] == SORT )     tool = new SortTool;
+        if ( argv[2] == STATS )    tool = new StatsTool;
     }
-     
-    // either 'bamtools help' or unrecognized argument after 'help'
-    cerr << endl;
-    cerr << "usage: bamtools [--help] COMMAND [ARGS]" << endl;
-    cerr << endl;
-    cerr << "Available bamtools commands:" << endl;
-    cerr << "\tcoverage  Prints coverage statistics from the input BAM file" << endl;
-    cerr << "\tdump      Dump BAM file contents to text output" << endl;                          // keep?
-    cerr << "\theader    Prints BAM header information" << endl;
-    cerr << "\tindex     Generates index for BAM file" << endl;
-    cerr << "\tmerge     Merge multiple BAM files into single file" << endl;
-    cerr << "\tsam       Prints the BAM file in SAM (text) format" << endl;
-    cerr << "\tsort      Sorts the BAM file according to some criteria" << endl;
-    cerr << "\tstats     Prints some basic statistics from the input BAM file" << endl;
-    cerr << endl;
-    cerr << "See 'bamtools help COMMAND' for more information on a specific command." << endl;
-    cerr << endl;
     
-    return 0;
+    if ( tool ) return tool->Help();
+    else {
+     
+        // either 'bamtools help' or unrecognized argument after 'help'
+        cerr << endl;
+        cerr << "usage: bamtools [--help] COMMAND [ARGS]" << endl;
+        cerr << endl;
+        cerr << "Available bamtools commands:" << endl;
+        cerr << "\tcount     Prints number of alignments in BAM file" << endl;
+        cerr << "\tcoverage  Prints coverage statistics from the input BAM file" << endl;
+        cerr << "\theader    Prints BAM header information" << endl;
+        cerr << "\tindex     Generates index for BAM file" << endl;
+        cerr << "\tmerge     Merge multiple BAM files into single file" << endl;
+        cerr << "\tsam       Prints the BAM file in SAM (text) format" << endl;
+        cerr << "\tsort      Sorts the BAM file according to some criteria" << endl;
+        cerr << "\tstats     Prints some basic statistics from the input BAM file" << endl;
+        cerr << endl;
+        cerr << "See 'bamtools help COMMAND' for more information on a specific command." << endl;
+        cerr << endl;
+        return 0;
+    }
 }
 
+// ------------------------------------------
+// Print version info
 int Version(void) {
     cout << endl;
     cout << "bamtools v0.x.xx" << endl;
@@ -90,6 +97,8 @@ int Version(void) {
     return 0;
 }
 
+// ------------------------------------------
+// toolkit entry point
 int main(int argc, char* argv[]) {
 
     // just 'bamtools'
@@ -101,16 +110,19 @@ int main(int argc, char* argv[]) {
     // 'bamtools version', 'bamtools --version', or 'bamtools -v'
     if ( (argv[1] == VERSION) || (argv[1] == LONG_VERSION) || (argv[1] == SHORT_VERSION) ) return Version(); 
         
-    // run desired sub-tool
-    if ( argv[1] == COVERAGE ) return RunBamCoverage(argc, argv);
-    if ( argv[1] == DUMP )     return RunBamDump(argc, argv);           // keep?
-    if ( argv[1] == HEADER )   return RunBamHeader(argc, argv);
-    if ( argv[1] == INDEX )    return RunBamIndex(argc, argv);
-    if ( argv[1] == MERGE )    return RunBamMerge(argc, argv); 
-    if ( argv[1] == SAM )      return RunBamSam(argc, argv);
-    if ( argv[1] == SORT )     return RunBamSort(argc, argv);
-    if ( argv[1] == STATS )    return RunBamStats(argc, argv);
+    // determine desired sub-tool
+    AbstractTool* tool(0);
+    if ( argv[1] == COUNT )    tool = new CountTool;
+    if ( argv[1] == COVERAGE ) tool = new CoverageTool;
+    if ( argv[1] == HEADER )   tool = new HeaderTool;
+    if ( argv[1] == INDEX )    tool = new IndexTool;
+    if ( argv[1] == MERGE )    tool = new MergeTool;
+    if ( argv[1] == SAM )      tool = new SamTool;
+    if ( argv[1] == SORT )     tool = new SortTool;
+    if ( argv[1] == STATS )    tool = new StatsTool;
     
-    // unrecognized 2nd argument, print help
-    return Help(argc, argv);    
+    // if found, run tool
+    if ( tool ) return tool->Run(argc, argv);
+    // no match found, show help
+    else return Help(argc, argv); 
 }

@@ -1,35 +1,38 @@
 // ***************************************************************************
-// bamtools_merge.h (c) 2010 Derek Barnett, Erik Garrison
+// bamtools_count.h (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
 // Last modified: 1 June 2010
 // ---------------------------------------------------------------------------
-// Merges multiple BAM files into one
+// Prints alignment count for BAM file
+//
+// ** Expand to multiple?? 
+//
 // ***************************************************************************
 
-#ifndef BAMTOOLS_MERGE_H
-#define BAMTOOLS_MERGE_H
+#ifndef BAMTOOLS_COUNT_H
+#define BAMTOOLS_COUNT_H
 
 #include "bamtools_tool.h"
 
-namespace BamTools {
+namespace BamTools { 
   
-class MergeTool : public AbstractTool {
+class CountTool : public AbstractTool {
   
     public:
-        MergeTool(void);
-        ~MergeTool(void);
-  
+        CountTool(void);
+        ~CountTool(void);
+
     public:
         int Help(void);
         int Run(int argc, char* argv[]); 
         
-    private:
-        struct MergeSettings;
-        MergeSettings* m_settings;
+    private: 
+        struct CountSettings;
+        CountSettings* m_settings;
 };
   
 } // namespace BamTools
 
-#endif // BAMTOOLS_MERGE_H
+#endif // BAMTOOLS_COUNT_H

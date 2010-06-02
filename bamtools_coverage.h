@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 26 May 2010
+// Last modified: 1 June 2010
 // ---------------------------------------------------------------------------
 // Prints coverage statistics for a single BAM file 
 //
@@ -14,47 +14,25 @@
 #ifndef BAMTOOLS_COVERAGE_H
 #define BAMTOOLS_COVERAGE_H
 
-#include <iostream>
-#include <string>
-
-#include "BamReader.h"
-#include "bamtools_getopt.h"
+#include "bamtools_tool.h"
 
 namespace BamTools {
-
-int BamCoverageHelp(void) { 
-    std::cerr << std::endl;
-    std::cerr << "usage:\tbamtools coverage [--in FILE]" << std::endl;
-    std::cerr << std::endl;
-    std::cerr << "\t--in FILE  Input BAM file to generate coverage stats  [stdin]" << std::endl;
-    std::cerr << std::endl;
-    return 0;
-}
-
-int RunBamCoverage(int argc, char* argv[]) {
   
-    // else parse command line for args  
-    GetOpt options(argc, argv, 1);
-    
-    std::string inputFilename;
-    options.addOption("in", &inputFilename);
-    
-    if ( !options.parse() ) return BamCoverageHelp();
-    if ( inputFilename.empty() ) { inputFilename = "stdin"; }
-    
-//     // open our BAM reader
-//     BamReader reader;
-//     reader.Open(inputFilename);
-    
-    // generate coverage stats
-    std::cerr << "Generating coverage stats for " << inputFilename << std::endl;
-    std::cerr << "FEATURE NOT YET IMPLEMENTED!" << std::endl;
-    
-    // clean & exit
-//     reader.Close();
-    return 0;
-}
-
+class CoverageTool : public AbstractTool {
+  
+    public:
+        CoverageTool(void);
+        ~CoverageTool(void);
+  
+    public:
+        int Help(void);
+        int Run(int argc, char* argv[]); 
+        
+    private:  
+        struct CoverageSettings;
+        CoverageSettings* m_settings;
+};
+  
 } // namespace BamTools
 
 #endif // BAMTOOLS_COVERAGE_H

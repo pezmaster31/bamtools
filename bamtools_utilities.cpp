@@ -35,8 +35,8 @@ bool Utilities::ParseRegionString(const string& regionString, string& startChrom
     // use BamReader methods to check if its valid for current BAM file
     if ( foundFirstColon == string::npos ) {
         startChrom = regionString;
-        startPos   = -1;                 // ** not sure about these defaults (should stopChrom == startChrom if same?)
-        stopChrom  = "";
+        startPos   = 0;
+        stopChrom  = regionString;
         stopPos    = -1;
         return true;
     }
@@ -55,7 +55,7 @@ bool Utilities::ParseRegionString(const string& regionString, string& startChrom
         // store contents before colon as startChrom, after as startPos
         if ( foundRangeDots == string::npos ) {
             startPos   = atoi( regionString.substr(foundFirstColon+1).c_str() ); 
-            stopChrom  = "";
+            stopChrom  = startChrom;
             stopPos    = -1;
             return true;
         } 
@@ -72,7 +72,7 @@ bool Utilities::ParseRegionString(const string& regionString, string& startChrom
             // no second colon found
             // so we have a "standard" chrom:start..stop input format (on single chrom)
             if ( foundSecondColon == string::npos ) {
-                stopChrom  = "";
+                stopChrom  = startChrom;
                 stopPos    = atoi( regionString.substr(foundRangeDots+2).c_str() );
                 return true;
             }
@@ -80,7 +80,7 @@ bool Utilities::ParseRegionString(const string& regionString, string& startChrom
             // second colon found
             // so we have a range requested across 2 chrom's
             else {
-                stopChrom  = regionString.substr(foundRangeDots+2, regionString.length()-foundSecondColon-1);
+                stopChrom  = regionString.substr(foundRangeDots+2, foundSecondColon-(foundRangeDots+2));
                 stopPos    = atoi( regionString.substr(foundSecondColon+1).c_str() );
                 return true;
             }

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 26 May 2010
+// Last modified: 2 June 2010
 // ---------------------------------------------------------------------------
 // Merges multiple BAM files into one.
 //
@@ -32,20 +32,20 @@ struct MergeTool::MergeSettings {
     // flags
     bool HasInputBamFilename;
     bool HasOutputBamFilename;
-    bool HasRegion;
+//     bool HasRegion;
     
     // filenames
     vector<string> InputFiles;
     
     // other parameters
     string OutputFilename;
-    string Region;
+//     string Region;
     
     // constructor
     MergeSettings(void)
         : HasInputBamFilename(false)
         , HasOutputBamFilename(false)
-        , HasRegion(false)
+//         , HasRegion(false)
         , OutputFilename(Options::StandardOut())
     { }
 };  
@@ -58,15 +58,15 @@ MergeTool::MergeTool(void)
     , m_settings(new MergeSettings)
 {
     // set program details
-    Options::SetProgramInfo("bamtools merge", "merges multiple BAM files into one", "[-in <filename> ...] [-region REGION] [-out <filename>]");
+    Options::SetProgramInfo("bamtools merge", "merges multiple BAM files into one", "[-in <filename> -in <filename> ...] [-out <filename>]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",  "BAM filename", "the input BAM file",  "", m_settings->HasInputBamFilename,  m_settings->InputFiles,     IO_Opts);
-    Options::AddValueOption("-out", "BAM filename", "the output BAM file", "", m_settings->HasOutputBamFilename, m_settings->OutputFilename, IO_Opts);
+    Options::AddValueOption("-in",  "BAM filename", "the input BAM file(s)",  "", m_settings->HasInputBamFilename,  m_settings->InputFiles,     IO_Opts);
+    Options::AddValueOption("-out", "BAM filename", "the output BAM file",    "", m_settings->HasOutputBamFilename, m_settings->OutputFilename, IO_Opts);
     
-    OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
-    Options::AddValueOption("-region", "REGION", "genomic region. See README for more details", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
+//     OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
+//     Options::AddValueOption("-region", "REGION", "genomic region. See README for more details", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
 }
 
 MergeTool::~MergeTool(void) {
@@ -87,35 +87,26 @@ int MergeTool::Run(int argc, char* argv[]) {
      // set to default input if none provided
     if ( !m_settings->HasInputBamFilename ) m_settings->InputFiles.push_back(Options::StandardIn());
     
-//     // opens the BAM files without checking for indexes
-//     BamMultiReader reader;
-//     reader.Open(m_settings->InputFiles, false); 
-// 
-//     // retrieve header & reference dictionary info
-//     std::string mergedHeader = reader.GetHeaderText();
-//     RefVector references = reader.GetReferenceData();
-// 
-//     // open BamWriter
-//     BamWriter writer;
-//     writer.Open(m_settings->OutputFilename, mergedHeader, references);
-// 
-//     // if desired region provided
-//     if ( m_settings->HasRegion ) {
-//         // parse region string
-//         // only get alignments from this region
-//     } 
-//     
-//     // else get all alignments
-//     else {
-//         // store alignments to output file
-//         BamAlignment bAlignment;
-//         while (reader.GetNextAlignment(bAlignment)) {
-//             writer.SaveAlignment(bAlignment);
-//         }
-//     }
-//
-//     // clean & exit
-//     reader.Close();
-//     writer.Close();
+    // opens the BAM files without checking for indexes
+    BamMultiReader reader;
+    reader.Open(m_settings->InputFiles, false); 
+
+    // retrieve header & reference dictionary info
+    std::string mergedHeader = reader.GetHeaderText();
+    RefVector references = reader.GetReferenceData();
+
+    // open BamWriter
+    BamWriter writer;
+    writer.Open(m_settings->OutputFilename, mergedHeader, references);
+
+    // store alignments to output file
+    BamAlignment bAlignment;
+    while (reader.GetNextAlignment(bAlignment)) {
+        writer.SaveAlignment(bAlignment);
+    }
+
+    // clean & exit
+    reader.Close();
+    writer.Close();
     return 0;  
 }

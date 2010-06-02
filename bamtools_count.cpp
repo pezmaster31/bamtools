@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 1 June 2010
+// Last modified: 2 June 2010
 // ---------------------------------------------------------------------------
 // Prints alignment count for BAM file
 //
@@ -90,7 +90,7 @@ int CountTool::Run(int argc, char* argv[]) {
     if ( !m_settings->HasRegion ) {
         cerr << "Counting all alignments " << endl;
     } else {
-        if ( ParseRegionString(m_settings->Region, startChrom, startPos, stopChrom, stopPos) ) {
+        if ( Utilities::ParseRegionString(m_settings->Region, startChrom, startPos, stopChrom, stopPos) ) {
             cerr << "Counting only alignments in region " << m_settings->Region << endl;
             cerr << "StartChrom: " << startChrom << endl;
             cerr << "StartPos:   " << startPos << endl;

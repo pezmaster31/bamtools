@@ -47,11 +47,13 @@ of features we hope you find useful.
 usage: bamtools [--help] COMMAND [ARGS]
 
 Available bamtools commands:
+	count		Prints number of alignments in BAM file
 	coverage	Prints coverage statistics from the input BAM file	
-	dump		Dump BAM file contents to text output
+	filter		Filters BAM file(s) by user-specified criteria
 	header		Prints BAM header information
 	index		Generates index for BAM file
 	merge		Merge multiple BAM files into single file
+	sam		Prints the BAM file in SAM (text) format
 	sort		Sorts the BAM file according to some criteria
 	stats		Prints some basic statistics from the input BAM file
 

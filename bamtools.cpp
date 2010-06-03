@@ -14,6 +14,7 @@
 // BamTools includes
 #include "bamtools_count.h"
 #include "bamtools_coverage.h"
+#include "bamtools_filter.h"
 #include "bamtools_header.h"
 #include "bamtools_index.h"
 #include "bamtools_merge.h"
@@ -28,6 +29,7 @@ using namespace BamTools;
 // bamtools subtool names
 static const string COUNT    = "count";
 static const string COVERAGE = "coverage";
+static const string FILTER   = "filter";
 static const string HEADER   = "header";
 static const string INDEX    = "index";
 static const string MERGE    = "merge";
@@ -55,6 +57,7 @@ int Help(int argc, char* argv[]) {
         AbstractTool* tool(0);
         if ( argv[2] == COUNT )    tool = new CountTool;
         if ( argv[2] == COVERAGE ) tool = new CoverageTool;
+        if ( argv[2] == FILTER )   tool = new FilterTool;
         if ( argv[2] == HEADER )   tool = new HeaderTool;
         if ( argv[2] == INDEX )    tool = new IndexTool;
         if ( argv[2] == MERGE )    tool = new MergeTool;
@@ -73,6 +76,7 @@ int Help(int argc, char* argv[]) {
     cerr << "Available bamtools commands:" << endl;
     cerr << "\tcount     Prints number of alignments in BAM file" << endl;
     cerr << "\tcoverage  Prints coverage statistics from the input BAM file" << endl;
+    cerr << "\tfilter    Filters BAM file(s) by user-specified criteria" << endl;
     cerr << "\theader    Prints BAM header information" << endl;
     cerr << "\tindex     Generates index for BAM file" << endl;
     cerr << "\tmerge     Merge multiple BAM files into single file" << endl;
@@ -114,6 +118,7 @@ int main(int argc, char* argv[]) {
     AbstractTool* tool(0);
     if ( argv[1] == COUNT )    tool = new CountTool;
     if ( argv[1] == COVERAGE ) tool = new CoverageTool;
+    if ( argv[1] == FILTER )   tool = new FilterTool;
     if ( argv[1] == HEADER )   tool = new HeaderTool;
     if ( argv[1] == INDEX )    tool = new IndexTool;
     if ( argv[1] == MERGE )    tool = new MergeTool;

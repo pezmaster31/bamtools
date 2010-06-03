@@ -1,3 +1,23 @@
+// ***************************************************************************
+// bamtools_options.cpp (c) 2010 Derek Barnett, Erik Garrison
+// Marth Lab, Department of Biology, Boston College
+// All rights reserved.
+// ---------------------------------------------------------------------------
+// Last modified: 2 June 2010
+// ---------------------------------------------------------------------------
+// Parses command line arguments and creates a help menu
+// ---------------------------------------------------------------------------
+// Modified from:
+// The Mosaik suite's command line parser class: COptions
+// (c) 2006 - 2009 Michael Str�mberg
+// Marth Lab, Department of Biology, Boston College
+// Dual licenced under the GNU General Public License 2.0+ license or as
+// a commercial license with the Marth Lab.
+//
+// * Modified slightly to fit BamTools, otherwise code is same. 
+// *  (BamTools namespace, added stdin/stdout) (DB)
+// ***************************************************************************
+
 #include "bamtools_options.h"
 #include <cstdio>
 #include <cstdlib>
@@ -52,14 +72,12 @@ void Options::DisplayHelp(void) {
 
     // display the menu
     printf("Description: %s.\n\n", m_description.c_str());
-
     printf("Usage: ");
     printf("%s", m_programName.c_str());
     printf(" %s\n\n", m_exampleArguments.c_str());
 
-    vector<Option>::const_iterator optionIter;
+    vector<Option>::const_iterator      optionIter;
     vector<OptionGroup>::const_iterator groupIter;
-    
     for (groupIter = m_optionGroups.begin(); groupIter != m_optionGroups.end(); ++groupIter) {
         
         printf("%s:\n", groupIter->Name.c_str());
@@ -100,14 +118,15 @@ void Options::DisplayHelp(void) {
                 description = sb.str(); 
             }
 
-            if (description.size() <= DESC_LENGTH_FIRST_ROW) {
+            if ( description.size() <= DESC_LENGTH_FIRST_ROW ) {
                 printf("%s\n", description.c_str());
             } else {
 
                 // handle the first row
                 const char* pDescription = description.data();
                 unsigned int cutIndex = DESC_LENGTH_FIRST_ROW;
-                while(pDescription[cutIndex] != ' ') cutIndex--;
+                while(pDescription[cutIndex] != ' ') 
+                    cutIndex--;
                 printf("%s\n", description.substr(0, cutIndex).c_str());
                 description = description.substr(cutIndex + 1);
 
@@ -115,7 +134,8 @@ void Options::DisplayHelp(void) {
                 while(description.size() > DESC_LENGTH) {
                     pDescription = description.data();
                     cutIndex = DESC_LENGTH;
-                    while(pDescription[cutIndex] != ' ') cutIndex--;
+                    while(pDescription[cutIndex] != ' ') 
+                        cutIndex--;
                     printf("%s%s\n", indentBuffer, description.substr(0, cutIndex).c_str());
                     description = description.substr(cutIndex + 1);
                 }
@@ -167,7 +187,6 @@ void Options::Parse(int argc, char* argv[], int offset) {
         if (ovMapIter == m_optionsMap.end()) {
             errorBuilder << ERROR_SPACER << "An unrecognized argument was found: " << argument << std::endl;
             foundError = true;
-
         } else {
 
             *ovMapIter->second.pFoundArgument = true;
@@ -252,7 +271,7 @@ void Options::SetProgramInfo(const string& programName, const string& descriptio
 }
 
 // return string representations of stdin
-const string& Options::StandardIn(void)  { return m_stdin; }
+const string& Options::StandardIn(void) { return m_stdin; }
 
 // return string representations of stdout
 const string& Options::StandardOut(void) { return m_stdout; }

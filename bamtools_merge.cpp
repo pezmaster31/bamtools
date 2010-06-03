@@ -62,8 +62,8 @@ MergeTool::MergeTool(void)
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",  "BAM filename", "the input BAM file(s)",  "", m_settings->HasInputBamFilename,  m_settings->InputFiles,     IO_Opts);
-    Options::AddValueOption("-out", "BAM filename", "the output BAM file",    "", m_settings->HasOutputBamFilename, m_settings->OutputFilename, IO_Opts);
+    Options::AddValueOption("-in",  "BAM filename", "the input BAM file(s)", "", m_settings->HasInputBamFilename,  m_settings->InputFiles,     IO_Opts);
+    Options::AddValueOption("-out", "BAM filename", "the output BAM file",   "", m_settings->HasOutputBamFilename, m_settings->OutputFilename, IO_Opts);
     
 //     OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
 //     Options::AddValueOption("-region", "REGION", "genomic region. See README for more details", "", m_settings->HasRegion, m_settings->Region, FilterOpts);

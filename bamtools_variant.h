@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 1 June 2010
+// Last modified: 2 June 2010
 // ---------------------------------------------------------------------------
 // Provides a template-based variant type
 // ---------------------------------------------------------------------------
@@ -12,7 +12,7 @@
 // (c) 2000 Fernando Cacciola
 // Dr. Dobb's (http://www.ddj.com/cpp/184401293)
 //
-// * Modified to fit BamTools code-style, otherwise code is same. (DB)
+// * Modified to be in BamTools namespace, otherwise code is same. (DB)
 // ***************************************************************************
 
 #ifndef BAMTOOLS_VARIANT_H

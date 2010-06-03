@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 1 June 2010
+// Last modified: 2 June 2010
 // ---------------------------------------------------------------------------
 // Integrates a number of BamTools functionalities into a single executable.
 // ***************************************************************************
@@ -50,8 +50,9 @@ static const string SHORT_VERSION = "-v";
 int Help(int argc, char* argv[]) {
   
     // 'bamtools help COMMAND'
-    AbstractTool* tool(0);
     if (argc > 2) {
+        
+        AbstractTool* tool(0);
         if ( argv[2] == COUNT )    tool = new CountTool;
         if ( argv[2] == COVERAGE ) tool = new CoverageTool;
         if ( argv[2] == HEADER )   tool = new HeaderTool;
@@ -60,36 +61,35 @@ int Help(int argc, char* argv[]) {
         if ( argv[2] == SAM )      tool = new SamTool;
         if ( argv[2] == SORT )     tool = new SortTool;
         if ( argv[2] == STATS )    tool = new StatsTool;
+        
+        // if tool known, print its help screen
+        if ( tool ) return tool->Help();
     }
-    
-    if ( tool ) return tool->Help();
-    else {
-     
-        // either 'bamtools help' or unrecognized argument after 'help'
-        cerr << endl;
-        cerr << "usage: bamtools [--help] COMMAND [ARGS]" << endl;
-        cerr << endl;
-        cerr << "Available bamtools commands:" << endl;
-        cerr << "\tcount     Prints number of alignments in BAM file" << endl;
-        cerr << "\tcoverage  Prints coverage statistics from the input BAM file" << endl;
-        cerr << "\theader    Prints BAM header information" << endl;
-        cerr << "\tindex     Generates index for BAM file" << endl;
-        cerr << "\tmerge     Merge multiple BAM files into single file" << endl;
-        cerr << "\tsam       Prints the BAM file in SAM (text) format" << endl;
-        cerr << "\tsort      Sorts the BAM file according to some criteria" << endl;
-        cerr << "\tstats     Prints some basic statistics from the input BAM file" << endl;
-        cerr << endl;
-        cerr << "See 'bamtools help COMMAND' for more information on a specific command." << endl;
-        cerr << endl;
-        return 0;
-    }
+
+    // either 'bamtools help' or unrecognized argument after 'help'
+    cerr << endl;
+    cerr << "usage: bamtools [--help] COMMAND [ARGS]" << endl;
+    cerr << endl;
+    cerr << "Available bamtools commands:" << endl;
+    cerr << "\tcount     Prints number of alignments in BAM file" << endl;
+    cerr << "\tcoverage  Prints coverage statistics from the input BAM file" << endl;
+    cerr << "\theader    Prints BAM header information" << endl;
+    cerr << "\tindex     Generates index for BAM file" << endl;
+    cerr << "\tmerge     Merge multiple BAM files into single file" << endl;
+    cerr << "\tsam       Prints the BAM file in SAM (text) format" << endl;
+    cerr << "\tsort      Sorts the BAM file according to some criteria" << endl;
+    cerr << "\tstats     Prints some basic statistics from the input BAM file" << endl;
+    cerr << endl;
+    cerr << "See 'bamtools help COMMAND' for more information on a specific command." << endl;
+    cerr << endl;
+    return 0;
 }
 
 // ------------------------------------------
 // Print version info
 int Version(void) {
     cout << endl;
-    cout << "bamtools v0.x.xx" << endl;
+    cout << "bamtools v0.8.xx" << endl;
     cout << "Part of BamTools API and toolkit" << endl;
     cout << "Primary authors: Derek Barnett, Erik Garrison, Michael Stromberg" << endl;
     cout << "(c) 2009-2010 Marth Lab, Biology Dept., Boston College" << endl;

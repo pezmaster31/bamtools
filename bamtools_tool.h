@@ -3,12 +3,10 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 1 June 2010
+// Last modified: 2 June 2010
 // ---------------------------------------------------------------------------
 // Base class for all other BamTools sub-tools
-//
-// ** Expand to multiple?? 
-//
+// All derived classes must provide Help() and Run() methods
 // ***************************************************************************
 
 #ifndef BAMTOOLS_ABSTRACTTOOL_H
@@ -21,16 +19,12 @@ namespace BamTools {
 class AbstractTool {
   
     public:
-        AbstractTool(void) : STDIN("stdin"), STDOUT("stdout") { }
+        AbstractTool(void) { }
         virtual ~AbstractTool(void) { }
 
     public:
         virtual int Help(void) =0;
         virtual int Run(int argc, char* argv[]) =0; 
-        
-    public:
-        const std::string STDIN;
-        const std::string STDOUT;
 };
   
 } // namespace BamTools

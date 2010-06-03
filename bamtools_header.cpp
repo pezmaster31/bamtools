@@ -69,7 +69,8 @@ int HeaderTool::Run(int argc, char* argv[]) {
     Options::Parse(argc, argv, 1);
   
     // set to default input if none provided
-    if ( !m_settings->HasInputBamFilename ) m_settings->InputFiles.push_back(Options::StandardIn());
+    if ( !m_settings->HasInputBamFilename ) 
+        m_settings->InputFiles.push_back(Options::StandardIn());
     
     // open files
     BamMultiReader reader;

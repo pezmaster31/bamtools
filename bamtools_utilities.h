@@ -15,7 +15,8 @@
 
 namespace BamTools {
 
-class BamReader;  
+class BamReader;
+class BamMultiReader;
 
 struct Region {
     int StartChromID;
@@ -28,7 +29,10 @@ class Utilities {
   
     public:                          
         // Parses a region string, uses reader to do validation (valid ID's, positions), stores in Region struct
+        // Returns success (true/false)
         static bool ParseRegionString(const std::string& regionString, const BamReader& reader, Region& region);
+        // Same as above, but accepts a BamMultiReader
+        static bool ParseRegionString(const std::string& regionString, const BamMultiReader& reader, Region& region);
 };
 
 } // namespace BamTools

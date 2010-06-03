@@ -108,12 +108,32 @@ struct BgzfData {
     static inline void PackUnsignedInt(char* buffer, unsigned int value);
     // packs an unsigned short into the specified buffer
     static inline void PackUnsignedShort(char* buffer, unsigned short value);
+    
     // unpacks a buffer into a signed int
     static inline signed int UnpackSignedInt(char* buffer);
-    // unpacks a buffer into a unsigned int
+    // unpacks a buffer into an unsigned int
     static inline unsigned int UnpackUnsignedInt(char* buffer);
-    // unpacks a buffer into a unsigned short
+    // unpacks a buffer into a signed short
+    static inline signed short UnpackSignedShort(char* buffer);
+    // unpacks a buffer into an unsigned short
     static inline unsigned short UnpackUnsignedShort(char* buffer);
+    // unpacks a buffer into a double
+    static inline double UnpackDouble(char* buffer);
+    // unpacks a buffer into a float
+    static inline float UnpackFloat(char* buffer); 
+    
+    // unpacks a buffer into a signed int
+    static inline signed int UnpackSignedInt(const char* buffer);
+    // unpacks a buffer into an unsigned int
+    static inline unsigned int UnpackUnsignedInt(const char* buffer);
+    // unpacks a buffer into a signed short
+    static inline signed short UnpackSignedShort(const char* buffer);
+    // unpacks a buffer into an unsigned short
+    static inline unsigned short UnpackUnsignedShort(const char* buffer);
+    // unpacks a buffer into a double
+    static inline double UnpackDouble(const char* buffer);
+    // unpacks a buffer into a float
+    static inline float UnpackFloat(const char* buffer); 
 };
 
 // -------------------------------------------------------------
@@ -170,6 +190,16 @@ unsigned int BgzfData::UnpackUnsignedInt(char* buffer) {
     return un.value;
 }
 
+// 'unpacks' a buffer into a signed short
+inline
+signed short BgzfData::UnpackSignedShort(char* buffer) {
+    union { signed short value; unsigned char valueBuffer[sizeof(signed short)]; } un;
+    un.value = 0;
+    un.valueBuffer[0] = buffer[0];
+    un.valueBuffer[1] = buffer[1];
+    return un.value;
+}
+
 // 'unpacks' a buffer into an unsigned short
 inline
 unsigned short BgzfData::UnpackUnsignedShort(char* buffer) {
@@ -177,6 +207,108 @@ unsigned short BgzfData::UnpackUnsignedShort(char* buffer) {
     un.value = 0;
     un.valueBuffer[0] = buffer[0];
     un.valueBuffer[1] = buffer[1];
+    return un.value;
+}
+
+// 'unpacks' a buffer into a double
+inline
+double BgzfData::UnpackDouble(char* buffer) {
+    union { double value; unsigned char valueBuffer[sizeof(double)]; } un;
+    un.value = 0;
+    un.valueBuffer[0] = buffer[0];
+    un.valueBuffer[1] = buffer[1];
+    un.valueBuffer[2] = buffer[2];
+    un.valueBuffer[3] = buffer[3];
+    un.valueBuffer[4] = buffer[4];
+    un.valueBuffer[5] = buffer[5];
+    un.valueBuffer[6] = buffer[6];
+    un.valueBuffer[7] = buffer[7];
+    return un.value;
+}
+
+// 'unpacks' a buffer into a float
+inline
+float BgzfData::UnpackFloat(char* buffer) {
+    union { float value; unsigned char valueBuffer[sizeof(float)]; } un;
+    un.value = 0;
+    un.valueBuffer[0] = buffer[0];
+    un.valueBuffer[1] = buffer[1];
+    un.valueBuffer[2] = buffer[2];
+    un.valueBuffer[3] = buffer[3];
+    return un.value;
+}
+
+// ---------
+
+// 'unpacks' a buffer into a signed int
+inline
+signed int BgzfData::UnpackSignedInt(const char* buffer) {
+    union { signed int value; unsigned char valueBuffer[sizeof(signed int)]; } un;
+    un.value = 0;
+    un.valueBuffer[0] = buffer[0];
+    un.valueBuffer[1] = buffer[1];
+    un.valueBuffer[2] = buffer[2];
+    un.valueBuffer[3] = buffer[3];
+    return un.value;
+}
+
+// 'unpacks' a buffer into an unsigned int
+inline
+unsigned int BgzfData::UnpackUnsignedInt(const char* buffer) {
+    union { unsigned int value; unsigned char valueBuffer[sizeof(unsigned int)]; } un;
+    un.value = 0;
+    un.valueBuffer[0] = buffer[0];
+    un.valueBuffer[1] = buffer[1];
+    un.valueBuffer[2] = buffer[2];
+    un.valueBuffer[3] = buffer[3];
+    return un.value;
+}
+
+// 'unpacks' a buffer into a signed short
+inline
+signed short BgzfData::UnpackSignedShort(const char* buffer) {
+    union { signed short value; unsigned char valueBuffer[sizeof(signed short)]; } un;
+    un.value = 0;
+    un.valueBuffer[0] = buffer[0];
+    un.valueBuffer[1] = buffer[1];
+    return un.value;
+}
+
+// 'unpacks' a buffer into an unsigned short
+inline
+unsigned short BgzfData::UnpackUnsignedShort(const char* buffer) {
+    union { unsigned short value; unsigned char valueBuffer[sizeof(unsigned short)]; } un;
+    un.value = 0;
+    un.valueBuffer[0] = buffer[0];
+    un.valueBuffer[1] = buffer[1];
+    return un.value;
+}
+
+// 'unpacks' a buffer into a double
+inline
+double BgzfData::UnpackDouble(const char* buffer) {
+    union { double value; unsigned char valueBuffer[sizeof(double)]; } un;
+    un.value = 0;
+    un.valueBuffer[0] = buffer[0];
+    un.valueBuffer[1] = buffer[1];
+    un.valueBuffer[2] = buffer[2];
+    un.valueBuffer[3] = buffer[3];
+    un.valueBuffer[4] = buffer[4];
+    un.valueBuffer[5] = buffer[5];
+    un.valueBuffer[6] = buffer[6];
+    un.valueBuffer[7] = buffer[7];
+    return un.value;
+}
+
+// 'unpacks' a buffer into a float
+inline
+float BgzfData::UnpackFloat(const char* buffer) {
+    union { float value; unsigned char valueBuffer[sizeof(float)]; } un;
+    un.value = 0;
+    un.valueBuffer[0] = buffer[0];
+    un.valueBuffer[1] = buffer[1];
+    un.valueBuffer[2] = buffer[2];
+    un.valueBuffer[3] = buffer[3];
     return un.value;
 }
 

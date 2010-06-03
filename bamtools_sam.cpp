@@ -1,25 +1,27 @@
 // ***************************************************************************
-// bamtools_sam.h (c) 2010 Derek Barnett, Erik Garrison
+// bamtools_sam.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 1 June 2010
+// Last modified: 2 June 2010
 // ---------------------------------------------------------------------------
 // Prints a BAM file in the text-based SAM format.
 // ***************************************************************************
 
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
 #include <string>
 
 #include "bamtools_sam.h"
 #include "bamtools_options.h"
 #include "BamReader.h"
+#include "BGZF.h"
 
 using namespace std;
 using namespace BamTools;
 
-RefVector references;
+static RefVector references;
 
 // ---------------------------------------------
 // print BamAlignment in SAM format
@@ -29,39 +31,121 @@ void PrintSAM(const BamAlignment& a) {
     // tab-delimited
     // <QNAME> <FLAG> <RNAME> <POS> <MAPQ> <CIGAR> <MRNM> <MPOS> <ISIZE> <SEQ> <QUAL> [ <TAG>:<VTYPE>:<VALUE> [...] ]
   
-    // ******************************* //
-    // ** NOT FULLY IMPLEMENTED YET ** //
-    //******************************** //
-    //
-    // Todo : build CIGAR string
-    //        build TAG string
-    //        there are some quirks, per the spec, regarding when to use '=' or not
-    //
-    // ******************************* //
+    ostringstream sb("");
     
-    //
-    // do validity check on RefID / MateRefID ??
-    //
-  
-    // build CIGAR string
-    string cigarString("CIGAR:NOT YET");
-  
-    // build TAG string
-    string tagString("TAG:NOT YET");
-  
-    // print BamAlignment to stdout in SAM format
-    cout << a.Name << '\t' 
-         << a.AlignmentFlag << '\t'
-         << references[a.RefID].RefName << '\t'
-         << a.Position << '\t'
-         << a.MapQuality << '\t'
-         << cigarString << '\t'
-         << ( a.IsPaired() ? references[a.MateRefID].RefName : "*" ) << '\t'
-         << ( a.IsPaired() ? a.MatePosition : 0 ) << '\t'
-         << ( a.IsPaired() ? a.InsertSize : 0 ) << '\t'
-         << a.QueryBases << '\t'
-         << a.Qualities << '\t'
-         << tagString << endl;
+    // write name & alignment flag
+    cout << a.Name << "\t" << a.AlignmentFlag << "\t";
+    
+    // write reference name
+    if ( (a.RefID >= 0) && (a.RefID < (int)references.size()) ) cout << references[a.RefID].RefName << "\t";
+    else cout << "*\t";
+    
+    // write position & map quality
+    cout << a.Position+1 << "\t" << a.MapQuality << "\t";
+    
+    // write CIGAR
+    const vector<CigarOp>& cigarData = a.CigarData;
+    if ( cigarData.empty() ) cout << "*\t";
+    else {
+        vector<CigarOp>::const_iterator cigarIter = cigarData.begin();
+        vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
+        for ( ; cigarIter != cigarEnd; ++cigarIter ) {
+            const CigarOp& op = (*cigarIter);
+            cout << op.Length << op.Type;
+        }
+        cout << "\t";
+    }
+    
+    // write mate reference name, mate position, & insert size
+    if ( a.IsPaired() && (a.MateRefID >= 0) && (a.MateRefID < (int)references.size()) ) {
+        if ( a.MateRefID == a.RefID ) cout << "=\t";
+        else cout << references[a.MateRefID].RefName << "\t";
+        cout << a.MatePosition+1 << "\t" << a.InsertSize << "\t";
+    } 
+    else cout << "*\t0\t0\t";
+    
+    // write sequence
+    if ( a.QueryBases.empty() ) cout << "*\t";
+    else cout << a.QueryBases << "\t";
+    
+    // write qualities
+    if ( a.Qualities.empty() ) cout << "*";
+    else cout << a.Qualities;
+    
+    // write tag data
+    const char* tagData = a.TagData.c_str();
+    const size_t tagDataLength = a.TagData.length();
+    size_t index = 0;
+    while ( index < tagDataLength ) {
+        
+        // write tag name
+        cout << "\t" << a.TagData.substr(index, 2) << ":";
+        index += 2;
+        
+        // get data type
+        char type = a.TagData.at(index);
+        ++index;
+        
+        switch (type) {
+            case('A') : 
+                cout << "A:" << tagData[index]; 
+                ++index; 
+                break;
+            
+            case('C') : 
+                cout << "i:" << atoi(&tagData[index]); 
+                ++index; 
+                break;
+            
+            case('c') : 
+                cout << "i:" << atoi(&tagData[index]);
+                ++index; 
+                break;
+            
+            case('S') : 
+                cout << "i:" << BgzfData::UnpackUnsignedShort(&tagData[index]); 
+                index += 2; 
+                break;
+                
+            case('s') : 
+                cout << "i:" << BgzfData::UnpackSignedShort(&tagData[index]);
+                index += 2; 
+                break;
+            
+            case('I') : 
+                cout << "i:" << BgzfData::UnpackUnsignedInt(&tagData[index]);
+                index += 4; 
+                break;
+            
+            case('i') : 
+                cout << "i:" << BgzfData::UnpackSignedInt(&tagData[index]);
+                index += 4; 
+                break;
+            
+            case('f') : 
+                cout << "f:" << BgzfData::UnpackFloat(&tagData[index]);
+                index += 4; 
+                break;
+            
+            case('d') : 
+                cout << "d:" << BgzfData::UnpackDouble(&tagData[index]);
+                index += 8; 
+                break;
+            
+            case('Z') :
+            case('H') : 
+                cout << type << ":"; 
+                while (tagData[index]) {
+                    cout << tagData[index];
+                    ++index;
+                }
+                ++index; 
+                break;      
+        }
+    }
+    
+    // write stream to stdout
+    cout << sb.str() << endl;
 }
 
 // ---------------------------------------------

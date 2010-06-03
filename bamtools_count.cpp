@@ -98,7 +98,10 @@ int CountTool::Run(int argc, char* argv[]) {
         BamAlignment al;
         while ( reader.GetNextAlignment(al) ) 
             ++alignmentCount;
-    } else {
+    } 
+    
+    // more complicated - region specified
+    else {
         
         // parse region string for desired region
         string startChrom;
@@ -199,7 +202,7 @@ int CountTool::Run(int argc, char* argv[]) {
                 }
                 
                 // -----------------------------
-                // count alignments until 
+                // count alignments until stop hit
                 
                 if ( !foundError ) {
                     // while valid alignment AND

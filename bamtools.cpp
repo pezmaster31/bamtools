@@ -12,6 +12,7 @@
 #include <iostream>
 
 // BamTools includes
+#include "bamtools_convert.h"
 #include "bamtools_count.h"
 #include "bamtools_coverage.h"
 #include "bamtools_filter.h"
@@ -27,6 +28,7 @@ using namespace BamTools;
 
 // ------------------------------------------
 // bamtools subtool names
+static const string CONVERT  = "convert";
 static const string COUNT    = "count";
 static const string COVERAGE = "coverage";
 static const string FILTER   = "filter";
@@ -55,6 +57,7 @@ int Help(int argc, char* argv[]) {
     if (argc > 2) {
         
         AbstractTool* tool(0);
+        if ( argv[2] == CONVERT )  tool = new ConvertTool;
         if ( argv[2] == COUNT )    tool = new CountTool;
         if ( argv[2] == COVERAGE ) tool = new CoverageTool;
         if ( argv[2] == FILTER )   tool = new FilterTool;
@@ -74,6 +77,7 @@ int Help(int argc, char* argv[]) {
     cerr << "usage: bamtools [--help] COMMAND [ARGS]" << endl;
     cerr << endl;
     cerr << "Available bamtools commands:" << endl;
+    cerr << "\tconvert   Converts between BAM and a number of other formats" << endl;
     cerr << "\tcount     Prints number of alignments in BAM file" << endl;
     cerr << "\tcoverage  Prints coverage statistics from the input BAM file" << endl;
     cerr << "\tfilter    Filters BAM file(s) by user-specified criteria" << endl;
@@ -116,6 +120,7 @@ int main(int argc, char* argv[]) {
         
     // determine desired sub-tool
     AbstractTool* tool(0);
+    if ( argv[1] == CONVERT )  tool = new ConvertTool;
     if ( argv[1] == COUNT )    tool = new CountTool;
     if ( argv[1] == COVERAGE ) tool = new CoverageTool;
     if ( argv[1] == FILTER )   tool = new FilterTool;

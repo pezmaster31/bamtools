@@ -9,25 +9,30 @@
 // ***************************************************************************
 
 #include <cstdlib>
-#include <iostream>
 #include "bamtools_utilities.h"
+#include "BamReader.h"
 
 using namespace std;
 using namespace BamTools;
 
-// Parses a REGION string, stores in (startChrom, startPos, stopChrom, stopPos) variables
-// Returns successful parse (true/false)
-bool Utilities::ParseRegionString(const string& regionString, string& startChrom, int& startPos, string& stopChrom, int& stopPos) {
-    
-    // shouldn't call this function with empty string but worth checking 
-    // checked first for clarity purposes later on, since we can assume at least some content in the string
-    if ( regionString.empty() ) { 
-        cerr << "Empty REGION. Usual format (e.g. chr2:1000..2000). See README for more detailed uses." << endl;
-        return false; 
-    }
+// Parses a region string, does validation (valid ID's, positions), stores in Region struct
+bool Utilities::ParseRegionString(const std::string& regionString, const BamReader& reader, Region& region) {
   
+    // -------------------------------
+    // parse region string
+  
+    // check first for empty string
+    if ( regionString.empty() ) 
+        return false;   
+    
     // non-empty string, look for a colom
     size_t foundFirstColon = regionString.find(':');
+    
+    // store chrom strings, and numeric positions
+    string startChrom;
+    string stopChrom;
+    int startPos;
+    int stopPos;
     
     // no colon found
     // going to use entire contents of requested chromosome 
@@ -38,7 +43,6 @@ bool Utilities::ParseRegionString(const string& regionString, string& startChrom
         startPos   = 0;
         stopChrom  = regionString;
         stopPos    = -1;
-        return true;
     }
     
     // colon found, so we at least have some sort of startPos requested
@@ -57,7 +61,6 @@ bool Utilities::ParseRegionString(const string& regionString, string& startChrom
             startPos   = atoi( regionString.substr(foundFirstColon+1).c_str() ); 
             stopChrom  = startChrom;
             stopPos    = -1;
-            return true;
         } 
         
         // ".." found, so we have some sort of range selected
@@ -74,7 +77,6 @@ bool Utilities::ParseRegionString(const string& regionString, string& startChrom
             if ( foundSecondColon == string::npos ) {
                 stopChrom  = startChrom;
                 stopPos    = atoi( regionString.substr(foundRangeDots+2).c_str() );
-                return true;
             }
             
             // second colon found
@@ -82,12 +84,41 @@ bool Utilities::ParseRegionString(const string& regionString, string& startChrom
             else {
                 stopChrom  = regionString.substr(foundRangeDots+2, foundSecondColon-(foundRangeDots+2));
                 stopPos    = atoi( regionString.substr(foundSecondColon+1).c_str() );
-                return true;
             }
         }
     }
-  
-    // shouldn't get here - any code path that does?
-    // if not, what does true/false really signify?
-    return false;
+
+    // -------------------------------
+    // validate reference IDs & genomic positions
+    
+    const RefVector references = reader.GetReferenceData();
+    
+    // if startRefID not found, return false
+    int startRefID = reader.GetReferenceID(startChrom);
+    if ( startRefID == (int)references.size() ) return false;  
+    
+    // if startPos is larger than reference, return false
+    const RefData& startReference = references.at(startRefID);
+    if ( startPos > startReference.RefLength ) return false;
+    
+    // if stopRefID not found, return false
+    int stopRefID = reader.GetReferenceID(stopChrom);
+    if ( stopRefID == (int)references.size() ) return false;
+    
+    // if stopPosition larger than reference, return false
+    const RefData& stopReference = references.at(stopRefID);
+    if ( stopPos > stopReference.RefLength ) return false;
+    
+    // if no stopPosition specified, set to reference end
+    if ( stopPos == -1 )stopPos = stopReference.RefLength;  
+    
+    // -------------------------------
+    // set up Region struct & return
+    
+    region.StartChromID  = startRefID;
+    region.StopChromID   = stopRefID;
+    region.StartPosition = startPos;
+    region.StopPosition  = stopPos;
+    return true;
 }
+

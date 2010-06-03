@@ -16,17 +16,19 @@
 namespace BamTools {
 
 class BamReader;  
-  
+
+struct Region {
+    int StartChromID;
+    int StopChromID;
+    int StartPosition;
+    int StopPosition;
+};
+
 class Utilities {
   
-    public:
-        // Parses a REGION string, stores in (startChrom, startPos, stopChrom, stopPos) variables
-        // Returns successful parse (true/false)
-        static bool ParseRegionString(const std::string& regionString,
-                                      std::string& startChrom,
-                                      int& startPos,
-                                      std::string& stopChrom,
-                                      int& stopPos); 
+    public:                          
+        // Parses a region string, uses reader to do validation (valid ID's, positions), stores in Region struct
+        static bool ParseRegionString(const std::string& regionString, const BamReader& reader, Region& region);
 };
 
 } // namespace BamTools

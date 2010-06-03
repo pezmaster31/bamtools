@@ -103,123 +103,56 @@ int CountTool::Run(int argc, char* argv[]) {
     // more complicated - region specified
     else {
         
-        // parse region string for desired region
-        string startChrom;
-        string stopChrom;
-        int startPos;
-        int stopPos;
-        if ( Utilities::ParseRegionString(m_settings->Region, startChrom, startPos, stopChrom, stopPos) ) {
+        Region region;
+        if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
 
-            const RefVector references = reader.GetReferenceData();
-
-            // -------------------------------
-            // validate start ref & position
-            
-            int startRefID = reader.GetReferenceID(startChrom);
-            
-            // startRefID not found
-            if ( startRefID == (int)references.size() ) {
-                foundError = true;
-                errorStream << "Start chrom: " << startChrom << " not found in BAM file." << endl;
-            } 
-            
-            // valid startRefID, check startPos
-            else {
-                const RefData& reference = references.at(startRefID);
-                
-                // startPos too large
-                if ( startPos > reference.RefLength ) {
-                    foundError = true;
-                    errorStream << "Start pos: " << startPos << " is larger than expected." << endl;
-                }
-            }
-            
-            // -------------------------------
-            // validate stop ref & position
-            
-            int stopRefID = reader.GetReferenceID(stopChrom);
-
-            // skip if error already found
-            if ( !foundError ) { 
+            // has index, we can jump directly to 
+            if ( m_settings->HasBamIndexFilename ) {
               
-                // stopRefID not found
-                if ( stopRefID == (int)references.size() ) {
+                // this is kind of a hack...?
+                // re-open BamReader, this time with the index file
+                reader.Close();
+                reader.Open(m_settings->InputBamFilename, m_settings->BamIndexFilename);
+              
+                // attempt Jump(), catch error
+                if ( !reader.Jump(region.StartChromID, region.StartPosition) ) {
                     foundError = true;
-                    errorStream << "Stop chrom: " << stopChrom << " not found in BAM file." << endl;
-                } 
-                
-                // valid stopRefID, check stopPos
-                else {
-                    const RefData& reference = references.at(stopRefID);
-                    
-                    // stopPos too large
-                    if ( stopPos > reference.RefLength ) {
-                        foundError = true;
-                        errorStream << "Stop pos: " << stopPos << " is larger than expected." << endl;
-                    } 
-                    
-                    // no stopPos specified, set to reference end
-                    else if ( stopPos == -1 ) {
-                        stopPos = reference.RefLength;
-                    } 
+                    errorStream << "Could not jump to desired REGION: " << m_settings->Region << endl;
                 }
             }
-
-            // -------------------------------
-            // if refs & positions valid, retrieve data
+            
+            else {
+              
+                // read through sequentially, until first overlapping read is found
+                BamAlignment al;
+                bool alignmentFound(false);
+                while( reader.GetNextAlignment(al) ) {
+                    if ( (al.RefID == region.StartChromID ) && ( (al.Position + al.Length) >= region.StartPosition) ) {
+                        alignmentFound = true;
+                        break;
+                    }
+                }
+                
+                // if overlapping alignment found (not EOF), increment counter
+                if ( alignmentFound) ++ alignmentCount; 
+            }
+            
+            // -----------------------------
+            // count alignments until stop hit
             
             if ( !foundError ) {
-
-                // has index, we can jump directly to 
-                if ( m_settings->HasBamIndexFilename ) {
-                  
-                    // this is kind of a hack...?
-                    // re-open BamReader, this time with the index file
-                    reader.Close();
-                    reader.Open(m_settings->InputBamFilename, m_settings->BamIndexFilename);
-                  
-                    // attempt Jump(), catch error
-                    if ( !reader.Jump(startRefID, startPos) ) {
-                        foundError = true;
-                        errorStream << "Could not jump to desired REGION: " << m_settings->Region << endl;
-                    }
-                }
-                
-                else {
-                  
-                    // read through sequentially, until first overlapping read is found
-                    BamAlignment al;
-                    bool alignmentFound(false);
-                    while( reader.GetNextAlignment(al) ) {
-                        if ( (al.RefID == startRefID ) && ( (al.Position + al.Length) >= startPos) ) {
-                            alignmentFound = true;
-                            break;
-                        }
-                    }
-                    
-                    // if overlapping alignment found (not EOF), increment counter
-                    if ( alignmentFound) ++ alignmentCount; 
-                }
-                
-                // -----------------------------
-                // count alignments until stop hit
-                
-                if ( !foundError ) {
-                    // while valid alignment AND
-                    // ( either current ref is before stopRefID OR
-                    //   current ref stopRefID but we're before stopPos )
-                    BamAlignment al;
-                    while ( reader.GetNextAlignment(al) && ((al.RefID < stopRefID ) || (al.RefID == stopRefID && al.Position <= stopPos)) )
-                        ++alignmentCount;
-                }
+                // while valid alignment AND
+                // ( either current ref is before stopRefID OR
+                //   current ref stopRefID but we're before stopPos )
+                BamAlignment al;
+                while ( reader.GetNextAlignment(al) && ((al.RefID < region.StopChromID ) || (al.RefID == region.StopChromID && al.Position <= region.StopPosition)) )
+                    ++alignmentCount;
             }
-        } 
-        
-        // could not parse REGION string, set error
-        else {
+
+        } else {
             foundError = true;
-            errorStream << "Could not parse desired REGION: " << m_settings->Region << endl;
-            errorStream << "Please see README for details on accepted REGION formats" << endl;
+            errorStream << "Could not parse REGION: " << m_settings->Region << endl;
+            errorStream << "Be sure REGION is in valid format (see README) and that coordinates are valid for selected references" << endl;
         }
     }
      

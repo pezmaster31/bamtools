@@ -13,12 +13,13 @@
 #include <vector>
 
 #include "bamtools_convert.h"
+#include "bamtools_format.h"
 #include "bamtools_options.h"
 #include "BamReader.h"
 #include "BamMultiReader.h"
 
 using namespace std;
-using namespace BamTools; 
+using namespace BamTools;
   
 // ---------------------------------------------
 // ConvertSettings implementation
@@ -39,8 +40,9 @@ struct ConvertTool::ConvertSettings {
     ConvertSettings(void)
         : HasInputBamFilename(false)
         , HasOutputBamFilename(false)
+        , InputFilename(Options::StandardIn())
         , OutputFilename(Options::StandardOut())
-    { }
+    { } 
 };  
 
 // ---------------------------------------------
@@ -51,7 +53,7 @@ ConvertTool::ConvertTool(void)
     , m_settings(new ConvertSettings)
 {
     // set program details
-    Options::SetProgramInfo("bamtools convert", "converts between BAM and a number of other formats)", "-in <filename> [-in <filename> ... ] -out <filename> -format FORMAT");
+    Options::SetProgramInfo("bamtools convert", "converts between BAM and a number of other formats", "-in <filename> -out <filename> -format <FORMAT>");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
@@ -77,9 +79,12 @@ int ConvertTool::Run(int argc, char* argv[]) {
     
     // open files
     BamReader reader;
-    reader.Open(m_settings->InputFilename, false);
+    reader.Open(m_settings->InputFilename);
         
     // do conversion
+    
+    
+    
     
     // clean up & exit
     reader.Close();

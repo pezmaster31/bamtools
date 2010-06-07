@@ -14,7 +14,7 @@
 #include <vector>
 
 #include "bamtools_convert.h"
-#include "bamtools_format.h"
+//#include "bamtools_format.h"
 #include "bamtools_options.h"
 #include "BGZF.h"
 #include "BamReader.h"
@@ -32,10 +32,10 @@ namespace BamTools {
     static const string FORMAT_JSON  = "json";
     static const string FORMAT_SAM   = "sam";
   
-    void PrintFASTA(const BamAlignment& a);
-    void PrintFASTQ(const BamAlignment& a);
-    void PrintJSON(const BamAlignment& a);
-    void PrintSAM(const BamAlignment& a);
+    void PrintFASTA(ostream& out, const BamAlignment& a);
+    void PrintFASTQ(ostream& out, const BamAlignment& a);
+    void PrintJSON(ostream& out, const BamAlignment& a);
+    void PrintSAM(ostream& out, const BamAlignment& a);
     
 } // namespace BamTools
   
@@ -107,24 +107,29 @@ int ConvertTool::Run(int argc, char* argv[]) {
 
     // FASTA
     if ( m_settings->Format == FORMAT_FASTA ) {
-        cout << "Converting to FASTA" << endl;
+        //cout << "Converting to FASTA" << endl;
     }
     
     // FASTQ
     else if ( m_settings->Format == FORMAT_FASTQ) {
-        cout << "Converting to FASTQ" << endl;
+        //cout << "Converting to FASTQ" << endl;
     }
     
     // JSON
     else if ( m_settings->Format == FORMAT_JSON ) {
-        cout << "Converting to JSON" << endl;
+        //cout << "Converting to JSON" << endl;
+        BamAlignment alignment;
+        while ( reader.GetNextAlignment(alignment) ) {
+            PrintJSON(cout, alignment);
+        }
+
     }
     
     // SAM
     else if ( m_settings->Format == FORMAT_SAM ) {
         BamAlignment alignment;
         while ( reader.GetNextAlignment(alignment) ) {
-            PrintSAM(alignment);
+            PrintSAM(cout, alignment);
         }
     }
     
@@ -146,75 +151,207 @@ int ConvertTool::Run(int argc, char* argv[]) {
 // ----------------------------------------------------------
 
 // print BamAlignment in FASTA format
-void BamTools::PrintFASTA(const BamAlignment& a) { 
+void BamTools::PrintFASTA(ostream& out, const BamAlignment& a) { 
 
 }
 
 // print BamAlignment in FASTQ format
-void BamTools::PrintFASTQ(const BamAlignment& a) { 
+void BamTools::PrintFASTQ(ostream& out, const BamAlignment& a) { 
 
 }
 
 // print BamAlignment in JSON format
-void BamTools::PrintJSON(const BamAlignment& a) { 
-
-}
-
-// print BamAlignment in SAM format
-void BamTools::PrintSAM(const BamAlignment& a) {
+void BamTools::PrintJSON(ostream& out, const BamAlignment& a) {
   
     // tab-delimited
     // <QNAME> <FLAG> <RNAME> <POS> <MAPQ> <CIGAR> <MRNM> <MPOS> <ISIZE> <SEQ> <QUAL> [ <TAG>:<VTYPE>:<VALUE> [...] ]
   
-    ostringstream sb("");
-    
     // write name & alignment flag
-    cout << a.Name << "\t" << a.AlignmentFlag << "\t";
+    out << "{\"name\":\"" << a.Name << "\",\"alignmentFlag\":\"" 
+        << a.AlignmentFlag << "\",";
     
     // write reference name
-    if ( (a.RefID >= 0) && (a.RefID < (int)references.size()) ) cout << references[a.RefID].RefName << "\t";
-    else cout << "*\t";
+    if ( (a.RefID >= 0) && (a.RefID < (int)references.size()) ) out << "\"reference\":\"" << references[a.RefID].RefName << "\",";
+    //else out << "*\t";
     
     // write position & map quality
-    cout << a.Position+1 << "\t" << a.MapQuality << "\t";
+    out << "\"position\":" << a.Position+1 << ",\"mapQuality\":" << a.MapQuality << ",";
     
     // write CIGAR
     const vector<CigarOp>& cigarData = a.CigarData;
-    if ( cigarData.empty() ) cout << "*\t";
+    if ( !cigarData.empty() ) {
+        out << "\"cigar\":[";
+        vector<CigarOp>::const_iterator cigarBegin = cigarData.begin();
+        vector<CigarOp>::const_iterator cigarIter = cigarBegin;
+        vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
+        for ( ; cigarIter != cigarEnd; ++cigarIter ) {
+            const CigarOp& op = (*cigarIter);
+            if (cigarIter != cigarBegin) out << ",";
+            out << "[\"" << op.Length << ",\"" << op.Type << "\"]";
+        }
+        out << "],";
+    }
+    
+    // write mate reference name, mate position, & insert size
+    if ( a.IsPaired() && (a.MateRefID >= 0) && (a.MateRefID < (int)references.size()) ) {
+        out << "\"mate\":{"
+            << "\"reference\":\"" << references[a.MateRefID].RefName << "\","
+            << "\"position\":" << a.MatePosition+1
+            << ",\"insertSize\":" << a.InsertSize << "},";
+    }
+    
+    // write sequence
+    if ( !a.QueryBases.empty() ) {
+        out << "\"queryBases\":\"" << a.QueryBases << "\",";
+    }
+    
+    // write qualities
+    if ( !a.Qualities.empty() ) {
+        out << "\"qualities\":\"" << a.Qualities << "\",";
+    }
+    
+    // write tag data
+    const char* tagData = a.TagData.c_str();
+    const size_t tagDataLength = a.TagData.length();
+    size_t index = 0;
+    if (index < tagDataLength) {
+
+        out << "\"tags\":{";
+        
+        while ( index < tagDataLength ) {
+
+            if (index > 0)
+                out << ",";
+            
+            // write tag name
+            out << "\"" << a.TagData.substr(index, 2) << "\":";
+            index += 2;
+            
+            // get data type
+            char type = a.TagData.at(index);
+            ++index;
+            
+            switch (type) {
+                case('A') : 
+                    out << "\"" << tagData[index] << "\"";
+                    ++index; 
+                    break;
+                
+                case('C') : 
+                    out << atoi(&tagData[index]); 
+                    ++index; 
+                    break;
+                
+                case('c') : 
+                    out << atoi(&tagData[index]);
+                    ++index; 
+                    break;
+                
+                case('S') : 
+                    out << BgzfData::UnpackUnsignedShort(&tagData[index]); 
+                    index += 2; 
+                    break;
+                    
+                case('s') : 
+                    out << BgzfData::UnpackSignedShort(&tagData[index]);
+                    index += 2; 
+                    break;
+                
+                case('I') : 
+                    out << BgzfData::UnpackUnsignedInt(&tagData[index]);
+                    index += 4; 
+                    break;
+                
+                case('i') : 
+                    out << BgzfData::UnpackSignedInt(&tagData[index]);
+                    index += 4; 
+                    break;
+                
+                case('f') : 
+                    out << BgzfData::UnpackFloat(&tagData[index]);
+                    index += 4; 
+                    break;
+                
+                case('d') : 
+                    out << BgzfData::UnpackDouble(&tagData[index]);
+                    index += 8; 
+                    break;
+                
+                case('Z') :
+                case('H') : 
+                    out << "\""; 
+                    while (tagData[index]) {
+                        out << tagData[index];
+                        ++index;
+                    }
+                    out << "\""; 
+                    ++index; 
+                    break;      
+            }
+        }
+
+        out << "}";
+    }
+
+    out << "}" << endl;
+    
+}
+
+// print BamAlignment in SAM format
+void BamTools::PrintSAM(ostream& out, const BamAlignment& a) {
+  
+    // tab-delimited
+    // <QNAME> <FLAG> <RNAME> <POS> <MAPQ> <CIGAR> <MRNM> <MPOS> <ISIZE> <SEQ> <QUAL> [ <TAG>:<VTYPE>:<VALUE> [...] ]
+  
+    // write name & alignment flag
+    out << a.Name << "\t" << a.AlignmentFlag << "\t";
+    
+    // write reference name
+    if ( (a.RefID >= 0) && (a.RefID < (int)references.size()) ) out << references[a.RefID].RefName << "\t";
+    else out << "*\t";
+    
+    // write position & map quality
+    out << a.Position+1 << "\t" << a.MapQuality << "\t";
+    
+    // write CIGAR
+    const vector<CigarOp>& cigarData = a.CigarData;
+    if ( cigarData.empty() ) out << "*\t";
     else {
         vector<CigarOp>::const_iterator cigarIter = cigarData.begin();
         vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
         for ( ; cigarIter != cigarEnd; ++cigarIter ) {
             const CigarOp& op = (*cigarIter);
-            cout << op.Length << op.Type;
+            out << op.Length << op.Type;
         }
-        cout << "\t";
+        out << "\t";
     }
     
     // write mate reference name, mate position, & insert size
     if ( a.IsPaired() && (a.MateRefID >= 0) && (a.MateRefID < (int)references.size()) ) {
-        if ( a.MateRefID == a.RefID ) cout << "=\t";
-        else cout << references[a.MateRefID].RefName << "\t";
-        cout << a.MatePosition+1 << "\t" << a.InsertSize << "\t";
+        if ( a.MateRefID == a.RefID ) out << "=\t";
+        else out << references[a.MateRefID].RefName << "\t";
+        out << a.MatePosition+1 << "\t" << a.InsertSize << "\t";
     } 
-    else cout << "*\t0\t0\t";
+    else out << "*\t0\t0\t";
     
     // write sequence
-    if ( a.QueryBases.empty() ) cout << "*\t";
-    else cout << a.QueryBases << "\t";
+    if ( a.QueryBases.empty() ) out << "*\t";
+    else out << a.QueryBases << "\t";
     
     // write qualities
-    if ( a.Qualities.empty() ) cout << "*";
-    else cout << a.Qualities;
+    if ( a.Qualities.empty() ) out << "*";
+    else out << a.Qualities;
     
     // write tag data
     const char* tagData = a.TagData.c_str();
     const size_t tagDataLength = a.TagData.length();
     size_t index = 0;
     while ( index < tagDataLength ) {
+
+        cerr << tagDataLength << " " << index << endl;
         
         // write tag name
-        cout << "\t" << a.TagData.substr(index, 2) << ":";
+        out << "\t" << a.TagData.substr(index, 2) << ":";
         index += 2;
         
         // get data type
@@ -223,62 +360,62 @@ void BamTools::PrintSAM(const BamAlignment& a) {
         
         switch (type) {
             case('A') : 
-                cout << "A:" << tagData[index]; 
+                out << "A:" << tagData[index]; 
                 ++index; 
                 break;
             
             case('C') : 
-                cout << "i:" << atoi(&tagData[index]); 
+                out << "i:" << atoi(&tagData[index]); 
                 ++index; 
                 break;
             
             case('c') : 
-                cout << "i:" << atoi(&tagData[index]);
+                out << "i:" << atoi(&tagData[index]);
                 ++index; 
                 break;
             
             case('S') : 
-                cout << "i:" << BgzfData::UnpackUnsignedShort(&tagData[index]); 
+                out << "i:" << BgzfData::UnpackUnsignedShort(&tagData[index]); 
                 index += 2; 
                 break;
                 
             case('s') : 
-                cout << "i:" << BgzfData::UnpackSignedShort(&tagData[index]);
+                out << "i:" << BgzfData::UnpackSignedShort(&tagData[index]);
                 index += 2; 
                 break;
             
             case('I') : 
-                cout << "i:" << BgzfData::UnpackUnsignedInt(&tagData[index]);
+                out << "i:" << BgzfData::UnpackUnsignedInt(&tagData[index]);
                 index += 4; 
                 break;
             
             case('i') : 
-                cout << "i:" << BgzfData::UnpackSignedInt(&tagData[index]);
+                out << "i:" << BgzfData::UnpackSignedInt(&tagData[index]);
                 index += 4; 
                 break;
             
             case('f') : 
-                cout << "f:" << BgzfData::UnpackFloat(&tagData[index]);
+                out << "f:" << BgzfData::UnpackFloat(&tagData[index]);
                 index += 4; 
                 break;
             
             case('d') : 
-                cout << "d:" << BgzfData::UnpackDouble(&tagData[index]);
+                out << "d:" << BgzfData::UnpackDouble(&tagData[index]);
                 index += 8; 
                 break;
             
             case('Z') :
             case('H') : 
-                cout << type << ":"; 
+                out << type << ":"; 
                 while (tagData[index]) {
-                    cout << tagData[index];
+                    out << tagData[index];
                     ++index;
                 }
                 ++index; 
                 break;      
         }
     }
+
+    out << endl;
     
-    // write stream to stdout
-    cout << sb.str() << endl;
 }

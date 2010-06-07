@@ -288,6 +288,8 @@ void BamTools::PrintJSON(ostream& out, const BamAlignment& a) {
                     ++index; 
                     break;      
             }
+            
+            if ( tagData[index] == '\0') break;
         }
 
         out << "}";
@@ -348,9 +350,7 @@ void BamTools::PrintSAM(ostream& out, const BamAlignment& a) {
     size_t index = 0;
     while ( index < tagDataLength ) {
 
-        cerr << tagDataLength << " " << index << endl;
-        
-        // write tag name
+        // write tag name        
         out << "\t" << a.TagData.substr(index, 2) << ":";
         index += 2;
         
@@ -414,8 +414,9 @@ void BamTools::PrintSAM(ostream& out, const BamAlignment& a) {
                 ++index; 
                 break;      
         }
+        
+        if ( tagData[index] == '\0') break;
     }
 
     out << endl;
-    
 }

@@ -187,7 +187,7 @@ void BamTools::PrintJSON(ostream& out, const BamAlignment& a) {
         for ( ; cigarIter != cigarEnd; ++cigarIter ) {
             const CigarOp& op = (*cigarIter);
             if (cigarIter != cigarBegin) out << ",";
-            out << "[\"" << op.Length << ",\"" << op.Type << "\"]";
+            out << "\"" << op.Length << op.Type << "\"";
         }
         out << "],";
     }

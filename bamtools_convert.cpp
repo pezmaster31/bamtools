@@ -238,12 +238,12 @@ void BamTools::PrintJSON(ostream& out, const BamAlignment& a) {
                     break;
                 
                 case('C') : 
-                    out << atoi(&tagData[index]); 
+                    out << (int)tagData[index]; 
                     ++index; 
                     break;
                 
                 case('c') : 
-                    out << atoi(&tagData[index]);
+                    out << (int)tagData[index];
                     ++index; 
                     break;
                 
@@ -347,6 +347,7 @@ void BamTools::PrintSAM(ostream& out, const BamAlignment& a) {
     // write tag data
     const char* tagData = a.TagData.c_str();
     const size_t tagDataLength = a.TagData.length();
+    
     size_t index = 0;
     while ( index < tagDataLength ) {
 
@@ -365,12 +366,12 @@ void BamTools::PrintSAM(ostream& out, const BamAlignment& a) {
                 break;
             
             case('C') : 
-                out << "i:" << atoi(&tagData[index]); 
+                out << "i:" << (int)tagData[index]; 
                 ++index; 
                 break;
             
             case('c') : 
-                out << "i:" << atoi(&tagData[index]);
+                out << "i:" << (int)tagData[index];
                 ++index; 
                 break;
             
@@ -384,7 +385,7 @@ void BamTools::PrintSAM(ostream& out, const BamAlignment& a) {
                 index += 2; 
                 break;
             
-            case('I') : 
+            case('I') :
                 out << "i:" << BgzfData::UnpackUnsignedInt(&tagData[index]);
                 index += 4; 
                 break;
@@ -414,7 +415,7 @@ void BamTools::PrintSAM(ostream& out, const BamAlignment& a) {
                 ++index; 
                 break;      
         }
-        
+
         if ( tagData[index] == '\0') break;
     }
 

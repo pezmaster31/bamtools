@@ -13,6 +13,8 @@
 
 // C++ includes
 #include <string>
+#include <map>
+#include <utility> // for pair
 
 using namespace std;
 
@@ -22,7 +24,8 @@ using namespace std;
 
 namespace BamTools {
 
-enum BamReaderState { START, END, CLOSED };
+// index mapping reference/position pairings to bamreaders and their alignments
+typedef multimap<pair<int, int>, pair<BamReader*, BamAlignment*> > AlignmentIndex;
 
 class BamMultiReader {
 
@@ -89,21 +92,18 @@ class BamMultiReader {
 
         // utility
         void PrintFilenames(void);
-        void UpdateAlignments(void);
-
+        void DumpAlignmentIndex(void);
 
     // private implementation
     private:
-        // TODO perhaps, for legibility, I should use a struct to wrap them all up
-        //      But this may actually make things more confusing, as I'm only
-        //      operating on them all simultaneously during GetNextAlignment
-        //      calls.
-        // all these vectors are ordered the same
-        // readers.at(N) refers to the same reader as alignments.at(N) and readerStates.at(N)
-        vector<BamReader*> readers; // the set of readers which we operate on
-        vector<BamAlignment*> alignments; // the equivalent set of alignments we use to step through the files
-        vector<BamReaderState> readerStates; // states of the various readers
-        // alignment position?
+
+        // the set of readers and alignments which we operate on, maintained throughout the life of this class
+        vector<pair<BamReader*, BamAlignment*> > readers;
+
+        // readers and alignments sorted by reference id and position, to keep track of the lowest (next) alignment
+        // when a reader reaches EOF, its entry is removed from this index
+        AlignmentIndex alignments;
+
         vector<string> fileNames;
 };
 

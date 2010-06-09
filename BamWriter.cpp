@@ -35,12 +35,13 @@ struct BamWriter::BamWriterPrivate {
 
     // "public" interface
     void Close(void);
-    void Open(const std::string& filename, const std::string& samHeader, const BamTools::RefVector& referenceSequences);
-    void SaveAlignment(const BamTools::BamAlignment& al);
+    void Open(const string& filename, const string& samHeader, const RefVector& referenceSequences);
+    void SaveAlignment(const BamAlignment& al);
+    void SaveAlignment(const BamAlignment& al, const BamAlignmentSupportData& supportData);
 
     // internal methods
-    void CreatePackedCigar(const std::vector<CigarOp>& cigarOperations, std::string& packedCigar);
-    void EncodeQuerySequence(const std::string& query, std::string& encodedQuery);
+    void CreatePackedCigar(const vector<CigarOp>& cigarOperations, string& packedCigar);
+    void EncodeQuerySequence(const string& query, string& encodedQuery);
 };
 
 // -----------------------------------------------------
@@ -59,8 +60,8 @@ BamWriter::~BamWriter(void) {
 }
 
 // closes the alignment archive
-void BamWriter::Close(void) {
-    d->Close();
+void BamWriter::Close(void) { 
+  d->Close(); 
 }
 
 // opens the alignment archive
@@ -69,8 +70,12 @@ void BamWriter::Open(const string& filename, const string& samHeader, const RefV
 }
 
 // saves the alignment to the alignment archive
-void BamWriter::SaveAlignment(const BamAlignment& al) {
+void BamWriter::SaveAlignment(const BamAlignment& al) { 
     d->SaveAlignment(al);
+}
+
+void BamWriter::SaveAlignment(const BamAlignment& al, const BamAlignmentSupportData& supportData) {
+    d->SaveAlignment(al, supportData);
 }
 
 // -----------------------------------------------------
@@ -380,3 +385,34 @@ void BamWriter::BamWriterPrivate::SaveAlignment(const BamAlignment& al) {
         mBGZF.Write(al.TagData.data(), tagDataLength);
     }
 }
+
+void BamWriter::BamWriterPrivate::SaveAlignment(const BamAlignment& al, const BamAlignmentSupportData& supportData) {
+  
+    // assign the BAM core data
+    uint32_t buffer[8];
+    buffer[0] = al.RefID;
+    buffer[1] = al.Position;
+    buffer[2] = (al.Bin << 16) | (al.MapQuality << 8) | supportData.QueryNameLength;
+    buffer[3] = (al.AlignmentFlag << 16) | supportData.NumCigarOperations;
+    buffer[4] = supportData.QuerySequenceLength;
+    buffer[5] = al.MateRefID;
+    buffer[6] = al.MatePosition;
+    buffer[7] = al.InsertSize;
+
+    // write the block size
+    unsigned int blockSize = supportData.BlockLength;
+    if ( IsBigEndian ) { SwapEndian_32(blockSize); }
+    mBGZF.Write((char*)&blockSize, BT_SIZEOF_INT);
+
+    // write the BAM core
+    if ( IsBigEndian ) { 
+        for ( int i = 0; i < 8; ++i ) { 
+            SwapEndian_32(buffer[i]); 
+        } 
+    }
+    mBGZF.Write((char*)&buffer, BAM_CORE_SIZE);
+
+    // write the raw char data
+    mBGZF.Write((char*)supportData.AllCharData.data(), supportData.BlockLength-BAM_CORE_SIZE);
+}
+

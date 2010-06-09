@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 30 March 2010 (DB)
+// Last modified: 8 June 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -51,6 +51,11 @@ class BamReader {
 
         // retrieves next available alignment (returns success/fail)
         bool GetNextAlignment(BamAlignment& bAlignment);
+        // retrieves next available alignment core data (returns success/fail)
+        // ** DOES NOT parse any character data (bases, qualities, tag data)
+        //    these can be accessed, if necessary, from the supportData 
+        // useful for operations requiring ONLY positional or other alignment-related information
+        bool GetNextAlignmentCore(BamAlignment& bAlignment, BamAlignmentSupportData& supportData);
 
         // ----------------------
         // access auxiliary data

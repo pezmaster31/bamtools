@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 14 April 2010 (DB)
+// Last modified: 8 June 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -22,16 +22,6 @@
 #include "BamReader.h"
 using namespace BamTools;
 using namespace std;
-
-namespace BamTools {
-  struct BamAlignmentSupportData {
-      string   AllCharData;
-      uint32_t BlockLength;
-      uint32_t NumCigarOperations;
-      uint32_t QueryNameLength;
-      uint32_t QuerySequenceLength;
-  };
-} // namespace BamTools
 
 struct BamReader::BamReaderPrivate {
 
@@ -79,6 +69,7 @@ struct BamReader::BamReaderPrivate {
 
     // access alignment data
     bool GetNextAlignment(BamAlignment& bAlignment);
+    bool GetNextAlignmentCore(BamAlignment& bAlignment, BamAlignmentSupportData& supportData);
 
     // access auxiliary data
     int GetReferenceID(const string& refName) const;
@@ -148,6 +139,7 @@ bool BamReader::Rewind(void) { return d->Rewind(); }
 
 // access alignment data
 bool BamReader::GetNextAlignment(BamAlignment& bAlignment) { return d->GetNextAlignment(bAlignment); }
+bool BamReader::GetNextAlignmentCore(BamAlignment& bAlignment, BamAlignmentSupportData& supportData) { return d->GetNextAlignmentCore(bAlignment, supportData); }
 
 // access auxiliary data
 const string BamReader::GetHeaderText(void) const { return d->HeaderText; }
@@ -526,7 +518,7 @@ bool BamReader::BamReaderPrivate::GetNextAlignment(BamAlignment& bAlignment) {
         // load next alignment until region overlap is found
         while ( !IsOverlap(bAlignment) ) {
             // if no valid alignment available (likely EOF) return failure
-            if ( !LoadNextAlignment(bAlignment, supportData) ) { return false; }
+            if ( !LoadNextAlignment(bAlignment, supportData) ) return false;
         }
 
         // return success (alignment found that overlaps region)
@@ -535,7 +527,35 @@ bool BamReader::BamReaderPrivate::GetNextAlignment(BamAlignment& bAlignment) {
     }
 
     // no valid alignment
-    else { return false; }
+    else 
+        return false;
+}
+
+// retrieves next available alignment core data (returns success/fail)
+// ** DOES NOT parse any character data (bases, qualities, tag data)
+//    these can be accessed, if necessary, from the supportData 
+// useful for operations requiring ONLY positional or other alignment-related information
+bool BamReader::BamReaderPrivate::GetNextAlignmentCore(BamAlignment& bAlignment, BamAlignmentSupportData& supportData) {
+
+    // if valid alignment available
+    if ( LoadNextAlignment(bAlignment, supportData) ) {
+
+        // if region not specified, return success
+        if ( !IsRegionSpecified ) return true;
+
+        // load next alignment until region overlap is found
+        while ( !IsOverlap(bAlignment) ) {
+            // if no valid alignment available (likely EOF) return failure
+            if ( !LoadNextAlignment(bAlignment, supportData) ) return false;
+        }
+
+        // return success (alignment found that overlaps region)
+        return true;
+    }
+
+    // no valid alignment
+    else
+        return false;
 }
 
 // calculate closest indexed file offset for region specified

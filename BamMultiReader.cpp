@@ -249,6 +249,8 @@ const string BamMultiReader::GetHeaderText(void) const {
                     mergedHeader.append(headerLine.c_str() );
                     mergedHeader.append(1, '\n');
                     readGroups[readGroup] = true;
+                } else {
+                    cerr << "WARNING: duplicate @RG tag entry in BAM header " << readGroup << endl;
                 }
             }
 

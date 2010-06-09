@@ -15,6 +15,7 @@
 #include <string>
 #include <map>
 #include <utility> // for pair
+#include <sstream>
 
 using namespace std;
 
@@ -26,6 +27,7 @@ namespace BamTools {
 
 // index mapping reference/position pairings to bamreaders and their alignments
 typedef multimap<pair<int, int>, pair<BamReader*, BamAlignment*> > AlignmentIndex;
+
 
 class BamMultiReader {
 

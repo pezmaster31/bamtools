@@ -204,6 +204,7 @@ bool BamMultiReader::CreateIndexes(void) {
 const string BamMultiReader::GetHeaderText(void) const {
 
     string mergedHeader = "";
+    map<string, bool> readGroups;
 
     // foreach extraction entry (each BAM file)
     bool isFirstTime = true;
@@ -231,10 +232,24 @@ const string BamMultiReader::GetHeaderText(void) const {
                 }
             }
 
-            // (for all files) append RG entries
+            // (for all files) append RG entries if they are unique
             if ( headerLine.find("@RG") == 0 ) {
-                mergedHeader.append(headerLine.c_str() );
-                mergedHeader.append(1, '\n');
+                stringstream headerLineSs(headerLine);
+                string part, readGroupPart, readGroup;
+                while(std::getline(headerLineSs, part, '\t')) {
+                    if (part == "@RG") {
+                       std::getline(headerLineSs, readGroupPart, '\t');
+                       stringstream readGroupPartSs(readGroupPart);
+                       std::getline(readGroupPartSs, readGroup, ':');
+                       std::getline(readGroupPartSs, readGroup, ':');
+                       break;
+                    }
+                }
+                if (readGroups.find(readGroup) == readGroups.end()) { // prevents duplicate @RG entries
+                    mergedHeader.append(headerLine.c_str() );
+                    mergedHeader.append(1, '\n');
+                    readGroups[readGroup] = true;
+                }
             }
 
         }

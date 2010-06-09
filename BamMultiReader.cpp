@@ -237,12 +237,12 @@ const string BamMultiReader::GetHeaderText(void) const {
                 stringstream headerLineSs(headerLine);
                 string part, readGroupPart, readGroup;
                 while(std::getline(headerLineSs, part, '\t')) {
-                    if (part == "@RG") {
-                       std::getline(headerLineSs, readGroupPart, '\t');
-                       stringstream readGroupPartSs(readGroupPart);
-                       std::getline(readGroupPartSs, readGroup, ':');
-                       std::getline(readGroupPartSs, readGroup, ':');
-                       break;
+                    stringstream partSs(part);
+                    string subtag;
+                    std::getline(partSs, subtag, ':');
+                    if (subtag == "ID") {
+                        std::getline(partSs, readGroup, ':');
+                        break;
                     }
                 }
                 if (readGroups.find(readGroup) == readGroups.end()) { // prevents duplicate @RG entries

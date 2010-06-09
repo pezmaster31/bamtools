@@ -207,10 +207,11 @@ const string BamMultiReader::GetHeaderText(void) const {
     map<string, bool> readGroups;
 
     // foreach extraction entry (each BAM file)
-    bool isFirstTime = true;
-    for (vector<pair<BamReader*, BamAlignment*> >::const_iterator it = readers.begin(); it != readers.end(); ++it) {
+    for (vector<pair<BamReader*, BamAlignment*> >::const_iterator rs = readers.begin(); rs != readers.end(); ++rs) {
 
-        BamReader* reader = it->first;
+        map<string, bool> currentFileReadGroups;
+
+        BamReader* reader = rs->first;
 
         stringstream header(reader->GetHeaderText());
         vector<string> lines;
@@ -225,7 +226,7 @@ const string BamMultiReader::GetHeaderText(void) const {
             if ( headerLine.empty() ) { continue; }
 
             // if first file, save HD & SQ entries
-            if ( isFirstTime ) {
+            if ( rs == readers.begin() ) {
                 if ( headerLine.find("@HD") == 0 || headerLine.find("@SQ") == 0) {
                     mergedHeader.append(headerLine.c_str());
                     mergedHeader.append(1, '\n');
@@ -249,15 +250,17 @@ const string BamMultiReader::GetHeaderText(void) const {
                     mergedHeader.append(headerLine.c_str() );
                     mergedHeader.append(1, '\n');
                     readGroups[readGroup] = true;
+                    currentFileReadGroups[readGroup] = true;
                 } else {
-                    cerr << "WARNING: duplicate @RG tag entry in BAM header " << readGroup << endl;
+                    // warn iff we are reading one file and discover duplicated @RG tags in the header
+                    // otherwise, we emit no warning, as we might be merging multiple BAM files with identical @RG tags
+                    if (currentFileReadGroups.find(readGroup) != currentFileReadGroups.end()) {
+                        cerr << "WARNING: duplicate @RG tag " << readGroup 
+                            << " entry in header of " << reader->GetFilename() << endl;
+                    }
                 }
             }
-
         }
-
-        // set iteration flag
-        isFirstTime = false;
     }
 
     // return merged header text

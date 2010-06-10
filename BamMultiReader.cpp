@@ -80,7 +80,7 @@ bool BamMultiReader::HasOpenReaders() {
     return alignments.size() > 0;
 }
 
-// get next alignment among all files (from specified region, if given)
+// get next alignment among all files
 bool BamMultiReader::GetNextAlignment(BamAlignment& nextAlignment) {
 
     // bail out if we are at EOF in all files, means no more alignments to process
@@ -92,24 +92,59 @@ bool BamMultiReader::GetNextAlignment(BamAlignment& nextAlignment) {
     UpdateReferenceID();
 
     // our lowest alignment and reader will be at the front of our alignment index
-    BamAlignment* lowestAlignment = alignments.begin()->second.second;
-    BamReader* lowestReader = alignments.begin()->second.first;
+    BamAlignment* alignment = alignments.begin()->second.second;
+    BamReader* reader = alignments.begin()->second.first;
 
     // now that we have the lowest alignment in the set, save it by copy to our argument
-    nextAlignment = BamAlignment(*lowestAlignment);
+    nextAlignment = BamAlignment(*alignment);
 
     // remove this alignment index entry from our alignment index
     alignments.erase(alignments.begin());
 
     // and add another entry if we can get another alignment from the reader
-    if (lowestReader->GetNextAlignment(*lowestAlignment)) {
-        alignments.insert(make_pair(make_pair(lowestAlignment->RefID, lowestAlignment->Position), 
-                                    make_pair(lowestReader, lowestAlignment)));
+    if (reader->GetNextAlignment(*alignment)) {
+        alignments.insert(make_pair(make_pair(alignment->RefID, alignment->Position),
+                                    make_pair(reader, alignment)));
     } else { // do nothing
         //cerr << "reached end of file " << lowestReader->GetFilename() << endl;
     }
 
     return true;
+
+}
+
+// get next alignment among all files without parsing character data from alignments
+bool BamMultiReader::GetNextAlignmentCore(BamAlignment& nextAlignment) {
+
+    // bail out if we are at EOF in all files, means no more alignments to process
+    if (!HasOpenReaders())
+        return false;
+
+    // when all alignments have stepped into a new target sequence, update our
+    // current reference sequence id
+    UpdateReferenceID();
+
+    // our lowest alignment and reader will be at the front of our alignment index
+    BamAlignment* alignment = alignments.begin()->second.second;
+    BamReader* reader = alignments.begin()->second.first;
+
+    // now that we have the lowest alignment in the set, save it by copy to our argument
+    nextAlignment = BamAlignment(*alignment);
+    //memcpy(&nextAlignment, alignment, sizeof(BamAlignment));
+
+    // remove this alignment index entry from our alignment index
+    alignments.erase(alignments.begin());
+
+    // and add another entry if we can get another alignment from the reader
+    if (reader->GetNextAlignmentCore(*alignment)) {
+        alignments.insert(make_pair(make_pair(alignment->RefID, alignment->Position), 
+                                    make_pair(reader, alignment)));
+    } else { // do nothing
+        //cerr << "reached end of file " << lowestReader->GetFilename() << endl;
+    }
+
+    return true;
+
 }
 
 // jumps to specified region(refID, leftBound) in BAM files, returns success/fail
@@ -146,7 +181,7 @@ bool BamMultiReader::Jump(int refID, int position) {
 }
 
 // opens BAM files
-void BamMultiReader::Open(const vector<string> filenames, bool openIndexes) {
+void BamMultiReader::Open(const vector<string> filenames, bool openIndexes, bool coreMode) {
     // for filename in filenames
     fileNames = filenames; // save filenames in our multireader
     for (vector<string>::const_iterator it = filenames.begin(); it != filenames.end(); ++it) {
@@ -158,7 +193,11 @@ void BamMultiReader::Open(const vector<string> filenames, bool openIndexes) {
             reader->Open(filename); // for merging, jumping is disallowed
         }
         BamAlignment* alignment = new BamAlignment;
-        reader->GetNextAlignment(*alignment);
+        if (coreMode) {
+            reader->GetNextAlignmentCore(*alignment);
+        } else {
+            reader->GetNextAlignment(*alignment);
+        }
         readers.push_back(make_pair(reader, alignment)); // store pointers to our readers for cleanup
         alignments.insert(make_pair(make_pair(alignment->RefID, alignment->Position),
                                     make_pair(reader, alignment)));

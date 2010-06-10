@@ -272,6 +272,7 @@ BamAlignment::BamAlignment(const BamAlignment& other)
     , MateRefID(other.MateRefID)
     , MatePosition(other.MatePosition)
     , InsertSize(other.InsertSize)
+    , SupportData(other.SupportData)
 { }
 
 inline 

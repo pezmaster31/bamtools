@@ -49,11 +49,18 @@ class BamMultiReader {
 
         // close BAM files
         void Close(void);
+
+        // opens BAM files (and optional BAM index files, if provided)
+        // @openIndexes - triggers index opening, useful for suppressing
+        // error messages during merging of files in which we may not have
+        // indexes.
+        // @coreMode - setup our first alignments using GetNextAlignmentCore();
+        // also useful for merging
+        void Open(const vector<string> filenames, bool openIndexes = true, bool coreMode = false);
+
         // performs random-access jump to reference, position
         bool Jump(int refID, int position = 0);
-        // opens BAM files (and optional BAM index files, if provided)
-        //void Open(const vector<std::string&> filenames, const vector<std::string&> indexFilenames);
-        void Open(const vector<string> filenames, bool openIndexes = true);
+
         // returns file pointers to beginning of alignments
         bool Rewind(void);
 
@@ -65,6 +72,10 @@ class BamMultiReader {
 
         // retrieves next available alignment (returns success/fail) from all files
         bool GetNextAlignment(BamAlignment&);
+        // retrieves next available alignment (returns success/fail) from all files
+        // and populates the support data with information about the alignment
+        // *** BUT DOES NOT PARSE CHARACTER DATA FROM THE ALIGNMENT
+        bool GetNextAlignmentCore(BamAlignment&);
         // ... should this be private?
         bool HasOpenReaders(void);
 

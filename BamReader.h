@@ -51,11 +51,12 @@ class BamReader {
 
         // retrieves next available alignment (returns success/fail)
         bool GetNextAlignment(BamAlignment& bAlignment);
+        
         // retrieves next available alignment core data (returns success/fail)
         // ** DOES NOT parse any character data (bases, qualities, tag data)
         //    these can be accessed, if necessary, from the supportData 
         // useful for operations requiring ONLY positional or other alignment-related information
-        bool GetNextAlignmentCore(BamAlignment& bAlignment, BamAlignmentSupportData& supportData);
+        bool GetNextAlignmentCore(BamAlignment& bAlignment);
 
         // ----------------------
         // access auxiliary data

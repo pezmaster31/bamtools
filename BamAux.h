@@ -133,6 +133,28 @@ struct BamAlignment {
         int32_t      MateRefID;         // ID number for reference sequence where alignment's mate was aligned
         int32_t      MatePosition;      // Position (0-based) where alignment's mate starts
         int32_t      InsertSize;        // Mate-pair insert size
+        
+        struct BamAlignmentSupportData {
+      
+            // data members
+            std::string AllCharData;
+            uint32_t    BlockLength;
+            uint32_t    NumCigarOperations;
+            uint32_t    QueryNameLength;
+            uint32_t    QuerySequenceLength;
+            bool        IsParsed;
+            
+            // constructor
+            BamAlignmentSupportData(void)
+                : BlockLength(0)
+                , NumCigarOperations(0)
+                , QueryNameLength(0)
+                , QuerySequenceLength(0)
+                , IsParsed(false)
+            { }
+        };
+        
+        BamAlignmentSupportData SupportData;  // Contains raw character data & lengths 
 
     // Alignment flag query constants
     // Use the get/set methods above instead
@@ -153,24 +175,6 @@ struct BamAlignment {
 
 // ----------------------------------------------------------------
 // Auxiliary data structs & typedefs
-
-struct BamAlignmentSupportData {
-      
-    // data members
-    std::string AllCharData;
-    uint32_t    BlockLength;
-    uint32_t    NumCigarOperations;
-    uint32_t    QueryNameLength;
-    uint32_t    QuerySequenceLength;
-    
-    // constructor
-    BamAlignmentSupportData(void)
-        : BlockLength(0)
-        , NumCigarOperations(0)
-        , QueryNameLength(0)
-        , QuerySequenceLength(0)
-    { }
-};
 
 struct CigarOp {
   

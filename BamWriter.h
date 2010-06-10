@@ -37,8 +37,6 @@ class BamWriter {
         void Open(const std::string& filename, const std::string& samHeader, const BamTools::RefVector& referenceSequences);
         // saves the alignment to the alignment archive
         void SaveAlignment(const BamTools::BamAlignment& al);
-        // saves the (partial) alignment, using support data, to the alignment archive
-        void SaveAlignment(const BamTools::BamAlignment& al, const BamTools::BamAlignmentSupportData& supportData);
 
     // private implementation
     private:

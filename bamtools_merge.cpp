@@ -88,8 +88,11 @@ int MergeTool::Run(int argc, char* argv[]) {
     if ( !m_settings->HasInputBamFilename ) m_settings->InputFiles.push_back(Options::StandardIn());
     
     // opens the BAM files without checking for indexes
-    BamMultiReader reader;
-    reader.Open(m_settings->InputFiles, false); 
+//     BamMultiReader reader;
+//     reader.Open(m_settings->InputFiles, false); 
+
+    BamReader reader;
+    reader.Open(m_settings->InputFiles.at(0));
 
     // retrieve header & reference dictionary info
     std::string mergedHeader = reader.GetHeaderText();
@@ -100,6 +103,11 @@ int MergeTool::Run(int argc, char* argv[]) {
     writer.Open(m_settings->OutputFilename, mergedHeader, references);
 
     // store alignments to output file
+//     BamAlignment bAlignment;
+//     while (reader.GetNextAlignment(bAlignment)) {
+//         writer.SaveAlignment(bAlignment);
+//     }
+    
     BamAlignment bAlignment;
     while (reader.GetNextAlignment(bAlignment)) {
         writer.SaveAlignment(bAlignment);

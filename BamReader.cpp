@@ -69,7 +69,7 @@ struct BamReader::BamReaderPrivate {
 
     // access alignment data
     bool GetNextAlignment(BamAlignment& bAlignment);
-    bool GetNextAlignmentCore(BamAlignment& bAlignment, BamAlignmentSupportData& supportData);
+    bool GetNextAlignmentCore(BamAlignment& bAlignment);
 
     // access auxiliary data
     int GetReferenceID(const string& refName) const;
@@ -86,7 +86,7 @@ struct BamReader::BamReaderPrivate {
     // calculate bins that overlap region ( left to reference end for now )
     int BinsFromRegion(int refID, int left, uint16_t[MAX_BIN]);
     // fills out character data for BamAlignment data
-    bool BuildCharData(BamAlignment& bAlignment, const BamAlignmentSupportData& supportData);
+    bool BuildCharData(BamAlignment& bAlignment);
     // calculate file offset for first alignment chunk overlapping 'left'
     int64_t GetOffset(int refID, int left);
     // checks to see if alignment overlaps current region
@@ -94,7 +94,7 @@ struct BamReader::BamReaderPrivate {
     // retrieves header text from BAM file
     void LoadHeaderData(void);
     // retrieves BAM alignment under file pointer
-    bool LoadNextAlignment(BamAlignment& bAlignment, BamAlignmentSupportData& supportData);
+    bool LoadNextAlignment(BamAlignment& bAlignment);
     // builds reference data structure from BAM file
     void LoadReferenceData(void);
 
@@ -139,7 +139,7 @@ bool BamReader::Rewind(void) { return d->Rewind(); }
 
 // access alignment data
 bool BamReader::GetNextAlignment(BamAlignment& bAlignment) { return d->GetNextAlignment(bAlignment); }
-bool BamReader::GetNextAlignmentCore(BamAlignment& bAlignment, BamAlignmentSupportData& supportData) { return d->GetNextAlignmentCore(bAlignment, supportData); }
+bool BamReader::GetNextAlignmentCore(BamAlignment& bAlignment) { return d->GetNextAlignmentCore(bAlignment); }
 
 // access auxiliary data
 const string BamReader::GetHeaderText(void) const { return d->HeaderText; }
@@ -196,40 +196,40 @@ int BamReader::BamReaderPrivate::BinsFromRegion(int refID, int left, uint16_t li
     return i;
 }
 
-bool BamReader::BamReaderPrivate::BuildCharData(BamAlignment& bAlignment, const BamAlignmentSupportData& supportData) {
+bool BamReader::BamReaderPrivate::BuildCharData(BamAlignment& bAlignment) {
   
     // calculate character lengths/offsets
-    const unsigned int dataLength     = supportData.BlockLength - BAM_CORE_SIZE;
-    const unsigned int seqDataOffset  = supportData.QueryNameLength + (supportData.NumCigarOperations * 4);
-    const unsigned int qualDataOffset = seqDataOffset + (supportData.QuerySequenceLength+1)/2;
-    const unsigned int tagDataOffset  = qualDataOffset + supportData.QuerySequenceLength;
+    const unsigned int dataLength     = bAlignment.SupportData.BlockLength - BAM_CORE_SIZE;
+    const unsigned int seqDataOffset  = bAlignment.SupportData.QueryNameLength + (bAlignment.SupportData.NumCigarOperations * 4);
+    const unsigned int qualDataOffset = seqDataOffset + (bAlignment.SupportData.QuerySequenceLength+1)/2;
+    const unsigned int tagDataOffset  = qualDataOffset + bAlignment.SupportData.QuerySequenceLength;
     const unsigned int tagDataLength  = dataLength - tagDataOffset;
       
     // set up char buffers
-    const char* allCharData = supportData.AllCharData.data();
+    const char* allCharData = bAlignment.SupportData.AllCharData.data();
     const char* seqData     = ((const char*)allCharData) + seqDataOffset;
     const char* qualData    = ((const char*)allCharData) + qualDataOffset;
     char* tagData     = ((char*)allCharData) + tagDataOffset;
   
     // save query sequence
     bAlignment.QueryBases.clear();
-    bAlignment.QueryBases.reserve(supportData.QuerySequenceLength);
-    for (unsigned int i = 0; i < supportData.QuerySequenceLength; ++i) {
+    bAlignment.QueryBases.reserve(bAlignment.SupportData.QuerySequenceLength);
+    for (unsigned int i = 0; i < bAlignment.SupportData.QuerySequenceLength; ++i) {
         char singleBase = DNA_LOOKUP[ ( ( seqData[(i/2)] >> (4*(1-(i%2)))) & 0xf ) ];
         bAlignment.QueryBases.append(1, singleBase);
     }
   
     // save qualities, converting from numeric QV to 'FASTQ-style' ASCII character
     bAlignment.Qualities.clear();
-    bAlignment.Qualities.reserve(supportData.QuerySequenceLength);
-    for (unsigned int i = 0; i < supportData.QuerySequenceLength; ++i) {
+    bAlignment.Qualities.reserve(bAlignment.SupportData.QuerySequenceLength);
+    for (unsigned int i = 0; i < bAlignment.SupportData.QuerySequenceLength; ++i) {
         char singleQuality = (char)(qualData[i]+33);
         bAlignment.Qualities.append(1, singleQuality);
     }
     
     // parse CIGAR to build 'AlignedBases'
     bAlignment.AlignedBases.clear();
-    bAlignment.AlignedBases.reserve(supportData.QuerySequenceLength);
+    bAlignment.AlignedBases.reserve(bAlignment.SupportData.QuerySequenceLength);
     
     int k = 0;
     vector<CigarOp>::const_iterator cigarIter = bAlignment.CigarData.begin();
@@ -322,6 +322,9 @@ bool BamReader::BamReaderPrivate::BuildCharData(BamAlignment& bAlignment, const 
     bAlignment.TagData.clear();
     bAlignment.TagData.resize(tagDataLength);
     memcpy((char*)bAlignment.TagData.data(), tagData, tagDataLength);
+    
+    // set support data parsed flag
+    bAlignment.SupportData.IsParsed = true;
     
     // return success
     return true;
@@ -504,25 +507,23 @@ int BamReader::BamReaderPrivate::GetReferenceID(const string& refName) const {
 // get next alignment (from specified region, if given)
 bool BamReader::BamReaderPrivate::GetNextAlignment(BamAlignment& bAlignment) {
 
-    BamAlignmentSupportData supportData;
-  
     // if valid alignment available
-    if ( LoadNextAlignment(bAlignment, supportData) ) {
+    if ( LoadNextAlignment(bAlignment) ) {
 
         // if region not specified, return success
         if ( !IsRegionSpecified ) { 
-          bool ok = BuildCharData(bAlignment, supportData);
+          bool ok = BuildCharData(bAlignment);
           return ok; 
         }
 
         // load next alignment until region overlap is found
         while ( !IsOverlap(bAlignment) ) {
             // if no valid alignment available (likely EOF) return failure
-            if ( !LoadNextAlignment(bAlignment, supportData) ) return false;
+            if ( !LoadNextAlignment(bAlignment) ) return false;
         }
 
         // return success (alignment found that overlaps region)
-        bool ok = BuildCharData(bAlignment, supportData);
+        bool ok = BuildCharData(bAlignment);
         return ok;
     }
 
@@ -535,10 +536,10 @@ bool BamReader::BamReaderPrivate::GetNextAlignment(BamAlignment& bAlignment) {
 // ** DOES NOT parse any character data (bases, qualities, tag data)
 //    these can be accessed, if necessary, from the supportData 
 // useful for operations requiring ONLY positional or other alignment-related information
-bool BamReader::BamReaderPrivate::GetNextAlignmentCore(BamAlignment& bAlignment, BamAlignmentSupportData& supportData) {
+bool BamReader::BamReaderPrivate::GetNextAlignmentCore(BamAlignment& bAlignment) {
 
     // if valid alignment available
-    if ( LoadNextAlignment(bAlignment, supportData) ) {
+    if ( LoadNextAlignment(bAlignment) ) {
 
         // if region not specified, return success
         if ( !IsRegionSpecified ) return true;
@@ -546,7 +547,7 @@ bool BamReader::BamReaderPrivate::GetNextAlignmentCore(BamAlignment& bAlignment,
         // load next alignment until region overlap is found
         while ( !IsOverlap(bAlignment) ) {
             // if no valid alignment available (likely EOF) return failure
-            if ( !LoadNextAlignment(bAlignment, supportData) ) return false;
+            if ( !LoadNextAlignment(bAlignment) ) return false;
         }
 
         // return success (alignment found that overlaps region)
@@ -847,14 +848,14 @@ bool BamReader::BamReaderPrivate::LoadIndex(void) {
 }
 
 // populates BamAlignment with alignment data under file pointer, returns success/fail
-bool BamReader::BamReaderPrivate::LoadNextAlignment(BamAlignment& bAlignment, BamAlignmentSupportData& supportData) {
+bool BamReader::BamReaderPrivate::LoadNextAlignment(BamAlignment& bAlignment) {
 
     // read in the 'block length' value, make sure it's not zero
     char buffer[4];
     mBGZF.Read(buffer, 4);
-    supportData.BlockLength = BgzfData::UnpackUnsignedInt(buffer);
-    if ( IsBigEndian ) { SwapEndian_32(supportData.BlockLength); }
-    if ( supportData.BlockLength == 0 ) { return false; }
+    bAlignment.SupportData.BlockLength = BgzfData::UnpackUnsignedInt(buffer);
+    if ( IsBigEndian ) { SwapEndian_32(bAlignment.SupportData.BlockLength); }
+    if ( bAlignment.SupportData.BlockLength == 0 ) { return false; }
 
     // read in core alignment data, make sure the right size of data was read
     char x[BAM_CORE_SIZE];
@@ -873,20 +874,20 @@ bool BamReader::BamReaderPrivate::LoadNextAlignment(BamAlignment& bAlignment, Ba
     unsigned int tempValue = BgzfData::UnpackUnsignedInt(&x[8]);
     bAlignment.Bin        = tempValue >> 16;
     bAlignment.MapQuality = tempValue >> 8 & 0xff;
-    supportData.QueryNameLength = tempValue & 0xff;
+    bAlignment.SupportData.QueryNameLength = tempValue & 0xff;
 
     tempValue = BgzfData::UnpackUnsignedInt(&x[12]);
     bAlignment.AlignmentFlag = tempValue >> 16;
-    supportData.NumCigarOperations = tempValue & 0xffff;
+    bAlignment.SupportData.NumCigarOperations = tempValue & 0xffff;
 
-    supportData.QuerySequenceLength = BgzfData::UnpackUnsignedInt(&x[16]);
+    bAlignment.SupportData.QuerySequenceLength = BgzfData::UnpackUnsignedInt(&x[16]);
     bAlignment.MateRefID    = BgzfData::UnpackSignedInt(&x[20]);
     bAlignment.MatePosition = BgzfData::UnpackSignedInt(&x[24]);
     bAlignment.InsertSize   = BgzfData::UnpackSignedInt(&x[28]);
     
     // store 'all char data' and cigar ops
-    const unsigned int dataLength      = supportData.BlockLength - BAM_CORE_SIZE;
-    const unsigned int cigarDataOffset = supportData.QueryNameLength;
+    const unsigned int dataLength      = bAlignment.SupportData.BlockLength - BAM_CORE_SIZE;
+    const unsigned int cigarDataOffset = bAlignment.SupportData.QueryNameLength;
     
     char*     allCharData = (char*)calloc(sizeof(char), dataLength);
     uint32_t* cigarData   = (uint32_t*)(allCharData + cigarDataOffset);
@@ -897,14 +898,14 @@ bool BamReader::BamReaderPrivate::LoadNextAlignment(BamAlignment& bAlignment, Ba
      
         // store alignment name and length
         bAlignment.Name.assign((const char*)(allCharData));
-        bAlignment.Length = supportData.QuerySequenceLength;
+        bAlignment.Length = bAlignment.SupportData.QuerySequenceLength;
       
         // store remaining 'allCharData' in supportData structure
-        supportData.AllCharData.assign((const char*)allCharData, dataLength);
+        bAlignment.SupportData.AllCharData.assign((const char*)allCharData, dataLength);
         
         // save CigarOps for BamAlignment
         bAlignment.CigarData.clear();
-        for (unsigned int i = 0; i < supportData.NumCigarOperations; ++i) {
+        for (unsigned int i = 0; i < bAlignment.SupportData.NumCigarOperations; ++i) {
 
             // swap if necessary
             if ( IsBigEndian ) { SwapEndian_32(cigarData[i]); }

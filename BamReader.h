@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 8 June 2010 (DB)
+// Last modified: 16 June 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -21,7 +21,7 @@
 #include "BamAux.h"
 
 namespace BamTools {
-
+  
 class BamReader {
 
     // constructor / destructor
@@ -44,6 +44,11 @@ class BamReader {
         void Open(const std::string& filename, const std::string& indexFilename = "");
         // returns file pointer to beginning of alignments
         bool Rewind(void);
+        // sets a region of interest (with left & right bound reference/position)
+        // attempts a Jump() to left bound as well
+        // returns success/failure of Jump()
+        bool SetRegion(const BamRegion& region);
+        bool SetRegion(const int& leftRefID, const int& leftBound, const int& rightRefID, const int& rightBound);
 
         // ----------------------
         // access alignment data

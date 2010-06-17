@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 8 June 2010 (DB)
+// Last modified: 16 June 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic constants, data structures, etc. for using BAM files
 // ***************************************************************************
@@ -207,6 +207,26 @@ struct RefData {
 
 typedef std::vector<RefData>      RefVector;
 typedef std::vector<BamAlignment> BamAlignmentVector;
+
+struct BamRegion {
+  
+    // data members
+    int LeftRefID;
+    int LeftPosition;
+    int RightRefID;
+    int RightPosition;
+    
+    // constructor
+    BamRegion(const int& leftID   = -1, 
+              const int& leftPos  = -1,
+              const int& rightID  = -1,
+              const int& rightPos = -1)
+        : LeftRefID(leftID)
+        , LeftPosition(leftPos)
+        , RightRefID(rightID)
+        , RightPosition(rightPos)
+    { }
+};
 
 // ----------------------------------------------------------------
 // Indexing structs & typedefs

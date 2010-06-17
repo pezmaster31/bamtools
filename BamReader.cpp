@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 8 June 2010 (DB)
+// Last modified: 16 June 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -43,6 +43,10 @@ struct BamReader::BamReaderPrivate {
     bool IsBigEndian;
 
     // user-specified region values
+    BamRegion Region;
+    bool IsLeftBoundSpecified;
+    bool IsRightBoundSpecified;
+    
     bool IsRegionSpecified;
     int  CurrentRefID;
     int  CurrentLeft;
@@ -66,6 +70,7 @@ struct BamReader::BamReaderPrivate {
     bool Jump(int refID, int position = 0);
     void Open(const string& filename, const string& indexFilename = "");
     bool Rewind(void);
+    bool SetRegion(const BamRegion& region);
 
     // access alignment data
     bool GetNextAlignment(BamAlignment& bAlignment);
@@ -133,9 +138,19 @@ BamReader::~BamReader(void) {
 
 // file operations
 void BamReader::Close(void) { d->Close(); }
-bool BamReader::Jump(int refID, int position) { return d->Jump(refID, position); }
+bool BamReader::Jump(int refID, int position) { 
+    d->Region.LeftRefID = refID;
+    d->Region.LeftPosition = position;
+    d->IsLeftBoundSpecified = true;
+    d->IsRightBoundSpecified = false;
+    return d->Jump(refID, position); 
+}
 void BamReader::Open(const string& filename, const string& indexFilename) { d->Open(filename, indexFilename); }
 bool BamReader::Rewind(void) { return d->Rewind(); }
+bool BamReader::SetRegion(const BamRegion& region) { return d->SetRegion(region); }
+bool BamReader::SetRegion(const int& leftRefID, const int& leftBound, const int& rightRefID, const int& rightBound) {
+    return d->SetRegion( BamRegion(leftRefID, leftBound, rightRefID, rightBound) );
+}
 
 // access alignment data
 bool BamReader::GetNextAlignment(BamAlignment& bAlignment) { return d->GetNextAlignment(bAlignment); }
@@ -159,6 +174,8 @@ bool BamReader::CreateIndex(void) { return d->CreateIndex(); }
 BamReader::BamReaderPrivate::BamReaderPrivate(void)
     : IsIndexLoaded(false)
     , AlignmentsBeginOffset(0)
+    , IsLeftBoundSpecified(false)
+    , IsRightBoundSpecified(false)
     , IsRegionSpecified(false)
     , CurrentRefID(0)
     , CurrentLeft(0)
@@ -471,6 +488,8 @@ void BamReader::BamReaderPrivate::Close(void) {
     mBGZF.Close();
     ClearIndex();
     HeaderText.clear();
+    IsLeftBoundSpecified = false;
+    IsRightBoundSpecified = false;
     IsRegionSpecified = false;
 }
 
@@ -507,28 +526,12 @@ int BamReader::BamReaderPrivate::GetReferenceID(const string& refName) const {
 // get next alignment (from specified region, if given)
 bool BamReader::BamReaderPrivate::GetNextAlignment(BamAlignment& bAlignment) {
 
-    // if valid alignment available
-    if ( LoadNextAlignment(bAlignment) ) {
-
-        // if region not specified, return success
-        if ( !IsRegionSpecified ) { 
-          bool ok = BuildCharData(bAlignment);
-          return ok; 
-        }
-
-        // load next alignment until region overlap is found
-        while ( !IsOverlap(bAlignment) ) {
-            // if no valid alignment available (likely EOF) return failure
-            if ( !LoadNextAlignment(bAlignment) ) return false;
-        }
-
-        // return success (alignment found that overlaps region)
-        bool ok = BuildCharData(bAlignment);
-        return ok;
-    }
-
-    // no valid alignment
-    else 
+    // if valid alignment found, attempt to parse char data, and return success/failure
+    if ( GetNextAlignmentCore(bAlignment) )
+        return BuildCharData(bAlignment);
+    
+    // no valid alignment found
+    else
         return false;
 }
 
@@ -542,7 +545,7 @@ bool BamReader::BamReaderPrivate::GetNextAlignmentCore(BamAlignment& bAlignment)
     if ( LoadNextAlignment(bAlignment) ) {
 
         // if region not specified, return success
-        if ( !IsRegionSpecified ) return true;
+        if ( !IsLeftBoundSpecified ) return true;
 
         // load next alignment until region overlap is found
         while ( !IsOverlap(bAlignment) ) {
@@ -652,17 +655,40 @@ void BamReader::BamReaderPrivate::InsertLinearOffset(LinearOffsetVector& offsets
     }
 }
 
-// returns whether alignment overlaps currently specified region (refID, leftBound)
+// returns whether alignment overlaps currently specified region
+// this *internal* method should ONLY called when (at least) IsLeftBoundSpecified == true
 bool BamReader::BamReaderPrivate::IsOverlap(BamAlignment& bAlignment) {
+    
+    // --------------------------------------------------
+    // check alignment start against right bound cutoff
+    
+    // if full region of interest was given
+    if ( IsRightBoundSpecified ) {
+      
+        // read starts on right bound reference, but AFTER right bound position
+        if ( bAlignment.RefID == Region.RightRefID && bAlignment.Position > Region.RightPosition )
+            return false;
+      
+        // if read starts on reference AFTER right bound, return false
+        if ( bAlignment.RefID > Region.RightRefID ) 
+            return false;
+    }
+  
+    // --------------------------------------------------------
+    // no right bound given OR read starts before right bound
+    // so, check if it overlaps left bound 
+  
+    // if read starts on left bound reference AND after left boundary, return success
+    if ( bAlignment.RefID == Region.LeftRefID && bAlignment.Position >= Region.LeftPosition)
+        return true;
+  
+    // if read is on any reference sequence before left bound, return false
+    if ( bAlignment.RefID < Region.LeftRefID )
+        return false;
 
-    // if on different reference sequence, quit
-    if ( bAlignment.RefID != CurrentRefID ) { return false; }
-
-    // read starts after left boundary
-    if ( bAlignment.Position >= CurrentLeft) { return true; }
-
-    // return whether alignment end overlaps left boundary
-    return ( bAlignment.GetEndPosition() >= CurrentLeft );
+    // read is on left bound reference, but starts before left bound position
+    // calculate the alignment end to see if it overlaps
+    return ( bAlignment.GetEndPosition() >= Region.LeftPosition );
 }
 
 // jumps to specified region(refID, leftBound) in BAM file, returns success/fail
@@ -671,19 +697,15 @@ bool BamReader::BamReaderPrivate::Jump(int refID, int position) {
     // if data exists for this reference and position is valid    
     if ( References.at(refID).RefHasAlignments && (position <= References.at(refID).RefLength) ) {
 
-        // set current region
-        CurrentRefID = refID;
-        CurrentLeft  = position;
-        IsRegionSpecified = true;
-
         // calculate offset
-        int64_t offset = GetOffset(CurrentRefID, CurrentLeft);
+        int64_t offset = GetOffset(Region.LeftRefID, Region.LeftPosition);
 
         // if in valid offset, return failure
-        if ( offset == -1 ) { return false; }
-
         // otherwise return success of seek operation
-        else { return mBGZF.Seek(offset); }
+        if ( offset == -1 ) 
+            return false;
+        else 
+            return mBGZF.Seek(offset);
     }
 
     // invalid jump request parameters, return failure
@@ -1048,13 +1070,34 @@ bool BamReader::BamReaderPrivate::Rewind(void) {
         if ( References.at(refID).RefHasAlignments ) { break; }
     }
 
-    // store default bounds for first alignment
-    CurrentRefID = refID;
-    CurrentLeft = 0;
-    IsRegionSpecified = false;
+    // reset default region info
+    Region.LeftRefID = refID;
+    Region.LeftPosition = 0;
+    Region.RightRefID = -1;
+    Region.RightPosition = -1;
+    IsLeftBoundSpecified = false;
+    IsRightBoundSpecified = false;
 
     // return success/failure of seek
     return mBGZF.Seek(AlignmentsBeginOffset);
+}
+
+// sets a region of interest (with left & right bound reference/position)
+// attempts a Jump() to left bound as well
+// returns success/failure of Jump()
+bool BamReader::BamReaderPrivate::SetRegion(const BamRegion& region) {
+    
+    // save region of interest
+    Region = region;
+    
+    // set flags
+    if ( region.LeftRefID >= 0 && region.LeftPosition >= 0 ) 
+        IsLeftBoundSpecified = true;
+    if ( region.RightRefID >= 0 && region.RightPosition >= 0 ) 
+        IsRightBoundSpecified = true;
+    
+    // attempt jump to beginning of region, return success/fail of Jump()
+    return Jump( Region.LeftRefID, Region.LeftPosition );
 }
 
 // saves index data to BAM index file (".bai"), returns success/fail

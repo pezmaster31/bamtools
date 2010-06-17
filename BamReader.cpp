@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 16 June 2010 (DB)
+// Last modified: 17 June 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -88,12 +88,12 @@ struct BamReader::BamReaderPrivate {
 
     // *** reading alignments and auxiliary data *** //
 
-    // calculate bins that overlap region ( left to reference end for now )
-    int BinsFromRegion(int refID, int left, uint16_t[MAX_BIN]);
+    // calculate bins that overlap region
+    int BinsFromRegion(uint16_t bins[MAX_BIN]);
     // fills out character data for BamAlignment data
     bool BuildCharData(BamAlignment& bAlignment);
-    // calculate file offset for first alignment chunk overlapping 'left'
-    int64_t GetOffset(int refID, int left);
+    // calculate file offset for first alignment chunk overlapping specified region
+    int64_t GetOffset(void);
     // checks to see if alignment overlaps current region
     bool IsOverlap(BamAlignment& bAlignment);
     // retrieves header text from BAM file
@@ -190,13 +190,22 @@ BamReader::BamReaderPrivate::~BamReaderPrivate(void) {
     Close();
 }
 
-// calculate bins that overlap region ( left to reference end for now )
-int BamReader::BamReaderPrivate::BinsFromRegion(int refID, int left, uint16_t list[MAX_BIN]) {
+// calculate bins that overlap region
+int BamReader::BamReaderPrivate::BinsFromRegion(uint16_t list[MAX_BIN]) {
 
     // get region boundaries
-    uint32_t begin = (unsigned int)left;
-    uint32_t end   = (unsigned int)References.at(refID).RefLength - 1;
-
+    uint32_t begin = (unsigned int)Region.LeftPosition;
+    uint32_t end;
+    
+    // if right bound specified AND left&right bounds are on same reference
+    // OK to use right bound position
+    if ( IsRightBoundSpecified && ( Region.LeftRefID == Region.RightRefID ) )
+        end = (unsigned int)Region.RightPosition; // -1 ??
+    
+    // otherwise, use end of left bound reference as cutoff
+    else
+        end = (unsigned int)References.at(Region.LeftRefID).RefLength - 1;
+    
     // initialize list, bin '0' always a valid bin
     int i = 0;
     list[i++] = 0;
@@ -508,21 +517,6 @@ bool BamReader::BamReaderPrivate::CreateIndex(void) {
     return ok;
 }
 
-// returns RefID for given RefName (returns References.size() if not found)
-int BamReader::BamReaderPrivate::GetReferenceID(const string& refName) const {
-
-    // retrieve names from reference data
-    vector<string> refNames;
-    RefVector::const_iterator refIter = References.begin();
-    RefVector::const_iterator refEnd  = References.end();
-    for ( ; refIter != refEnd; ++refIter) {
-        refNames.push_back( (*refIter).RefName );
-    }
-
-    // return 'index-of' refName ( if not found, returns refNames.size() )
-    return distance(refNames.begin(), find(refNames.begin(), refNames.end(), refName));
-}
-
 // get next alignment (from specified region, if given)
 bool BamReader::BamReaderPrivate::GetNextAlignment(BamAlignment& bAlignment) {
 
@@ -562,27 +556,28 @@ bool BamReader::BamReaderPrivate::GetNextAlignmentCore(BamAlignment& bAlignment)
         return false;
 }
 
-// calculate closest indexed file offset for region specified
-int64_t BamReader::BamReaderPrivate::GetOffset(int refID, int left) {
+// calculate file offset for first alignment chunk overlapping specified region
+int64_t BamReader::BamReaderPrivate::GetOffset(void) {
 
     // calculate which bins overlap this region
     uint16_t* bins = (uint16_t*)calloc(MAX_BIN, 2);
-    int numBins = BinsFromRegion(refID, left, bins);
+    int numBins = BinsFromRegion(bins);
 
     // get bins for this reference
-    const ReferenceIndex& refIndex = Index.at(refID);
+    const ReferenceIndex& refIndex = Index.at(Region.LeftRefID);
     const BamBinMap& binMap        = refIndex.Bins;
 
     // get minimum offset to consider
     const LinearOffsetVector& offsets = refIndex.Offsets;
-    uint64_t minOffset = ( (unsigned int)(left>>BAM_LIDX_SHIFT) >= offsets.size() ) ? 0 : offsets.at(left>>BAM_LIDX_SHIFT);
+    uint64_t minOffset = ( (unsigned int)(Region.LeftPosition>>BAM_LIDX_SHIFT) >= offsets.size() ) ? 0 : offsets.at(Region.LeftPosition>>BAM_LIDX_SHIFT);
 
     // store offsets to beginning of alignment 'chunks'
     std::vector<int64_t> chunkStarts;
 
     // store all alignment 'chunk' starts for bins in this region
     for (int i = 0; i < numBins; ++i ) {
-        uint16_t binKey = bins[i];
+      
+        const uint16_t binKey = bins[i];
 
         map<uint32_t, ChunkVector>::const_iterator binIter = binMap.find(binKey);
         if ( (binIter != binMap.end()) && ((*binIter).first == binKey) ) {
@@ -605,6 +600,21 @@ int64_t BamReader::BamReaderPrivate::GetOffset(int refID, int left) {
     // if no alignments found, else return smallest offset for alignment starts
     if ( chunkStarts.size() == 0 ) { return -1; }
     else { return *min_element(chunkStarts.begin(), chunkStarts.end()); }
+}
+
+// returns RefID for given RefName (returns References.size() if not found)
+int BamReader::BamReaderPrivate::GetReferenceID(const string& refName) const {
+
+    // retrieve names from reference data
+    vector<string> refNames;
+    RefVector::const_iterator refIter = References.begin();
+    RefVector::const_iterator refEnd  = References.end();
+    for ( ; refIter != refEnd; ++refIter) {
+        refNames.push_back( (*refIter).RefName );
+    }
+
+    // return 'index-of' refName ( if not found, returns refNames.size() )
+    return distance(refNames.begin(), find(refNames.begin(), refNames.end(), refName));
 }
 
 // saves BAM bin entry for index
@@ -698,7 +708,7 @@ bool BamReader::BamReaderPrivate::Jump(int refID, int position) {
     if ( References.at(refID).RefHasAlignments && (position <= References.at(refID).RefLength) ) {
 
         // calculate offset
-        int64_t offset = GetOffset(Region.LeftRefID, Region.LeftPosition);
+        int64_t offset = GetOffset();
 
         // if in valid offset, return failure
         // otherwise return success of seek operation

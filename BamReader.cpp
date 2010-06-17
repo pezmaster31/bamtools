@@ -16,6 +16,7 @@
 #include <iterator>
 #include <string>
 #include <vector>
+#include <iostream>
 
 // BamTools includes
 #include "BGZF.h"
@@ -24,6 +25,14 @@ using namespace BamTools;
 using namespace std;
 
 struct BamReader::BamReaderPrivate {
+
+    // -------------------------------
+    // structs, enums, typedefs
+    // -------------------------------
+    enum RegionState { BEFORE_REGION = 0
+                      , WITHIN_REGION
+                      , AFTER_REGION
+          };
 
     // -------------------------------
     // data members
@@ -93,9 +102,9 @@ struct BamReader::BamReaderPrivate {
     // fills out character data for BamAlignment data
     bool BuildCharData(BamAlignment& bAlignment);
     // calculate file offset for first alignment chunk overlapping specified region
-    int64_t GetOffset(void);
+    int64_t GetOffset(std::vector<int64_t>& chunkStarts);
     // checks to see if alignment overlaps current region
-    bool IsOverlap(BamAlignment& bAlignment);
+    RegionState IsOverlap(BamAlignment& bAlignment);
     // retrieves header text from BAM file
     void LoadHeaderData(void);
     // retrieves BAM alignment under file pointer
@@ -541,10 +550,20 @@ bool BamReader::BamReaderPrivate::GetNextAlignmentCore(BamAlignment& bAlignment)
         // if region not specified, return success
         if ( !IsLeftBoundSpecified ) return true;
 
-        // load next alignment until region overlap is found
-        while ( !IsOverlap(bAlignment) ) {
+        // determine region state (before, within, after)
+        BamReader::BamReaderPrivate::RegionState state = IsOverlap(bAlignment);
+      
+        // if alignment lies after region, return false
+        if ( state == AFTER_REGION ) 
+            return false;
+
+        while ( state != WITHIN_REGION ) {
             // if no valid alignment available (likely EOF) return failure
             if ( !LoadNextAlignment(bAlignment) ) return false;
+            // if alignment lies after region, return false (no available read within region)
+            state = IsOverlap(bAlignment);
+            if ( state == AFTER_REGION) return false;
+            
         }
 
         // return success (alignment found that overlaps region)
@@ -557,7 +576,7 @@ bool BamReader::BamReaderPrivate::GetNextAlignmentCore(BamAlignment& bAlignment)
 }
 
 // calculate file offset for first alignment chunk overlapping specified region
-int64_t BamReader::BamReaderPrivate::GetOffset(void) {
+int64_t BamReader::BamReaderPrivate::GetOffset(std::vector<int64_t>& chunkStarts) {
 
     // calculate which bins overlap this region
     uint16_t* bins = (uint16_t*)calloc(MAX_BIN, 2);
@@ -572,13 +591,12 @@ int64_t BamReader::BamReaderPrivate::GetOffset(void) {
     uint64_t minOffset = ( (unsigned int)(Region.LeftPosition>>BAM_LIDX_SHIFT) >= offsets.size() ) ? 0 : offsets.at(Region.LeftPosition>>BAM_LIDX_SHIFT);
 
     // store offsets to beginning of alignment 'chunks'
-    std::vector<int64_t> chunkStarts;
+    //std::vector<int64_t> chunkStarts;
 
     // store all alignment 'chunk' starts for bins in this region
     for (int i = 0; i < numBins; ++i ) {
       
         const uint16_t binKey = bins[i];
-
         map<uint32_t, ChunkVector>::const_iterator binIter = binMap.find(binKey);
         if ( (binIter != binMap.end()) && ((*binIter).first == binKey) ) {
 
@@ -665,9 +683,9 @@ void BamReader::BamReaderPrivate::InsertLinearOffset(LinearOffsetVector& offsets
     }
 }
 
-// returns whether alignment overlaps currently specified region
+// returns region state - whether alignment ends before, overlaps, or starts after currently specified region
 // this *internal* method should ONLY called when (at least) IsLeftBoundSpecified == true
-bool BamReader::BamReaderPrivate::IsOverlap(BamAlignment& bAlignment) {
+BamReader::BamReaderPrivate::RegionState BamReader::BamReaderPrivate::IsOverlap(BamAlignment& bAlignment) {
     
     // --------------------------------------------------
     // check alignment start against right bound cutoff
@@ -677,11 +695,11 @@ bool BamReader::BamReaderPrivate::IsOverlap(BamAlignment& bAlignment) {
       
         // read starts on right bound reference, but AFTER right bound position
         if ( bAlignment.RefID == Region.RightRefID && bAlignment.Position > Region.RightPosition )
-            return false;
+            return AFTER_REGION;
       
         // if read starts on reference AFTER right bound, return false
         if ( bAlignment.RefID > Region.RightRefID ) 
-            return false;
+            return AFTER_REGION;
     }
   
     // --------------------------------------------------------
@@ -690,15 +708,21 @@ bool BamReader::BamReaderPrivate::IsOverlap(BamAlignment& bAlignment) {
   
     // if read starts on left bound reference AND after left boundary, return success
     if ( bAlignment.RefID == Region.LeftRefID && bAlignment.Position >= Region.LeftPosition)
-        return true;
+        return WITHIN_REGION;
   
     // if read is on any reference sequence before left bound, return false
     if ( bAlignment.RefID < Region.LeftRefID )
-        return false;
+        return BEFORE_REGION;
 
+    // --------------------------------------------------------
     // read is on left bound reference, but starts before left bound position
-    // calculate the alignment end to see if it overlaps
-    return ( bAlignment.GetEndPosition() >= Region.LeftPosition );
+
+    // if it overlaps, return WITHIN_REGION
+    if ( bAlignment.GetEndPosition() >= Region.LeftPosition )
+        return WITHIN_REGION;
+    // else begins before left bound position
+    else
+        return BEFORE_REGION;
 }
 
 // jumps to specified region(refID, leftBound) in BAM file, returns success/fail
@@ -708,14 +732,36 @@ bool BamReader::BamReaderPrivate::Jump(int refID, int position) {
     if ( References.at(refID).RefHasAlignments && (position <= References.at(refID).RefLength) ) {
 
         // calculate offset
-        int64_t offset = GetOffset();
+        std::vector<int64_t> chunkStarts;
+        int64_t offset = GetOffset(chunkStarts);
+	sort(chunkStarts.begin(), chunkStarts.end());
 
         // if in valid offset, return failure
         // otherwise return success of seek operation
-        if ( offset == -1 ) 
+        if ( offset == -1 ) {
             return false;
-        else 
-            return mBGZF.Seek(offset);
+        } else {
+            //return mBGZF.Seek(offset);
+            BamAlignment bAlignment;
+            bool result = true;
+            for (std::vector<int64_t>::const_iterator o = chunkStarts.begin(); o != chunkStarts.end(); ++o) {
+            //    std::cerr << *o << endl;
+	    //	std::cerr << "Seeking to offset: " << *o << endl;
+                result &= mBGZF.Seek(*o);
+                LoadNextAlignment(bAlignment);
+            //    std::cerr << "alignment: " << bAlignment.RefID 
+            //        << ":" << bAlignment.Position << ".." << bAlignment.Position + bAlignment.Length << endl;
+                if ((bAlignment.RefID == refID && bAlignment.Position + bAlignment.Length > position) || bAlignment.RefID > refID) {
+             //       std::cerr << "here i am" << endl;
+	     //	    std::cerr << "seeking to offset: " << (*(o-1)) << endl;
+	     //	    std::cerr << "*** Finished jumping ***" << endl;
+                    return mBGZF.Seek(*o);
+                }
+            }
+
+            //std::cerr << "*** Finished jumping ***" << endl;
+            return result;
+        }
     }
 
     // invalid jump request parameters, return failure

@@ -115,10 +115,16 @@ int CountTool::Run(int argc, char* argv[]) {
                 reader.Open(m_settings->InputBamFilename, m_settings->BamIndexFilename);
               
                 // attempt Jump(), catch error
-                if ( !reader.Jump(region.StartChromID, region.StartPosition) ) {
-                    foundError = true;
-                    errorStream << "Could not jump to desired REGION: " << m_settings->Region << endl;
+               // if ( !reader.Jump(region.StartChromID, region.StartPosition) ) {
+               //     foundError = true;
+               //     errorStream << "Could not jump to desired REGION: " << m_settings->Region << endl;
+               // }
+               //
+                if ( !reader.SetRegion(region.StartChromID, region.StartPosition, region.StopChromID, region.StopPosition) ) {
+                   foundError = true;
+                   errorStream << "Could not set BamReader region to REGION: " << m_settings->Region << endl;
                 }
+
             }
             
             else {
@@ -145,8 +151,12 @@ int CountTool::Run(int argc, char* argv[]) {
                 // ( either current ref is before stopRefID OR
                 //   current ref stopRefID but we're before stopPos )
                 BamAlignment al;
-                while ( reader.GetNextAlignment(al) && ((al.RefID < region.StopChromID ) || (al.RefID == region.StopChromID && al.Position <= region.StopPosition)) )
+                //while ( reader.GetNextAlignment(al) && ((al.RefID < region.StopChromID ) || (al.RefID == region.StopChromID && al.Position <= region.StopPosition)) )
+                //    ++alignmentCount;
+                //
+                while ( reader.GetNextAlignment(al) )
                     ++alignmentCount;
+
             }
 
         } else {

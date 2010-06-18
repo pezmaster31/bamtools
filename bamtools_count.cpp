@@ -103,7 +103,7 @@ int CountTool::Run(int argc, char* argv[]) {
     // more complicated - region specified
     else {
         
-        Region region;
+        BamRegion region;
         if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
 
             // has index, we can jump directly to 
@@ -120,7 +120,7 @@ int CountTool::Run(int argc, char* argv[]) {
                //     errorStream << "Could not jump to desired REGION: " << m_settings->Region << endl;
                // }
                //
-                if ( !reader.SetRegion(region.StartChromID, region.StartPosition, region.StopChromID, region.StopPosition) ) {
+                if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {
                    foundError = true;
                    errorStream << "Could not set BamReader region to REGION: " << m_settings->Region << endl;
                 }
@@ -133,14 +133,14 @@ int CountTool::Run(int argc, char* argv[]) {
                 BamAlignment al;
                 bool alignmentFound(false);
                 while( reader.GetNextAlignment(al) ) {
-                    if ( (al.RefID == region.StartChromID ) && ( (al.Position + al.Length) >= region.StartPosition) ) {
+                    if ( (al.RefID == region.LeftRefID) && ( (al.Position + al.Length) >= region.LeftPosition ) ) {
                         alignmentFound = true;
                         break;
                     }
                 }
                 
                 // if overlapping alignment found (not EOF), increment counter
-                if ( alignmentFound) ++ alignmentCount; 
+                if ( alignmentFound ) ++ alignmentCount;
             }
             
             // -----------------------------

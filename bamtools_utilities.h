@@ -12,27 +12,21 @@
 #define BAMTOOLS_UTILITIES_H
 
 #include <string>
+#include "BamAux.h"
 
 namespace BamTools {
 
 class BamReader;
 class BamMultiReader;
 
-struct Region {
-    int StartChromID;
-    int StopChromID;
-    int StartPosition;
-    int StopPosition;
-};
-
 class Utilities {
   
     public:                          
         // Parses a region string, uses reader to do validation (valid ID's, positions), stores in Region struct
         // Returns success (true/false)
-        static bool ParseRegionString(const std::string& regionString, const BamReader& reader, Region& region);
+        static bool ParseRegionString(const std::string& regionString, const BamReader& reader, BamRegion& region);
         // Same as above, but accepts a BamMultiReader
-        static bool ParseRegionString(const std::string& regionString, const BamMultiReader& reader, Region& region);
+        static bool ParseRegionString(const std::string& regionString, const BamMultiReader& reader, BamRegion& region);
 };
 
 } // namespace BamTools

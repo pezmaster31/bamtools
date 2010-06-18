@@ -18,7 +18,7 @@ using namespace BamTools;
 
 // Parses a region string, does validation (valid ID's, positions), stores in Region struct
 // Returns success (true/false)
-bool Utilities::ParseRegionString(const std::string& regionString, const BamReader& reader, Region& region) {
+bool Utilities::ParseRegionString(const std::string& regionString, const BamReader& reader, BamRegion& region) {
   
     // -------------------------------
     // parse region string
@@ -117,15 +117,15 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamRead
     // -------------------------------
     // set up Region struct & return
     
-    region.StartChromID  = startRefID;
-    region.StopChromID   = stopRefID;
-    region.StartPosition = startPos;
-    region.StopPosition  = stopPos;
+    region.LeftRefID = startRefID;
+    region.LeftPosition = startPos;
+    region.RightRefID = stopRefID;;
+    region.RightPosition = stopPos;
     return true;
 }
 
 // Same as ParseRegionString() above, but accepts a BamMultiReader
-bool Utilities::ParseRegionString(const std::string& regionString, const BamMultiReader& reader, Region& region) {
+bool Utilities::ParseRegionString(const std::string& regionString, const BamMultiReader& reader, BamRegion& region) {
   
     // -------------------------------
     // parse region string
@@ -224,9 +224,10 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamMult
     // -------------------------------
     // set up Region struct & return
     
-    region.StartChromID  = startRefID;
-    region.StopChromID   = stopRefID;
-    region.StartPosition = startPos;
-    region.StopPosition  = stopPos;
+    region.LeftRefID = startRefID;
+    region.LeftPosition = startPos;
+    region.RightRefID = stopRefID;;
+    region.RightPosition = stopPos;
+
     return true;
 }

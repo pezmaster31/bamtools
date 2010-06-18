@@ -27,6 +27,9 @@ class Utilities {
         static bool ParseRegionString(const std::string& regionString, const BamReader& reader, BamRegion& region);
         // Same as above, but accepts a BamMultiReader
         static bool ParseRegionString(const std::string& regionString, const BamMultiReader& reader, BamRegion& region);
+
+        // check if a file exists
+        static bool FileExists(const std::string& fname); 
 };
 
 } // namespace BamTools

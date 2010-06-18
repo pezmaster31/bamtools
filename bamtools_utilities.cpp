@@ -9,6 +9,7 @@
 // ***************************************************************************
 
 #include <cstdlib>
+#include <sys/stat.h> 
 #include "bamtools_utilities.h"
 #include "BamReader.h"
 #include "BamMultiReader.h"
@@ -230,4 +231,11 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamMult
     region.RightPosition = stopPos;
 
     return true;
+}
+
+bool Utilities::FileExists(const std::string& filename) { 
+
+    struct stat fileInfo; 
+    return stat(filename.c_str(), &fileInfo) == 0;
+
 }

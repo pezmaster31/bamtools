@@ -163,21 +163,51 @@ bool BamMultiReader::Jump(int refID, int position) {
             exit(1);
         }
     }
-    if (result) {
-        // Update Alignments
-        alignments.clear();
-        for (vector<pair<BamReader*, BamAlignment*> >::iterator it = readers.begin(); it != readers.end(); ++it) {
-            BamReader* br = it->first;
-            BamAlignment* ba = it->second;
-            if (br->GetNextAlignment(*ba)) {
-                alignments.insert(make_pair(make_pair(ba->RefID, ba->Position), 
-                                            make_pair(br, ba)));
-            } else {
-                // assume BamReader EOF
-            }
+    if (result) UpdateAlignments();
+    return result;
+}
+
+bool BamMultiReader::SetRegion(const int& leftRefID, const int& leftPosition, const int& rightRefID, const int& rightPosition) {
+
+    BamRegion region(leftRefID, leftPosition, rightRefID, rightPosition);
+
+    return SetRegion(region);
+
+}
+
+bool BamMultiReader::SetRegion(const BamRegion& region) {
+
+    Region = region;
+
+    bool result = true;
+    for (vector<pair<BamReader*, BamAlignment*> >::iterator it = readers.begin(); it != readers.end(); ++it) {
+        BamReader* reader = it->first;
+        result &= reader->SetRegion(region);
+        if (!result) {
+            cerr << "ERROR: could not set region " << reader->GetFilename() << " to " 
+                << region.LeftRefID << ":" << region.LeftPosition << ".." << region.RightRefID << ":" << region.RightPosition
+                << endl;
+            exit(1);
         }
     }
+    if (result) UpdateAlignments();
     return result;
+
+}
+
+void BamMultiReader::UpdateAlignments(void) {
+    // Update Alignments
+    alignments.clear();
+    for (vector<pair<BamReader*, BamAlignment*> >::iterator it = readers.begin(); it != readers.end(); ++it) {
+        BamReader* br = it->first;
+        BamAlignment* ba = it->second;
+        if (br->GetNextAlignment(*ba)) {
+            alignments.insert(make_pair(make_pair(ba->RefID, ba->Position), 
+                                        make_pair(br, ba)));
+        } else {
+            // assume BamReader end of region / EOF
+        }
+    }
 }
 
 // opens BAM files

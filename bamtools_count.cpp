@@ -20,6 +20,7 @@
 #include "bamtools_options.h"
 #include "bamtools_utilities.h"
 #include "BamReader.h"
+#include "BamMultiReader.h"
 
 using namespace std;
 using namespace BamTools;
@@ -30,21 +31,17 @@ using namespace BamTools;
 struct CountTool::CountSettings {
 
     // flags
-    bool HasBamIndexFilename;
-    bool HasInputBamFilename;
+    bool HasInput;
     bool HasRegion;
 
     // filenames
-    string BamIndexFilename;
-    string InputBamFilename;
+    vector<string> InputFiles;
     string Region;
     
     // constructor
     CountSettings(void)
-        : HasBamIndexFilename(false)
-        , HasInputBamFilename(false)
+        : HasInput(false)
         , HasRegion(false)
-        , InputBamFilename(Options::StandardIn())
     { }  
 }; 
   
@@ -56,15 +53,16 @@ CountTool::CountTool(void)
     , m_settings(new CountSettings)
 { 
     // set program details
-    Options::SetProgramInfo("bamtools count", "prints alignment counts for a BAM file", "-in <filename> [-region <REGION> [-index <filename>]]");
+    Options::SetProgramInfo("bamtools count", "prints alignment counts for a BAM file", "-in <filename> [-region <REGION>]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",    "BAM filename",        "the input BAM file", "", m_settings->HasInputBamFilename, m_settings->InputBamFilename, IO_Opts, Options::StandardIn());
-    Options::AddValueOption("-index", "BAM index filename", "the BAM index file",  "", m_settings->HasBamIndexFilename, m_settings->BamIndexFilename, IO_Opts);
+    //Options::AddValueOption("-in",    "BAM filename",        "the input BAM file", "", m_settings->HasInputBamFilename, m_settings->InputBamFilename, IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-in",  "BAM filename", "the input BAM file(s)", "", m_settings->HasInput,  m_settings->InputFiles, IO_Opts);
+    //Options::AddValueOption("-index", "BAM index filename", "the BAM index file",  "", m_settings->HasBamIndexFilename, m_settings->BamIndexFilename, IO_Opts);
     
     OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
-    Options::AddValueOption("-region", "REGION", "genomic region. Index file is recommended for better performance. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
+    Options::AddValueOption("-region", "REGION", "genomic region. Index file is recommended for better performance, and is read automatically if it exists as <filename>.bai. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
 }
 
 CountTool::~CountTool(void) { 
@@ -82,9 +80,8 @@ int CountTool::Run(int argc, char* argv[]) {
     // parse command line arguments
     Options::Parse(argc, argv, 1);
 
-    //open our BAM reader
-    BamReader reader;
-    reader.Open(m_settings->InputBamFilename);
+    BamMultiReader reader;
+    reader.Open(m_settings->InputFiles, false, true);
 
     // alignment counter
     int alignmentCount(0);
@@ -96,9 +93,9 @@ int CountTool::Run(int argc, char* argv[]) {
     // if no region specified, count entire file 
     if ( !m_settings->HasRegion ) {
         BamAlignment al;
-        while ( reader.GetNextAlignment(al) ) 
+        while ( reader.GetNextAlignmentCore(al) ) 
             ++alignmentCount;
-    } 
+    }
     
     // more complicated - region specified
     else {
@@ -106,33 +103,39 @@ int CountTool::Run(int argc, char* argv[]) {
         BamRegion region;
         if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
 
+            // check if there are index files *.bai corresponding to the input files
+            bool hasIndexes = true;
+            for (vector<string>::const_iterator f = m_settings->InputFiles.begin(); f != m_settings->InputFiles.end(); ++f) {
+                if (!Utilities::FileExists(*f + ".bai")) {
+                    errorStream << "could not find index file " << *f + ".bai" 
+                        << ", parsing whole file(s) to get alignment counts for target region" << endl;
+                    hasIndexes = false;
+                    break;
+                }
+            }
             // has index, we can jump directly to 
-            if ( m_settings->HasBamIndexFilename ) {
+            if ( hasIndexes ) {
               
                 // this is kind of a hack...?
-                // re-open BamReader, this time with the index file
-                reader.Close();
-                reader.Open(m_settings->InputBamFilename, m_settings->BamIndexFilename);
+                BamMultiReader reader;
+                reader.Open(m_settings->InputFiles, true, true);
               
-                // attempt Jump(), catch error
-               // if ( !reader.Jump(region.StartChromID, region.StartPosition) ) {
-               //     foundError = true;
-               //     errorStream << "Could not jump to desired REGION: " << m_settings->Region << endl;
-               // }
-               //
                 if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {
                    foundError = true;
                    errorStream << "Could not set BamReader region to REGION: " << m_settings->Region << endl;
+                } else {
+                    BamAlignment al;
+                    while ( reader.GetNextAlignmentCore(al) )
+                        ++alignmentCount;
                 }
 
-            }
-            
-            else {
+            } else {
               
                 // read through sequentially, until first overlapping read is found
                 BamAlignment al;
                 bool alignmentFound(false);
-                while( reader.GetNextAlignment(al) ) {
+                //reader.Open(m_settings->InputFiles, false, true);
+                while( reader.GetNextAlignmentCore(al) ) {
                     if ( (al.RefID == region.LeftRefID) && ( (al.Position + al.Length) >= region.LeftPosition ) ) {
                         alignmentFound = true;
                         break;
@@ -146,19 +149,6 @@ int CountTool::Run(int argc, char* argv[]) {
             // -----------------------------
             // count alignments until stop hit
             
-            if ( !foundError ) {
-                // while valid alignment AND
-                // ( either current ref is before stopRefID OR
-                //   current ref stopRefID but we're before stopPos )
-                BamAlignment al;
-                //while ( reader.GetNextAlignment(al) && ((al.RefID < region.StopChromID ) || (al.RefID == region.StopChromID && al.Position <= region.StopPosition)) )
-                //    ++alignmentCount;
-                //
-                while ( reader.GetNextAlignment(al) )
-                    ++alignmentCount;
-
-            }
-
         } else {
             foundError = true;
             errorStream << "Could not parse REGION: " << m_settings->Region << endl;

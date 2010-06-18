@@ -43,6 +43,9 @@ class BamMultiReader {
         int CurrentRefID;
         int CurrentLeft;
 
+        // region under analysis, specified using SetRegion
+        BamRegion Region;
+
         // ----------------------
         // BAM file operations
         // ----------------------
@@ -60,6 +63,10 @@ class BamMultiReader {
 
         // performs random-access jump to reference, position
         bool Jump(int refID, int position = 0);
+
+        // sets the target region
+        bool SetRegion(const BamRegion& region);
+        bool SetRegion(const int&, const int&, const int&, const int&); // convenience function to above
 
         // returns file pointers to beginning of alignments
         bool Rewind(void);
@@ -106,6 +113,7 @@ class BamMultiReader {
         // utility
         void PrintFilenames(void);
         void DumpAlignmentIndex(void);
+        void UpdateAlignments(void); // updates our alignment cache
 
     // private implementation
     private:

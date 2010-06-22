@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 1 June 2010
+// Last modified: 21 June 2010 (DB)
 // ---------------------------------------------------------------------------
 // Sorts a BAM file.
 // ***************************************************************************
@@ -28,6 +28,9 @@ class SortTool : public AbstractTool {
     private:
         struct SortSettings;
         SortSettings* m_settings;
+        
+        struct SortToolPrivate;
+        SortToolPrivate* m_impl;
 };
   
 } // namespace BamTools

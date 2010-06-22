@@ -176,9 +176,17 @@ int SortTool::Run(int argc, char* argv[]) {
 // constructor
 SortTool::SortToolPrivate::SortToolPrivate(SortTool::SortSettings* settings) 
     : m_settings(settings)
-    , m_tempFilenameStub("bamtools.sort.temp.")
     , m_numberOfRuns(0) 
-{ }
+{ 
+    // set filename stub depending on inputfile path
+    // that way multiple sort runs don't trip on each other's temp files
+    if ( m_settings) {
+        size_t extensionFound = m_settings->InputBamFilename.find(".bam");
+        if (extensionFound != string::npos )
+            m_tempFilenameStub = m_settings->InputBamFilename.substr(0,extensionFound);
+        m_tempFilenameStub.append(".sort.temp.");
+    }
+}
 
 // destructor
 SortTool::SortToolPrivate::~SortToolPrivate(void) { }

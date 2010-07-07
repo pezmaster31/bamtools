@@ -179,19 +179,18 @@ bool BamMultiReader::SetRegion(const BamRegion& region) {
 
     Region = region;
 
-    bool result = true;
+    // NB: While it may make sense to track readers in which we can
+    // successfully SetRegion, In practice a failure of SetRegion means "no
+    // alignments here."  It makes sense to simply accept the failure,
+    // UpdateAlignments(), and continue.
+
     for (vector<pair<BamReader*, BamAlignment*> >::iterator it = readers.begin(); it != readers.end(); ++it) {
-        BamReader* reader = it->first;
-        result &= reader->SetRegion(region);
-        if (!result) {
-            cerr << "ERROR: could not set region " << reader->GetFilename() << " to " 
-                << region.LeftRefID << ":" << region.LeftPosition << ".." << region.RightRefID << ":" << region.RightPosition
-                << endl;
-            exit(1);
-        }
+        it->first->SetRegion(region);
     }
-    if (result) UpdateAlignments();
-    return result;
+
+    UpdateAlignments();
+
+    return true;
 
 }
 

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 22 June 2010 (DB)
+// Last modified: 9 July 2010 (DB)
 // ---------------------------------------------------------------------------
 // BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -90,7 +90,7 @@ struct BgzfData {
     
     // closes BGZF file
     void Close(void);
-    // opens the BGZF file for reading (mode is either "rb" for reading, or "wb" for writing
+    // opens the BGZF file (mode is either "rb" for reading, or "wb" for writing)
     bool Open(const std::string& filename, const char* mode);
     // reads BGZF data into a byte buffer
     int Read(char* data, const unsigned int dataLength);

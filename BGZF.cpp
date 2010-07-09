@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 11 January 2010 (DB)
+// Last modified: 9 July 2010 (DB)
 // ---------------------------------------------------------------------------
 // BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -232,15 +232,15 @@ bool BgzfData::Open(const string& filename, const char* mode) {
     // stdin/stdout option contributed by Aaron Quinlan (2010-Jan-03)
     if ( (filename != "stdin") && (filename != "stdout") ) {
         // read/write BGZF data to/from a file
-        Stream = fopen(filename.c_str(), mode);
+        Stream = fopen64(filename.c_str(), mode);
     }
     else if ( (filename == "stdin") && (strcmp(mode, "rb") == 0 ) ) { 
         // read BGZF data from stdin
-        Stream = freopen(NULL, mode, stdin);
+        Stream = freopen64(NULL, mode, stdin);
     }
     else if ( (filename == "stdout") && (strcmp(mode, "wb") == 0) ) { 
         // write BGZF data to stdout
-        Stream = freopen(NULL, mode, stdout);
+        Stream = freopen64(NULL, mode, stdout);
     }
 
     if(!Stream) {
@@ -279,7 +279,7 @@ int BgzfData::Read(char* data, const unsigned int dataLength) {
    }
 
    if ( BlockOffset == BlockLength ) {
-       BlockAddress = ftell(Stream);
+       BlockAddress = ftello(Stream);
        BlockOffset  = 0;
        BlockLength  = 0;
    }
@@ -291,8 +291,8 @@ int BgzfData::Read(char* data, const unsigned int dataLength) {
 bool BgzfData::ReadBlock(void) {
 
     char    header[BLOCK_HEADER_LENGTH];
-    int64_t blockAddress = ftell(Stream);
-
+    int64_t blockAddress = ftello(Stream);
+    
     int count = fread(header, 1, sizeof(header), Stream);
     if (count == 0) {
         BlockLength = 0;
@@ -340,7 +340,7 @@ bool BgzfData::Seek(int64_t position) {
     int     blockOffset  = (position & 0xFFFF);
     int64_t blockAddress = (position >> 16) & 0xFFFFFFFFFFFFLL;
 
-    if (fseek(Stream, blockAddress, SEEK_SET) != 0) {
+    if (fseeko(Stream, blockAddress, SEEK_SET) != 0) {
         printf("BGZF ERROR: unable to seek in file\n");
         return false;
     }

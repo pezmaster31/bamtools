@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 30 June 2010 (DB)
+// Last modified: 9 July 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -246,51 +246,59 @@ bool BamReader::BamReaderPrivate::BuildCharData(BamAlignment& bAlignment) {
         bAlignment.Qualities.append(1, singleQuality);
     }
     
-    // parse CIGAR to build 'AlignedBases'
-    bAlignment.AlignedBases.clear();
-    bAlignment.AlignedBases.reserve(bAlignment.SupportData.QuerySequenceLength);
+    // if QueryBases is empty (and this is a allowed case)
+    if ( bAlignment.QueryBases.empty() ) 
+        bAlignment.AlignedBases = bAlignment.QueryBases;
     
-    int k = 0;
-    vector<CigarOp>::const_iterator cigarIter = bAlignment.CigarData.begin();
-    vector<CigarOp>::const_iterator cigarEnd  = bAlignment.CigarData.end();
-    for ( ; cigarIter != cigarEnd; ++cigarIter ) {
-        
-        const CigarOp& op = (*cigarIter);
-        switch(op.Type) {
-          
-            case ('M') :
-            case ('I') :
-                bAlignment.AlignedBases.append(bAlignment.QueryBases.substr(k, op.Length)); // for 'M', 'I' - write bases
-                // fall through
+    // if QueryBases contains data, then build AlignedBases using CIGAR data
+    else {
+    
+        // resize AlignedBases
+        bAlignment.AlignedBases.clear();
+        bAlignment.AlignedBases.reserve(bAlignment.SupportData.QuerySequenceLength);
+      
+        // iterate over CigarOps
+        int k = 0;
+        vector<CigarOp>::const_iterator cigarIter = bAlignment.CigarData.begin();
+        vector<CigarOp>::const_iterator cigarEnd  = bAlignment.CigarData.end();
+        for ( ; cigarIter != cigarEnd; ++cigarIter ) {
             
-            case ('S') :
-                k += op.Length;                                     // for 'S' - soft clip, skip over query bases
-                break;
+            const CigarOp& op = (*cigarIter);
+            switch(op.Type) {
+              
+                case ('M') :
+                case ('I') :
+                    bAlignment.AlignedBases.append(bAlignment.QueryBases.substr(k, op.Length)); // for 'M', 'I' - write bases
+                    // fall through
                 
-            case ('D') :
-                bAlignment.AlignedBases.append(op.Length, '-');     // for 'D' - write gap character
-                break;
-                
-            case ('P') :
-                bAlignment.AlignedBases.append( op.Length, '*' );   // for 'P' - write padding character
-                break;
-                
-            case ('N') :
-                bAlignment.AlignedBases.append( op.Length, 'N' );  // for 'N' - write N's, skip bases in original query sequence
-                // k+=op.Length; 
-                break;
-                
-            case ('H') :
-                break;  // for 'H' - hard clip, do nothing to AlignedBases, move to next op
-                
-            default:
-                printf("ERROR: Invalid Cigar op type\n"); // shouldn't get here
-                exit(1);
+                case ('S') :
+                    k += op.Length;                                     // for 'S' - soft clip, skip over query bases
+                    break;
+                    
+                case ('D') :
+                    bAlignment.AlignedBases.append(op.Length, '-');     // for 'D' - write gap character
+                    break;
+                    
+                case ('P') :
+                    bAlignment.AlignedBases.append( op.Length, '*' );   // for 'P' - write padding character
+                    break;
+                    
+                case ('N') :
+                    bAlignment.AlignedBases.append( op.Length, 'N' );  // for 'N' - write N's, skip bases in original query sequence
+                    break;
+                    
+                case ('H') :
+                    break;  // for 'H' - hard clip, do nothing to AlignedBases, move to next op
+                    
+                default:
+                    printf("ERROR: Invalid Cigar op type\n"); // shouldn't get here
+                    exit(1);
+            }
         }
     }
  
     // -----------------------
-    // Added: 3-25-2010 DWB
+    // Added: 3-25-2010 DB
     // Fixed: endian-correctness for tag data
     // -----------------------
     if ( IsBigEndian ) {
@@ -310,18 +318,18 @@ bool BamReader::BamReaderPrivate::BuildCharData(BamAlignment& bAlignment) {
 
                 case('S') : 
                     SwapEndian_16p(&tagData[i]); 
-                    i+=2; // sizeof(uint16_t)
+                    i += sizeof(uint16_t);
                     break;
                     
                 case('F') :
                 case('I') : 
                     SwapEndian_32p(&tagData[i]);
-                    i+=4; // sizeof(uint32_t)
+                    i += sizeof(uint32_t);
                     break;
                 
                 case('D') : 
                     SwapEndian_64p(&tagData[i]);
-                    i+=8; // sizeof(uint64_t) 
+                    i += sizeof(uint64_t);
                     break;
                 
                 case('H') :
@@ -407,7 +415,7 @@ bool BamReader::BamReaderPrivate::GetNextAlignment(BamAlignment& bAlignment) {
 }
 
 // retrieves next available alignment core data (returns success/fail)
-// ** DOES NOT parse any character data (bases, qualities, tag data)
+// ** DOES NOT parse any character data (read name, bases, qualities, tag data)
 //    these can be accessed, if necessary, from the supportData 
 // useful for operations requiring ONLY positional or other alignment-related information
 bool BamReader::BamReaderPrivate::GetNextAlignmentCore(BamAlignment& bAlignment) {

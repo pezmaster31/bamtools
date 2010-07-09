@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 26 May 2010
+// Last modified: 7 July 2010
 // ---------------------------------------------------------------------------
 // Creates a BAM index (".bai") file for the provided BAM file.
 // ***************************************************************************
@@ -25,6 +25,7 @@ struct IndexTool::IndexSettings {
 
     // flags
     bool HasInputBamFilename;
+    bool IsUsingBamtoolsIndex;
 
     // filenames
     string InputBamFilename;
@@ -32,6 +33,7 @@ struct IndexTool::IndexSettings {
     // constructor
     IndexSettings(void)
         : HasInputBamFilename(false)
+        , IsUsingBamtoolsIndex(false)
         , InputBamFilename(Options::StandardIn())
     { }
 };  
@@ -44,11 +46,12 @@ IndexTool::IndexTool(void)
     , m_settings(new IndexSettings)
 {
     // set program details
-    Options::SetProgramInfo("bamtools index", "creates index for BAM file", "-in <filename>");
+    Options::SetProgramInfo("bamtools index", "creates index for BAM file", "[-in <filename>] [-bti]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in", "BAM filename", "the input BAM file", "", m_settings->HasInputBamFilename, m_settings->InputBamFilename, IO_Opts, Options::StandardIn());
+    Options::AddOption("-bti", "use (non-standard) BamTools indexing scheme", m_settings->IsUsingBamtoolsIndex, IO_Opts);
 }
 
 IndexTool::~IndexTool(void) {
@@ -71,7 +74,8 @@ int IndexTool::Run(int argc, char* argv[]) {
     reader.Open(m_settings->InputBamFilename);
     
     // create index for BAM file
-    reader.CreateIndex();
+    bool useDefaultIndex = !m_settings->IsUsingBamtoolsIndex;
+    reader.CreateIndex(useDefaultIndex);
     
     // clean & exit
     reader.Close();

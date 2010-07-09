@@ -62,7 +62,7 @@ CountTool::CountTool(void)
     //Options::AddValueOption("-index", "BAM index filename", "the BAM index file",  "", m_settings->HasBamIndexFilename, m_settings->BamIndexFilename, IO_Opts);
     
     OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
-    Options::AddValueOption("-region", "REGION", "genomic region. Index file is recommended for better performance, and is read automatically if it exists as <filename>.bai. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
+    Options::AddValueOption("-region", "REGION", "genomic region. Index file is recommended for better performance, and is read automatically if it exists as <filename>.bai or <filename>.bti. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
 }
 
 CountTool::~CountTool(void) { 
@@ -103,22 +103,63 @@ int CountTool::Run(int argc, char* argv[]) {
         BamRegion region;
         if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
 
-            // check if there are index files *.bai corresponding to the input files
-            bool hasIndexes = true;
+            // check if there are index files *.bai/*.bti corresponding to the input files
+            bool hasDefaultIndex   = false;
+            bool hasBamtoolsIndex  = false;
+            bool hasNoIndex        = false;
+            int defaultIndexCount   = 0;
+            int bamtoolsIndexCount = 0;
             for (vector<string>::const_iterator f = m_settings->InputFiles.begin(); f != m_settings->InputFiles.end(); ++f) {
-                if (!Utilities::FileExists(*f + ".bai")) {
-                    errorStream << "could not find index file " << *f + ".bai" 
-                        << ", parsing whole file(s) to get alignment counts for target region" << endl;
-                    hasIndexes = false;
+              
+                if ( Utilities::FileExists(*f + ".bai") ) {
+                    hasDefaultIndex = true;
+                    ++defaultIndexCount;
+                }       
+                
+                if ( Utilities::FileExists(*f + ".bti") ) {
+                    hasBamtoolsIndex = true;
+                    ++bamtoolsIndexCount;
+                }
+                  
+                if ( !hasDefaultIndex && !hasBamtoolsIndex ) {
+                    hasNoIndex = true;
+                    cerr << "*WARNING - could not find index file for " << *f  
+                         << ", parsing whole file(s) to get alignment counts for target region" 
+                         << " (could be slow)" << endl;
                     break;
                 }
             }
-            // has index, we can jump directly to 
-            if ( hasIndexes ) {
+            
+            // determine if index file types are heterogeneous
+            bool hasDifferentIndexTypes = false;
+            if ( defaultIndexCount > 0 && bamtoolsIndexCount > 0 ) {
+                hasDifferentIndexTypes = true;
+                cerr << "*WARNING - different index file formats found"  
+                         << ", parsing whole file(s) to get alignment counts for target region" 
+                         << " (could be slow)" << endl;
+            }
+            
+            // if any input file has no index, or if input files use different index formats
+            // can't use BamMultiReader to jump directly (**for now**)
+            if ( hasNoIndex || hasDifferentIndexTypes ) {
+                
+                // read through sequentially, counting all overlapping reads
+                BamAlignment al;
+                while( reader.GetNextAlignmentCore(al) ) {
+                    if ( (al.RefID >= region.LeftRefID)  && ( (al.Position + al.Length) >= region.LeftPosition ) &&
+                         (al.RefID <= region.RightRefID) && ( al.Position <= region.RightPosition) ) 
+                    {
+                        ++alignmentCount;
+                    }
+                }
+            }
+            
+            // has index file for each input file (and same format)
+            else {
               
                 // this is kind of a hack...?
                 BamMultiReader reader;
-                reader.Open(m_settings->InputFiles, true, true);
+                reader.Open(m_settings->InputFiles, true, true, hasDefaultIndex );
               
                 if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {
                    foundError = true;
@@ -128,26 +169,7 @@ int CountTool::Run(int argc, char* argv[]) {
                     while ( reader.GetNextAlignmentCore(al) )
                         ++alignmentCount;
                 }
-
-            } else {
-              
-                // read through sequentially, until first overlapping read is found
-                BamAlignment al;
-                bool alignmentFound(false);
-                //reader.Open(m_settings->InputFiles, false, true);
-                while( reader.GetNextAlignmentCore(al) ) {
-                    if ( (al.RefID == region.LeftRefID) && ( (al.Position + al.Length) >= region.LeftPosition ) ) {
-                        alignmentFound = true;
-                        break;
-                    }
-                }
-                
-                // if overlapping alignment found (not EOF), increment counter
-                if ( alignmentFound ) ++ alignmentCount;
             }
-            
-            // -----------------------------
-            // count alignments until stop hit
             
         } else {
             foundError = true;

@@ -38,6 +38,8 @@ class BamReader {
 
         // close BAM file
         void Close(void);
+        // returns whether reader is open for reading or not
+        bool IsOpen(void) const;
         // performs random-access jump to reference, position
         bool Jump(int refID, int position = 0);
         // opens BAM file (and optional BAM index file, if provided)
@@ -72,7 +74,7 @@ class BamReader {
         // returns number of reference sequences
         int GetReferenceCount(void) const;
         // returns vector of reference objects
-        const BamTools::RefVector GetReferenceData(void) const;
+        const BamTools::RefVector& GetReferenceData(void) const;
         // returns reference id (used for BamReader::Jump()) for the given reference name
         int GetReferenceID(const std::string& refName) const;
         // returns the name of the file associated with this BamReader
@@ -83,8 +85,8 @@ class BamReader {
         // ----------------------
 
         // creates index for BAM file, saves to file (default = bamFilename + ".bai")
-        bool CreateIndex(void);
-
+        bool CreateIndex(bool useDefaultIndex = true);
+        
     // private implementation
     private:
         struct BamReaderPrivate;

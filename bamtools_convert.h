@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 2 June 2010
+// Last modified: 9 July 2010
 // ---------------------------------------------------------------------------
 // Converts between BAM and a number of other formats
 // ***************************************************************************
@@ -28,6 +28,9 @@ class ConvertTool : public AbstractTool {
     private: 
         struct ConvertSettings;
         ConvertSettings* m_settings;
+        
+        struct ConvertToolPrivate;
+        ConvertToolPrivate* m_impl;
 };
   
 } // namespace BamTools

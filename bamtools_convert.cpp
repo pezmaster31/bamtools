@@ -25,16 +25,15 @@ using namespace std;
 using namespace BamTools;
   
 namespace BamTools { 
-  
+ 
     // format names
-    static const string FORMAT_FASTA_LOWER = "fasta";
-    static const string FORMAT_FASTA_UPPER = "FASTA";
-    static const string FORMAT_FASTQ_LOWER = "fastq";
-    static const string FORMAT_FASTQ_UPPER = "FASTQ";
-    static const string FORMAT_JSON_LOWER  = "json";
-    static const string FORMAT_JSON_UPPER  = "JSON";
-    static const string FORMAT_SAM_LOWER   = "sam";
-    static const string FORMAT_SAM_UPPER   = "SAM";
+    static const string FORMAT_BED      = "bed";
+    static const string FORMAT_BEDGRAPH = "bedgraph";
+    static const string FORMAT_FASTA    = "fasta";
+    static const string FORMAT_FASTQ    = "fastq";
+    static const string FORMAT_JSON     = "json";
+    static const string FORMAT_SAM      = "sam";
+    static const string FORMAT_WIGGLE   = "wig";
 
     // other constants
     static const unsigned int FASTA_LINE_MAX = 50;
@@ -54,10 +53,13 @@ struct ConvertTool::ConvertToolPrivate {
     
     // internal methods
     private:
-        void PrintFASTA(const BamAlignment& a);
-        void PrintFASTQ(const BamAlignment& a);
-        void PrintJSON(const BamAlignment& a);
-        void PrintSAM(const BamAlignment& a);
+        void PrintBed(const BamAlignment& a);
+        void PrintBedGraph(const BamAlignment& a);
+        void PrintFasta(const BamAlignment& a);
+        void PrintFastq(const BamAlignment& a);
+        void PrintJson(const BamAlignment& a);
+        void PrintSam(const BamAlignment& a);
+        void PrintWiggle(const BamAlignment& a);
         
     // data members
     private: 
@@ -153,8 +155,6 @@ ConvertTool::ConvertToolPrivate::~ConvertToolPrivate(void) { }
 
 bool ConvertTool::ConvertToolPrivate::Run(void) {
  
-    bool convertedOk = true;
-
     // ------------------------------------
     // initialize conversion input/output
         
@@ -183,64 +183,68 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
     }
     
     // ------------------------
-    // do conversion
-    
-    // FASTA
-    if ( m_settings->Format == FORMAT_FASTA_LOWER || m_settings->Format == FORMAT_FASTA_UPPER ) {
-        BamAlignment alignment;
-        while ( reader.GetNextAlignment(alignment) ) {
-            PrintFASTA(alignment);
-        }
-    }
-    
-    // FASTQ
-    else if ( m_settings->Format == FORMAT_FASTQ_LOWER || m_settings->Format == FORMAT_FASTQ_UPPER ) {
-        BamAlignment alignment;
-        while ( reader.GetNextAlignment(alignment) ) {
-            PrintFASTQ(alignment);
-        }
-    }
-    
-    // JSON 
-    else if ( m_settings->Format == FORMAT_JSON_LOWER || m_settings->Format == FORMAT_JSON_UPPER ) {
-        BamAlignment alignment;
-        while ( reader.GetNextAlignment(alignment) ) {
-            PrintJSON(alignment);
-        }
-    }
-    
-    // SAM
-    else if ( m_settings->Format == FORMAT_SAM_LOWER || m_settings->Format == FORMAT_SAM_UPPER ) {
-        BamAlignment alignment;
-        while ( reader.GetNextAlignment(alignment) ) {
-            PrintSAM(alignment);
-        }
-    }
-    
-    // error
-    else {
+    // determine format type
+    bool formatError = false;
+    bool convertedOk = true;
+    void (BamTools::ConvertTool::ConvertToolPrivate::*pFunction)(const BamAlignment&) = 0;
+    if      ( m_settings->Format == FORMAT_BED )      pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintBed;
+    else if ( m_settings->Format == FORMAT_BEDGRAPH ) pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintBedGraph;
+    else if ( m_settings->Format == FORMAT_FASTA )    pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintFasta;
+    else if ( m_settings->Format == FORMAT_FASTQ )    pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintFastq;
+    else if ( m_settings->Format == FORMAT_JSON )     pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintJson;
+    else if ( m_settings->Format == FORMAT_SAM )      pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintSam;
+    else if ( m_settings->Format == FORMAT_WIGGLE )   pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintWiggle;
+    else { 
         cerr << "Unrecognized format: " << m_settings->Format << endl;
         cerr << "Please see help|README (?) for details on supported formats " << endl;
+        formatError = true;
         convertedOk = false;
+    }
+    
+    // ------------------------
+    // do conversion
+    if ( !formatError ) {
+        BamAlignment a;
+        while ( reader.GetNextAlignment(a) ) {
+            (this->*pFunction)(a);
+        }
     }
     
     // ------------------------
     // clean up & exit
     reader.Close();
     if ( m_settings->HasOutputFilename ) outFile.close();
-    return convertedOk;  
+    return convertedOk;   
 }
 
 // ----------------------------------------------------------
 // Conversion/output methods
 // ----------------------------------------------------------
 
+void ConvertTool::ConvertToolPrivate::PrintBed(const BamAlignment& a)      { 
+  
+    // tab-delimited, 0-based half-open 
+    // (e.g. a 50-base read aligned to pos 10 could have BED coordinates (10, 60) instead of BAM coordinates (10, 59) )
+    // <chromName> <chromStart> <chromEnd> <readName> <score> <strand>
+
+    m_out << m_references.at(a.RefID).RefName << "\t"
+          << a.Position << "\t"
+          << a.GetEndPosition() + 1 << "\t"
+          << a.Name << "\t"
+          << a.MapQuality << "\t"
+          << (a.IsReverseStrand() ? "-" : "+") << endl;
+}
+
+void ConvertTool::ConvertToolPrivate::PrintBedGraph(const BamAlignment& a) { 
+    ; 
+}
+
 // print BamAlignment in FASTA format
 // N.B. - uses QueryBases NOT AlignedBases
-void ConvertTool::ConvertToolPrivate::PrintFASTA(const BamAlignment& a) { 
+void ConvertTool::ConvertToolPrivate::PrintFasta(const BamAlignment& a) { 
     
     // >BamAlignment.Name
-    // BamAlignment.QueryBases
+    // BamAlignment.QueryBases (up to FASTA_LINE_MAX bases per line)
     // ...
   
     // print header
@@ -269,7 +273,7 @@ void ConvertTool::ConvertToolPrivate::PrintFASTA(const BamAlignment& a) {
 
 // print BamAlignment in FASTQ format
 // N.B. - uses QueryBases NOT AlignedBases
-void ConvertTool::ConvertToolPrivate::PrintFASTQ(const BamAlignment& a) { 
+void ConvertTool::ConvertToolPrivate::PrintFastq(const BamAlignment& a) { 
   
     // @BamAlignment.Name
     // BamAlignment.QueryBases
@@ -283,7 +287,7 @@ void ConvertTool::ConvertToolPrivate::PrintFASTQ(const BamAlignment& a) {
 }
 
 // print BamAlignment in JSON format
-void ConvertTool::ConvertToolPrivate::PrintJSON(const BamAlignment& a) {
+void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a) {
   
     // write name & alignment flag
     m_out << "{\"name\":\"" << a.Name << "\",\"alignmentFlag\":\"" << a.AlignmentFlag << "\",";
@@ -417,7 +421,7 @@ void ConvertTool::ConvertToolPrivate::PrintJSON(const BamAlignment& a) {
 }
 
 // print BamAlignment in SAM format
-void ConvertTool::ConvertToolPrivate::PrintSAM(const BamAlignment& a) {
+void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
   
     // tab-delimited
     // <QNAME> <FLAG> <RNAME> <POS> <MAPQ> <CIGAR> <MRNM> <MPOS> <ISIZE> <SEQ> <QUAL> [ <TAG>:<VTYPE>:<VALUE> [...] ]
@@ -540,4 +544,8 @@ void ConvertTool::ConvertToolPrivate::PrintSAM(const BamAlignment& a) {
     }
 
     m_out << endl;
+}
+
+void ConvertTool::ConvertToolPrivate::PrintWiggle(const BamAlignment& a) { 
+    ; 
 }

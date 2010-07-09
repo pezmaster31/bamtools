@@ -16,6 +16,7 @@
 #include "bamtools_convert.h"
 //#include "bamtools_format.h"
 #include "bamtools_options.h"
+#include "bamtools_utilities.h"
 #include "BGZF.h"
 #include "BamReader.h"
 #include "BamMultiReader.h"
@@ -45,20 +46,25 @@ namespace BamTools {
 struct ConvertTool::ConvertSettings {
 
     // flags
-    bool HasInputBamFilename;
+    bool HasInputBamFilenames;
     bool HasOutputBamFilename;
     bool HasFormat;
+    bool HasRegion;
 
     // filenames
-    string InputFilename;
+    //string InputFilename;
+    vector<string> InputFiles;
     string OutputFilename;
     string Format;
+
+    // region
+    string Region;
     
     // constructor
     ConvertSettings(void)
-        : HasInputBamFilename(false)
+        : HasInputBamFilenames(false)
         , HasOutputBamFilename(false)
-        , InputFilename(Options::StandardIn())
+        //, InputFilename(Options::StandardIn())
         , OutputFilename(Options::StandardOut())
     { } 
 };  
@@ -75,9 +81,12 @@ ConvertTool::ConvertTool(void)
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInputBamFilename,  m_settings->InputFilename,  IO_Opts, Options::StandardIn());
+    //Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInputBamFilename,  m_settings->InputFilename,  IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-in",  "BAM filename", "the input BAM file(s)", "", m_settings->HasInputBamFilenames,  m_settings->InputFiles, IO_Opts, Options::StandardIn());
     Options::AddValueOption("-out",    "BAM filename", "the output BAM file",   "", m_settings->HasOutputBamFilename, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
     Options::AddValueOption("-format", "FORMAT", "the output file format - see README for recognized formats", "", m_settings->HasFormat, m_settings->Format, IO_Opts);
+    OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
+    Options::AddValueOption("-region", "REGION", "genomic region. Index file is recommended for better performance, and is read automatically if it exists as <filename>.bai. See \'bamtools help index\' for more  details on creating one", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
 }
 
 ConvertTool::~ConvertTool(void) {
@@ -98,9 +107,16 @@ int ConvertTool::Run(int argc, char* argv[]) {
     Options::Parse(argc, argv, 1);
     
     // open files
-    BamReader reader;
-    reader.Open(m_settings->InputFilename);
+    BamMultiReader reader;
+    reader.Open(m_settings->InputFiles);
     references = reader.GetReferenceData();
+
+    BamRegion region;
+    if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
+        if ( !reader.SetRegion(region) ) {
+           cerr << "Could not set BamReader region to REGION: " << m_settings->Region << endl;
+        }
+    }
         
     // ----------------------------------------
     // do conversion,depending on desired output format

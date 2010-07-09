@@ -16,6 +16,7 @@
 
 #include "bamtools_convert.h"
 #include "bamtools_options.h"
+#include "bamtools_utilities.h"
 #include "BGZF.h"
 #include "BamReader.h"
 #include "BamMultiReader.h"
@@ -77,7 +78,7 @@ struct ConvertTool::ConvertSettings {
     bool HasRegion;
 
     // options
-    vector<string> InputFilenames;
+    vector<string> InputFiles;
     string OutputFilename;
     string Format;
     string Region;
@@ -105,8 +106,8 @@ ConvertTool::ConvertTool(void)
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInputBamFilenames,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());
-    Options::AddValueOption("-out",    "BAM filename", "the output BAM file",   "", m_settings->HasOutputBamFilename,  m_settings->OutputFilename, IO_Opts, Options::StandardOut());
+    Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInputFilenames,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-out",    "BAM filename", "the output BAM file",   "", m_settings->HasOutputFilename,  m_settings->OutputFilename, IO_Opts, Options::StandardOut());
     Options::AddValueOption("-format", "FORMAT", "the output file format - see README for recognized formats", "", m_settings->HasFormat, m_settings->Format, IO_Opts);
    
     OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
@@ -158,13 +159,13 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
     // initialize conversion input/output
         
     // set to default input if none provided
-    if ( !m_settings->HasInputBamFilename ) 
+    if ( !m_settings->HasInputFilenames ) 
         m_settings->InputFiles.push_back(Options::StandardIn());
     
     // open files
     BamMultiReader reader;
     reader.Open(m_settings->InputFiles);
-    references = reader.GetReferenceData();
+    m_references = reader.GetReferenceData();
 
     BamRegion region;
     if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {

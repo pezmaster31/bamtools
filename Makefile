@@ -6,7 +6,9 @@ API=		BGZF.o \
 		BamReader.o \
 		BamWriter.o \
 		BamMultiReader.o
-UTILS=		bamtools_options.o \
+UTILS=		bamtools_fasta.o \
+		bamtools_options.o \
+		bamtools_pileup.o \
 		bamtools_utilities.o
 TOOLKIT=	bamtools_convert.o \
 		bamtools_count.o \

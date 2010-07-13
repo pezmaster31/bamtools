@@ -1,3 +1,16 @@
+// ***************************************************************************
+// bamtools_pileup.h (c) 2010 Derek Barnett, Erik Garrison
+// Marth Lab, Department of Biology, Boston College
+// All rights reserved.
+// ---------------------------------------------------------------------------
+// Last modified: 13 July 2010
+// ---------------------------------------------------------------------------
+// Provides pileup conversion functionality.  
+// 
+// The 'assembly' aspect of pileup makes this more complicated than the 
+// simpler one-to-one conversion methods for other formats.
+// ***************************************************************************
+
 #ifndef BAMTOOLS_PILEUP_H
 #define BAMTOOLS_PILEUP_H
 

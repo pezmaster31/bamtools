@@ -1,3 +1,16 @@
+// ***************************************************************************
+// bamtools_pileup.cpp (c) 2010 Derek Barnett, Erik Garrison
+// Marth Lab, Department of Biology, Boston College
+// All rights reserved.
+// ---------------------------------------------------------------------------
+// Last modified: 13 July 2010
+// ---------------------------------------------------------------------------
+// Provides pileup conversion functionality.  
+// 
+// The 'assembly' aspect of pileup makes this more complicated than the 
+// simpler one-to-one conversion methods for other formats.
+// ***************************************************************************
+
 #include <vector>
 #include "BamMultiReader.h"
 #include "bamtools_pileup.h"

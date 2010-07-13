@@ -1,3 +1,15 @@
+// ***************************************************************************
+// BamIndex.h (c) 2009 Derek Barnett
+// Marth Lab, Department of Biology, Boston College
+// All rights reserved.
+// ---------------------------------------------------------------------------
+// Last modified: 13 July 2010 (DB)
+// ---------------------------------------------------------------------------
+// Provides index functionality - both for the default (standardized) BAM 
+// index format (.bai) as well as a BamTools-specific (nonstandard) index 
+// format (.bti).
+// ***************************************************************************
+
 #ifndef BAM_INDEX_H
 #define BAM_INDEX_H
 

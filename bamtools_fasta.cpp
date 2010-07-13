@@ -1,3 +1,13 @@
+// ***************************************************************************
+// bamtools_fasta.cpp (c) 2010 Derek Barnett, Erik Garrison
+// Marth Lab, Department of Biology, Boston College
+// All rights reserved.
+// ---------------------------------------------------------------------------
+// Last modified: 13 July 2010
+// ---------------------------------------------------------------------------
+// Provides FASTA reading/indexing functionality.
+// ***************************************************************************
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -157,12 +167,26 @@ bool Fasta::FastaPrivate::CreateIndex(const string& indexFilename) {
     string sequence = "";
     while ( GetNextHeader(header) ) {
         
+        // ---------------------------
         // build index entry data
         FastaIndexData data;
-        GetNameFromHeader(header, data.Name);
+        
+        // store file offset of beginning of DNA sequence (after header)
         data.Offset = ftello(Stream);
         
-        GetNextSequence(sequence);
+        // parse header, store sequence name in data.Name
+        if ( !GetNameFromHeader(header, data.Name) ) {
+            cerr << "FASTA error : could not parse read name from FASTA header" << endl;
+            return false;
+        }
+        
+        // retrieve FASTA sequence
+        if ( !GetNextSequence(sequence) ) {
+            cerr << "FASTA error : could not read in next sequence from FASTA file" << endl;
+            return false;
+        }
+        
+        // store sequence length & line/byte lengths
         data.Length = sequence.length();
         data.LineLength = lineLength;
         data.ByteLength = byteLength;
@@ -305,7 +329,7 @@ bool Fasta::FastaPrivate::GetNameFromHeader(const string& header, string& name) 
     }
 
     if ( start == stop ) {
-        cout << "FASTA error : could not parse read name from FASTA header." << endl;
+        cerr << "FASTA error : could not parse read name from FASTA header" << endl;
         return false;
     }
 
@@ -582,7 +606,7 @@ Fasta::~Fasta(void) {
     d = 0;
 }
 
-bool Fasta::Close(void) {
+bool Fasta::Close(void) { 
     return d->Close();
 }
 

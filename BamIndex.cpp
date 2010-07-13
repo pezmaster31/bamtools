@@ -1,3 +1,15 @@
+// ***************************************************************************
+// BamIndex.cpp (c) 2009 Derek Barnett
+// Marth Lab, Department of Biology, Boston College
+// All rights reserved.
+// ---------------------------------------------------------------------------
+// Last modified: 13 July 2010 (DB)
+// ---------------------------------------------------------------------------
+// Provides index functionality - both for the default (standardized) BAM 
+// index format (.bai) as well as a BamTools-specific (nonstandard) index 
+// format (.bti).
+// ***************************************************************************
+
 #include <cstdio>
 #include <cstdlib>
 #include <algorithm>
@@ -747,15 +759,6 @@ bool BamToolsIndex::Build(void) {
         // if block is full, get offset for next block, reset currentBlockCount
         if ( currentBlockCount == d->m_blockSize ) {
           
-//             cerr << "-------------------------------" << endl;
-//             cerr << "BlockCount = " << currentBlockCount << endl;
-//             cerr << endl;
-//             cerr << "Storing entry: " << endl;
-//             cerr << "\trefID  : " << blockStartId << endl;
-//             cerr << "\tpos    : " << blockStartPosition << endl;
-//             cerr << "\toffset : " << blockStartOffset << endl;
-//             
-          
             d->m_indexData.push_back( BamToolsIndexEntry(blockStartOffset, blockStartId, blockStartPosition) );
             blockStartOffset = m_BGZF->Tell();
             currentBlockCount = 0;
@@ -796,7 +799,6 @@ bool BamToolsIndex::GetOffsets(const BamRegion& region, const bool isRightBoundS
         return false;
     
     // store offset & return success
-/*    cerr << "BTI::GetOffsets() : calculated offset = " << previousOffset << endl;*/
     offsets.push_back(previousOffset);
     return true; 
 }

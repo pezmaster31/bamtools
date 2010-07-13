@@ -1,3 +1,13 @@
+// ***************************************************************************
+// bamtools_fasta.h (c) 2010 Derek Barnett, Erik Garrison
+// Marth Lab, Department of Biology, Boston College
+// All rights reserved.
+// ---------------------------------------------------------------------------
+// Last modified: 13 July 2010
+// ---------------------------------------------------------------------------
+// Provides FASTA reading/indexing functionality.
+// ***************************************************************************
+
 #ifndef BAMTOOLS_FASTA_H
 #define BAMTOOLS_FASTA_H
 

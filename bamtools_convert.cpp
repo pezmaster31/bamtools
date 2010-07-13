@@ -16,6 +16,7 @@
 
 #include "bamtools_convert.h"
 #include "bamtools_options.h"
+#include "bamtools_pileup.h"
 #include "bamtools_utilities.h"
 #include "BGZF.h"
 #include "BamReader.h"
@@ -33,6 +34,7 @@ namespace BamTools {
     static const string FORMAT_FASTQ    = "fastq";
     static const string FORMAT_JSON     = "json";
     static const string FORMAT_SAM      = "sam";
+    static const string FORMAT_PILEUP   = "pileup";
     static const string FORMAT_WIGGLE   = "wig";
 
     // other constants
@@ -79,11 +81,18 @@ struct ConvertTool::ConvertSettings {
     bool HasFormat;
     bool HasRegion;
 
+    // pileup flags
+    bool HasFastaFilename;
+    bool IsPrintingPileupMapQualities;
+    
     // options
     vector<string> InputFiles;
     string OutputFilename;
     string Format;
     string Region;
+    
+    // pileup options
+    string FastaFilename;
 
     // constructor
     ConvertSettings(void)
@@ -91,6 +100,8 @@ struct ConvertTool::ConvertSettings {
         , HasOutputFilename(false)
         , HasFormat(false)
         , HasRegion(false)
+        , HasFastaFilename(false)
+        , IsPrintingPileupMapQualities(false)
         , OutputFilename(Options::StandardOut())
     { } 
 };  
@@ -114,6 +125,10 @@ ConvertTool::ConvertTool(void)
    
     OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
     Options::AddValueOption("-region", "REGION", "genomic region. Index file is recommended for better performance, and is read automatically if it exists as <filename>.bai. See \'bamtools help index\' for more  details on creating one", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
+    
+    OptionGroup* PileupOpts = Options::CreateOptionGroup("Pileup Options");
+    Options::AddValueOption("-fasta", "FASTA filename", "FASTA reference file", "", m_settings->HasFastaFilename, m_settings->FastaFilename, PileupOpts, "");
+    Options::AddOption("-mapqual", "print the mapping qualities", m_settings->IsPrintingPileupMapQualities, PileupOpts);
 }
 
 ConvertTool::~ConvertTool(void) {
@@ -155,6 +170,8 @@ ConvertTool::ConvertToolPrivate::~ConvertToolPrivate(void) { }
 
 bool ConvertTool::ConvertToolPrivate::Run(void) {
  
+    bool convertedOk = true;
+  
     // ------------------------------------
     // initialize conversion input/output
         
@@ -162,51 +179,84 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
     if ( !m_settings->HasInputFilenames ) 
         m_settings->InputFiles.push_back(Options::StandardIn());
     
-    // open files
+    // open input files
     BamMultiReader reader;
     reader.Open(m_settings->InputFiles);
     m_references = reader.GetReferenceData();
 
+    // set region if specified
     BamRegion region;
-    if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
-        if ( !reader.SetRegion(region) ) {
-           cerr << "Could not set BamReader region to REGION: " << m_settings->Region << endl;
+    if ( m_settings->HasRegion ) {
+        if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
+            if ( !reader.SetRegion(region) )
+              cerr << "Could not set BamReader region to REGION: " << m_settings->Region << endl;
         }
     }
         
-    // if an output filename given, open outfile 
+    // if output file given
     ofstream outFile;
-    if ( m_settings->HasOutputFilename ) { 
+    if ( m_settings->HasOutputFilename ) {
+      
+        // open output file stream
         outFile.open(m_settings->OutputFilename.c_str());
-        if (!outFile) { cerr << "Could not open " << m_settings->OutputFilename << " for output" << endl; return false; }
-        m_out.rdbuf(outFile.rdbuf()); // set m_out to file's streambuf
+        if ( !outFile ) {
+            cerr << "Could not open " << m_settings->OutputFilename << " for output" << endl; 
+            return false; 
+        }
+        
+        // set m_out to file's streambuf
+        m_out.rdbuf(outFile.rdbuf()); 
     }
     
     // ------------------------
-    // determine format type
-    bool formatError = false;
-    bool convertedOk = true;
-    void (BamTools::ConvertTool::ConvertToolPrivate::*pFunction)(const BamAlignment&) = 0;
-    if      ( m_settings->Format == FORMAT_BED )      pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintBed;
-    else if ( m_settings->Format == FORMAT_BEDGRAPH ) pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintBedGraph;
-    else if ( m_settings->Format == FORMAT_FASTA )    pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintFasta;
-    else if ( m_settings->Format == FORMAT_FASTQ )    pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintFastq;
-    else if ( m_settings->Format == FORMAT_JSON )     pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintJson;
-    else if ( m_settings->Format == FORMAT_SAM )      pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintSam;
-    else if ( m_settings->Format == FORMAT_WIGGLE )   pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintWiggle;
-    else { 
-        cerr << "Unrecognized format: " << m_settings->Format << endl;
-        cerr << "Please see help|README (?) for details on supported formats " << endl;
-        formatError = true;
-        convertedOk = false;
+    // pileup is special case
+    if ( m_settings->Format == FORMAT_PILEUP ) {
+        
+        // initialize pileup input/output
+        Pileup pileup(&reader, &m_out);
+        
+        // ---------------------------
+        // configure pileup settings
+        
+        if ( m_settings->HasRegion ) 
+            pileup.SetRegion(region);
+        
+        if ( m_settings->HasFastaFilename ) 
+            pileup.SetFastaFilename(m_settings->FastaFilename);
+        
+        pileup.SetIsPrintingMapQualities( m_settings->IsPrintingPileupMapQualities );
+        
+        // run pileup
+        convertedOk = pileup.Run();
     }
     
-    // ------------------------
-    // do conversion
-    if ( !formatError ) {
-        BamAlignment a;
-        while ( reader.GetNextAlignment(a) ) {
-            (this->*pFunction)(a);
+    // -------------------------------------
+    // else determine 'simpler' format type
+    else {
+    
+        bool formatError = false;
+        void (BamTools::ConvertTool::ConvertToolPrivate::*pFunction)(const BamAlignment&) = 0;
+        if      ( m_settings->Format == FORMAT_BED )      pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintBed;
+        else if ( m_settings->Format == FORMAT_BEDGRAPH ) pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintBedGraph;
+        else if ( m_settings->Format == FORMAT_FASTA )    pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintFasta;
+        else if ( m_settings->Format == FORMAT_FASTQ )    pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintFastq;
+        else if ( m_settings->Format == FORMAT_JSON )     pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintJson;
+        else if ( m_settings->Format == FORMAT_SAM )      pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintSam;
+        else if ( m_settings->Format == FORMAT_WIGGLE )   pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintWiggle;
+        else { 
+            cerr << "Unrecognized format: " << m_settings->Format << endl;
+            cerr << "Please see help|README (?) for details on supported formats " << endl;
+            formatError = true;
+            convertedOk = false;
+        }
+        
+        // ------------------------
+        // do conversion
+        if ( !formatError ) {
+            BamAlignment a;
+            while ( reader.GetNextAlignment(a) ) {
+                (this->*pFunction)(a);
+            }
         }
     }
     

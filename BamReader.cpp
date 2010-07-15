@@ -732,23 +732,23 @@ bool BamReader::BamReaderPrivate::Open(const string& filename, const string& ind
 // returns BAM file pointer to beginning of alignment data
 bool BamReader::BamReaderPrivate::Rewind(void) {
    
-    // find first reference that has alignments in the BAM file
-    int refID = 0;
-    int refCount = References.size();
-    for ( ; refID < refCount; ++refID ) {
-        if ( References.at(refID).RefHasAlignments ) 
-            break;
-    }
+    // rewind to first alignment
+    if ( !mBGZF.Seek(AlignmentsBeginOffset) ) return false;
+  
+    // retrieve first alignment data
+    BamAlignment al;
+    if ( !GetNextAlignmentCore(al) ) return false;
+      
+    // reset default region info using first alignment in file
+    Region.LeftRefID      = al.RefID;
+    Region.LeftPosition   = al.Position;
+    Region.RightRefID     = -1;
+    Region.RightPosition  = -1;
+    IsLeftBoundSpecified  = false;
+    IsRightBoundSpecified = false; 
 
-    // reset default region info
-    Region.LeftRefID = refID;
-    Region.LeftPosition = 0;
-    Region.RightRefID = -1;
-    Region.RightPosition = -1;
-    IsLeftBoundSpecified = false;
-    IsRightBoundSpecified = false;
-
-    // return success/failure of seek
+    // rewind back to before first alignment
+    // return success/fail of seek
     return mBGZF.Seek(AlignmentsBeginOffset);
 }
 

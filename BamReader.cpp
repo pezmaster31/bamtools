@@ -737,7 +737,7 @@ bool BamReader::BamReaderPrivate::Rewind(void) {
   
     // retrieve first alignment data
     BamAlignment al;
-    if ( !GetNextAlignmentCore(al) ) return false;
+    if ( !LoadNextAlignment(al) ) return false;
       
     // reset default region info using first alignment in file
     Region.LeftRefID      = al.RefID;

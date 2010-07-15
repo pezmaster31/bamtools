@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 16 June 2010 (DB)
+// Last modified: 15 July 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic constants, data structures, etc. for using BAM files
 // ***************************************************************************
@@ -133,7 +133,8 @@ struct BamAlignment {
         int32_t      MateRefID;         // ID number for reference sequence where alignment's mate was aligned
         int32_t      MatePosition;      // Position (0-based) where alignment's mate starts
         int32_t      InsertSize;        // Mate-pair insert size
-        
+          
+          
         struct BamAlignmentSupportData {
       
             // data members
@@ -142,7 +143,7 @@ struct BamAlignment {
             uint32_t    NumCigarOperations;
             uint32_t    QueryNameLength;
             uint32_t    QuerySequenceLength;
-            bool        IsParsed;
+            bool        HasCoreOnly;
             
             // constructor
             BamAlignmentSupportData(void)
@@ -150,7 +151,7 @@ struct BamAlignment {
                 , NumCigarOperations(0)
                 , QueryNameLength(0)
                 , QuerySequenceLength(0)
-                , IsParsed(false)
+                , HasCoreOnly(false)
             { }
         };
         

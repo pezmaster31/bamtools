@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 9 July 2010 (DB)
+// Last modified: 15 July 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -350,8 +350,8 @@ bool BamReader::BamReaderPrivate::BuildCharData(BamAlignment& bAlignment) {
     bAlignment.TagData.resize(tagDataLength);
     memcpy((char*)bAlignment.TagData.data(), tagData, tagDataLength);
     
-    // set support data parsed flag
-    bAlignment.SupportData.IsParsed = true;
+    // clear the core-only flag
+    bAlignment.SupportData.HasCoreOnly = false;
     
     // return success
     return true;
@@ -423,6 +423,9 @@ bool BamReader::BamReaderPrivate::GetNextAlignmentCore(BamAlignment& bAlignment)
     // if valid alignment available
     if ( LoadNextAlignment(bAlignment) ) {
 
+        // set core-only flag
+        bAlignment.SupportData.HasCoreOnly = true;
+      
         // if region not specified, return success
         if ( !IsLeftBoundSpecified ) return true;
 

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 9 July 2010 (DB)
+// Last modified: 19 July 2010 (DB)
 // ---------------------------------------------------------------------------
 // BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -24,6 +24,18 @@
 
 // zlib includes
 #include "zlib.h"
+
+// Platform-specific large-file support
+#ifndef BAMTOOLS_LFS
+#define BAMTOOLS_LFS
+    #ifdef WIN32
+        #define ftell64(a)     _ftelli64(a)
+        #define fseek64(a,b,c) _fseeki64(a,b,c)
+    #else
+        #define ftell64(a)     ftello(a)
+        #define fseek64(a,b,c) fseeko(a,b,c) 
+    #endif
+#endif // BAMTOOLS_LFS
 
 // Platform-specific type definitions
 #ifndef BAMTOOLS_TYPES

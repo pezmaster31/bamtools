@@ -200,7 +200,7 @@ bool Fasta::FastaPrivate::CreateIndex(const string& indexFilename) {
     
     // open index file
     if ( !indexFilename.empty() ) {
-        IndexStream = fopen64(indexFilename.c_str(), "wb");
+        IndexStream = fopen(indexFilename.c_str(), "wb");
         if ( !IndexStream ) {
             cerr << "FASTA error : Could not open " << indexFilename << " for writing." << endl;
             return false;
@@ -531,7 +531,7 @@ bool Fasta::FastaPrivate::Open(const string& filename, const string& indexFilena
     bool success = true;
   
     // open FASTA filename
-    Stream = fopen64(filename.c_str(), "rb");
+    Stream = fopen(filename.c_str(), "rb");
     if ( !Stream ) {
         cerr << "FASTA error: Could not open " << filename << " for reading" << endl;
         return false;
@@ -541,7 +541,7 @@ bool Fasta::FastaPrivate::Open(const string& filename, const string& indexFilena
     
     // open index file if it exists
     if ( !indexFilename.empty() ) {
-        IndexStream = fopen64(indexFilename.c_str(), "rb");
+        IndexStream = fopen(indexFilename.c_str(), "rb");
         if ( !IndexStream ) {
             cerr << "FASTA error : Could not open " << indexFilename << " for reading." << endl;
             return false;

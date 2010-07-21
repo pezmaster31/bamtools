@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 15 July 2010 (DB)
+// Last modified: 21 July 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic constants, data structures, etc. for using BAM files
 // ***************************************************************************
@@ -12,6 +12,7 @@
 #define BAMAUX_H
 
 // C inclues
+#include <cctype>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>

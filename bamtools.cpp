@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 2 June 2010
+// Last modified: 20 July 2010
 // ---------------------------------------------------------------------------
 // Integrates a number of BamTools functionalities into a single executable.
 // ***************************************************************************
@@ -19,7 +19,8 @@
 #include "bamtools_header.h"
 #include "bamtools_index.h"
 #include "bamtools_merge.h"
-#include "bamtools_sam.h"
+#include "bamtools_random.h"
+// #include "bamtools_sam.h"
 #include "bamtools_sort.h"
 #include "bamtools_stats.h"
 
@@ -35,7 +36,8 @@ static const string FILTER   = "filter";
 static const string HEADER   = "header";
 static const string INDEX    = "index";
 static const string MERGE    = "merge";
-static const string SAM      = "sam";
+static const string RANDOM   = "random";
+// static const string SAM      = "sam";
 static const string SORT     = "sort";
 static const string STATS    = "stats";
 
@@ -64,7 +66,8 @@ int Help(int argc, char* argv[]) {
         if ( argv[2] == HEADER )   tool = new HeaderTool;
         if ( argv[2] == INDEX )    tool = new IndexTool;
         if ( argv[2] == MERGE )    tool = new MergeTool;
-        if ( argv[2] == SAM )      tool = new SamTool;
+        if ( argv[2] == RANDOM )   tool = new RandomTool;
+//         if ( argv[2] == SAM )      tool = new SamTool;
         if ( argv[2] == SORT )     tool = new SortTool;
         if ( argv[2] == STATS )    tool = new StatsTool;
         
@@ -84,7 +87,8 @@ int Help(int argc, char* argv[]) {
     cerr << "\theader    Prints BAM header information" << endl;
     cerr << "\tindex     Generates index for BAM file" << endl;
     cerr << "\tmerge     Merge multiple BAM files into single file" << endl;
-    cerr << "\tsam       Prints the BAM file in SAM (text) format" << endl;
+    cerr << "\trandom    Grab a random subset of alignments" << endl;
+//     cerr << "\tsam       Prints the BAM file in SAM (text) format" << endl;
     cerr << "\tsort      Sorts the BAM file according to some criteria" << endl;
     cerr << "\tstats     Prints some basic statistics from the input BAM file" << endl;
     cerr << endl;
@@ -127,7 +131,8 @@ int main(int argc, char* argv[]) {
     if ( argv[1] == HEADER )   tool = new HeaderTool;
     if ( argv[1] == INDEX )    tool = new IndexTool;
     if ( argv[1] == MERGE )    tool = new MergeTool;
-    if ( argv[1] == SAM )      tool = new SamTool;
+    if ( argv[1] == RANDOM )   tool = new RandomTool;
+//     if ( argv[1] == SAM )      tool = new SamTool;
     if ( argv[1] == SORT )     tool = new SortTool;
     if ( argv[1] == STATS )    tool = new StatsTool;
     

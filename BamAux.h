@@ -24,6 +24,9 @@
 #include <utility>
 #include <vector>
 
+#include <iostream>
+#include <typeinfo>
+
 // Platform-specific type definitions
 #ifndef BAMTOOLS_TYPES
 #define BAMTOOLS_TYPES
@@ -103,11 +106,16 @@ struct BamAlignment {
 
     // Tag data access methods
     public:
-        bool GetEditDistance(uint8_t& editDistance) const;	// get "NM" tag data - contributed by Aaron Quinlan
-        bool GetReadGroup(std::string& readGroup) const;	// get "RG" tag data
+        // generic tag data access methods 
+        bool GetTag(const std::string& tag, std::string& destination) const;    // access variable-length char or hex strings 
+        bool GetTag(const std::string& tag, uint32_t& destination) const;       // access unsigned integer data
+        bool GetTag(const std::string& tag, int32_t& destination) const;        // access signed integer data
+        bool GetTag(const std::string& tag, float& destination) const;          // access floating point data
         
-        bool GetTag(const std::string& tag, std::string& destination);
-        template<typename T> bool GetTag(const std::string& tag, T& destination);
+        // specific tag data access methods - only remain here for legacy support
+        bool GetEditDistance(uint8_t& editDistance) const;      // get "NM" tag data - contributed by Aaron Quinlan
+        bool GetReadGroup(std::string& readGroup) const;        // get "RG" tag data
+
 
     // Additional data access methods
     public:
@@ -115,7 +123,7 @@ struct BamAlignment {
 
     // 'internal' utility methods 
     private:
-        static void SkipToNextTag(const char storageType, char* &pTagData, unsigned int& numBytesParsed);
+        static bool SkipToNextTag(const char storageType, char* &pTagData, unsigned int& numBytesParsed);
 
     // Data members
     public:
@@ -313,7 +321,8 @@ int BamAlignment::GetEndPosition(bool usePadded) const {
 inline 
 bool BamAlignment::GetEditDistance(uint8_t& editDistance) const {
 
-    if ( TagData.empty() ) { return false; }
+    // make sure tag data exists
+    if ( TagData.empty() ) return false;
 
     // localize the tag data
     char* pTagData = (char*)TagData.data();
@@ -321,7 +330,7 @@ bool BamAlignment::GetEditDistance(uint8_t& editDistance) const {
     unsigned int numBytesParsed = 0;
 
     bool foundEditDistanceTag = false;
-    while( numBytesParsed < tagDataLen ) {
+    while ( numBytesParsed < tagDataLen ) {
 
         const char* pTagType = pTagData;
         const char* pTagStorageType = pTagData + 2;
@@ -335,12 +344,12 @@ bool BamAlignment::GetEditDistance(uint8_t& editDistance) const {
         }
 
         // get the storage class and find the next tag
-        if (*pTagStorageType == '\0') { return false; }
-        SkipToNextTag( *pTagStorageType, pTagData, numBytesParsed );
-        if (*pTagData == '\0') { return false; }
+        if ( *pTagStorageType == '\0' ) return false;
+        if ( !SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) ) return false;
+        if ( *pTagData == '\0' ) return false;
     }
     // return if the edit distance tag was not present
-    if ( !foundEditDistanceTag ) { return false; }
+    if ( !foundEditDistanceTag ) return false;
 
     // assign the editDistance value
     std::memcpy(&editDistance, pTagData, 1);
@@ -352,7 +361,8 @@ bool BamAlignment::GetEditDistance(uint8_t& editDistance) const {
 inline 
 bool BamAlignment::GetReadGroup(std::string& readGroup) const {
 
-    if ( TagData.empty() ) { return false; }
+    // make sure tag data exists
+    if ( TagData.empty() ) return false;
 
     // localize the tag data
     char* pTagData = (char*)TagData.data();
@@ -374,13 +384,13 @@ bool BamAlignment::GetReadGroup(std::string& readGroup) const {
         }
 
         // get the storage class and find the next tag
-        if (*pTagStorageType == '\0') { return false; }
-        SkipToNextTag( *pTagStorageType, pTagData, numBytesParsed );
-        if (*pTagData == '\0') { return false; }
+        if ( *pTagStorageType == '\0' ) return false;
+        if ( !SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) ) return false;
+        if ( *pTagData == '\0' ) return false;
     }
 
     // return if the read group tag was not present
-    if ( !foundReadGroupTag ) { return false; }
+    if ( !foundReadGroupTag ) return false;
 
     // assign the read group
     const unsigned int readGroupLen = std::strlen(pTagData);
@@ -390,9 +400,10 @@ bool BamAlignment::GetReadGroup(std::string& readGroup) const {
 }
 
 inline
-bool BamAlignment::GetTag(const std::string& tag, std::string& destination) {
+bool BamAlignment::GetTag(const std::string& tag, std::string& destination) const {
   
-    if ( TagData.empty() ) { return false; }
+    // make sure tag data exists
+    if ( TagData.empty() ) return false;
 
     // localize the tag data
     char* pTagData = (char*)TagData.data();
@@ -400,7 +411,7 @@ bool BamAlignment::GetTag(const std::string& tag, std::string& destination) {
     unsigned int numBytesParsed = 0;
 
     bool foundReadGroupTag = false;
-    while( numBytesParsed < tagDataLen ) {
+    while ( numBytesParsed < tagDataLen ) {
 
         const char* pTagType = pTagData;
         const char* pTagStorageType = pTagData + 2;
@@ -414,13 +425,13 @@ bool BamAlignment::GetTag(const std::string& tag, std::string& destination) {
         }
 
         // get the storage class and find the next tag
-        if (*pTagStorageType == '\0') { return false; }
-        SkipToNextTag( *pTagStorageType, pTagData, numBytesParsed );
-        if (*pTagData == '\0') { return false; }
+        if ( *pTagStorageType == '\0' ) return false; 
+        if ( !SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) ) return false;
+        if ( *pTagData == '\0' ) return false;
     }
 
     // return if the read group tag was not present
-    if ( !foundReadGroupTag ) { return false; }
+    if ( !foundReadGroupTag ) return false;
 
     // assign the read group
     const unsigned int dataLen = std::strlen(pTagData);
@@ -429,16 +440,106 @@ bool BamAlignment::GetTag(const std::string& tag, std::string& destination) {
     return true;
 }
 
-template<typename T> 
-bool BamAlignment::GetTag(const std::string& tag, T& destination) {
+inline
+bool BamAlignment::GetTag(const std::string& tag, uint32_t& destination) const {
   
-    if ( TagData.empty() ) { return false; }
+    // make sure data exists
+    if ( TagData.empty() ) return false;
+
+    // clear out destination
+    destination = 0;
 
     // localize the tag data
     char* pTagData = (char*)TagData.data();
     const unsigned int tagDataLen = TagData.size();
     unsigned int numBytesParsed = 0;
 
+    int destinationLength = 0;    
+    bool foundDesiredTag = false;
+    while ( numBytesParsed < tagDataLen ) {
+
+        const char* pTagType = pTagData;
+        const char* pTagStorageType = pTagData + 2;
+        pTagData       += 3;
+        numBytesParsed += 3;
+
+        // check the current tag
+        if ( strncmp(pTagType, tag.c_str(), 2) == 0 ) {
+            
+            // determine actual length of data depending on tag type
+            // this is necessary because some tags may be of variable byte-lengths (i.e. char or short)
+            const char type = *pTagStorageType;
+            switch(type) {
+
+                // 1 byte data
+                case 'A':
+                case 'c':
+                case 'C':
+                    destinationLength = 1;
+                    break;
+
+                // 2 byte data
+                case 's':
+                case 'S':
+                    destinationLength = 2;
+                    break;
+
+                // 4 byte data
+                case 'i':
+                case 'I':
+                    destinationLength = 4;
+                    break;
+
+                // unsupported type for integer destination (float & var-length strings)
+                case 'f':
+                case 'Z':
+                case 'H':
+                    printf("ERROR: Cannot store tag of type %c in integer destination\n", type);
+                    return false;
+
+                // unknown tag type
+                default:
+                    printf("ERROR: Unknown tag storage class encountered: [%c]\n", *pTagData);
+                    return false;
+            }
+            
+            foundDesiredTag = true;
+            break;
+        }
+
+        // get the storage class and find the next tag
+        if ( *pTagStorageType == '\0' ) return false;
+        if ( !SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) ) return false;
+        if ( *pTagData == '\0' ) return false;
+    }
+    // return if the edit distance tag was not present
+    if ( !foundDesiredTag ) return false; 
+
+    // assign the editDistance value
+    std::memcpy(&destination, pTagData, destinationLength);
+    return true;
+}
+
+inline
+bool BamAlignment::GetTag(const std::string& tag, int32_t& destination) const {
+    return GetTag(tag, (uint32_t&)destination);
+}
+
+inline
+bool BamAlignment::GetTag(const std::string& tag, float& destination) const {
+  
+    // make sure data exists
+    if ( TagData.empty() ) return false;
+
+    // clear out destination
+    destination = 0.0;
+
+    // localize the tag data
+    char* pTagData = (char*)TagData.data();
+    const unsigned int tagDataLen = TagData.size();
+    unsigned int numBytesParsed = 0;
+
+    int destinationLength = 0;
     bool foundDesiredTag = false;
     while( numBytesParsed < tagDataLen ) {
 
@@ -449,25 +550,63 @@ bool BamAlignment::GetTag(const std::string& tag, T& destination) {
 
         // check the current tag
         if ( strncmp(pTagType, tag.c_str(), 2) == 0 ) {
+          
+            // determine actual length of data depending on tag type
+            // this is necessary because some tags may be of variable byte-lengths (i.e. char or short)
+            const char type = *pTagStorageType;
+            switch(type) {
+
+                // 1 byte data
+                case 'A':
+                case 'c':
+                case 'C':
+                    destinationLength = 1;
+                    break;
+
+                // 2 byte data
+                case 's':
+                case 'S':
+                    destinationLength = 2;
+                    break;
+
+                // 4 byte data
+                case 'f':
+                case 'i':
+                case 'I':
+                    destinationLength = 4;
+                    break;
+                
+                // unsupported type (var-length strings)
+                case 'Z':
+                case 'H':
+                    printf("ERROR: Cannot store tag of type %c in integer destination\n", type);
+                    return false;
+
+                // unknown tag type
+                default:
+                    printf("ERROR: Unknown tag storage class encountered: [%c]\n", *pTagData);
+                    return false;
+            }
+            
             foundDesiredTag = true;
             break;
         }
 
         // get the storage class and find the next tag
-        if (*pTagStorageType == '\0') { return false; }
-        SkipToNextTag( *pTagStorageType, pTagData, numBytesParsed );
-        if (*pTagData == '\0') { return false; }
+        if ( *pTagStorageType == '\0' ) return false;
+        if ( !SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) ) return false;
+        if ( *pTagData == '\0' ) return false;
     }
     // return if the edit distance tag was not present
-    if ( !foundDesiredTag ) { return false; }
+    if ( !foundDesiredTag ) return false; 
 
     // assign the editDistance value
-    std::memcpy(&destination, pTagData, sizeof(T));
+    std::memcpy(&destination, pTagData, destinationLength);
     return true;
 }
 
 inline
-void BamAlignment::SkipToNextTag(const char storageType, char* &pTagData, unsigned int& numBytesParsed) {
+bool BamAlignment::SkipToNextTag(const char storageType, char* &pTagData, unsigned int& numBytesParsed) {
     
     switch(storageType) {
 
@@ -505,10 +644,14 @@ void BamAlignment::SkipToNextTag(const char storageType, char* &pTagData, unsign
         // ---------------------------
             break;
 
-        default:
+        default: 
+            // error case
             printf("ERROR: Unknown tag storage class encountered: [%c]\n", *pTagData);
-            exit(1);
+            return false;
     }
+    
+    // return success
+    return true;
 }
 
 // ----------------------------------------------------------------

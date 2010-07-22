@@ -47,20 +47,21 @@ BgzfData::~BgzfData(void) {
 // closes BGZF file
 void BgzfData::Close(void) {
 
-	// skip if file not open, otherwise set flag
+    // skip if file not open, otherwise set flag
     if ( !IsOpen ) return;
-    IsOpen = false;
 
-    // flush the current BGZF block
-    if ( IsWriteOnly ) FlushBlock();
-
-    // write an empty block (as EOF marker)
-    int blockLength = DeflateBlock();
-    fwrite(CompressedBlock, 1, blockLength, Stream);
+    // if writing to file, flush the current BGZF block,
+    // then write an empty block (as EOF marker)
+    if ( IsWriteOnly ) {
+        FlushBlock();
+        int blockLength = DeflateBlock();
+        fwrite(CompressedBlock, 1, blockLength, Stream);
+    }
     
     // flush and close
     fflush(Stream);
     fclose(Stream);
+    IsOpen = false;
 }
 
 // compresses the current block

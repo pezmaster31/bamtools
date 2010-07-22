@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 9 July 2010
+// Last modified: 22 July 2010
 // ---------------------------------------------------------------------------
 // Converts between BAM and a number of other formats
 // ***************************************************************************
@@ -83,6 +83,7 @@ struct ConvertTool::ConvertSettings {
 
     // pileup flags
     bool HasFastaFilename;
+    bool IsOmittingSamHeader;
     bool IsPrintingPileupMapQualities;
     
     // options
@@ -101,6 +102,7 @@ struct ConvertTool::ConvertSettings {
         , HasFormat(false)
         , HasRegion(false)
         , HasFastaFilename(false)
+        , IsOmittingSamHeader(false)
         , IsPrintingPileupMapQualities(false)
         , OutputFilename(Options::StandardOut())
     { } 
@@ -129,6 +131,9 @@ ConvertTool::ConvertTool(void)
     OptionGroup* PileupOpts = Options::CreateOptionGroup("Pileup Options");
     Options::AddValueOption("-fasta", "FASTA filename", "FASTA reference file", "", m_settings->HasFastaFilename, m_settings->FastaFilename, PileupOpts, "");
     Options::AddOption("-mapqual", "print the mapping qualities", m_settings->IsPrintingPileupMapQualities, PileupOpts);
+    
+    OptionGroup* SamOpts = Options::CreateOptionGroup("SAM Options");
+    Options::AddOption("-noheader", "omit the SAM header from output", m_settings->IsOmittingSamHeader, SamOpts);
 }
 
 ConvertTool::~ConvertTool(void) {
@@ -181,7 +186,7 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
     
     // open input files
     BamMultiReader reader;
-    reader.Open(m_settings->InputFiles);
+    reader.Open(m_settings->InputFiles, false);
     m_references = reader.GetReferenceData();
 
     // set region if specified
@@ -248,6 +253,12 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
             cerr << "Please see help|README (?) for details on supported formats " << endl;
             formatError = true;
             convertedOk = false;
+        }
+        
+        // if SAM format & not omitting header, print SAM header
+        if ( (m_settings->Format == FORMAT_SAM) && !m_settings->IsOmittingSamHeader ) {
+            string headerText = reader.GetHeaderText();
+            m_out << headerText;
         }
         
         // ------------------------
@@ -524,14 +535,14 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
     size_t index = 0;
     while ( index < tagDataLength ) {
 
-        // write tag name        
-        m_out << "\t" << a.TagData.substr(index, 2) << ":";
+        // write tag name   
+        string tagName = a.TagData.substr(index, 2);
+        m_out << "\t" << tagName << ":";
         index += 2;
         
         // get data type
         char type = a.TagData.at(index);
         ++index;
-        
         switch (type) {
             case('A') : 
                 m_out << "A:" << tagData[index]; 
@@ -549,7 +560,7 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
                 break;
             
             case('S') : 
-                m_out << "i:" << BgzfData::UnpackUnsignedShort(&tagData[index]); 
+                m_out << "i:" << BgzfData::UnpackUnsignedShort(&tagData[index]);
                 index += 2; 
                 break;
                 
@@ -580,7 +591,7 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
             
             case('Z') :
             case('H') : 
-                m_out << type << ":"; 
+                m_out << type << ":";
                 while (tagData[index]) {
                     m_out << tagData[index];
                     ++index;

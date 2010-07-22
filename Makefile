@@ -18,7 +18,6 @@ TOOLKIT=	bamtools_convert.o \
 		bamtools_index.o \
 		bamtools_merge.o \
 		bamtools_random.o \
-		bamtools_sam.o \
 		bamtools_sort.o \
 		bamtools_stats.o
 MAIN=		bamtools.o

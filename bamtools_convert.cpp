@@ -76,8 +76,8 @@ struct ConvertTool::ConvertToolPrivate {
 struct ConvertTool::ConvertSettings {
 
     // flags
-    bool HasInputFilenames;
-    bool HasOutputFilename;
+    bool HasInput;
+    bool HasOutput;
     bool HasFormat;
     bool HasRegion;
 
@@ -97,8 +97,8 @@ struct ConvertTool::ConvertSettings {
 
     // constructor
     ConvertSettings(void)
-        : HasInputFilenames(false)
-        , HasOutputFilename(false)
+        : HasInput(false)
+        , HasOutput(false)
         , HasFormat(false)
         , HasRegion(false)
         , HasFastaFilename(false)
@@ -117,12 +117,12 @@ ConvertTool::ConvertTool(void)
     , m_impl(0)
 {
     // set program details
-    Options::SetProgramInfo("bamtools convert", "converts between BAM and a number of other formats", "-in <filename> -out <filename> -format <FORMAT>");
+    Options::SetProgramInfo("bamtools convert", "converts BAM to a number of other formats", "-format <FORMAT> [-in <filename> -in <filename> ...] [-out <filename>] [other options]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInputFilenames,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());
-    Options::AddValueOption("-out",    "BAM filename", "the output BAM file",   "", m_settings->HasOutputFilename,  m_settings->OutputFilename, IO_Opts, Options::StandardOut());
+    Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInput,   m_settings->InputFiles,     IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-out",    "BAM filename", "the output BAM file",   "", m_settings->HasOutput,  m_settings->OutputFilename, IO_Opts, Options::StandardOut());
     Options::AddValueOption("-format", "FORMAT", "the output file format - see README for recognized formats", "", m_settings->HasFormat, m_settings->Format, IO_Opts);
    
     OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
@@ -181,7 +181,7 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
     // initialize conversion input/output
         
     // set to default input if none provided
-    if ( !m_settings->HasInputFilenames ) 
+    if ( !m_settings->HasInput ) 
         m_settings->InputFiles.push_back(Options::StandardIn());
     
     // open input files
@@ -200,7 +200,7 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
         
     // if output file given
     ofstream outFile;
-    if ( m_settings->HasOutputFilename ) {
+    if ( m_settings->HasOutput ) {
       
         // open output file stream
         outFile.open(m_settings->OutputFilename.c_str());
@@ -274,7 +274,7 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
     // ------------------------
     // clean up & exit
     reader.Close();
-    if ( m_settings->HasOutputFilename ) outFile.close();
+    if ( m_settings->HasOutput ) outFile.close();
     return convertedOk;   
 }
 

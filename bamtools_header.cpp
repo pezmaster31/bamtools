@@ -74,11 +74,11 @@ int HeaderTool::Run(int argc, char* argv[]) {
     
     // open files
     BamMultiReader reader;
-    reader.Open(m_settings->InputFiles, false);
+    if ( reader.Open(m_settings->InputFiles, false) ) {      
+        // dump header contents to stdout
+        cout << reader.GetHeaderText() << endl;
+    }
         
-    // dump header contents to stdout
-    cout << reader.GetHeaderText() << endl;
-    
     // clean up & exit
     reader.Close();
     return 0;

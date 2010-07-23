@@ -57,7 +57,6 @@ CountTool::CountTool(void)
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    //Options::AddValueOption("-in",    "BAM filename",        "the input BAM file", "", m_settings->HasInputBamFilename, m_settings->InputBamFilename, IO_Opts, Options::StandardIn());
     Options::AddValueOption("-in",  "BAM filename", "the input BAM file(s)", "", m_settings->HasInput,  m_settings->InputFiles, IO_Opts);
     //Options::AddValueOption("-index", "BAM index filename", "the BAM index file",  "", m_settings->HasBamIndexFilename, m_settings->BamIndexFilename, IO_Opts);
     
@@ -80,6 +79,9 @@ int CountTool::Run(int argc, char* argv[]) {
     // parse command line arguments
     Options::Parse(argc, argv, 1);
 
+    if ( !m_settings->HasInput ) 
+        m_settings->InputFiles.push_back(Options::StandardIn());
+    
     BamMultiReader reader;
     reader.Open(m_settings->InputFiles, false, true);
 

@@ -32,7 +32,7 @@
 namespace BamTools {
 
 #define ARGUMENT_LENGTH       35
-#define DESC_LENGTH_FIRST_ROW 42
+#define DESC_LENGTH_FIRST_ROW 50
 #define DESC_LENGTH           39
 #define MAX_LINE_LENGTH       78
 

@@ -70,6 +70,7 @@ class SortTool::SortToolPrivate {
         
     // internal methods
     private:
+        void ClearBuffer(vector<BamAlignment>& buffer);
         bool GenerateSortedRuns(void);
         bool HandleBufferContents(vector<BamAlignment>& buffer);
         bool MergeSortedRuns(void);
@@ -208,7 +209,7 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
     
     // while data available
     BamAlignment al;
-    while ( inputReader.GetNextAlignmentCore(al) ) {
+    while ( inputReader.GetNextAlignmentCore(al)) {
         
         // store alignments in buffer
         buffer.push_back(al);
@@ -262,7 +263,7 @@ bool SortTool::SortToolPrivate::MergeSortedRuns(void) {
     
     // while data available in temp files
     BamAlignment al;
-    while ( multiReader.GetNextAlignment(al) ) {
+    while ( multiReader.GetNextAlignmentCore(al) ) {
         mergedWriter.SaveAlignment(al);
     }
   

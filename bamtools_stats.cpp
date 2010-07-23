@@ -150,7 +150,6 @@ void StatsTool::StatsToolPrivate::PrintStats(void) {
         cout << "Singletons:        " << numSingletons << "\t(" << ((float)numSingletons/numPaired)*100 << "%)" << endl;
     }
     
-    
     if ( settings->IsShowingInsertSizeSummary ) {
       
         double avgInsertSize = 0.0;

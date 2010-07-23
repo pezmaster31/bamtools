@@ -86,7 +86,7 @@ int Help(int argc, char* argv[]) {
     cerr << "\tmerge     Merge multiple BAM files into single file" << endl;
     cerr << "\trandom    Grab a random subset of alignments" << endl;
     cerr << "\tsort      Sorts the BAM file according to some criteria" << endl;
-    cerr << "\tstats     Prints some basic statistics from the input BAM file" << endl;
+    cerr << "\tstats     Prints general alignment statistics" << endl;
     cerr << endl;
     cerr << "See 'bamtools help COMMAND' for more information on a specific command." << endl;
     cerr << endl;

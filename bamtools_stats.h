@@ -31,6 +31,9 @@ class StatsTool : public AbstractTool {
     private:
         struct StatsSettings;
         StatsSettings* m_settings;
+        
+        struct StatsToolPrivate;
+        StatsToolPrivate* m_impl;
 };
   
 } // namespace BamTools

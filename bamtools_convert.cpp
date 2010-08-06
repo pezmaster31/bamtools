@@ -388,8 +388,15 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a) {
         m_out << "\"queryBases\":\"" << a.QueryBases << "\",";
     
     // write qualities
-    if ( !a.Qualities.empty() )
-        m_out << "\"qualities\":\"" << a.Qualities << "\",";
+    if ( !a.Qualities.empty() ) {
+        string::const_iterator s = a.Qualities.begin();
+        m_out << "\"qualities\":[" << static_cast<short>(*s) - 33;
+        ++s;
+        for (; s != a.Qualities.end(); ++s) {
+            m_out << "," << static_cast<short>(*s) - 33;
+        }
+        m_out << "],";
+    }
     
     // write tag data
     const char* tagData = a.TagData.c_str();

@@ -342,9 +342,9 @@ void ConvertTool::ConvertToolPrivate::PrintFastq(const BamAlignment& a) {
     // BamAlignment.Qualities
   
     m_out << "@" << a.Name << endl
-          << a.QueryBases   << endl
-          << "+"            << endl
-          << a.Qualities    << endl;
+          << a.QueryBases  << endl
+          << "+"           << endl
+          << a.Qualities   << endl;
 }
 
 // print BamAlignment in JSON format

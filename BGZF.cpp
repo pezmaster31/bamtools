@@ -17,7 +17,7 @@ using namespace BamTools;
 using std::string;
 using std::min;
 
-BgzfData::BgzfData(bool writeUncompressed)
+BgzfData::BgzfData(void)
     : UncompressedBlockSize(DEFAULT_BLOCK_SIZE)
     , CompressedBlockSize(MAX_BLOCK_SIZE)
     , BlockLength(0)
@@ -25,7 +25,7 @@ BgzfData::BgzfData(bool writeUncompressed)
     , BlockAddress(0)
     , IsOpen(false)
     , IsWriteOnly(false)
-    , IsWriteUncompressed(writeUncompressed)
+    , IsWriteUncompressed(false)
     , Stream(NULL)
     , UncompressedBlock(NULL)
     , CompressedBlock(NULL)
@@ -62,6 +62,7 @@ void BgzfData::Close(void) {
     // flush and close
     fflush(Stream);
     fclose(Stream);
+    IsWriteUncompressed = false;
     IsOpen = false;
 }
 
@@ -221,7 +222,7 @@ int BgzfData::InflateBlock(const int& blockLength) {
 }
 
 // opens the BGZF file for reading (mode is either "rb" for reading, or "wb" for writing)
-bool BgzfData::Open(const string& filename, const char* mode) {
+bool BgzfData::Open(const string& filename, const char* mode, bool isWriteUncompressed ) {
 
     // determine open mode
     if ( strcmp(mode, "rb") == 0 )
@@ -254,8 +255,9 @@ bool BgzfData::Open(const string& filename, const char* mode) {
         return false;
     }
     
-    // set flag, return success
+    // set flags, return success
     IsOpen = true;
+    IsWriteUncompressed = isWriteUncompressed;
     return true;
 }
 

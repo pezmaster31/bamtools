@@ -35,7 +35,7 @@ struct BamWriter::BamWriterPrivate {
 
     // "public" interface
     void Close(void);
-    bool Open(const string& filename, const string& samHeader, const RefVector& referenceSequences);
+    bool Open(const string& filename, const string& samHeader, const RefVector& referenceSequences, bool isWriteUncompressed);
     void SaveAlignment(const BamAlignment& al);
 
     // internal methods
@@ -65,8 +65,8 @@ void BamWriter::Close(void) {
 }
 
 // opens the alignment archive
-bool BamWriter::Open(const string& filename, const string& samHeader, const RefVector& referenceSequences) {
-    return d->Open(filename, samHeader, referenceSequences);
+bool BamWriter::Open(const string& filename, const string& samHeader, const RefVector& referenceSequences, bool isWriteUncompressed) {
+    return d->Open(filename, samHeader, referenceSequences, isWriteUncompressed);
 }
 
 // saves the alignment to the alignment archive
@@ -202,10 +202,10 @@ void BamWriter::BamWriterPrivate::EncodeQuerySequence(const string& query, strin
 }
 
 // opens the alignment archive
-bool BamWriter::BamWriterPrivate::Open(const string& filename, const string& samHeader, const RefVector& referenceSequences) {
+bool BamWriter::BamWriterPrivate::Open(const string& filename, const string& samHeader, const RefVector& referenceSequences, bool isWriteUncompressed) {
 
     // open the BGZF file for writing, return failure if error
-    if ( !mBGZF.Open(filename, "wb") )
+    if ( !mBGZF.Open(filename, "wb", isWriteUncompressed) )
         return false;
 
     // ================

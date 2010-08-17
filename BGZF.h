@@ -93,7 +93,7 @@ struct BgzfData {
 
     // constructor & destructor
     public:
-        BgzfData(bool writeUncompressed = false);
+        BgzfData(void);
         ~BgzfData(void);
 
     // main interface methods
@@ -101,7 +101,7 @@ struct BgzfData {
         // closes BGZF file
         void Close(void);
         // opens the BGZF file (mode is either "rb" for reading, or "wb" for writing)
-        bool Open(const std::string& filename, const char* mode);
+        bool Open(const std::string& filename, const char* mode, bool isWriteUncompressed = false);
         // reads BGZF data into a byte buffer
         int Read(char* data, const unsigned int dataLength);
         // seek to position in BGZF file

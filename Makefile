@@ -1,6 +1,8 @@
 # ==========================
 # BamTools Makefile
 # (c) 2010 Derek Barnett
+#
+# top-level
 # ==========================
 
 # define main directories

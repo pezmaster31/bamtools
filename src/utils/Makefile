@@ -1,3 +1,10 @@
+# ==========================
+# BamTools Makefile
+# (c) 2010 Derek Barnett
+#
+# src/utils
+# ==========================
+
 API_DIR = ../api
 OBJ_DIR = ../../obj
 BIN_DIR = ../../bin

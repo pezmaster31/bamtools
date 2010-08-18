@@ -26,6 +26,9 @@ all:
 	@echo "Version: $$BAMTOOLS_VERSION"
 	@echo "========================================================="
 	
+	mkdir -p $(BIN_DIR)
+	mkdir -p $(OBJ_DIR)
+
 	@for dir in $(SUBDIRS); do \
 		echo "- Building in $$dir"; \
 		$(MAKE) --no-print-directory -C $$dir; \

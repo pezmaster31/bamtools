@@ -1,33 +1,41 @@
-CXX=		g++
-CXXFLAGS=	-Wall -O3 -D_FILE_OFFSET_BITS=64
-PROG= 		bamtools
-API=		BGZF.o \
-		BamIndex.o \
-		BamReader.o \
-		BamWriter.o \
-		BamMultiReader.o
-UTILS=		bamtools_fasta.o \
-		bamtools_options.o \
-		bamtools_pileup.o \
-		bamtools_utilities.o
-TOOLKIT=	bamtools_convert.o \
-		bamtools_count.o \
-		bamtools_coverage.o \
-		bamtools_filter.o \
-		bamtools_header.o \
-		bamtools_index.o \
-		bamtools_merge.o \
-		bamtools_random.o \
-		bamtools_sort.o \
-		bamtools_stats.o
-MAIN=		bamtools.o
-OBJS=		$(API) $(UTILS) $(TOOLKIT) $(MAIN)
-LIBS=		-lz
+# ==========================
+# BamTools Makefile
+# (c) 2010 Derek Barnett
+# ==========================
 
-all: $(PROG)
+# define main directories
+export OBJ_DIR  = obj
+export BIN_DIR  = bin
+export SRC_DIR  = src
 
-bamtools: $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJS) $(LIBS)
+# define compile/link flags
+export CXX      = g++
+export CXXFLAGS = -Wall -O3 -D_FILE_OFFSET_BITS=64
+export LIBS     = -lz
+
+# define current BamTools version
+export BAMTOOLS_VERSION = 0.7.0812
+
+# define source subdirectories
+SUBDIRS = $(SRC_DIR)/api \
+          $(SRC_DIR)/utils \
+          $(SRC_DIR)/toolkit
+
+all:
+	@echo "Building BamTools:"
+	@echo "Version: $$BAMTOOLS_VERSION"
+	@echo "========================================================="
+	
+	@for dir in $(SUBDIRS); do \
+		echo "- Building in $$dir"; \
+		$(MAKE) --no-print-directory -C $$dir; \
+		echo ""; \
+	done
+
+.PHONY: all
 
 clean:
-	rm -fr gmon.out *.o *.a a.out *~
+	@echo "Cleaning up."
+	@rm -f $(OBJ_DIR)/* $(BIN_DIR)/*
+
+.PHONY: clean

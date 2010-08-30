@@ -14,7 +14,7 @@
 // Dual licenced under the GNU General Public License 2.0+ license or as
 // a commercial license with the Marth Lab.
 //
-// * Modified to fit BamTools code-style, otherwise code is same. (DB)
+// * Modified to fit BamTools code-style, added stdin/stdout members (DB)
 // ***************************************************************************
 
 #ifndef BAMTOOLS_OPTIONS_H

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 15 July 2010 (DB)
+// Last modified: 30 August 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -196,7 +196,7 @@ bool BamReader::BamReaderPrivate::BuildCharData(BamAlignment& bAlignment) {
   
     // calculate character lengths/offsets
     const unsigned int dataLength      = bAlignment.SupportData.BlockLength - BAM_CORE_SIZE;
-    const unsigned int cigarDataOffset = bAlignment.SupportData.QueryNameLength;
+//     const unsigned int cigarDataOffset = bAlignment.SupportData.QueryNameLength;
     const unsigned int seqDataOffset   = bAlignment.SupportData.QueryNameLength + (bAlignment.SupportData.NumCigarOperations * 4);
     const unsigned int qualDataOffset  = seqDataOffset + (bAlignment.SupportData.QuerySequenceLength+1)/2;
     const unsigned int tagDataOffset   = qualDataOffset + bAlignment.SupportData.QuerySequenceLength;
@@ -204,31 +204,30 @@ bool BamReader::BamReaderPrivate::BuildCharData(BamAlignment& bAlignment) {
       
     // set up char buffers
     const char*     allCharData = bAlignment.SupportData.AllCharData.data();
-          uint32_t* cigarData   = (uint32_t*)(allCharData + cigarDataOffset);
+//           uint32_t* cigarData   = (uint32_t*)(allCharData + cigarDataOffset);
     const char*     seqData     = ((const char*)allCharData) + seqDataOffset;
     const char*     qualData    = ((const char*)allCharData) + qualDataOffset;
           char*     tagData     = ((char*)allCharData) + tagDataOffset;
   
-    // store alignment name (depends on null char as terminator)
+    // store alignment name (relies on null char in name as terminator)
     bAlignment.Name.assign((const char*)(allCharData));    
           
-    // save CigarOps 
-    CigarOp op;
-    bAlignment.CigarData.clear();
-    bAlignment.CigarData.reserve(bAlignment.SupportData.NumCigarOperations);
-    for (unsigned int i = 0; i < bAlignment.SupportData.NumCigarOperations; ++i) {
-
-        // swap if necessary
-        if ( IsBigEndian ) { SwapEndian_32(cigarData[i]); }
-      
-        // build CigarOp structure
-        op.Length = (cigarData[i] >> BAM_CIGAR_SHIFT);
-        op.Type   = CIGAR_LOOKUP[ (cigarData[i] & BAM_CIGAR_MASK) ];
-
-        // save CigarOp
-        bAlignment.CigarData.push_back(op);
-    }
-          
+//     // save CigarOps 
+//     CigarOp op;
+//     bAlignment.CigarData.clear();
+//     bAlignment.CigarData.reserve(bAlignment.SupportData.NumCigarOperations);
+//     for (unsigned int i = 0; i < bAlignment.SupportData.NumCigarOperations; ++i) {
+// 
+//         // swap if necessary
+//         if ( IsBigEndian ) { SwapEndian_32(cigarData[i]); }
+//       
+//         // build CigarOp structure
+//         op.Length = (cigarData[i] >> BAM_CIGAR_SHIFT);
+//         op.Type   = CIGAR_LOOKUP[ (cigarData[i] & BAM_CIGAR_MASK) ];
+// 
+//         // save CigarOp
+//         bAlignment.CigarData.push_back(op);
+//     }
           
     // save query sequence
     bAlignment.QueryBases.clear();
@@ -663,6 +662,27 @@ bool BamReader::BamReaderPrivate::LoadNextAlignment(BamAlignment& bAlignment) {
         
         // set success flag
         readCharDataOK = true;
+        
+        // save CIGAR ops 
+        // need to calculate this here so that  BamAlignment::GetEndPosition() performs correctly, 
+        // even when BamReader::GetNextAlignmentCore() is called 
+        const unsigned int cigarDataOffset = bAlignment.SupportData.QueryNameLength;
+        uint32_t* cigarData = (uint32_t*)(allCharData + cigarDataOffset);
+        CigarOp op;
+        bAlignment.CigarData.clear();
+        bAlignment.CigarData.reserve(bAlignment.SupportData.NumCigarOperations);
+        for (unsigned int i = 0; i < bAlignment.SupportData.NumCigarOperations; ++i) {
+
+            // swap if necessary
+            if ( IsBigEndian ) SwapEndian_32(cigarData[i]);
+          
+            // build CigarOp structure
+            op.Length = (cigarData[i] >> BAM_CIGAR_SHIFT);
+            op.Type   = CIGAR_LOOKUP[ (cigarData[i] & BAM_CIGAR_MASK) ];
+
+            // save CigarOp
+            bAlignment.CigarData.push_back(op);
+        }
     }
 
     free(allCharData);

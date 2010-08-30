@@ -82,6 +82,7 @@ int CountTool::Run(int argc, char* argv[]) {
     if ( !m_settings->HasInput ) 
         m_settings->InputFiles.push_back(Options::StandardIn());
     
+    // open reader without index
     BamMultiReader reader;
     reader.Open(m_settings->InputFiles, false, true);
 

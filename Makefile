@@ -12,7 +12,7 @@ export SRC_DIR  = src
 
 # define compile/link flags
 export CXX      = g++
-export CXXFLAGS = -Wall -O3 -D_FILE_OFFSET_BITS=64 -pg
+export CXXFLAGS = -Wall -O3 -D_FILE_OFFSET_BITS=64
 export LIBS     = -lz
 
 # define current BamTools version

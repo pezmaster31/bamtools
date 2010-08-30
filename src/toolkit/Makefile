@@ -9,8 +9,9 @@ API_DIR   = ../api
 UTILS_DIR = ../utils
 OBJ_DIR   = ../../obj
 BIN_DIR   = ../../bin
+THIRD_PARTY_DIR = ../third_party
 
-INCLUDES = -I$(API_DIR)/ -I$(UTILS_DIR)
+INCLUDES = -I$(API_DIR)/ -I$(UTILS_DIR) -I$(THIRD_PARTY_DIR)
 
 # ----------------------------------
 # define our source and object files

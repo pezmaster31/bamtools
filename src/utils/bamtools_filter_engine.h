@@ -12,7 +12,6 @@
 #define BAMTOOLS_FILTER_ENGINE_H
 
 #include <algorithm>
-#include <iostream>
 #include <map>
 #include <sstream>
 #include <string>
@@ -78,6 +77,8 @@ typedef std::map<std::string, PropertyFilterValue> PropertyMap;
 
 struct PropertyFilter {  
   
+    // will be used more later
+    // if we implement a compound 'rules' system  - i.e. "(filter1 AND filter2) OR filter 3"
     enum FilterCompareType { AND = 0
                            , EXACT
                            , NOT
@@ -87,12 +88,9 @@ struct PropertyFilter {
     // data members
     PropertyMap Properties;
     FilterCompareType Type; 
-    PropertyFilter* LeftChild;
-    PropertyFilter* RightChild;
-    
-    // ctor & dtor
-    PropertyFilter(void);
-    ~PropertyFilter(void);
+
+    // ctor
+    PropertyFilter(void) : Type( PropertyFilter::EXACT ) { }
     
     // filter check methods      
     template<typename T>
@@ -156,13 +154,6 @@ class FilterEngine {
         // returns true if query passes all filters on 'propertyName'
         template<typename T>
         static bool check(const std::string& propertyName, const T& query);
-        
-    // debugging
-    public:
-        static void print(void);
-        static void printAllProperties(void);
-        static void printEnabledProperties(void);
-        static void printFilters(void);
 
     // data members
     private:
@@ -215,48 +206,24 @@ bool PropertyFilterValue::check(const T& query) const {
 template<typename T>
 bool PropertyFilter::check(const std::string& propertyName, const T& query) const {
   
-    // if this filter is a 'leaf' filter
-    if ( (LeftChild == 0 ) && ( RightChild == 0 ) ) {
-        
-        // if propertyName found for this filter, 
-        PropertyMap::const_iterator propIter = Properties.find(propertyName);
-        if ( propIter != Properties.end() ) {
-          const PropertyFilterValue& filterValue = (*propIter).second;
-          
-          // check 
-          switch ( Type ) {
-              case ( PropertyFilter::EXACT ) : return filterValue.check(query);
-              case ( PropertyFilter::NOT )   : return !filterValue.check(query);
-              case ( PropertyFilter::AND )   :
-              case ( PropertyFilter::OR )    : BAMTOOLS_ASSERT_MESSAGE(false, "Cannot use a binary compare operator on 1 value");
-              default : BAMTOOLS_ASSERT_UNREACHABLE;
-          }
-          return false; // unreachable
-        }
-        
-        // property unknown to this filter
-        else return true;
-    }
-  
-    // if this filter is a parent filter (contains valid left & right children)
-    else if ( LeftChild && RightChild ) {
+    // if propertyName found for this filter, 
+    PropertyMap::const_iterator propIter = Properties.find(propertyName);
+    if ( propIter != Properties.end() ) {
+      const PropertyFilterValue& filterValue = (*propIter).second;
       
-        // return result of children using this filter's compare type (AND, OR)
-        switch ( Type ) {
-            case ( PropertyFilter::AND )  : return LeftChild->check(propertyName, query) && RightChild->check(propertyName, query);
-            case ( PropertyFilter::OR )   : return LeftChild->check(propertyName, query) || RightChild->check(propertyName, query);
-            case ( PropertyFilter::EXACT) : 
-            case ( PropertyFilter::NOT)   : BAMTOOLS_ASSERT_MESSAGE(false, "Cannot use a unary compare operator on 2 values");
-            default : BAMTOOLS_ASSERT_UNREACHABLE;
-        }
-        return false; // unreachable
+      // check 
+      switch ( Type ) {
+          case ( PropertyFilter::EXACT ) : return filterValue.check(query);
+          case ( PropertyFilter::NOT )   : return !filterValue.check(query);
+          case ( PropertyFilter::AND )   :
+          case ( PropertyFilter::OR )    : BAMTOOLS_ASSERT_MESSAGE(false, "Cannot use a binary compare operator on 1 value");
+          default : BAMTOOLS_ASSERT_UNREACHABLE;
+      }
+      return false; // unreachable
     }
-  
-    // otherwise filter contains one child... invalid state
-    else {
-        BAMTOOLS_ASSERT_MESSAGE(false, "PropertyFilter needs both children to do a binary compare");
-        return false;
-    }
+
+    // property unknown to this filter
+    else return true;
 }
 
 template<typename T>
@@ -453,22 +420,11 @@ bool FilterEngine::check(const std::string& propertyName, const T& query) {
       
         // check query against this filter
         const PropertyFilter& filter = (*filterIter).second;
-        if ( !filter.check(propertyName, query) ) return false;
-      
-      
-//         // see if filter set has this property enabled
-//         const PropertyFilter& filter = (*filterIter).second;
-//         PropertyMap::const_iterator propIter = filter.Properties.find(propertyName);
-//         if ( propIter != filter.Properties.end() ) {
-//         
-//           // if so, check query against filter, return false if check fails
-//           const PropertyFilterValue& propertyFilter = (*propIter).second;
-//           if ( !propertyFilter.check(query) ) return false;
-//         }
+        if ( filter.check(propertyName, query) ) return true;
     }
  
-    // query passes all filters with property enabled
-    return true;
+    // query passes none of the filters with current property enabled
+    return false;
 }
 
 } // namespace BamTools

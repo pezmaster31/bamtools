@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 30 August 2010
+// Last modified: 31 August 2010
 // ---------------------------------------------------------------------------
 // Filters a single BAM file (or filters multiple BAM files and merges) 
 // according to some user-specified criteria.
@@ -110,6 +110,7 @@ struct FilterTool::FilterSettings {
     bool HasOutputBamFilename;
     bool HasRegion;
     bool HasScriptFilename;
+    bool IsForceCompression;
     
     // filenames
     vector<string> InputFiles;
@@ -175,6 +176,7 @@ struct FilterTool::FilterSettings {
         , HasOutputBamFilename(false)
         , HasRegion(false)
         , HasScriptFilename(false)
+        , IsForceCompression(false)
         , OutputFilename(Options::StandardOut())
         , HasAlignmentFlagFilter(false)
         , HasInsertSizeFilter(false)
@@ -223,6 +225,7 @@ FilterTool::FilterTool(void)
     Options::AddValueOption("-out",    "BAM filename", "the output BAM file",   "", m_settings->HasOutputBamFilename, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
     Options::AddValueOption("-region", "REGION",       "only read data from this genomic region (see README for more details)", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
     Options::AddValueOption("-script", "filename",     "the filter script file (see README for more details)", "", m_settings->HasScriptFilename, m_settings->ScriptFilename, IO_Opts);
+    Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
     
     OptionGroup* FilterOpts = Options::CreateOptionGroup("General Filters");
     Options::AddValueOption("-alignmentFlag", "int",     "keep reads with this *exact* alignment flag (for more detailed queries, see below)", "", m_settings->HasAlignmentFlagFilter, m_settings->AlignmentFlagFilter, FilterOpts);
@@ -607,7 +610,8 @@ bool FilterTool::FilterToolPrivate::Run(void) {
     
     // open writer
     BamWriter writer;
-    writer.Open(m_settings->OutputFilename, headerText, m_references);
+    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() && !m_settings->IsForceCompression );
+    writer.Open(m_settings->OutputFilename, headerText, m_references, writeUncompressed);
     
     // set up error handling
     ostringstream errorStream("");

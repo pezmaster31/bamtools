@@ -38,6 +38,7 @@ struct RandomTool::RandomSettings {
     bool HasInput;
     bool HasOutput;
     bool HasRegion;
+    bool IsForceCompression;
 
     // parameters
     unsigned int AlignmentCount;
@@ -51,7 +52,9 @@ struct RandomTool::RandomSettings {
         , HasInput(false)
         , HasOutput(false)
         , HasRegion(false)
+        , IsForceCompression(false)
         , AlignmentCount(RANDOM_MAX_ALIGNMENT_COUNT)
+        , OutputFilename(Options::StandardOut())
     { }  
 };  
 
@@ -69,6 +72,7 @@ RandomTool::RandomTool(void)
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in",  "BAM filename", "the input BAM file",  "", m_settings->HasInput,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());
     Options::AddValueOption("-out", "BAM filename", "the output BAM file", "", m_settings->HasOutput, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
+    Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
     
     OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
     Options::AddValueOption("-n", "count", "number of alignments to grab.  Note - no duplicate checking is performed (currently)", "", m_settings->HasAlignmentCount, m_settings->AlignmentCount, FilterOpts, RANDOM_MAX_ALIGNMENT_COUNT);
@@ -116,9 +120,10 @@ int RandomTool::Run(int argc, char* argv[]) {
             reader.SetRegion(region);
     }
     
-    // open out BAM writer
+    // open writer
     BamWriter writer;
-    writer.Open(m_settings->OutputFilename, headerText, references);
+    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() && !m_settings->IsForceCompression );
+    writer.Open(m_settings->OutputFilename, headerText, references, writeUncompressed);
     
     // seed our random number generator
     srand (time(NULL) );

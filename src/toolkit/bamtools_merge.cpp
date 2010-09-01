@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 2 June 2010
+// Last modified: 31 August 2010
 // ---------------------------------------------------------------------------
 // Merges multiple BAM files into one.
 //
@@ -32,6 +32,7 @@ struct MergeTool::MergeSettings {
     // flags
     bool HasInputBamFilename;
     bool HasOutputBamFilename;
+    bool IsForceCompression;
 //     bool HasRegion;
     
     // filenames
@@ -45,6 +46,7 @@ struct MergeTool::MergeSettings {
     MergeSettings(void)
         : HasInputBamFilename(false)
         , HasOutputBamFilename(false)
+        , IsForceCompression(false)
 //         , HasRegion(false)
         , OutputFilename(Options::StandardOut())
     { }
@@ -64,6 +66,7 @@ MergeTool::MergeTool(void)
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in",  "BAM filename", "the input BAM file(s)", "", m_settings->HasInputBamFilename,  m_settings->InputFiles,     IO_Opts);
     Options::AddValueOption("-out", "BAM filename", "the output BAM file",   "", m_settings->HasOutputBamFilename, m_settings->OutputFilename, IO_Opts);
+    Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
     
 //     OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
 //     Options::AddValueOption("-region", "REGION", "genomic region. See README for more details", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
@@ -95,9 +98,10 @@ int MergeTool::Run(int argc, char* argv[]) {
     std::string mergedHeader = reader.GetHeaderText();
     RefVector references = reader.GetReferenceData();
 
-    // open BamWriter
+    // open writer
     BamWriter writer;
-    writer.Open(m_settings->OutputFilename, mergedHeader, references);
+    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() && !m_settings->IsForceCompression );
+    writer.Open(m_settings->OutputFilename, mergedHeader, references, writeUncompressed);
 
     // store alignments to output file
     BamAlignment bAlignment;

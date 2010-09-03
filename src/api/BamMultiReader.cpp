@@ -31,15 +31,6 @@
 using namespace BamTools;
 using namespace std;
 
-namespace BamTools {
-
-bool FileExists(const string& filename) {
-    ifstream f(filename.c_str(), ifstream::in);
-    return !f.fail();
-}
-  
-} // namespace BamTools
-
 // -----------------------------------------------------
 // BamMultiReader implementation
 // -----------------------------------------------------
@@ -310,21 +301,11 @@ bool BamMultiReader::Open(const vector<string> filenames, bool openIndexes, bool
 
         bool openedOK = true;
         if (openIndexes) {
-          
-            const string defaultIndexFilename  = filename + ".bai";
-            const string bamToolsIndexFilename = filename + ".bti";
             
-            // if default BAM index requested and one exists
-            if ( useDefaultIndex && FileExists(defaultIndexFilename) )
-                openedOK = reader->Open(filename, defaultIndexFilename);
-            
-            // else see if BamTools index exists
-            else if ( FileExists(bamToolsIndexFilename) )
-                openedOK = reader->Open(filename, bamToolsIndexFilename);
-            
-            // else none exist... just open without
-            else
-                openedOK = reader->Open(filename);
+            // leave index filename empty 
+            // this allows BamReader & BamIndex to search for any available
+            // useDefaultIndex gives hint to prefer BAI over BTI
+            openedOK = reader->Open(filename, "", true, useDefaultIndex);
         } 
         
         // ignoring index file(s)
@@ -348,7 +329,7 @@ bool BamMultiReader::Open(const vector<string> filenames, bool openIndexes, bool
             }
         } 
        
-        // TODO; any more error handling when openedOKvis false ??
+        // TODO; any further error handling when openedOK is false ??
         else 
             return false;
     }

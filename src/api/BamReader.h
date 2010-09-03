@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 2 September 2010 (DB)
+// Last modified: 3 September 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -45,7 +45,12 @@ class BamReader {
         // performs random-access jump to reference, position
         bool Jump(int refID, int position = 0);
         // opens BAM file (and optional BAM index file, if provided)
-        bool Open(const std::string& filename, const std::string& indexFilename = "");
+        // @lookForIndex - if no indexFilename provided, look for an existing index file
+        // @preferStandardIndex - if true, give priority in index file searching to standard BAM index
+        bool Open(const std::string& filename, 
+                  const std::string& indexFilename = "", 
+                  const bool lookForIndex = false, 
+                  const bool preferStandardIndex = false);
         // returns file pointer to beginning of alignments
         bool Rewind(void);
         // sets a region of interest (with left & right bound reference/position)
@@ -86,8 +91,10 @@ class BamReader {
         // BAM index operations
         // ----------------------
 
-        // creates index for BAM file, saves to file (default = bamFilename + ".bai")
-        bool CreateIndex(bool useDefaultIndex = true);
+        // creates index for BAM file, saves to file
+        // default behavior is to create the BAM standard index (".bai")
+        // set flag to false to create the BamTools-specific index (".bti")
+        bool CreateIndex(bool useStandardIndex = true);
         
     // private implementation
     private:

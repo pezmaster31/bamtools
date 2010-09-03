@@ -3,16 +3,12 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 2 June 2010
+// Last modified: 3 September 2010
 // ---------------------------------------------------------------------------
-// Prints alignment count for BAM file
-//
-// ** Expand to multiple?? 
-//
+// Prints alignment count for BAM file(s)
 // ***************************************************************************
 
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -53,15 +49,14 @@ CountTool::CountTool(void)
     , m_settings(new CountSettings)
 { 
     // set program details
-    Options::SetProgramInfo("bamtools count", "prints alignment counts for a BAM file", "-in <filename> [-region <REGION>]");
+    Options::SetProgramInfo("bamtools count", "prints alignment counts for a BAM file", "[-in <filename> -in <filename> ...] [-region <REGION>]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",  "BAM filename", "the input BAM file(s)", "", m_settings->HasInput,  m_settings->InputFiles, IO_Opts);
-    //Options::AddValueOption("-index", "BAM index filename", "the BAM index file",  "", m_settings->HasBamIndexFilename, m_settings->BamIndexFilename, IO_Opts);
+    Options::AddValueOption("-in",  "BAM filename", "the input BAM file(s)", "", m_settings->HasInput,  m_settings->InputFiles, IO_Opts, Options::StandardIn());
     
     OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
-    Options::AddValueOption("-region", "REGION", "genomic region. Index file is recommended for better performance, and is read automatically if it exists as <filename>.bai or <filename>.bti. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
+    Options::AddValueOption("-region", "REGION", "genomic region. Index file is required and is read automatically if it exists as <filename>.bai or <filename>.bti. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
 }
 
 CountTool::~CountTool(void) { 
@@ -79,6 +74,7 @@ int CountTool::Run(int argc, char* argv[]) {
     // parse command line arguments
     Options::Parse(argc, argv, 1);
 
+    // if no '-in' args supplied, default to stdin
     if ( !m_settings->HasInput ) 
         m_settings->InputFiles.push_back(Options::StandardIn());
     
@@ -87,107 +83,73 @@ int CountTool::Run(int argc, char* argv[]) {
     reader.Open(m_settings->InputFiles, false, true);
 
     // alignment counter
+    BamAlignment al;
     int alignmentCount(0);
-    
-    // set up error handling
-    ostringstream errorStream("");
-    bool foundError(false);
     
     // if no region specified, count entire file 
     if ( !m_settings->HasRegion ) {
-        BamAlignment al;
         while ( reader.GetNextAlignmentCore(al) ) 
             ++alignmentCount;
     }
     
-    // more complicated - region specified
+    // otherwise attempt to use region as constraint
     else {
         
+        // if region string parses OK
         BamRegion region;
         if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
 
-            // check if there are index files *.bai/*.bti corresponding to the input files
-            bool hasDefaultIndex   = false;
-            bool hasBamtoolsIndex  = false;
-            bool hasNoIndex        = false;
-            int defaultIndexCount   = 0;
-            int bamtoolsIndexCount = 0;
-            for (vector<string>::const_iterator f = m_settings->InputFiles.begin(); f != m_settings->InputFiles.end(); ++f) {
+            // attempt to re-open reader with index files
+            reader.Close();
+            bool openedOK = reader.Open(m_settings->InputFiles, true, true );
+            
+            // if error
+            if ( !openedOK ) {
+                cerr << "ERROR: Could not open input BAM file(s)... Aborting." << endl;
+                return 1;
+            }
+            
+            // if index data available, we can use SetRegion
+            if ( reader.IsIndexLoaded() ) {
               
-                if ( Utilities::FileExists(*f + ".bai") ) {
-                    hasDefaultIndex = true;
-                    ++defaultIndexCount;
-                }       
-                
-                if ( Utilities::FileExists(*f + ".bti") ) {
-                    hasBamtoolsIndex = true;
-                    ++bamtoolsIndexCount;
-                }
-                  
-                if ( !hasDefaultIndex && !hasBamtoolsIndex ) {
-                    hasNoIndex = true;
-                    cerr << "*WARNING - could not find index file for " << *f  
-                         << ", parsing whole file(s) to get alignment counts for target region" 
-                         << " (could be slow)" << endl;
-                    break;
-                }
-            }
+                // attempt to use SetRegion(), if failed report error
+                if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {
+                    cerr << "ERROR: Region requested, but could not set BamReader region to REGION: " << m_settings->Region << " Aborting." << endl;
+                    reader.Close();
+                    return 1;
+                } 
+              
+                // everything checks out, just iterate through specified region, counting alignments
+                while ( reader.GetNextAlignmentCore(al) )
+                    ++alignmentCount;
+            } 
             
-            // determine if index file types are heterogeneous
-            bool hasDifferentIndexTypes = false;
-            if ( defaultIndexCount > 0 && bamtoolsIndexCount > 0 ) {
-                hasDifferentIndexTypes = true;
-                cerr << "*WARNING - different index file formats found"  
-                         << ", parsing whole file(s) to get alignment counts for target region" 
-                         << " (could be slow)" << endl;
-            }
-            
-            // if any input file has no index, or if input files use different index formats
-            // can't use BamMultiReader to jump directly (**for now**)
-            if ( hasNoIndex || hasDifferentIndexTypes ) {
-                
-                // read through sequentially, counting all overlapping reads
-                BamAlignment al;
+            // no index data available, we have to iterate through until we
+            // find overlapping alignments
+            else {
                 while( reader.GetNextAlignmentCore(al) ) {
                     if ( (al.RefID >= region.LeftRefID)  && ( (al.Position + al.Length) >= region.LeftPosition ) &&
-                         (al.RefID <= region.RightRefID) && ( al.Position <= region.RightPosition) ) 
+                          (al.RefID <= region.RightRefID) && ( al.Position <= region.RightPosition) ) 
                     {
                         ++alignmentCount;
                     }
                 }
             }
-            
-            // has index file for each input file (and same format)
-            else {
-              
-                // this is kind of a hack...?
-                BamMultiReader reader;
-                reader.Open(m_settings->InputFiles, true, true, hasDefaultIndex );
-              
-                if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {
-                   foundError = true;
-                   errorStream << "Could not set BamReader region to REGION: " << m_settings->Region << endl;
-                } else {
-                    BamAlignment al;
-                    while ( reader.GetNextAlignmentCore(al) )
-                        ++alignmentCount;
-                }
-            }
-            
-        } else {
-            foundError = true;
-            errorStream << "Could not parse REGION: " << m_settings->Region << endl;
-            errorStream << "Be sure REGION is in valid format (see README) and that coordinates are valid for selected references" << endl;
+        } 
+        
+        // error parsing REGION string
+        else {
+            cerr << "ERROR: Could not parse REGION - " << m_settings->Region << endl;
+            cerr << "Be sure REGION is in valid format (see README) and that coordinates are valid for selected references" << endl;
+            reader.Close();
+            return 1;
         }
     }
-     
-    // print errors OR results 
-    if ( foundError )
-        cerr << errorStream.str() << endl;
-    else
-        cout << alignmentCount << endl;
+    
+    // print results 
+    cout << alignmentCount << endl;
     
     // clean & exit
     reader.Close();
-    return (int)foundError;
+    return 0;
 }

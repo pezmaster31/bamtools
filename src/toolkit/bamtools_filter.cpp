@@ -561,11 +561,12 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
         return false;     
     }
 
+    // initialize return status
+    bool success = true;
+    
     // see if root object contains multiple filters
     const Json::Value filters = root["filters"];
     if ( !filters.isNull() ) {
-      
-        bool success = true;
       
         // iterate over any filters found
         int filterIndex = 0;
@@ -575,20 +576,42 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
             Json::Value filter = (*filtersIter);
             
             // convert filter index to string
-            stringstream convert;
-            convert << filterIndex;
-            const string filterName = convert.str();
+            string filterName;
+            
+            // if id tag supplied
+            const Json::Value id = filter["id"];
+            if ( !id.isNull() ) {
+                filterName = id.asString();
+            } 
+            
+            // use array index 
+            else {
+                stringstream convert;
+                convert << filterIndex;
+                filterName = convert.str();
+            }
             
             // create & parse filter 
             success &= ParseFilterObject(filterName, filter);
-            
         }
+        
+        // see if user defined "rule" for these filters
+        const Json::Value rule = root["rule"];
+        if ( !rule.isNull() ) {
+            cout << "found rule: " << rule.asString() << endl;
+        } else {
+            cout << "no rule found!" << endl;
+        }
+          
         return success;
     } 
     
     // otherwise, root is the only filter (just contains properties)
     // create & parse filter named "ROOT"
-    else return ParseFilterObject("ROOT", root);
+    else success = ParseFilterObject("ROOT", root);
+    
+    // return success/failure
+    return success;
 }
 
 
@@ -613,106 +636,69 @@ bool FilterTool::FilterToolPrivate::Run(void) {
     bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() && !m_settings->IsForceCompression );
     writer.Open(m_settings->OutputFilename, headerText, m_references, writeUncompressed);
     
-    // set up error handling
-    ostringstream errorStream("");
-    bool foundError(false);
+    BamAlignment al;
     
-    // if no REGION specified, run filter on entire file contents
+    // if no region specified, filter entire file 
     if ( !m_settings->HasRegion ) {
-        BamAlignment al;
         while ( reader.GetNextAlignment(al) ) {
-            // perform main filter check
             if ( CheckAlignment(al) ) 
                 writer.SaveAlignment(al);
         }
     }
     
-    // REGION specified
+    // otherwise attempt to use region as constraint
     else {
-      
-        // attempt to parse string into BamRegion struct
+        
+        // if region string parses OK
         BamRegion region;
         if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
 
-            // check if there are index files *.bai/*.bti corresponding to the input files
-            bool hasDefaultIndex   = false;
-            bool hasBamtoolsIndex  = false;
-            bool hasNoIndex        = false;
-            int defaultIndexCount   = 0;
-            int bamtoolsIndexCount = 0;
-            for (vector<string>::const_iterator f = m_settings->InputFiles.begin(); f != m_settings->InputFiles.end(); ++f) {
-              
-                if ( Utilities::FileExists(*f + ".bai") ) {
-                    hasDefaultIndex = true;
-                    ++defaultIndexCount;
-                }       
-                
-                if ( Utilities::FileExists(*f + ".bti") ) {
-                    hasBamtoolsIndex = true;
-                    ++bamtoolsIndexCount;
-                }
-                  
-                if ( !hasDefaultIndex && !hasBamtoolsIndex ) {
-                    hasNoIndex = true;
-                    cerr << "*WARNING - could not find index file for " << *f  
-                         << ", parsing whole file(s) to get alignment counts for target region" 
-                         << " (could be slow)" << endl;
-                    break;
-                }
+            // attempt to re-open reader with index files
+            reader.Close();
+            bool openedOK = reader.Open(m_settings->InputFiles, true, true );
+            
+            // if error
+            if ( !openedOK ) {
+                cerr << "ERROR: Could not open input BAM file(s)... Aborting." << endl;
+                return 1;
             }
             
-            // determine if index file types are heterogeneous
-            bool hasDifferentIndexTypes = false;
-            if ( defaultIndexCount > 0 && bamtoolsIndexCount > 0 ) {
-                hasDifferentIndexTypes = true;
-                cerr << "*WARNING - different index file formats found"  
-                         << ", parsing whole file(s) to get alignment counts for target region" 
-                         << " (could be slow)" << endl;
-            }
-            
-            // if any input file has no index, or if input files use different index formats
-            // can't use BamMultiReader to jump directly (**for now**)
-            if ( hasNoIndex || hasDifferentIndexTypes ) {
-                
-                // read through sequentially, but onlt perform filter on reads overlapping REGION
-                BamAlignment al;
-                while( reader.GetNextAlignment(al) ) {
-                    if ( (al.RefID >= region.LeftRefID)  && ( (al.Position + al.Length) >= region.LeftPosition ) &&
-                         (al.RefID <= region.RightRefID) && ( al.Position <= region.RightPosition) ) 
-                    {
-                        // perform main filter check
-                        if ( CheckAlignment(al) ) 
-                            writer.SaveAlignment(al);
-                    }
-                }
-            }
-            
-            // has index file for each input file (and same format)
-            else {
+            // if index data available, we can use SetRegion
+            if ( reader.IsIndexLoaded() ) {
               
-                // this is kind of a hack...?
-                BamMultiReader reader;
-                reader.Open(m_settings->InputFiles, true, true, hasDefaultIndex );
-              
+                // attempt to use SetRegion(), if failed report error
                 if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {
-                   foundError = true;
-                   errorStream << "Could not set BamReader region to REGION: " << m_settings->Region << endl;
-                } else {
-                  
-                    // filter only alignments from specified region
-                    BamAlignment al;
-                    while ( reader.GetNextAlignment(al) ) {
-                        // perform main filter check
+                    cerr << "ERROR: Region requested, but could not set BamReader region to REGION: " << m_settings->Region << " Aborting." << endl;
+                    reader.Close();
+                    return 1;
+                } 
+              
+                // everything checks out, just iterate through specified region, filtering alignments
+                while ( reader.GetNextAlignmentCore(al) )
+                    if ( CheckAlignment(al) ) 
+                        writer.SaveAlignment(al);
+            } 
+            
+            // no index data available, we have to iterate through until we
+            // find overlapping alignments
+            else {
+                while( reader.GetNextAlignmentCore(al) ) {
+                    if ( (al.RefID >= region.LeftRefID)  && ( (al.Position + al.Length) >= region.LeftPosition ) &&
+                          (al.RefID <= region.RightRefID) && ( al.Position <= region.RightPosition) ) 
+                    {
                         if ( CheckAlignment(al) ) 
                             writer.SaveAlignment(al);
                     }
                 }
             }
-            
-        } else {
-            foundError = true;
-            errorStream << "Could not parse REGION: " << m_settings->Region << endl;
-            errorStream << "Be sure REGION is in valid format (see README) and that coordinates are valid for selected references" << endl;
+        } 
+        
+        // error parsing REGION string
+        else {
+            cerr << "ERROR: Could not parse REGION - " << m_settings->Region << endl;
+            cerr << "Be sure REGION is in valid format (see README) and that coordinates are valid for selected references" << endl;
+            reader.Close();
+            return 1;
         }
     }
 

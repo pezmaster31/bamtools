@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 9 July 2010 (DB)
+// Last modified: 2 September 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -38,6 +38,8 @@ class BamReader {
 
         // close BAM file
         void Close(void);
+        // returns whether index data is loaded (i.e. reader is able to Jump() or not)
+        bool IsIndexLoaded(void) const;
         // returns whether reader is open for reading or not
         bool IsOpen(void) const;
         // performs random-access jump to reference, position

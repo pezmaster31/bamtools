@@ -137,6 +137,7 @@ BamReader::~BamReader(void) {
 
 // file operations
 void BamReader::Close(void) { d->Close(); }
+bool BamReader::IsIndexLoaded(void) const { return d->IsIndexLoaded; }
 bool BamReader::IsOpen(void) const { return d->mBGZF.IsOpen; }
 bool BamReader::Jump(int refID, int position) { 
     d->Region.LeftRefID = refID;
@@ -360,6 +361,7 @@ bool BamReader::BamReaderPrivate::BuildCharData(BamAlignment& bAlignment) {
 void BamReader::BamReaderPrivate::ClearIndex(void) {
     delete NewIndex;
     NewIndex = 0;
+    IsIndexLoaded = false;
 }
 
 // closes the BAM file
@@ -393,11 +395,15 @@ bool BamReader::BamReaderPrivate::CreateIndex(bool useDefaultIndex) {
     else
         NewIndex = new BamToolsIndex(&mBGZF, Parent, IsBigEndian);
     
+    // build new index
     bool ok = true;
     ok &= NewIndex->Build();
+    IsIndexLoaded = ok;
+    
+    // attempt to save index data to file
     ok &= NewIndex->Write(Filename); 
     
-    // return success/fail
+    // return success/fail of both building & writing index
     return ok;
 }
 
@@ -515,7 +521,7 @@ bool BamReader::BamReaderPrivate::Jump(int refID, int position) {
 
     // -----------------------------------------------------------------------
     // check for existing index 
-    if ( NewIndex == 0 ) return false; 
+    if ( !IsIndexLoaded || NewIndex == 0 ) return false; 
     // see if reference has alignments
     if ( !NewIndex->HasAlignments(refID) ) return false; 
     // make sure position is valid
@@ -605,8 +611,9 @@ bool BamReader::BamReaderPrivate::LoadIndex(void) {
         return false;
     }
     
-    // return success of loading index data
-    return NewIndex->Load(IndexFilename);
+    // return success of loading index data from file
+    IsIndexLoaded = NewIndex->Load(IndexFilename);
+    return IsIndexLoaded;
 }
 
 // populates BamAlignment with alignment data under file pointer, returns success/fail

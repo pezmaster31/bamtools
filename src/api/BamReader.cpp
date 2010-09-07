@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 3 September 2010 (DB)
+// Last modified: 7 September 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -383,7 +383,7 @@ bool BamReader::BamReaderPrivate::CreateIndex(bool useStandardIndex) {
     
     // create index based on type requested
     if ( useStandardIndex ) 
-        NewIndex = new BamDefaultIndex(&mBGZF, Parent, IsBigEndian);
+        NewIndex = new BamStandardIndex(&mBGZF, Parent, IsBigEndian);
     // create BamTools 'custom' index
     else
         NewIndex = new BamToolsIndex(&mBGZF, Parent, IsBigEndian);

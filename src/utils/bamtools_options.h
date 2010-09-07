@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 1 June 2010
+// Last modified: 7 September 2010
 // ---------------------------------------------------------------------------
 // Parses command line arguments and creates a help menu
 // ---------------------------------------------------------------------------
@@ -11,10 +11,10 @@
 // The Mosaik suite's command line parser class: COptions
 // (c) 2006 - 2009 Michael Str�mberg
 // Marth Lab, Department of Biology, Boston College
-// Dual licenced under the GNU General Public License 2.0+ license or as
-// a commercial license with the Marth Lab.
+// Re-licensed under MIT License with author's permission.
 //
-// * Modified to fit BamTools code-style, added stdin/stdout members (DB)
+// * Modified slightly to fit BamTools, otherwise code is same. 
+// *  (BamTools namespace, added stdin/stdout) (DB)
 // ***************************************************************************
 
 #ifndef BAMTOOLS_OPTIONS_H

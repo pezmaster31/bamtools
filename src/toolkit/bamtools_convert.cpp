@@ -186,7 +186,7 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
     
     // open input files
     BamMultiReader reader;
-    reader.Open(m_settings->InputFiles, false);
+    reader.Open(m_settings->InputFiles);
     m_references = reader.GetReferenceData();
 
     // set region if specified

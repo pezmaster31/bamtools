@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 27 July 2010 (DB)
+// Last modified: 3 September 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic constants, data structures, etc. for using BAM files
 // ***************************************************************************
@@ -19,6 +19,8 @@
 
 // C++ includes
 #include <exception>
+#include <fstream>
+#include <iostream>
 #include <map>
 #include <string>
 #include <utility>
@@ -348,6 +350,11 @@ inline void SwapEndian_32p(char* data) {
 inline void SwapEndian_64p(char* data) {
     uint64_t& value = (uint64_t&)*data; 
     SwapEndian_64(value);
+}
+
+inline bool FileExists(const std::string& filename) {
+    std::ifstream f(filename.c_str(), std::ifstream::in);
+    return !f.fail();
 }
 
 // ----------------------------------------------------------------

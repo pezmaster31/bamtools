@@ -21,16 +21,18 @@ export BAMTOOLS_VERSION = 0.7.0812
 # define source subdirectories
 SUBDIRS = $(SRC_DIR)/api \
           $(SRC_DIR)/utils \
-          $(SRC_DIR)/toolkit
+          $(SRC_DIR)/third_party \
+          $(SRC_DIR)/toolkit 
 
 all:
 	@echo "Building BamTools:"
 	@echo "Version: $$BAMTOOLS_VERSION"
 	@echo "========================================================="
-	
-	mkdir -p $(BIN_DIR)
-	mkdir -p $(OBJ_DIR)
-
+	@echo ""
+	@echo "- Creating target directories"
+	@mkdir -p $(BIN_DIR)
+	@mkdir -p $(OBJ_DIR)
+	@echo ""
 	@for dir in $(SUBDIRS); do \
 		echo "- Building in $$dir"; \
 		$(MAKE) --no-print-directory -C $$dir; \

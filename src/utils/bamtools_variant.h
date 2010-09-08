@@ -27,34 +27,35 @@ namespace BamTools {
 class Variant {
   
     public:
-        Variant(void) : data (NULL) { }
+        Variant(void) : data(NULL) { }
         
         Variant(const Variant& other) { 
-            if(other.data != NULL) 
+            if ( other.data != NULL ) 
                 other.data->AddRef();
             data = other.data;
         }
 
         ~Variant(void) { 
-            if(data != NULL) data->Release();
+            if ( data != NULL ) 
+                data->Release();
         }
 
         // NOTE: This code takes care of self-assignment.
         // DO NOT CHANGE THE ORDER of the statements.
-        Variant& operator=(const Variant& rhs) {
-            if(rhs.data != NULL) 
+        Variant& operator= (const Variant& rhs) {
+            if ( rhs.data != NULL ) 
                 rhs.data->AddRef();
-            if(data != NULL) 
+            if ( data != NULL ) 
                 data->Release();
             data = rhs.data;
-            return * this;
+            return *this;
         }
 
         // This member template constructor allows you to
         // instance a variant_t object with a value of any type.
         template<typename T>
-        Variant(T v)
-            : data(new Impl<T>(v))
+        Variant(T v) 
+            : data(new Impl<T>(v)) 
         { 
             data->AddRef(); 
         }
@@ -88,13 +89,13 @@ class Variant {
     private:
         struct ImplBase {
                 
-            ImplBase() : refs(0) {}
-            virtual ~ImplBase() {}
+            ImplBase() : refs(0) { }
+            virtual ~ImplBase(void) { }
                 
-            void AddRef(void) { refs ++; }
+            void AddRef(void) { ++refs; }
             void Release(void) { 
                 --refs;
-                if(refs == 0) delete this;
+                if ( refs == 0 ) delete this;
             }
                 
             size_t refs;
@@ -102,7 +103,7 @@ class Variant {
 
         template<typename T>
         struct Impl : ImplBase {
-            Impl(T v) : data (v) { }
+            Impl(T v) : data(v) { }
             ~Impl(void) { }
             T data;
         };
@@ -113,9 +114,9 @@ class Variant {
         static Impl<T>* CastFromBase(ImplBase* v) {
             // This upcast will fail if T is other than the T used
             // with the constructor of variant_t.
-            Impl<T>* p = dynamic_cast<Impl<T>*> (v);
-            if (p == NULL) 
-                throw std::invalid_argument(typeid(T).name()+std::string(" is not a valid type"));
+            Impl<T>* p = dynamic_cast< Impl<T>* > (v);
+            if ( p == NULL ) 
+                throw std::invalid_argument( typeid(T).name() + std::string(" is not a valid type") );
             return p;
         }
 

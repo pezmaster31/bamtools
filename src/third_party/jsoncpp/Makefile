@@ -2,23 +2,18 @@
 # BamTools Makefile
 # (c) 2010 Derek Barnett
 #
-# src/utils
+# src/third_party/jsoncpp
 # ==========================
 
-API_DIR = ../api
-OBJ_DIR = ../../obj
-BIN_DIR = ../../bin
-
-INCLUDES = -I$(API_DIR)/
+OBJ_DIR = ../../../obj
+BIN_DIR = ../../../bin
 
 # ----------------------------------
 # define our source and object files
 # ----------------------------------
-SOURCES = bamtools_fasta.cpp \
-          bamtools_filter_engine.cpp \
-          bamtools_options.cpp \
-          bamtools_pileup.cpp \
-          bamtools_utilities.cpp 
+SOURCES = json_reader.cpp \
+          json_value.cpp \
+          json_writer.cpp
 OBJECTS= $(SOURCES:.cpp=.o)
 BUILT_OBJECTS= $(patsubst %,$(OBJ_DIR)/%,$(OBJECTS))
 

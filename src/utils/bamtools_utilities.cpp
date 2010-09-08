@@ -3,19 +3,25 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 2 June 2010
+// Last modified: 3 September 2010
 // ---------------------------------------------------------------------------
 // Provides general utilities used by BamTools sub-tools.
 // ***************************************************************************
 
 #include <cstdlib>
-#include <sys/stat.h> 
+#include <fstream>
+#include <iostream>
 #include "bamtools_utilities.h"
 #include "BamReader.h"
 #include "BamMultiReader.h"
-
 using namespace std;
 using namespace BamTools;
+
+// check if a file exists
+bool Utilities::FileExists(const std::string& filename) { 
+    ifstream f(filename.c_str(), ifstream::in);
+    return !f.fail();
+}
 
 // Parses a region string, does validation (valid ID's, positions), stores in Region struct
 // Returns success (true/false)
@@ -231,11 +237,4 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamMult
     region.RightPosition = stopPos;
 
     return true;
-}
-
-bool Utilities::FileExists(const std::string& filename) { 
-
-    struct stat fileInfo; 
-    return stat(filename.c_str(), &fileInfo) == 0;
-
 }

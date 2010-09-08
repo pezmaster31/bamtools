@@ -4,59 +4,65 @@ README : BAMTOOLS
 
 BamTools: a C++ API & toolkit for reading/writing/manipulating BAM files.
 
-I. Introduction
-    a. The API
-    b. The Toolkit
+I.   Introduction
+     a. The API
+     b. The Toolkit
 
-II. Usage
-    a. The API
-    b. The Toolkit
+II.  Usage
+     a. The API
+     b. The Toolkit
 
-III. Contact
+III. License
+
+IV.  Acknowledgements
+
+V.   Contact
 
 ------------------------------------------------------------
 
 I. Introduction:
+
 BamTools provides both a programmer's API and an end-user's toolkit for handling 
 BAM files.  
 
-Ia. The API
+
+Ia. The API: 
+
 The API consists of 2 main modules - BamReader and BamWriter. As you would expect, 
-BamReader provides read-access to BAM files, while BamWriter does the writing of BAM
-files. BamReader provides an interface for random-access (jumping) in a BAM file,
+BamReader provides read-access to BAM files, while BamWriter handles writing data to 
+BAM files. BamReader provides an interface for random-access (jumping) in a BAM file,
 as well as generating BAM index files.
  
 BamMultiReader is an extra module that allows you to manage multiple open BAM file
 for reading. It provides some validation & bookkeeping under the hood to keep all 
-files sync'ed for 
+files sync'ed up for you.
 
-An additional file, BamAux.h, is included as well.  
-This file contains the common data structures and typedefs used throught the API.
+Additional files used by the API:
+ - BamAux.h   : contains the common data structures and typedefs used throught the API.
+ - BamIndex.* : implements both the standard BAM format index (".bai") as well as a 
+                new BamTools-specific index (".bti").
+ - BGZF.*     : contains our implementation of the Broad Institute's BGZF compression format.
 
-BGZF.h & BGZF.cpp contain our implementation of the Broad Institute's 
-BGZF compression format.
 
+Ib. The Toolkit:
 
-Ib. The Toolkit
-If you've been using BamTools since the early days, you'll notice that our 'toy' API 
-examples (BamConversion, BamDump, and BamTrim) are now gone.  In their place is a set 
-of features we hope you find useful.
-
-** More explanation here **
+If you've been using the BamTools since the early days, you'll notice that our 'toy' API 
+examples (BamConversion, BamDump, BamTrim,...) are now gone.  We dumped these in favor of 
+a suite of small utilities that we hope both developers and end-users find useful:
 
 usage: bamtools [--help] COMMAND [ARGS]
 
 Available bamtools commands:
 	convert         Converts between BAM and a number of other formats
-	count           Prints number of alignments in BAM file
+	count           Prints number of alignments in BAM file(s)
 	coverage        Prints coverage statistics from the input BAM file	
 	filter          Filters BAM file(s) by user-specified criteria
 	header          Prints BAM header information
 	index           Generates index for BAM file
 	merge           Merge multiple BAM files into single file
-	sam             Prints the BAM file in SAM (text) format
+	random		Select random alignments from existing BAM file(s)
 	sort            Sorts the BAM file according to some criteria
-	stats           Prints some basic statistics from the input BAM file
+	stats           Prints some basic statistics from input BAM file(s)
 
 See 'bamtools help COMMAND' for more information on a specific command.
 
@@ -73,16 +79,16 @@ IIa. The API
 
 To use this API, you simply need to do 3 things:
 
-    1 - Drop the BamTools files somewhere the compiler can find them.
-        (i.e. in your source tree, or somewhere else in your include path)
+    1 - Drop the BamTools API files somewhere the compiler can find them.
+        (i.e. in your project's source tree, or somewhere else in your include path)
 
     2 - Import BamTools API with the following lines of code
-        #include "BamReader.h"     // as needed
+        #include "BamReader.h"     // or "BamMultiReader.h", as needed
         #include "BamWriter.h"     // as needed
         using namespace BamTools;
     	
     3 - Compile with '-lz' ('l' as in Lima) to access ZLIB compression library
-	    (For VS users, I can provide you zlib headers - just contact me).
+	(For MSVC users, I can provide you modified zlib headers - just contact me).
 
 See any included programs and Makefile for more specific compiling/usage examples.
 See comments in the header files for more detailed API documentation. 
@@ -94,7 +100,23 @@ IIb. The Toolkit
 
 ------------------------------------------------------------
 
-III. Contact :
+III. License :
+
+Both the BamTools API and toolkit are released under the MIT License.
+Copyright (c) 2009-2010 Derek Barnett, Erik Garrison, Gabor Marth, Michael Stromberg
+See file LICENSE for details.
+
+------------------------------------------------------------
+
+IV. Acknowledgements :
+
+ * Aaron Quinlan for several key feature ideas and bug fix contributions
+ * Baptiste Lepilleur for the public-domain JSON parser (JsonCPP)
+ * Heng Li, author of SAMtools - the original C-language BAM API/toolkit.
+
+------------------------------------------------------------
+
+V. Contact :
 
 Feel free to contact me with any questions, comments, suggestions, bug reports, etc.
   - Derek Barnett
@@ -105,3 +127,4 @@ Biology Dept., Boston College
 Email: barnetde@bc.edu  
 Project Websites: http://github.com/pezmaster31/bamtools   (ACTIVE SUPPORT)
                   http://sourceforge.net/projects/bamtools (major updates only)
+

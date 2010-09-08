@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 2 June 2010
+// Last modified: 28 August 2010
 // ---------------------------------------------------------------------------
 // Filters a single BAM file (or filters multiple BAM files and merges) 
 // according to some user-specified criteria.
@@ -29,6 +29,9 @@ class FilterTool : public AbstractTool {
     private:
         struct FilterSettings;
         FilterSettings* m_settings;
+        
+        struct FilterToolPrivate;
+        FilterToolPrivate* m_impl;
 };
   
 } // namespace BamTools

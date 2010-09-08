@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 7 July 2010
+// Last modified: 2 September 2010
 // ---------------------------------------------------------------------------
 // Creates a BAM index (".bai") file for the provided BAM file.
 // ***************************************************************************
@@ -51,7 +51,7 @@ IndexTool::IndexTool(void)
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in", "BAM filename", "the input BAM file", "", m_settings->HasInputBamFilename, m_settings->InputBamFilename, IO_Opts, Options::StandardIn());
-    Options::AddOption("-bti", "use (non-standard) BamTools indexing scheme", m_settings->IsUsingBamtoolsIndex, IO_Opts);
+    Options::AddOption("-bti", "create (non-standard) BamTools index file", m_settings->IsUsingBamtoolsIndex, IO_Opts);
 }
 
 IndexTool::~IndexTool(void) {

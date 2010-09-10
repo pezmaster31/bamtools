@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 3 September 2010 (DB)
+// Last modified: 10 September 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides index functionality - both for the standardized BAM index format
 // (".bai") as well as a BamTools-specific (nonstandard) index format (".bti").
@@ -30,15 +30,14 @@ class BamIndex {
     public:
         BamIndex(BamTools::BgzfData* bgzf, BamTools::BamReader* reader, bool isBigEndian);
         virtual ~BamIndex(void) { }
-
+        
     // index interface
     public:
         // creates index data (in-memory) from current reader data
         virtual bool Build(void) =0;
         // returns supported file extension
         virtual const std::string Extension(void) const =0;
-        // calculates offset(s) for a given region
-        //virtual bool GetOffsets(const BamTools::BamRegion& region, const bool isRightBoundSpecified, std::vector<int64_t>& offsets) =0;
+        // attempts to use index to jump to region; returns success/fail
         virtual bool Jump(const BamTools::BamRegion& region) =0;
         // returns whether reference has alignments or no
         virtual bool HasAlignments(const int& referenceID); 
@@ -97,8 +96,7 @@ class BamStandardIndex : public BamIndex {
         bool Build(void);
         // returns supported file extension
         const std::string Extension(void) const { return std::string(".bai"); }
-        // calculates offset(s) for a given region
-        bool GetOffsets(const BamTools::BamRegion& region, const bool isRightBoundSpecified, std::vector<int64_t>& offsets);
+        // attempts to use index to jump to region; returns success/fail
         bool Jump(const BamTools::BamRegion& region);
          // loads existing data from file into memory
         bool Load(const std::string& filename);
@@ -131,8 +129,7 @@ class BamToolsIndex : public BamIndex {
         bool Build(void);
         // returns supported file extension
         const std::string Extension(void) const { return std::string(".bti"); }
-        // calculates offset(s) for a given region
-        bool GetOffsets(const BamTools::BamRegion& region, const bool isRightBoundSpecified, std::vector<int64_t>& offsets);
+        // attempts to use index to jump to region; returns success/fail
         bool Jump(const BamTools::BamRegion& region);
          // loads existing data from file into memory
         bool Load(const std::string& filename);

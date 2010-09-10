@@ -270,6 +270,12 @@ struct BamRegion {
         , RightRefID(rightID)
         , RightPosition(rightPos)
     { }
+    
+    // member functions
+    void clear(void) { LeftRefID = -1; LeftPosition = -1; RightRefID = -1; RightPosition = -1; }
+    bool isLeftBoundSpecified(void) const { return ( LeftRefID != -1 && LeftPosition != -1 ); }
+    bool isNull(void) const { return !( isLeftBoundSpecified() && isRightBoundSpecified() ); }
+    bool isRightBoundSpecified(void) const { return ( RightRefID != -1 && RightPosition != -1 ); }
 };
 
 // ----------------------------------------------------------------

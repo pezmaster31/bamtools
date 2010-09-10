@@ -38,7 +38,8 @@ class BamIndex {
         // returns supported file extension
         virtual const std::string Extension(void) const =0;
         // calculates offset(s) for a given region
-        virtual bool GetOffsets(const BamTools::BamRegion& region, const bool isRightBoundSpecified, std::vector<int64_t>& offsets) =0;
+        //virtual bool GetOffsets(const BamTools::BamRegion& region, const bool isRightBoundSpecified, std::vector<int64_t>& offsets) =0;
+        virtual bool Jump(const BamTools::BamRegion& region) =0;
         // returns whether reference has alignments or no
         virtual bool HasAlignments(const int& referenceID); 
         // loads existing data from file into memory
@@ -98,6 +99,7 @@ class BamStandardIndex : public BamIndex {
         const std::string Extension(void) const { return std::string(".bai"); }
         // calculates offset(s) for a given region
         bool GetOffsets(const BamTools::BamRegion& region, const bool isRightBoundSpecified, std::vector<int64_t>& offsets);
+        bool Jump(const BamTools::BamRegion& region);
          // loads existing data from file into memory
         bool Load(const std::string& filename);
         // writes in-memory index data out to file 
@@ -131,6 +133,7 @@ class BamToolsIndex : public BamIndex {
         const std::string Extension(void) const { return std::string(".bti"); }
         // calculates offset(s) for a given region
         bool GetOffsets(const BamTools::BamRegion& region, const bool isRightBoundSpecified, std::vector<int64_t>& offsets);
+        bool Jump(const BamTools::BamRegion& region);
          // loads existing data from file into memory
         bool Load(const std::string& filename);
         // writes in-memory index data out to file 

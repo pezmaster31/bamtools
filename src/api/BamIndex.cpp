@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 3 September 2010 (DB)
+// Last modified: 9 September 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides index functionality - both for the default (standardized) BAM 
 // index format (.bai) as well as a BamTools-specific (nonstandard) index 
@@ -13,6 +13,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <algorithm>
+#include <iostream>
 #include <map>
 #include "BamIndex.h"
 #include "BamReader.h"
@@ -391,6 +392,48 @@ void BamStandardIndex::BamStandardIndexPrivate::InsertLinearOffset(LinearOffsetV
     }
 }      
 
+bool BamStandardIndex::Jump(const BamRegion& region) {
+  
+    cerr << "Jumping in BAI" << endl;
+  
+    if ( m_reader == 0 || m_BGZF == 0 || !m_reader->IsOpen() ) {
+        fprintf(stderr, "ERROR: Could not jump: invalid BamReader state.\n");
+        return false;
+    }
+    
+    // see if left-bound reference of region has alignments
+    if ( !HasAlignments(region.LeftRefID) ) return false; 
+    
+    // make sure left-bound position is valid
+    if ( region.LeftPosition > m_references.at(region.LeftRefID).RefLength ) return false;
+        
+    vector<int64_t> offsets;
+    if ( !GetOffsets(region, region.isRightBoundSpecified(), offsets) ) {
+        fprintf(stderr, "ERROR: Could not jump: unable to calculate offset for specified region.\n");
+        return false;
+    }
+  
+    // iterate through offsets
+    BamAlignment bAlignment;
+    bool result = true;
+    for ( vector<int64_t>::const_iterator o = offsets.begin(); o != offsets.end(); ++o) {
+        
+        // attempt seek & load first available alignment
+        result &= m_BGZF->Seek(*o);
+        m_reader->GetNextAlignmentCore(bAlignment);
+        
+        // if this alignment corresponds to desired position
+        // return success of seeking back to 'current offset'
+        if ( (bAlignment.RefID == region.LeftRefID && bAlignment.Position + bAlignment.Length > region.LeftPosition) || (bAlignment.RefID > region.LeftRefID) ) {
+            if ( o != offsets.begin() ) --o;
+            return m_BGZF->Seek(*o);
+        }
+    }
+    
+    if ( !result ) fprintf(stderr, "ERROR: Could not jump: unable to calculate offset for specified region.\n");
+    return result;
+}
+
 bool BamStandardIndex::Load(const string& filename)  { 
     
     // open index file, abort on error
@@ -679,16 +722,16 @@ struct BamToolsIndexEntry {
     
     // data members
     int64_t Offset;
-    int RefID;
-    int Position;
+    int32_t RefID;
+    int32_t StartPosition;
     
     // ctor
-    BamToolsIndexEntry(const uint64_t& offset = 0,
-                       const int& id = -1,
-                       const int& position = -1)
+    BamToolsIndexEntry(const int64_t& offset    = 0,
+                       const int32_t&  id       = -1,
+                       const int32_t&  position = -1)
         : Offset(offset)
         , RefID(id)
-        , Position(position)
+        , StartPosition(position)
     { }
 };
 
@@ -741,8 +784,8 @@ bool BamToolsIndex::Build(void) {
     // plow through alignments, store block offsets
     int32_t currentBlockCount  = 0;
     int64_t blockStartOffset   = m_BGZF->Tell();
-    int     blockStartId       = -1;
-    int     blockStartPosition = -1;
+    int32_t blockStartId       = -1;
+    int32_t blockStartPosition = -1;
     BamAlignment al;
     while ( m_reader->GetNextAlignmentCore(al) ) {
         
@@ -777,7 +820,46 @@ bool BamToolsIndex::GetOffsets(const BamRegion& region, const bool isRightBoundS
   
     // clear any prior data
     offsets.clear();
-  
+    
+    
+/*    bool found = false;
+    int64_t previousOffset = -1;
+    BamToolsIndexData::const_iterator indexIter = d->m_indexData.end() - 1;
+    BamToolsIndexData::const_iterator indexBegin = d->m_indexData.begin();
+    for ( ; indexIter >= indexBegin; --indexIter ) {
+
+        const BamToolsIndexEntry& entry = (*indexIter);
+      
+        cerr << "Considering entry at " << entry.RefID << ":" << entry.Position << " => " << entry.Offset << endl;
+        
+        if ( entry.RefID < region.LeftRefID) { 
+            found = true;
+            break;
+        }
+        
+        if ( (entry.RefID == region.LeftRefID) && (entry.Position < region.LeftPosition) ) {
+            found = true;
+            break;
+        }
+        
+        previousOffset = entry.Offset;
+    }
+
+    if ( !found || previousOffset == -1 ) return false;
+   
+    // store offset & return success
+    cerr << endl;
+    cerr << "Using offset: " << previousOffset << endl;
+    cerr << endl;
+    
+    offsets.push_back(previousOffset);
+    return true;*/ 
+    
+    
+//     cerr << "--------------------------------------------------" << endl;
+//     cerr << "Looking for " << region.LeftRefID << ":" << region.LeftPosition << endl;
+//     cerr << endl;
+    
     // calculate nearest index to jump to
     int64_t previousOffset = -1;
     BamToolsIndexData::const_iterator indexIter = d->m_indexData.begin();
@@ -786,21 +868,69 @@ bool BamToolsIndex::GetOffsets(const BamRegion& region, const bool isRightBoundS
      
         const BamToolsIndexEntry& entry = (*indexIter);
         
+//         cerr << "Considering entry at " << entry.RefID << ":" << entry.StartPosition << " => " << entry.Offset << endl;
+        
         // check if we are 'past' beginning of desired region
         // if so, we will break out & use previously stored offset
         if ( entry.RefID > region.LeftRefID ) break;
-        if ( (entry.RefID == region.LeftRefID) && (entry.Position > region.LeftPosition) ) break;
+        if ( (entry.RefID == region.LeftRefID) && (entry.StartPosition >= region.LeftPosition) ) break;
         
         // not past desired region, so store current entry offset in previousOffset
         previousOffset = entry.Offset;
     }
   
-    // no index was found
-    if ( previousOffset == -1 ) return false;
+    // no index found
+    if ( indexIter == indexEnd ) return false;
+  
+    // first offset matches (so previousOffset was never set)
+    if ( previousOffset == -1 ) previousOffset = (*indexIter).Offset;
     
     // store offset & return success
+//     cerr << endl;
+//     cerr << "Using offset: " << previousOffset << endl;
+//     cerr << endl;
     offsets.push_back(previousOffset);
     return true; 
+}
+
+bool BamToolsIndex::Jump(const BamRegion& region) {
+  
+    if ( m_reader == 0 || m_BGZF == 0 || !m_reader->IsOpen() ) {
+        fprintf(stderr, "ERROR: Could not jump: invalid BamReader state.\n");
+        return false;
+    }
+  
+    // see if left-bound reference of region has alignments
+    if ( !HasAlignments(region.LeftRefID) ) return false; 
+    
+    // make sure left-bound position is valid
+    if ( region.LeftPosition > m_references.at(region.LeftRefID).RefLength ) return false;
+  
+    vector<int64_t> offsets;
+    if ( !GetOffsets(region, region.isRightBoundSpecified(), offsets) ) {
+        fprintf(stderr, "ERROR: Could not jump: unable to calculate offset for specified region.\n");
+        return false;
+    }
+  
+    // iterate through offsets
+    BamAlignment bAlignment;
+    bool result = true;
+    for ( vector<int64_t>::const_iterator o = offsets.begin(); o != offsets.end(); ++o) {
+        
+        // attempt seek & load first available alignment
+        result &= m_BGZF->Seek(*o);
+        m_reader->GetNextAlignmentCore(bAlignment);
+        
+        // if this alignment corresponds to desired position
+        // return success of seeking back to 'current offset'
+        if ( (bAlignment.RefID == region.LeftRefID && bAlignment.Position + bAlignment.Length > region.LeftPosition) || (bAlignment.RefID > region.LeftRefID) ) {
+            if ( o != offsets.begin() ) --o;
+            return m_BGZF->Seek(*o);
+        }
+    }
+    
+    if ( !result ) fprintf(stderr, "ERROR: Could not jump: unable to calculate offset for specified region.\n");
+    return result;
 }
 
 bool BamToolsIndex::Load(const string& filename) { 
@@ -839,13 +969,13 @@ bool BamToolsIndex::Load(const string& filename) {
     // iterate over index entries
     for ( unsigned int i = 0; i < numOffsets; ++i ) {
       
-        uint64_t offset;
-        int id;
-        int position;
+        int64_t offset;
+        int32_t id;
+        int32_t position;
         
         // read in data
-        elementsRead = fread(&offset, sizeof(offset), 1, indexStream);
-        elementsRead = fread(&id, sizeof(id), 1, indexStream);
+        elementsRead = fread(&offset,   sizeof(offset),   1, indexStream);
+        elementsRead = fread(&id,       sizeof(id),       1, indexStream);
         elementsRead = fread(&position, sizeof(position), 1, indexStream);
         
         // swap endian-ness if necessary
@@ -871,6 +1001,7 @@ bool BamToolsIndex::Load(const string& filename) {
 // N.B. - (this is the original BAM filename, method will modify it to use applicable extension)
 bool BamToolsIndex::Write(const std::string& bamFilename) { 
     
+    // open index file for writing
     string indexFilename = bamFilename + ".bti";
     FILE* indexStream = fopen(indexFilename.c_str(), "wb");
     if ( indexStream == 0 ) {
@@ -900,9 +1031,9 @@ bool BamToolsIndex::Write(const std::string& bamFilename) {
         const BamToolsIndexEntry& entry = (*indexIter);
         
         // copy entry data
-        uint64_t offset = entry.Offset;
-        int id = entry.RefID;
-        int position = entry.Position;
+        int64_t offset   = entry.Offset;
+        int32_t id       = entry.RefID;
+        int32_t position = entry.StartPosition;
         
         // swap endian-ness if necessary
         if ( m_isBigEndian ) {
@@ -912,12 +1043,12 @@ bool BamToolsIndex::Write(const std::string& bamFilename) {
         }
         
         // write the reference index entry
-        fwrite(&offset,   sizeof(offset), 1, indexStream);
-        fwrite(&id,       sizeof(id), 1, indexStream);
+        fwrite(&offset,   sizeof(offset),   1, indexStream);
+        fwrite(&id,       sizeof(id),       1, indexStream);
         fwrite(&position, sizeof(position), 1, indexStream);
     }
 
-    // flush file buffer, close file, and return success
+    // flush any remaining output, close file, and return success
     fflush(indexStream);
     fclose(indexStream);
     return true;

@@ -394,8 +394,6 @@ void BamStandardIndex::BamStandardIndexPrivate::InsertLinearOffset(LinearOffsetV
 
 bool BamStandardIndex::Jump(const BamRegion& region) {
   
-    cerr << "Jumping in BAI" << endl;
-  
     if ( m_reader == 0 || m_BGZF == 0 || !m_reader->IsOpen() ) {
         fprintf(stderr, "ERROR: Could not jump: invalid BamReader state.\n");
         return false;

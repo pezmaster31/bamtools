@@ -999,7 +999,7 @@ bool BamToolsIndex::BamToolsIndexPrivate::Jump(const BamRegion& region) {
         }
     }
     
-    if ( !result ) fprintf(stderr, "ERROR: Could not jump: unable to calculate offset for specified region.\n");
+    if ( !result ) fprintf(stderr, "ERROR: Could not jump: unable to seek to offset for specified region.\n");
     return result;
 }
 

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 13 September 2010 (DB)
+// Last modified: 15 September 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic constants, data structures, etc. for using BAM files
 // ***************************************************************************
@@ -145,7 +145,9 @@ struct BamAlignment {
 
     // Additional data access methods
     public:
-	int GetEndPosition(bool usePadded = false) const;       // calculates alignment end position, based on starting position and CIGAR operations
+        // calculates alignment end position, based on starting position and CIGAR operations
+        // @zeroBased - if true, returns 0-based coordinate; else returns 1-based
+	int GetEndPosition(bool usePadded = false, bool zeroBased = true) const;  
 
     // 'internal' utility methods 
     private:
@@ -418,7 +420,7 @@ inline void BamAlignment::SetIsUnmapped(bool ok)           { if (ok) AlignmentFl
 
 // calculates alignment end position, based on starting position and CIGAR operations
 inline 
-int BamAlignment::GetEndPosition(bool usePadded) const {
+int BamAlignment::GetEndPosition(bool usePadded, bool zeroBased) const {
 
     // initialize alignment end to starting position
     int alignEnd = Position;
@@ -435,7 +437,12 @@ int BamAlignment::GetEndPosition(bool usePadded) const {
             alignEnd += (*cigarIter).Length;
         }
     }
-    return alignEnd - 1;
+    
+    // adjust for zeroBased, if necessary
+    if (zeroBased) 
+        return alignEnd - 1;
+    else 
+        return alignEnd;
 }
 
 inline

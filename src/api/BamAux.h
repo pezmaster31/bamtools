@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 15 September 2010 (DB)
+// Last modified: 16 September 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic constants, data structures, etc. for using BAM files
 // ***************************************************************************
@@ -46,24 +46,9 @@
 namespace BamTools {
 
 // BAM constants
-const int BAM_CORE_SIZE   = 32;
-const int BAM_CMATCH      = 0;
-const int BAM_CINS        = 1;
-const int BAM_CDEL        = 2;
-const int BAM_CREF_SKIP   = 3;
-const int BAM_CSOFT_CLIP  = 4;
-const int BAM_CHARD_CLIP  = 5;
-const int BAM_CPAD        = 6;
 const int BAM_CIGAR_SHIFT = 4;
 const int BAM_CIGAR_MASK  = ((1 << BAM_CIGAR_SHIFT) - 1);
-
-// BAM index constants
-const int MAX_BIN           = 37450;	// =(8^6-1)/7+1
-const int BAM_MIN_CHUNK_GAP = 32768;
-const int BAM_LIDX_SHIFT    = 14;
-
-// Explicit variable sizes
-const int BT_SIZEOF_INT = 4;
+const int BAM_CORE_SIZE   = 32;
 
 struct CigarOp;
 

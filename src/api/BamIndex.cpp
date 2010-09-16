@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 10 September 2010 (DB)
+// Last modified: 16 September 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides index functionality - both for the default (standardized) BAM 
 // index format (.bai) as well as a BamTools-specific (nonstandard) index 
@@ -52,6 +52,10 @@ bool BamIndex::HasAlignments(const int& referenceID) {
  
 namespace BamTools { 
 
+// BAM index constants
+const int MAX_BIN           = 37450;    // =(8^6-1)/7+1
+const int BAM_LIDX_SHIFT    = 14;  
+  
 // --------------------------------------------------
 // BamStandardIndex data structures & typedefs
 struct Chunk {

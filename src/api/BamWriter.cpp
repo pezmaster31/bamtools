@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 17 August 2010 (DB)
+// Last modified: 16 September 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -17,6 +17,20 @@
 #include "BamWriter.h"
 using namespace BamTools;
 using namespace std;
+
+namespace BamTools {
+
+// BAM constants
+const int BT_SIZEOF_INT   = 4;
+const int BAM_CMATCH      = 0;
+const int BAM_CINS        = 1;
+const int BAM_CDEL        = 2;
+const int BAM_CREF_SKIP   = 3;
+const int BAM_CSOFT_CLIP  = 4;
+const int BAM_CHARD_CLIP  = 5;
+const int BAM_CPAD        = 6;
+
+} // namespace BamTools
 
 struct BamWriter::BamWriterPrivate {
 

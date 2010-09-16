@@ -46,9 +46,17 @@
 namespace BamTools {
 
 // BAM constants
+const int BAM_CMATCH      = 0;
+const int BAM_CINS        = 1;
+const int BAM_CDEL        = 2;
+const int BAM_CREF_SKIP   = 3;
+const int BAM_CSOFT_CLIP  = 4;
+const int BAM_CHARD_CLIP  = 5;
+const int BAM_CPAD        = 6;
 const int BAM_CIGAR_SHIFT = 4;
 const int BAM_CIGAR_MASK  = ((1 << BAM_CIGAR_SHIFT) - 1);
 const int BAM_CORE_SIZE   = 32;
+const int BT_SIZEOF_INT   = 4;
 
 struct CigarOp;
 

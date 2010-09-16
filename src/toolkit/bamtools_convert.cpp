@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 22 July 2010
+// Last modified: 16 September 2010
 // ---------------------------------------------------------------------------
 // Converts between BAM and a number of other formats
 // ***************************************************************************
@@ -13,21 +13,22 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
 #include "bamtools_convert.h"
+#include "bamtools_fasta.h"
 #include "bamtools_options.h"
-#include "bamtools_pileup.h"
+#include "bamtools_pileup_engine.h"
 #include "bamtools_utilities.h"
 #include "BGZF.h"
-#include "BamReader.h"
 #include "BamMultiReader.h"
-
 using namespace std;
 using namespace BamTools;
   
 namespace BamTools { 
- 
-    // format names
+  
+    // ---------------------------------------------
+    // ConvertTool constants
+  
+    // supported conversion format command-line names
     static const string FORMAT_BED      = "bed";
     static const string FORMAT_BEDGRAPH = "bedgraph";
     static const string FORMAT_FASTA    = "fasta";
@@ -40,36 +41,36 @@ namespace BamTools {
     // other constants
     static const unsigned int FASTA_LINE_MAX = 50;
     
+    // ---------------------------------------------
+    // ConvertPileupFormatVisitor declaration
+    
+    class ConvertPileupFormatVisitor : public PileupVisitor {
+      
+        // ctor & dtor
+        public:
+            ConvertPileupFormatVisitor(const RefVector& references, 
+                                       const string& fastaFilename,
+                                       const bool isPrintingMapQualities,
+                                       ostream* out);
+            ~ConvertPileupFormatVisitor(void);
+      
+        // PileupVisitor interface implementation
+        public:
+//             void Visit(const int& refId, const int& position, const vector<BamAlignment>& alignments);
+            
+            void Visit(const PileupPosition& pileupData);
+            
+        // data members
+        private:
+            Fasta     m_fasta;
+            bool      m_hasFasta;
+            bool      m_isPrintingMapQualities;
+            ostream*  m_out;
+            RefVector m_references;
+    };
+    
 } // namespace BamTools
   
-struct ConvertTool::ConvertToolPrivate {
-  
-    // ctor & dtor
-    public:
-        ConvertToolPrivate(ConvertTool::ConvertSettings* settings);
-        ~ConvertToolPrivate(void);
-    
-    // interface
-    public:
-        bool Run(void);
-    
-    // internal methods
-    private:
-        void PrintBed(const BamAlignment& a);
-        void PrintBedGraph(const BamAlignment& a);
-        void PrintFasta(const BamAlignment& a);
-        void PrintFastq(const BamAlignment& a);
-        void PrintJson(const BamAlignment& a);
-        void PrintSam(const BamAlignment& a);
-        void PrintWiggle(const BamAlignment& a);
-        
-    // data members
-    private: 
-        ConvertTool::ConvertSettings* m_settings;
-        RefVector m_references;
-        ostream m_out;
-};
-
 // ---------------------------------------------
 // ConvertSettings implementation
 
@@ -105,66 +106,43 @@ struct ConvertTool::ConvertSettings {
         , IsOmittingSamHeader(false)
         , IsPrintingPileupMapQualities(false)
         , OutputFilename(Options::StandardOut())
+        , FastaFilename("")
     { } 
-};  
+};    
 
 // ---------------------------------------------
-// ConvertTool implementation
-
-ConvertTool::ConvertTool(void)
-    : AbstractTool()
-    , m_settings(new ConvertSettings)
-    , m_impl(0)
-{
-    // set program details
-    Options::SetProgramInfo("bamtools convert", "converts BAM to a number of other formats", "-format <FORMAT> [-in <filename> -in <filename> ...] [-out <filename>] [other options]");
-    
-    // set up options 
-    OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInput,   m_settings->InputFiles,     IO_Opts, Options::StandardIn());
-    Options::AddValueOption("-out",    "BAM filename", "the output BAM file",   "", m_settings->HasOutput,  m_settings->OutputFilename, IO_Opts, Options::StandardOut());
-    Options::AddValueOption("-format", "FORMAT", "the output file format - see README for recognized formats", "", m_settings->HasFormat, m_settings->Format, IO_Opts);
-   
-    OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
-    Options::AddValueOption("-region", "REGION", "genomic region. Index file is recommended for better performance, and is read automatically if it exists as <filename>.bai. See \'bamtools help index\' for more  details on creating one", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
-    
-    OptionGroup* PileupOpts = Options::CreateOptionGroup("Pileup Options");
-    Options::AddValueOption("-fasta", "FASTA filename", "FASTA reference file", "", m_settings->HasFastaFilename, m_settings->FastaFilename, PileupOpts, "");
-    Options::AddOption("-mapqual", "print the mapping qualities", m_settings->IsPrintingPileupMapQualities, PileupOpts);
-    
-    OptionGroup* SamOpts = Options::CreateOptionGroup("SAM Options");
-    Options::AddOption("-noheader", "omit the SAM header from output", m_settings->IsOmittingSamHeader, SamOpts);
-}
-
-ConvertTool::~ConvertTool(void) {
-    delete m_settings;
-    m_settings = 0;
-    
-    delete m_impl;
-    m_impl = 0;
-}
-
-int ConvertTool::Help(void) {
-    Options::DisplayHelp();
-    return 0;
-}
-
-int ConvertTool::Run(int argc, char* argv[]) {
+// ConvertToolPrivate implementation  
   
-    // parse command line arguments
-    Options::Parse(argc, argv, 1);
+struct ConvertTool::ConvertToolPrivate {
+  
+    // ctor & dtor
+    public:
+        ConvertToolPrivate(ConvertTool::ConvertSettings* settings);
+        ~ConvertToolPrivate(void);
     
-    // run internal ConvertTool implementation, return success/fail
-    m_impl = new ConvertToolPrivate(m_settings);
-    
-    if ( m_impl->Run() ) 
-        return 0;
-    else 
-        return 1;
-}
-
-// ---------------------------------------------
-// ConvertToolPrivate implementation
+    // interface
+    public:
+        bool Run(void);
+        
+    // internal methods
+    private:
+        void PrintBed(const BamAlignment& a);
+        void PrintBedGraph(const BamAlignment& a);
+        void PrintFasta(const BamAlignment& a);
+        void PrintFastq(const BamAlignment& a);
+        void PrintJson(const BamAlignment& a);
+        void PrintSam(const BamAlignment& a);
+        void PrintWiggle(const BamAlignment& a);
+        
+        // special case - uses the PileupEngine
+        bool RunPileupConversion(BamMultiReader* reader);
+        
+    // data members
+    private: 
+        ConvertTool::ConvertSettings* m_settings;
+        RefVector m_references;
+        ostream m_out;
+};
 
 ConvertTool::ConvertToolPrivate::ConvertToolPrivate(ConvertTool::ConvertSettings* settings)
     : m_settings(settings)
@@ -175,8 +153,6 @@ ConvertTool::ConvertToolPrivate::~ConvertToolPrivate(void) { }
 
 bool ConvertTool::ConvertToolPrivate::Run(void) {
  
-    bool convertedOk = true;
-  
     // ------------------------------------
     // initialize conversion input/output
         
@@ -193,8 +169,13 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
     BamRegion region;
     if ( m_settings->HasRegion ) {
         if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
-            if ( !reader.SetRegion(region) )
-              cerr << "Could not set BamReader region to REGION: " << m_settings->Region << endl;
+            if ( !reader.SetRegion(region) ) {
+                cerr << "Could not set BamReader region to REGION: " << m_settings->Region << endl;
+                return false;
+            }
+        } else {
+            cerr << "Could not parse REGION: " << m_settings->Region << endl;
+            return false;
         }
     }
         
@@ -213,33 +194,22 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
         m_out.rdbuf(outFile.rdbuf()); 
     }
     
-    // ------------------------
-    // pileup is special case
-    if ( m_settings->Format == FORMAT_PILEUP ) {
-        
-        // initialize pileup input/output
-        Pileup pileup(&reader, &m_out);
-        
-        // ---------------------------
-        // configure pileup settings
-        
-        if ( m_settings->HasRegion ) 
-            pileup.SetRegion(region);
-        
-        if ( m_settings->HasFastaFilename ) 
-            pileup.SetFastaFilename(m_settings->FastaFilename);
-        
-        pileup.SetIsPrintingMapQualities( m_settings->IsPrintingPileupMapQualities );
-        
-        // run pileup
-        convertedOk = pileup.Run();
-    }
-    
     // -------------------------------------
-    // else determine 'simpler' format type
+    // do conversion based on format
+    
+     bool convertedOk = true;
+    
+    // pileup is special case
+    // conversion not done per alignment, like the other formats
+    if ( m_settings->Format == FORMAT_PILEUP )
+        convertedOk = RunPileupConversion(&reader);
+    
+    // all other formats
     else {
     
         bool formatError = false;
+        
+        // set function pointer to proper conversion method
         void (BamTools::ConvertTool::ConvertToolPrivate::*pFunction)(const BamAlignment&) = 0;
         if      ( m_settings->Format == FORMAT_BED )      pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintBed;
         else if ( m_settings->Format == FORMAT_BEDGRAPH ) pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintBedGraph;
@@ -255,24 +225,26 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
             convertedOk = false;
         }
         
-        // if SAM format & not omitting header, print SAM header
-        if ( (m_settings->Format == FORMAT_SAM) && !m_settings->IsOmittingSamHeader ) {
-            string headerText = reader.GetHeaderText();
-            m_out << headerText;
-        }
-        
-        // ------------------------
-        // do conversion
+        // if format selected ok
         if ( !formatError ) {
+        
+            // if SAM format & not omitting header, print SAM header first
+            if ( (m_settings->Format == FORMAT_SAM) && !m_settings->IsOmittingSamHeader ) 
+                m_out << reader.GetHeaderText();
+            
+            // iterate through file, doing conversion
             BamAlignment a;
-            while ( reader.GetNextAlignment(a) ) {
-                (this->*pFunction)(a);
-            }
+            while ( reader.GetNextAlignment(a) ) 
+              (this->*pFunction)(a);
+            
+            // set flag for successful conversion
+            convertedOk = true;
         }
     }
     
     // ------------------------
     // clean up & exit
+    
     reader.Close();
     if ( m_settings->HasOutput ) outFile.close();
     return convertedOk;   
@@ -282,7 +254,7 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
 // Conversion/output methods
 // ----------------------------------------------------------
 
-void ConvertTool::ConvertToolPrivate::PrintBed(const BamAlignment& a)      { 
+void ConvertTool::ConvertToolPrivate::PrintBed(const BamAlignment& a) { 
   
     // tab-delimited, 0-based half-open 
     // (e.g. a 50-base read aligned to pos 10 could have BED coordinates (10, 60) instead of BAM coordinates (10, 59) )
@@ -485,7 +457,6 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a) {
     }
 
     m_out << "}" << endl;
-    
 }
 
 // print BamAlignment in SAM format
@@ -616,4 +587,237 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
 
 void ConvertTool::ConvertToolPrivate::PrintWiggle(const BamAlignment& a) { 
     ; 
+}
+
+bool ConvertTool::ConvertToolPrivate::RunPileupConversion(BamMultiReader* reader) {
+  
+    // check for valid BamMultiReader
+    if ( reader == 0 ) return false;
+  
+    // set up our pileup format 'visitor'
+    ConvertPileupFormatVisitor* v = new ConvertPileupFormatVisitor(m_references, 
+                                                                   m_settings->FastaFilename,
+                                                                   m_settings->IsPrintingPileupMapQualities, 
+                                                                   &m_out);
+
+    // set up PileupEngine
+    PileupEngine pileup;
+    pileup.AddVisitor(v);
+    
+    // iterate through data
+    BamAlignment al;
+    while ( reader->GetNextAlignment(al) )
+        pileup.AddAlignment(al);
+    pileup.Flush();
+    
+    // clean up
+    delete v;
+    v = 0;
+    
+    // return success
+    return true;
+}       
+
+// ---------------------------------------------
+// ConvertTool implementation
+
+ConvertTool::ConvertTool(void)
+    : AbstractTool()
+    , m_settings(new ConvertSettings)
+    , m_impl(0)
+{
+    // set program details
+    Options::SetProgramInfo("bamtools convert", "converts BAM to a number of other formats", "-format <FORMAT> [-in <filename> -in <filename> ...] [-out <filename>] [other options]");
+    
+    // set up options 
+    OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
+    Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInput,   m_settings->InputFiles,     IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-out",    "BAM filename", "the output BAM file",   "", m_settings->HasOutput,  m_settings->OutputFilename, IO_Opts, Options::StandardOut());
+    Options::AddValueOption("-format", "FORMAT", "the output file format - see README for recognized formats", "", m_settings->HasFormat, m_settings->Format, IO_Opts);
+   
+    OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
+    Options::AddValueOption("-region", "REGION", "genomic region. Index file is recommended for better performance, and is read automatically if it exists as <filename>.bai. See \'bamtools help index\' for more  details on creating one", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
+    
+    OptionGroup* PileupOpts = Options::CreateOptionGroup("Pileup Options");
+    Options::AddValueOption("-fasta", "FASTA filename", "FASTA reference file", "", m_settings->HasFastaFilename, m_settings->FastaFilename, PileupOpts, "");
+    Options::AddOption("-mapqual", "print the mapping qualities", m_settings->IsPrintingPileupMapQualities, PileupOpts);
+    
+    OptionGroup* SamOpts = Options::CreateOptionGroup("SAM Options");
+    Options::AddOption("-noheader", "omit the SAM header from output", m_settings->IsOmittingSamHeader, SamOpts);
+}
+
+ConvertTool::~ConvertTool(void) {
+    delete m_settings;
+    m_settings = 0;
+    
+    delete m_impl;
+    m_impl = 0;
+}
+
+int ConvertTool::Help(void) {
+    Options::DisplayHelp();
+    return 0;
+}
+
+int ConvertTool::Run(int argc, char* argv[]) {
+  
+    // parse command line arguments
+    Options::Parse(argc, argv, 1);
+    
+    // run internal ConvertTool implementation, return success/fail
+    m_impl = new ConvertToolPrivate(m_settings);
+    
+    if ( m_impl->Run() ) 
+        return 0;
+    else 
+        return 1;
+}
+
+// ---------------------------------------------
+// ConvertPileupFormatVisitor implementation
+
+ConvertPileupFormatVisitor::ConvertPileupFormatVisitor(const RefVector& references, 
+                                                       const string& fastaFilename,
+                                                       const bool isPrintingMapQualities,
+                                                       ostream* out)
+    : PileupVisitor()
+    , m_hasFasta(false)
+    , m_isPrintingMapQualities(isPrintingMapQualities)
+    , m_out(out)
+    , m_references(references)
+{ 
+    // set up Fasta reader if file is provided
+    if ( !fastaFilename.empty() ) {
+      
+        // check for FASTA index
+        string indexFilename = "";
+        if ( Utilities::FileExists(fastaFilename + ".fai") ) 
+            indexFilename = fastaFilename + ".fai";
+      
+        // open FASTA file
+        if ( m_fasta.Open(fastaFilename, indexFilename) ) 
+            m_hasFasta = true;
+    }
+}
+
+ConvertPileupFormatVisitor::~ConvertPileupFormatVisitor(void) { 
+    // be sure to close Fasta reader
+    if ( m_hasFasta ) {
+        m_fasta.Close();
+        m_hasFasta = false;
+    }
+}
+
+void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData ) {
+  
+    // skip if no alignments at this position
+    if ( pileupData.PileupAlignments.empty() ) return;
+  
+    // retrieve reference name
+    const string& referenceName = m_references[pileupData.RefId].RefName;
+    const int& position   = pileupData.Position;
+    
+    // retrieve reference base from FASTA file, if one provided; otherwise default to 'N'
+    char referenceBase('N');
+    if ( m_hasFasta && (pileupData.Position < m_references[pileupData.RefId].RefLength) ) {
+        if ( !m_fasta.GetBase(pileupData.RefId, pileupData.Position, referenceBase ) ) {
+            cerr << "Pileup error : Could not read reference base from FASTA file" << endl;
+            return;
+        }
+    }
+    
+    // get count of alleles at this position
+    const int numberAlleles = pileupData.PileupAlignments.size();
+    
+    // -----------------------------------------------------------
+    // build strings based on alleles at this positionInAlignment
+    
+    stringstream bases("");
+    stringstream baseQualities("");
+    stringstream mapQualities("");
+    
+    // iterate over alignments at this pileup position
+    vector<PileupAlignment>::const_iterator pileupIter = pileupData.PileupAlignments.begin();
+    vector<PileupAlignment>::const_iterator pileupEnd  = pileupData.PileupAlignments.end();
+    for ( ; pileupIter != pileupEnd; ++pileupIter ) {
+        const PileupAlignment pa = (*pileupIter);
+        const BamAlignment& ba = pa.Alignment;
+        
+        // if beginning of read segment
+        if ( pa.IsSegmentBegin )
+            bases << '^' << ( ((int)ba.MapQuality > 93) ? (char)126 : (char)((int)ba.MapQuality+33) );
+        
+        // if current base is not a DELETION
+        if ( !pa.IsCurrentDeletion ) {
+          
+            // get base at current position
+            char base = ba.QueryBases.at(pa.PositionInAlignment);
+            
+            // if base matches reference
+            if ( base == '=' || 
+                 toupper(base) == toupper(referenceBase) ||
+                 tolower(base) == tolower(referenceBase) ) 
+            {
+                base = (ba.IsReverseStrand() ? ',' : '.' );
+            }
+            
+            // mismatches reference
+            else base = (ba.IsReverseStrand() ? tolower(base) : toupper(base) );
+            
+            // store base
+            bases << base;
+          
+            // if next position contains insertion
+            if ( pa.IsNextInsertion ) {
+                bases << '+' << pa.InsertionLength;
+                for (int i = 1; i <= pa.InsertionLength; ++i) {
+                    char insertedBase = (char)ba.QueryBases.at(pa.PositionInAlignment + i);
+                    bases << (ba.IsReverseStrand() ? (char)tolower(insertedBase) : (char)toupper(insertedBase) );
+                }
+            }
+            
+            // if next position contains DELETION
+            else if ( pa.IsNextDeletion ) {
+                bases << '-' << pa.DeletionLength;
+                for (int i = 1; i <= pa.DeletionLength; ++i) {
+                    char deletedBase('N');
+                    if ( m_hasFasta && (pileupData.Position+i < m_references[pileupData.RefId].RefLength) ) {
+                        if ( !m_fasta.GetBase(pileupData.RefId, pileupData.Position+i, deletedBase ) ) {
+                            cerr << "Pileup error : Could not read reference base from FASTA file" << endl;
+                            return;
+                        }
+                    }
+                    bases << (ba.IsReverseStrand() ? (char)tolower(deletedBase) : (char)toupper(deletedBase) );
+                }
+            }
+        }
+        
+        // otherwise, DELETION
+        else bases << '*';
+        
+        // if end of read segment
+        if ( pa.IsSegmentEnd ) bases << '$';
+        
+        // store current base quality
+        baseQualities << ba.Qualities.at(pa.PositionInAlignment);
+        
+        // save alignment map quality if desired
+        if ( m_isPrintingMapQualities )
+            mapQualities << ( ((int)ba.MapQuality > 93) ? (char)126 : (char)((int)ba.MapQuality+33) );
+    }
+    
+    // ----------------------
+    // print results 
+    
+    // tab-delimited
+    // <refName> <1-based pos> <refBase> <numberAlleles> <bases> <qualities> [mapQuals]
+    
+    const string TAB = "\t";
+    *m_out << referenceName       << TAB 
+           << position + 1        << TAB 
+           << referenceBase       << TAB 
+           << numberAlleles       << TAB 
+           << bases.str()         << TAB 
+           << baseQualities.str() << TAB
+           << mapQualities.str()  << endl;
 }

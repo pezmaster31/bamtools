@@ -3,42 +3,150 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 1 June 2010
+// Last modified: 16 September 2010
 // ---------------------------------------------------------------------------
-// Prints coverage statistics for a single BAM file 
-//
-// ** Expand to multiple?? 
-//
+// Prints coverage data for a single BAM file 
 // ***************************************************************************
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
-
 #include "bamtools_coverage.h"
 #include "bamtools_options.h"
+#include "bamtools_pileup_engine.h"
 #include "BamReader.h"
-
 using namespace std;
 using namespace BamTools; 
   
+namespace BamTools {
+ 
+// ---------------------------------------------  
+// CoverageVisitor implementation 
+  
+class CoverageVisitor : public PileupVisitor {
+  
+    public:
+        CoverageVisitor(const RefVector& references, ostream* out)
+            : PileupVisitor()
+            , m_references(references)
+            , m_out(out)
+        { }
+        ~CoverageVisitor(void) { }
+  
+    // PileupVisitor interface implementation
+    public:
+//         void Visit(const int& refId, const int& position, const vector<BamAlignment>& alignments) {
+        void Visit(const PileupPosition& pileupData) {
+            // -----------------------------------------
+            // print coverage results ( tab-delimited )
+            // <refName> <0-based pos> <number of alleles>
+//             *m_out << m_references[refId].RefName << "\t" << position << "\t" << alignments.size() << endl;
+            *m_out << m_references[pileupData.RefId].RefName << "\t" 
+                   << pileupData.Position << "\t" 
+                   << pileupData.PileupAlignments.size() << endl;
+        }
+        
+    private:
+        RefVector m_references;
+        ostream*  m_out;
+};
+
+} // namespace BamTools
+
 // ---------------------------------------------  
 // CoverageSettings implementation
 
 struct CoverageTool::CoverageSettings {
 
     // flags
-    bool HasInputBamFilename;
+    bool HasInputFile;
+    bool HasOutputFile;
 
     // filenames
-    std::string InputBamFilename;
+    string InputBamFilename;
+    string OutputFilename;
     
     // constructor
     CoverageSettings(void)
-        : HasInputBamFilename(false)
+        : HasInputFile(false)
+        , HasOutputFile(false)
         , InputBamFilename(Options::StandardIn())
+        , OutputFilename(Options::StandardOut())
     { } 
 };  
+
+// ---------------------------------------------
+// CoverageToolPrivate implementation
+
+struct CoverageTool::CoverageToolPrivate {
+  
+    // ctor & dtor
+    public:
+        CoverageToolPrivate(CoverageTool::CoverageSettings* settings);
+        ~CoverageToolPrivate(void);
+    
+    // interface
+    public:
+        bool Run(void);
+        
+    // data members
+    private: 
+        CoverageTool::CoverageSettings* m_settings;
+        ostream m_out;
+        RefVector m_references;
+};  
+
+CoverageTool::CoverageToolPrivate::CoverageToolPrivate(CoverageTool::CoverageSettings* settings)
+    : m_settings(settings)
+    , m_out(cout.rdbuf()) // default output to cout
+{ }
+
+CoverageTool::CoverageToolPrivate::~CoverageToolPrivate(void) { }  
+  
+bool CoverageTool::CoverageToolPrivate::Run(void) {  
+  
+    // if output filename given
+    ofstream outFile;
+    if ( m_settings->HasOutputFile ) {
+      
+        // open output file stream
+        outFile.open(m_settings->OutputFilename.c_str());
+        if ( !outFile ) {
+            cerr << "Could not open " << m_settings->OutputFilename << " for output." << endl; 
+            return false; 
+        }
+        
+        // set m_out to file's streambuf
+        m_out.rdbuf(outFile.rdbuf()); 
+    } 
+    
+    //open our BAM reader
+    BamReader reader;
+    reader.Open(m_settings->InputBamFilename);
+    m_references = reader.GetReferenceData();
+    
+    // set up our output 'visitor'
+    CoverageVisitor* cv = new CoverageVisitor(m_references, &m_out);
+    
+    // set up pileup engine with 'visitor'
+    PileupEngine pileup;
+    pileup.AddVisitor(cv);
+    
+    // process input data
+    BamAlignment al;    
+    while ( reader.GetNextAlignment(al) ) 
+        pileup.AddAlignment(al);
+    
+    // clean up 
+    reader.Close();
+    if ( m_settings->HasOutputFile ) outFile.close();
+    delete cv;
+    cv = 0;
+    
+    // return success
+    return true;
+}
 
 // ---------------------------------------------
 // CoverageTool implementation
@@ -46,18 +154,23 @@ struct CoverageTool::CoverageSettings {
 CoverageTool::CoverageTool(void) 
     : AbstractTool()
     , m_settings(new CoverageSettings)
+    , m_impl(0)
 { 
     // set program details
-    Options::SetProgramInfo("bamtools coverage", "prints coverage stats for a BAM file", "-in <filename> ");
+    Options::SetProgramInfo("bamtools coverage", "prints coverage data for a single BAM file", "[-in <filename>] [-out <filename>]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in", "BAM filename", "the input BAM file", "", m_settings->HasInputBamFilename, m_settings->InputBamFilename, IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-in",  "BAM filename", "the input BAM file", "", m_settings->HasInputFile,  m_settings->InputBamFilename, IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-out", "filename",     "the output file",    "", m_settings->HasOutputFile, m_settings->OutputFilename,   IO_Opts, Options::StandardOut());
 }
 
 CoverageTool::~CoverageTool(void) { 
     delete m_settings;
     m_settings = 0;
+    
+    delete m_impl;
+    m_impl = 0;
 }
 
 int CoverageTool::Help(void) { 
@@ -69,16 +182,12 @@ int CoverageTool::Run(int argc, char* argv[]) {
 
     // parse command line arguments
     Options::Parse(argc, argv, 1);
-
-    //open our BAM reader
-    BamReader reader;
-    reader.Open(m_settings->InputBamFilename);
-
-    // generate coverage stats
-    cerr << "Generating coverage stats for " << m_settings->InputBamFilename << endl;
-    cerr << "FEATURE NOT YET IMPLEMENTED!" << endl;
-
-    // clean & exit
-    reader.Close();
-    return 0;
-}
+    
+    // run internal ConvertTool implementation, return success/fail
+    m_impl = new CoverageToolPrivate(m_settings);
+    
+    if ( m_impl->Run() ) 
+        return 0;
+    else 
+        return 1;
+}  

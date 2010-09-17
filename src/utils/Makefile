@@ -17,7 +17,7 @@ INCLUDES = -I$(API_DIR)/
 SOURCES = bamtools_fasta.cpp \
           bamtools_filter_engine.cpp \
           bamtools_options.cpp \
-          bamtools_pileup.cpp \
+	  bamtools_pileup_engine.cpp \
           bamtools_utilities.cpp 
 OBJECTS= $(SOURCES:.cpp=.o)
 BUILT_OBJECTS= $(patsubst %,$(OBJ_DIR)/%,$(OBJECTS))

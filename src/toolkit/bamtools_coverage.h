@@ -3,12 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 1 June 2010
+// Last modified: 1 August 2010
 // ---------------------------------------------------------------------------
-// Prints coverage statistics for a single BAM file 
-//
-// ** Expand to multiple?? 
-//
+// Prints coverage data for a single BAM file 
 // ***************************************************************************
 
 #ifndef BAMTOOLS_COVERAGE_H
@@ -31,6 +28,9 @@ class CoverageTool : public AbstractTool {
     private:  
         struct CoverageSettings;
         CoverageSettings* m_settings;
+        
+        struct CoverageToolPrivate;
+        CoverageToolPrivate* m_impl;
 };
   
 } // namespace BamTools

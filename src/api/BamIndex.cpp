@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 16 September 2010 (DB)
+// Last modified: 18 September 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides index functionality - both for the default (standardized) BAM 
 // index format (.bai) as well as a BamTools-specific (nonstandard) index 
@@ -121,7 +121,7 @@ struct BamStandardIndex::BamStandardIndexPrivate {
     // creates index data (in-memory) from current reader data
     bool Build(void);
     // attempts to use index to jump to region; returns success/fail
-    bool Jump(const BamTools::BamRegion& region);
+    bool Jump(const BamTools::BamRegion& region, bool* hasAlignmentsInRegion);
       // loads existing data from file into memory
     bool Load(const std::string& filename);
     // writes in-memory index data out to file 
@@ -404,7 +404,7 @@ void BamStandardIndex::BamStandardIndexPrivate::InsertLinearOffset(LinearOffsetV
     }
 }      
 
-bool BamStandardIndex::BamStandardIndexPrivate::Jump(const BamRegion& region) {
+bool BamStandardIndex::BamStandardIndexPrivate::Jump(const BamRegion& region, bool* hasAlignmentsInRegion) {
   
     // localize parent data
     if ( m_parent == 0 ) return false;
@@ -422,9 +422,12 @@ bool BamStandardIndex::BamStandardIndexPrivate::Jump(const BamRegion& region) {
     // make sure left-bound position is valid
     if ( region.LeftPosition > references.at(region.LeftRefID).RefLength ) return false;
         
+    // calculate offsets for this region
+    // if failed, print message, set flag, and return failure
     vector<int64_t> offsets;
     if ( !GetOffsets(region, region.isRightBoundSpecified(), offsets) ) {
         fprintf(stderr, "ERROR: Could not jump: unable to calculate offset for specified region.\n");
+        *hasAlignmentsInRegion = false;
         return false;
     }
   
@@ -434,18 +437,25 @@ bool BamStandardIndex::BamStandardIndexPrivate::Jump(const BamRegion& region) {
     for ( vector<int64_t>::const_iterator o = offsets.begin(); o != offsets.end(); ++o) {
         
         // attempt seek & load first available alignment
+        // set flag to true if data exists
         result &= mBGZF->Seek(*o);
-        reader->GetNextAlignmentCore(bAlignment);
+        *hasAlignmentsInRegion = reader->GetNextAlignmentCore(bAlignment);
         
         // if this alignment corresponds to desired position
-        // return success of seeking back to 'current offset'
+        // return success of seeking back to the offset before the 'current offset' (to cover overlaps)
         if ( (bAlignment.RefID == region.LeftRefID && bAlignment.Position + bAlignment.Length > region.LeftPosition) || (bAlignment.RefID > region.LeftRefID) ) {
             if ( o != offsets.begin() ) --o;
             return mBGZF->Seek(*o);
         }
     }
     
-    if ( !result ) fprintf(stderr, "ERROR: Could not jump: unable to calculate offset for specified region.\n");
+    // if error in jumping, print message & set flag
+    if ( !result ) {
+        fprintf(stderr, "ERROR: Could not jump: unable to calculate offset for specified region.\n");
+        *hasAlignmentsInRegion = false;
+    }
+    
+    // return success/failure
     return result;
 }
 
@@ -752,7 +762,7 @@ BamStandardIndex::~BamStandardIndex(void) {
 bool BamStandardIndex::Build(void) { return d->Build(); }
 
 // attempts to use index to jump to region; returns success/fail
-bool BamStandardIndex::Jump(const BamRegion& region) { return d->Jump(region); }
+bool BamStandardIndex::Jump(const BamRegion& region, bool* hasAlignmentsInRegion) { return d->Jump(region, hasAlignmentsInRegion); }
 
 // loads existing data from file into memory
 bool BamStandardIndex::Load(const string& filename) { return d->Load(filename); }
@@ -807,7 +817,9 @@ struct BamToolsIndex::BamToolsIndexPrivate {
     //   do something new 
     // else 
     //   do the old thing
-    enum Version { BTI_1_0 = 1 };  
+    enum Version { BTI_1_0 = 1 
+                 , BTI_1_1
+                 };  
   
     // -------------------------
     // data members
@@ -822,7 +834,7 @@ struct BamToolsIndex::BamToolsIndexPrivate {
     BamToolsIndexPrivate(BamToolsIndex* parent) 
         : m_parent(parent)
         , m_blockSize(1000)
-        , m_version(BTI_1_0) // latest version - used for writing new index files
+        , m_version(BTI_1_1) // latest version - used for writing new index files
     { }
     
     ~BamToolsIndexPrivate(void) { }
@@ -835,7 +847,7 @@ struct BamToolsIndex::BamToolsIndexPrivate {
     // returns supported file extension
     const std::string Extension(void) const { return std::string(".bti"); }
     // attempts to use index to jump to region; returns success/fail
-    bool Jump(const BamTools::BamRegion& region);
+    bool Jump(const BamTools::BamRegion& region, bool* hasAlignmentsInRegion);
       // loads existing data from file into memory
     bool Load(const std::string& filename);
     // writes in-memory index data out to file 
@@ -846,7 +858,7 @@ struct BamToolsIndex::BamToolsIndexPrivate {
     // internal methods
     
     // calculates offset for a given region
-    bool GetOffset(const BamRegion& region, int64_t& offset);
+    bool GetOffset(const BamRegion& region, int64_t& offset, bool* hasAlignmentsInRegion);
 };
 
 bool BamToolsIndex::BamToolsIndexPrivate::Build(void) { 
@@ -923,13 +935,16 @@ bool BamToolsIndex::BamToolsIndexPrivate::Build(void) {
         currentAlignmentOffset = mBGZF->Tell();  
     }
     
+    // store final block
+    m_indexData[blockRefId].push_back( BamToolsIndexEntry(blockMaxEndPosition, blockStartOffset, blockStartPosition) );
+    
     // attempt to rewind back to begnning of alignments
     // return success/fail
     return reader->Rewind();
 }
 
 // N.B. - ignores isRightBoundSpecified
-bool BamToolsIndex::BamToolsIndexPrivate::GetOffset(const BamRegion& region, int64_t& offset) { 
+bool BamToolsIndex::BamToolsIndexPrivate::GetOffset(const BamRegion& region, int64_t& offset, bool* hasAlignmentsInRegion) { 
   
     // return false if leftBound refID is not found in index data
     if ( m_indexData.find(region.LeftRefID) == m_indexData.end() ) return false;
@@ -942,22 +957,26 @@ bool BamToolsIndex::BamToolsIndexPrivate::GetOffset(const BamRegion& region, int
     
     // save first offset
     offset = (*referenceOffsets.begin()).StartOffset;
+    
+    // iterate over offsets entries on this reference
     vector<BamToolsIndexEntry>::const_iterator indexIter = referenceOffsets.begin();
     vector<BamToolsIndexEntry>::const_iterator indexEnd  = referenceOffsets.end();
     for ( ; indexIter != indexEnd; ++indexIter ) {
         const BamToolsIndexEntry& entry = (*indexIter);
+        // break if alignment 'entry' overlaps region
         if ( entry.MaxEndPosition >= region.LeftPosition ) break;
         offset = (*indexIter).StartOffset;
     }
   
-    // no index found
-    if ( indexIter == indexEnd ) return false;
-    
-    // return succes
+    // set flag based on whether an index entry was found for this region
+    *hasAlignmentsInRegion = ( indexIter != indexEnd );
     return true; 
 }
 
-bool BamToolsIndex::BamToolsIndexPrivate::Jump(const BamRegion& region) {
+bool BamToolsIndex::BamToolsIndexPrivate::Jump(const BamRegion& region, bool* hasAlignmentsInRegion) {
+  
+    // clear flag
+    *hasAlignmentsInRegion = false;
   
     // localize parent data
     if ( m_parent == 0 ) return false;
@@ -965,6 +984,7 @@ bool BamToolsIndex::BamToolsIndexPrivate::Jump(const BamRegion& region) {
     BgzfData*  mBGZF  = m_parent->m_BGZF;
     RefVector& references = m_parent->m_references;
   
+    // check valid BamReader state
     if ( reader == 0 || mBGZF == 0 || !reader->IsOpen() ) {
         fprintf(stderr, "ERROR: Could not jump: invalid BamReader state.\n");
         return false;
@@ -978,7 +998,7 @@ bool BamToolsIndex::BamToolsIndexPrivate::Jump(const BamRegion& region) {
   
     // calculate nearest offset to jump to
     int64_t offset;
-    if ( !GetOffset(region, offset) ) {
+    if ( !GetOffset(region, offset, hasAlignmentsInRegion) ) {
         fprintf(stderr, "ERROR: Could not jump - unable to calculate offset for specified region.\n");
         return false;
     }
@@ -1021,6 +1041,13 @@ bool BamToolsIndex::BamToolsIndexPrivate::Load(const string& filename) {
         fprintf(stderr, "Problem with index file - unsupported version.\n");
         fclose(indexStream);
         return false;
+    }
+
+    if ( (Version)indexVersion < BTI_1_1 ) {
+        fprintf(stderr, "\nProblem with index file - this version of the index contains a bug related to accessing data near reference ends.\n");
+        fprintf(stderr, "\nPlease run \'bamtools index -bti -in yourData.bam\' to generate an up-to-date BamToolsIndex.\n\n");
+        fclose(indexStream);
+        exit(1);
     }
 
     // read in block size
@@ -1177,7 +1204,10 @@ BamToolsIndex::~BamToolsIndex(void) {
 bool BamToolsIndex::Build(void) { return d->Build(); }
 
 // attempts to use index to jump to region; returns success/fail
-bool BamToolsIndex::Jump(const BamRegion& region) { return d->Jump(region); }
+// a "successful" jump indicates no error, but not whether this region has data
+//   * thus, the method sets a flag to indicate whether there are alignments 
+//     available after the jump position
+bool BamToolsIndex::Jump(const BamRegion& region, bool* hasAlignmentsInRegion) { return d->Jump(region, hasAlignmentsInRegion); }
 
 // loads existing data from file into memory
 bool BamToolsIndex::Load(const string& filename) { return d->Load(filename); }

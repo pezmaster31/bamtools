@@ -97,7 +97,7 @@ const string BamMultiReader::GetHeaderText(void) const {
     for (vector<pair<BamReader*, BamAlignment*> >::const_iterator rs = readers.begin(); rs != readers.end(); ++rs) {
 
         BamReader* reader = rs->first;
-        string headerText = reader->GetHeaderText();
+        const string headerText = reader->GetHeaderText();
         if ( headerText.empty() ) continue;
         
         map<string, bool> currentFileReadGroups;

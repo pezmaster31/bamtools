@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 18 September 2010 (DB)
+// Last modified: 19 September 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -99,6 +99,10 @@ struct BamAlignment {
         bool GetTag(const std::string& tag, uint32_t& destination) const;       // access unsigned integer data
         bool GetTag(const std::string& tag, int32_t& destination) const;        // access signed integer data
         bool GetTag(const std::string& tag, float& destination) const;          // access floating point data
+        
+        // retrieve the tag type code for TAG
+        // returns true if tag could be found and type determined
+        bool GetTagType(const std::string& tag, char& type) const;
         
         // remove tag data
         // returns true if removal was successful, false if error

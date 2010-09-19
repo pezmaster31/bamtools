@@ -25,6 +25,7 @@ SOURCES = bamtools_convert.cpp \
           bamtools_merge.cpp \
           bamtools_random.cpp \
           bamtools_sort.cpp \
+	  bamtools_split.cpp \
           bamtools_stats.cpp \
           bamtools.cpp 
 OBJECTS= $(SOURCES:.cpp=.o)

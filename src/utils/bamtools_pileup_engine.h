@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 16 September 2010
+// Last modified: 18 September 2010
 // ---------------------------------------------------------------------------
 // Provides pileup at position functionality for various tools.
 // ***************************************************************************
@@ -12,7 +12,7 @@
 #define BAMTOOLS_PILEUP_ENGINE_H
 
 #include <vector>
-#include "BamAux.h"
+#include "BamAlignment.h"
 
 namespace BamTools {
 

@@ -3,14 +3,13 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 30 August 2010
+// Last modified: 18 September 2010
 // ---------------------------------------------------------------------------
 // 
 // ***************************************************************************
 
 #include <iostream>
 #include "bamtools_filter_engine.h"
-#include "BamAux.h"
 using namespace std;
 using namespace BamTools;
 

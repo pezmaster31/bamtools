@@ -12,6 +12,7 @@ BIN_DIR = ../../bin
 # define our source and object files
 # ----------------------------------
 SOURCES = BGZF.cpp \
+	  BamAlignment.cpp \
           BamIndex.cpp \
           BamReader.cpp \
           BamMultiReader.cpp \

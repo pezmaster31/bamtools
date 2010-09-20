@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 17 September 2010 (DB)
+// Last modified: 18 September 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides index functionality - both for the standardized BAM index format
 // (".bai") as well as a BamTools-specific (nonstandard) index format (".bti").
@@ -15,7 +15,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "BamAux.h"
+#include "BamAlignment.h"
 
 namespace BamTools {
 

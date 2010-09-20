@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 September 2010 (DB)
+// Last modified: 20 September 2010 (DB)
 // ---------------------------------------------------------------------------
 // 
 // ***************************************************************************
@@ -106,16 +106,26 @@ class SplitTool::SplitToolPrivate {
         
     // internal methods
     private:
+        // close & delete BamWriters in map
+        template<typename T>
+        void CloseWriters(map<T, BamWriter*>& writers);
+        // calculate output stub based on IO args given
         void DetermineOutputFilenameStub(void);
+        // open our BamReader
         bool OpenReader(void);
+        // split alignments in BAM file based on isMapped property
         bool SplitMapped(void);
+        // split alignments in BAM file based on isPaired property
         bool SplitPaired(void);
+        // split alignments in BAM file based on refID property
         bool SplitReference(void);
+        // finds first alignment and calls corresponding SplitTagImpl<> 
+        // depending on tag type
         bool SplitTag(void);
-        bool SplitTag_Int(BamAlignment& al);
-        bool SplitTag_UInt(BamAlignment& al);
-        bool SplitTag_Real(BamAlignment& al);
-        bool SplitTag_String(BamAlignment& al);
+        // templated split tag implementation 
+        // handle the various types that are possible for tags
+        template<typename T>
+        bool SplitTagImpl(BamAlignment& al);    
         
     // data members
     private:
@@ -217,14 +227,7 @@ bool SplitTool::SplitToolPrivate::SplitMapped(void) {
     }
     
     // clean up BamWriters 
-    map<bool, BamWriter*>::iterator writerEnd  = outputFiles.end();
-    for ( writerIter = outputFiles.begin() ; writerIter != writerEnd; ++writerIter ) {
-        BamWriter* writer = (*writerIter).second;
-        if ( writer == 0 ) continue;
-        writer->Close();
-        delete writer;
-        writer = 0;
-    }
+    CloseWriters(outputFiles);
     
     // return success
     return true;
@@ -267,14 +270,7 @@ bool SplitTool::SplitToolPrivate::SplitPaired(void) {
     }
     
     // clean up BamWriters 
-    map<bool, BamWriter*>::iterator writerEnd  = outputFiles.end();
-    for ( writerIter = outputFiles.begin() ; writerIter != writerEnd; ++writerIter ) {
-        BamWriter* writer = (*writerIter).second;
-        if (writer == 0 ) continue;
-        writer->Close();
-        delete writer;
-        writer = 0;
-    }
+    CloseWriters(outputFiles);
     
     // return success
     return true;  
@@ -318,19 +314,13 @@ bool SplitTool::SplitToolPrivate::SplitReference(void) {
     }
     
     // clean up BamWriters 
-    map<int32_t, BamWriter*>::iterator writerEnd  = outputFiles.end();
-    for ( writerIter = outputFiles.begin(); writerIter != writerEnd; ++writerIter ) {
-        BamWriter* writer = (*writerIter).second;
-        if (writer == 0 ) continue;
-        writer->Close();
-        delete writer;
-        writer = 0;
-    }
+    CloseWriters(outputFiles);
     
     // return success
     return true;
 }
 
+// finds first alignment and calls corresponding SplitTagImpl<>() depending on tag type
 bool SplitTool::SplitToolPrivate::SplitTag(void) {  
   
     // iterate through alignments, until we hit TAG
@@ -348,20 +338,20 @@ bool SplitTool::SplitToolPrivate::SplitTag(void) {
             case 'c' :
             case 's' : 
             case 'i' :
-                return SplitTag_Int(al);
+                return SplitTagImpl<int32_t>(al);
                 
             case 'C' :
             case 'S' :
             case 'I' : 
-                return SplitTag_UInt(al);
+                return SplitTagImpl<uint32_t>(al);
               
             case 'f' :
-                return SplitTag_Real(al);
+                return SplitTagImpl<float>(al);
             
             case 'A':
             case 'Z':
             case 'H':
-                return SplitTag_String(al);
+                return SplitTagImpl<string>(al);
           
             default:
                 fprintf(stderr, "ERROR: Unknown tag storage class encountered: [%c]\n", tagType);
@@ -373,17 +363,47 @@ bool SplitTool::SplitToolPrivate::SplitTag(void) {
     return true;
 }
 
-bool SplitTool::SplitToolPrivate::SplitTag_Int(BamAlignment& al) {
+// --------------------------------------------------------------------------------
+// template method implementation
+// N.B. - *technical note* - use of template methods defined in ".cpp" goes against normal practices
+// but works here because these are purely internal (no one can call from outside this file)
+
+// close BamWriters & delete pointers
+template<typename T>
+void SplitTool::SplitToolPrivate::CloseWriters(map<T, BamWriter*>& writers) {
+  
+    typedef map<T, BamWriter*> WriterMap;
+    typedef typename WriterMap::iterator WriterMapIterator;
+  
+    WriterMapIterator writerIter = writers.begin();
+    WriterMapIterator writerEnd  = writers.end();
+    for ( ; writerIter != writerEnd; ++writerIter ) {
+        BamWriter* writer = (*writerIter).second;
+        if (writer == 0 ) continue;
+        writer->Close();
+        delete writer;
+        writer = 0;
+    }
+    writers.clear();
+}
+
+// handle the various types that are possible for tags
+template<typename T>
+bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al) {
+  
+    typedef T TagValueType;
+    typedef map<TagValueType, BamWriter*> WriterMap;
+    typedef typename WriterMap::iterator WriterMapIterator;
   
     // set up splitting data structure
-    map<int32_t, BamWriter*> outputFiles;
-    map<int32_t, BamWriter*>::iterator writerIter;
+    WriterMap outputFiles;
+    WriterMapIterator writerIter;
 
     // local variables
     const string tag = m_settings->TagToSplit;
     BamWriter* writer;
     stringstream outputFilenameStream("");
-    int32_t currentValue;
+    TagValueType currentValue;
     
     // retrieve first alignment tag value
     if ( al.GetTag(tag, currentValue) ) {
@@ -433,242 +453,11 @@ bool SplitTool::SplitToolPrivate::SplitTag_Int(BamAlignment& al) {
             writer->SaveAlignment(al);
     }
     
-    // clean up BamWriters 
-    map<int32_t, BamWriter*>::iterator writerEnd  = outputFiles.end();
-    for ( writerIter = outputFiles.begin(); writerIter != writerEnd; ++writerIter ) {
-        BamWriter* writer = (*writerIter).second;
-        if (writer == 0 ) continue;
-        writer->Close();
-        delete writer;
-        writer = 0;
-    }
+    // clean up BamWriters  
+    CloseWriters(outputFiles);
     
     // return success
-    return true;
-}
-
-bool SplitTool::SplitToolPrivate::SplitTag_UInt(BamAlignment& al) {
-  
-    // set up splitting data structure
-    map<uint32_t, BamWriter*> outputFiles;
-    map<uint32_t, BamWriter*>::iterator writerIter;
-
-    // local variables
-    const string tag = m_settings->TagToSplit;
-    BamWriter* writer;
-    stringstream outputFilenameStream("");
-    uint32_t currentValue;
-    
-    int alignmentsIgnored = 0;
-    
-    // retrieve first alignment tag value
-    if ( al.GetTag(tag, currentValue) ) {
-      
-        // open new BamWriter, save first alignment
-        writer = new BamWriter;
-        outputFilenameStream << m_outputFilenameStub << ".TAG_" << tag << "_" << currentValue << ".bam";
-        writer->Open(outputFilenameStream.str(), m_header, m_references);
-        writer->SaveAlignment(al);
-        
-        // store in map
-        outputFiles.insert( make_pair(currentValue, writer) );
-        
-        // reset stream
-        outputFilenameStream.str("");
-    } else ++alignmentsIgnored;
-    
-    // iterate through remaining alignments
-    while ( m_reader.GetNextAlignment(al) ) {
-      
-        // skip if this alignment doesn't have TAG 
-        if ( !al.GetTag(tag, currentValue) ) { ++alignmentsIgnored; continue; }
-        
-        // look up tag value in map
-        writerIter = outputFiles.find(currentValue);
-          
-        // if no writer associated with this value
-        if ( writerIter == outputFiles.end() ) {
-        
-            // open new BamWriter
-            writer = new BamWriter;
-            outputFilenameStream << m_outputFilenameStub << ".TAG_" << tag << "_" << currentValue << ".bam";
-            writer->Open(outputFilenameStream.str(), m_header, m_references);
-            
-            // store in map
-            outputFiles.insert( make_pair(currentValue, writer) );
-            
-            // reset stream
-            outputFilenameStream.str("");
-        } 
-        
-        // else grab corresponding writer
-        else writer = (*writerIter).second;
-        
-        // store alignment in proper BAM output file 
-        if ( writer ) 
-            writer->SaveAlignment(al);
-    }
-    
-    // clean up BamWriters 
-    map<uint32_t, BamWriter*>::iterator writerEnd  = outputFiles.end();
-    for ( writerIter = outputFiles.begin(); writerIter != writerEnd; ++writerIter ) {
-        BamWriter* writer = (*writerIter).second;
-        if (writer == 0 ) continue;
-        writer->Close();
-        delete writer;
-        writer = 0;
-    }
-    
-    // return success
-    return true;
-}
-
-bool SplitTool::SplitToolPrivate::SplitTag_Real(BamAlignment& al) {
-
-     // set up splitting data structure
-    map<float, BamWriter*> outputFiles;
-    map<float, BamWriter*>::iterator writerIter;
-
-    // local variables
-    const string tag = m_settings->TagToSplit;
-    BamWriter* writer;
-    stringstream outputFilenameStream("");
-    float currentValue;
-    
-    // retrieve first alignment tag value
-    if ( al.GetTag(tag, currentValue) ) {
-      
-        // open new BamWriter, save first alignment
-        writer = new BamWriter;
-        outputFilenameStream << m_outputFilenameStub << ".TAG_" << tag << "_" << currentValue << ".bam";
-        writer->Open(outputFilenameStream.str(), m_header, m_references);
-        writer->SaveAlignment(al);
-        
-        // store in map
-        outputFiles.insert( make_pair(currentValue, writer) );
-        
-        // reset stream
-        outputFilenameStream.str("");
-    }
-    
-    // iterate through remaining alignments
-    while ( m_reader.GetNextAlignment(al) ) {
-      
-        // skip if this alignment doesn't have TAG 
-        if ( !al.GetTag(tag, currentValue) ) continue;
-        
-        // look up tag value in map
-        writerIter = outputFiles.find(currentValue);
-          
-        // if no writer associated with this value
-        if ( writerIter == outputFiles.end() ) {
-        
-            // open new BamWriter
-            writer = new BamWriter;
-            outputFilenameStream << m_outputFilenameStub << ".TAG_" << tag << "_" << currentValue << ".bam";
-            writer->Open(outputFilenameStream.str(), m_header, m_references);
-            
-            // store in map
-            outputFiles.insert( make_pair(currentValue, writer) );
-            
-            // reset stream
-            outputFilenameStream.str("");
-        } 
-        
-        // else grab corresponding writer
-        else writer = (*writerIter).second;
-        
-        // store alignment in proper BAM output file 
-        if ( writer ) 
-            writer->SaveAlignment(al);
-    }
-    
-    // clean up BamWriters 
-    map<float, BamWriter*>::iterator writerEnd  = outputFiles.end();
-    for ( writerIter = outputFiles.begin(); writerIter != writerEnd; ++writerIter ) {
-        BamWriter* writer = (*writerIter).second;
-        if (writer == 0 ) continue;
-        writer->Close();
-        delete writer;
-        writer = 0;
-    }
-    
-    // return success
-    return true;
-}
-
-bool SplitTool::SplitToolPrivate::SplitTag_String(BamAlignment& al) {
-  
-     // set up splitting data structure
-    map<string, BamWriter*> outputFiles;
-    map<string, BamWriter*>::iterator writerIter;
-
-    // local variables
-    const string tag = m_settings->TagToSplit;
-    BamWriter* writer;
-    stringstream outputFilenameStream("");
-    string currentValue;
-    
-    // retrieve first alignment tag value
-    if ( al.GetTag(tag, currentValue) ) {
-      
-        // open new BamWriter, save first alignment
-        writer = new BamWriter;
-        outputFilenameStream << m_outputFilenameStub << ".TAG_" << tag << "_" << currentValue << ".bam";
-        writer->Open(outputFilenameStream.str(), m_header, m_references);
-        writer->SaveAlignment(al);
-        
-        // store in map
-        outputFiles.insert( make_pair(currentValue, writer) );
-        
-        // reset stream
-        outputFilenameStream.str("");
-    }
-    
-    // iterate through remaining alignments
-    while ( m_reader.GetNextAlignment(al) ) {
-      
-        // skip if this alignment doesn't have TAG 
-        if ( !al.GetTag(tag, currentValue) ) continue;
-        
-        // look up tag value in map
-        writerIter = outputFiles.find(currentValue);
-          
-        // if no writer associated with this value
-        if ( writerIter == outputFiles.end() ) {
-        
-            // open new BamWriter
-            writer = new BamWriter;
-            outputFilenameStream << m_outputFilenameStub << ".TAG_" << tag << "_" << currentValue << ".bam";
-            writer->Open(outputFilenameStream.str(), m_header, m_references);
-            
-            // store in map
-            outputFiles.insert( make_pair(currentValue, writer) );
-            
-            // reset stream
-            outputFilenameStream.str("");
-        } 
-        
-        // else grab corresponding writer
-        else writer = (*writerIter).second;
-        
-        // store alignment in proper BAM output file 
-        if ( writer ) 
-            writer->SaveAlignment(al);
-    }
-    
-    // clean up BamWriters 
-    map<string, BamWriter*>::iterator writerEnd  = outputFiles.end();
-    for ( writerIter = outputFiles.begin(); writerIter != writerEnd; ++writerIter ) {
-        BamWriter* writer = (*writerIter).second;
-        if (writer == 0 ) continue;
-        writer->Close();
-        delete writer;
-        writer = 0;
-    }
-    
-    // return success
-    return true;
+    return true;  
 }
 
 // ---------------------------------------------

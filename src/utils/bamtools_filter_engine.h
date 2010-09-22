@@ -3,8 +3,39 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 30 August 2010
+// Last modified: 21 September 2010
 // ---------------------------------------------------------------------------
+// Provides a generic filter engine based on filter-sets of properties,
+// with possible "rules" (compound logical expressions) to create more complex
+// queries on a data set.
+//
+// FilterEngine consists, most importantly, of :
+//
+//     a list of possible properties (each tagged whether it has been 'enabled' as a filter)
+//     a map of filterName => propertySet
+//     queue for compound rule expression (i.e. "(filter1 AND filter2) OR !filter3" )
+//     
+// Each propertySet is a list of properties enabled for this particular filter object
+//
+//     Implemented as a map of propertyNames to propertyFilterValue
+//     ( "property1" => pfv1 
+//       "property2" => pfv2 
+//       "property4" => pfv4
+//       etc. )  
+//
+//     Any properties that are 'possible', via FilterEngine::addProperty(), but not enabled 
+//     via FilterEngine::setProperty() (in our example, say "property3"), evaluate to true 
+//     for any query.  Meaning that if a property is not set on this filter, we don't care 
+//     about it here, so it passes though OK.
+//
+// A propertyFilterValue contains a value and comparison type
+//
+//    ( pfv1: Value = 50,    Type = GREATER_THAN_EQUAL
+//      pfv2: Value = "foo", Type = STARTS_WITH
+//      pfv4: Value = "bar", Type = CONTAINS
+//      etc. )  
+//
+//    This allows for more complex queries (than simple isEqual?) against a variety of data types.
 // 
 // ***************************************************************************
 
@@ -12,156 +43,128 @@
 #define BAMTOOLS_FILTER_ENGINE_H
 
 #include <algorithm>
+#include <iostream>
 #include <map>
+#include <queue>
+#include <sstream>
+#include <stack>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
+#include "bamtools_filter_properties.h"
+#include "bamtools_filter_ruleparser.h"
 #include "bamtools_utilities.h"
-#include "bamtools_variant.h"
 
 namespace BamTools {
 
-struct PropertyFilterValue {
-  
-    // define valid ValueCompareTypes
-    enum ValueCompareType { CONTAINS = 0
-                          , ENDS_WITH
-                          , EXACT
-                          , GREATER_THAN
-                          , GREATER_THAN_EQUAL
-                          , LESS_THAN
-                          , LESS_THAN_EQUAL
-                          , NOT
-                          , STARTS_WITH
-                          };
-                   
-    // ctor
-    PropertyFilterValue(const Variant& value = Variant(),
-                        const ValueCompareType& type = PropertyFilterValue::EXACT)
-        : Value(value)
-        , Type(type)
-    { }
-          
-    // filter check methods      
-    template<typename T>
-    bool check(const T& query) const;
-    bool check(const std::string& query) const;
-             
-    // data members
-    Variant Value;
-    ValueCompareType Type;
+struct FilterCompareType {    
+    enum Type { AND = 0
+              , NOT
+              , OR
+    };
 };
-
-inline
-const std::string toString(const PropertyFilterValue::ValueCompareType& type) {
   
-    switch ( type ) {
-        case ( PropertyFilterValue::CONTAINS )           : return std::string( "CONTAINS");
-        case ( PropertyFilterValue::ENDS_WITH )          : return std::string( "ENDS_WITH");
-        case ( PropertyFilterValue::EXACT )              : return std::string( "EXACT");
-        case ( PropertyFilterValue::GREATER_THAN )       : return std::string( "GREATER_THAN");
-        case ( PropertyFilterValue::GREATER_THAN_EQUAL ) : return std::string( "GREATER_THAN_EQUAL");
-        case ( PropertyFilterValue::LESS_THAN )          : return std::string( "LESS_THAN");
-        case ( PropertyFilterValue::LESS_THAN_EQUAL )    : return std::string( "LESS_THAN_EQUAL");
-        case ( PropertyFilterValue::NOT )                : return std::string( "NOT");
-        case ( PropertyFilterValue::STARTS_WITH )        : return std::string( "STARTS_WITH");
-        default : BAMTOOLS_ASSERT_UNREACHABLE;
-    }
-    return std::string();
-}
-
-// property name => property filter value 
-// ('name' => ('SSR', STARTS_WITH), 'mapQuality' => (50, GREATER_THAN_EQUAL), etc...)
-typedef std::map<std::string, PropertyFilterValue> PropertyMap;
-
-struct PropertyFilter {  
+// -----------------------------------------------------------
+// FilterEngine
   
-    // will be used more later
-    // if we implement a compound 'rules' system  - i.e. "(filter1 AND filter2) OR filter 3"
-    enum FilterCompareType { AND = 0
-                           , EXACT
-                           , NOT
-                           , OR
-                           };
-  
-    // data members
-    PropertyMap Properties;
-    FilterCompareType Type; 
-
-    // ctor
-    PropertyFilter(void) : Type( PropertyFilter::EXACT ) { }
-    
-    // filter check methods      
-    template<typename T>
-    bool check(const std::string& propertyName, const T& query) const;
-};
-
-// filter name => properties  
-// ('filter1' => properties1, 'filter2' => properties2, etc...)
-typedef std::map<std::string, PropertyFilter> FilterMap;
-  
-// used to store properties known to engine & keep track of enabled state
-struct Property {
-    std::string Name;
-    bool IsEnabled;
-    Property(const std::string& name, bool isEnabled = false) 
-        : Name(name)
-        , IsEnabled(isEnabled) 
-    { }
-};
-
-inline bool operator<  (const Property& lhs, const Property& rhs) { return lhs.Name <  rhs.Name; }
-inline bool operator== (const Property& lhs, const Property& rhs) { return lhs.Name == rhs.Name; }
-  
+template <typename FilterChecker>
 class FilterEngine {
+  
+    // ctor & dtor
+    public:
+        FilterEngine(void) 
+            : m_ruleString("")
+            , m_isRuleQueueGenerated(false)
+            , m_defaultCompareType(FilterCompareType::OR)
+            , AND_OPERATOR("&")
+            , OR_OPERATOR("|")
+            , NOT_OPERATOR("!")
+        { }
+        
+        ~FilterEngine(void) { }
   
     // 'filter set' methods
     public:
         // creates a new filter set, returns true if created, false if error or already exists
-        static bool addFilter(const std::string& filterName);       
+        bool addFilter(const std::string& filterName);       
         
         // return list of current filter names
-        static const std::vector<std::string> filterNames(void);    
+        const std::vector<std::string> filterNames(void);    
   
     // 'property' methods
     public:
       
         // add a new known property (& type) to engine
-        static bool addProperty(const std::string& propertyName);
+        bool addProperty(const std::string& propertyName);
   
         // sets property filter (value, type) for propertyName, on a particular filter set 
         // setProperty("filter1", "mapQuality", 50, GREATER_THAN_EQUAL)
         template<typename T>
-        static bool setProperty(const std::string& filterName, 
-                                const std::string& propertyName, 
-                                const T& value,
-                                const PropertyFilterValue::ValueCompareType& type = PropertyFilterValue::EXACT);
+        bool setProperty(const std::string& filterName, 
+                         const std::string& propertyName, 
+                         const T& value,
+                         const PropertyFilterValue::ValueCompareType& type = PropertyFilterValue::EXACT);
         
         // returns list of all properties known by FilterEngine  ( any created using addProperty() )
-        static const std::vector<std::string> allPropertyNames(void);
+        const std::vector<std::string> allPropertyNames(void);
         
         // returns list of property names that are 'enabled' ( only those touched by setProperty() )
-        static const std::vector<std::string> enabledPropertyNames(void);  
+        const std::vector<std::string> enabledPropertyNames(void);  
   
+     // 'rule' methods
+    public:   
+        
+        // sets comparison operator between filters if no rule string given
+        // default is to do an OR on each filter
+        void setDefaultCompareType(const FilterCompareType::Type& type = FilterCompareType::OR);
+
+        // sets rule string for building expression queue
+        // if empty, creates 
+        void setRule(const std::string& ruleString = "");
+        
     // token parsing (for property filter generation)
     public:
         template<typename T>
-        static bool parseToken(const std::string& token, T& value, PropertyFilterValue::ValueCompareType& type);
+        bool parseToken(const std::string& token, T& value, PropertyFilterValue::ValueCompareType& type);
         
     // query evaluation
     public:
-        // returns true if query passes all filters on 'propertyName'
+        // returns true if query passes all filters in FilterEngine
         template<typename T>
-        static bool check(const std::string& propertyName, const T& query);
+        bool check(const T& query);
 
+    // internal rule-handling methods
+    private:
+        void buildDefaultRuleString(void);
+        void buildRuleQueue(void);
+        template<typename T>
+        bool evaluateFilterRules(const T& query);
+        
     // data members
     private:
         // all 'filter sets'
-        static FilterMap m_filters;
+        FilterMap m_filters;
         
         // all known properties
-        static std::vector<Property> m_properties;  
+        std::vector<Property> m_properties; 
+        
+        // infix expression of filter-set comparison rules 
+        std::string m_ruleString;
+        
+        // postfix expression of tokens (filterNames) and operators (as strings)
+        // if this is empty, uses m_compareType to build default expression queue
+        std::queue<std::string> m_ruleQueue;
+        
+        // flag to test if the rule expression queue has been generated
+        bool m_isRuleQueueGenerated;
+        
+        // 'default' comparison operator between filters if no rule string given
+        // if this is changed, m_ruleString is used to build new m_ruleQueue
+        FilterCompareType::Type m_defaultCompareType;
+        
+        // client-specified checking type ( provides method: bool check(PropertyFilter, T object) )
+        FilterChecker m_checker;
         
         // token-parsing constants
         static const int NOT_CHAR          = (int)'!';
@@ -169,65 +172,192 @@ class FilterEngine {
         static const int GREATER_THAN_CHAR = (int)'>';
         static const int LESS_THAN_CHAR    = (int)'<';
         static const int WILDCARD_CHAR     = (int)'*';
+        
+        // filter evaluation constants
+        const std::string AND_OPERATOR;
+        const std::string OR_OPERATOR;
+        const std::string NOT_OPERATOR;
 };
 
-// -------------------------------------------------------------------
-// template methods
-
-// checks a query against a filter (value, compare type)
-template<typename T>
-bool PropertyFilterValue::check(const T& query) const {
-  
-    // ensure filter value & query are same type
-    if ( !Value.is_type<T>() ) { 
-        std::cerr << "Cannot compare different types!" << std::endl;
-        return false;
-    }
-    
-    // string matching
-    if ( Value.is_type<std::string>() ) {
-        std::cerr << "Cannot compare different types - query is a string!" << std::endl;
-        return false;
-    } 
-    
-    // numeric matching based on our filter type
-    switch ( Type ) {
-        case ( PropertyFilterValue::EXACT)              : return ( query == Value.get<T>() );
-        case ( PropertyFilterValue::GREATER_THAN)       : return ( query >  Value.get<T>() ); 
-        case ( PropertyFilterValue::GREATER_THAN_EQUAL) : return ( query >= Value.get<T>() ); 
-        case ( PropertyFilterValue::LESS_THAN)          : return ( query <  Value.get<T>() );
-        case ( PropertyFilterValue::LESS_THAN_EQUAL)    : return ( query <= Value.get<T>() );
-        case ( PropertyFilterValue::NOT)                : return ( query != Value.get<T>() );
-        default : BAMTOOLS_ASSERT_UNREACHABLE;
-    }
-    return false;
+// creates a new filter set, returns true if created, false if error or already exists
+template<typename FilterChecker>
+inline bool FilterEngine<FilterChecker>::addFilter(const std::string& filterName) {
+    return (m_filters.insert(std::make_pair(filterName, PropertyFilter()))).second;
 }
 
-template<typename T>
-bool PropertyFilter::check(const std::string& propertyName, const T& query) const {
-  
-    // if propertyName found for this filter, 
-    PropertyMap::const_iterator propIter = Properties.find(propertyName);
-    if ( propIter != Properties.end() ) {
-      const PropertyFilterValue& filterValue = (*propIter).second;
-      
-      // check 
-      switch ( Type ) {
-          case ( PropertyFilter::EXACT ) : return filterValue.check(query);
-          case ( PropertyFilter::NOT )   : return !filterValue.check(query);
-          case ( PropertyFilter::AND )   :
-          case ( PropertyFilter::OR )    : BAMTOOLS_ASSERT_MESSAGE(false, "Cannot use a binary compare operator on 1 value");
-          default : BAMTOOLS_ASSERT_UNREACHABLE;
-      }
-      return false; // unreachable
-    }
-
-    // property unknown to this filter
-    else return true;
+// add a new known property & type to engine
+template<typename FilterChecker>
+inline bool FilterEngine<FilterChecker>::addProperty(const std::string& propertyName) {
+    const std::vector<std::string> propertyNames = allPropertyNames();
+    bool found = std::binary_search( propertyNames.begin(), propertyNames.end(), propertyName );
+    if ( found ) return false;
+    m_properties.push_back( Property(propertyName) );
+    std::sort( m_properties.begin(), m_properties.end() );
+    return true;
 }
 
-template<typename T>
-bool FilterEngine::parseToken(const std::string& token, T& value, PropertyFilterValue::ValueCompareType& type) {
+// returns list of all properties known by FilterEngine 
+// ( any that were created using addProperty() )
+template<typename FilterChecker>
+inline const std::vector<std::string> FilterEngine<FilterChecker>::allPropertyNames(void) {
+    // set up stringlist
+    std::vector<std::string> names;
+    names.reserve(m_properties.size());
+    // iterate through all properties, appending to stringlist
+    std::vector<Property>::const_iterator propIter = m_properties.begin();
+    std::vector<Property>::const_iterator propEnd  = m_properties.end();
+    for ( ; propIter != propEnd; ++propIter )
+        names.push_back( (*propIter).Name );  
+    // return stringlist
+    return names;
+}
+
+// builds a default rule string based on m_defaultCompareType
+// used if user supplied an explicit rule string
+template<typename FilterChecker>
+inline void FilterEngine<FilterChecker>::buildDefaultRuleString(void) {
+  
+    // set up temp string stream 
+    std::stringstream ruleStream("");
+  
+    // get first filterName
+    FilterMap::const_iterator mapIter = m_filters.begin();
+    ruleStream << (*mapIter).first;
+    
+    // if there are more filters present
+    // iterate over remaining filters, appending compare operator and filter name
+    if ( m_filters.size() > 1 ) {        
+        for ( ++mapIter ; mapIter != m_filters.end(); ++mapIter )
+            ruleStream << ( (m_defaultCompareType == FilterCompareType::AND) ? " & " : " | " ) 
+                       << (*mapIter).first;
+    }
+
+    // set m_ruleString from temp stream
+    m_ruleString = ruleStream.str();
+}
+
+// build expression queue based on ruleString
+template<typename FilterChecker>
+inline void FilterEngine<FilterChecker>::buildRuleQueue(void) {
+  
+    // skip if no filters present
+    if ( m_filters.empty() ) return;
+  
+    // clear out any prior expression queue data
+    while ( !m_ruleQueue.empty() )
+        m_ruleQueue.pop();
+  
+    // create a rule string, if not provided
+    if ( m_ruleString.empty() ) 
+        buildDefaultRuleString();
+    
+    // initialize RuleParser, run, and retrieve results
+    RuleParser ruleParser(m_ruleString);
+    ruleParser.parse();
+    m_ruleQueue = ruleParser.results();
+    
+    // set flag if rule queue contains any values
+    m_isRuleQueueGenerated = (!m_ruleQueue.empty());    
+}
+
+// returns whether query value passes filter engine rules
+template<class FilterChecker> template<typename T>
+bool FilterEngine<FilterChecker>::check(const T& query) {
+  
+    // return result of querying against filter rules
+    return evaluateFilterRules(query);
+}
+
+// returns list of property names that are 'enabled' ( only those touched by setProperty() )
+template<typename FilterChecker>
+inline const std::vector<std::string> FilterEngine<FilterChecker>::enabledPropertyNames(void) {
+    // initialize stringlist
+    std::vector<std::string> names;
+    names.reserve(m_properties.size());
+    // iterate over all properties, appending if enabled
+    std::vector<Property>::const_iterator propIter = m_properties.begin();
+    std::vector<Property>::const_iterator propEnd  = m_properties.end();
+    for ( ; propIter != propEnd; ++propIter )
+        if ( (*propIter).IsEnabled ) 
+            names.push_back( (*propIter).Name );    
+    // return stringlist
+    return names;
+}
+
+// evaluates postfix rule queue - with each filter as an operand, AND|OR|NOT as operators
+template<class FilterChecker> template<typename T>
+bool FilterEngine<FilterChecker>::evaluateFilterRules(const T& query) {
+  
+    // build ruleQueue if not done before
+    if ( !m_isRuleQueueGenerated ) 
+        buildRuleQueue();
+    
+    std::stack<bool> resultStack;
+    FilterMap::const_iterator filterIter;
+    FilterMap::const_iterator filterEnd  = m_filters.end();
+    std::queue<std::string> ruleQueueCopy = m_ruleQueue;
+    while ( !ruleQueueCopy.empty() ) {
+        const std::string& token = ruleQueueCopy.front();
+        
+        // token is NOT_OPERATOR
+        if ( token == FilterEngine<FilterChecker>::NOT_OPERATOR ) {
+            BAMTOOLS_ASSERT_MESSAGE( !resultStack.empty(), "Empty result stack - cannot apply operator: !" );
+            resultStack.top() = !resultStack.top();
+        }
+        
+        // token is AND_OPERATOR
+        else if ( token == FilterEngine<FilterChecker>::AND_OPERATOR ) {
+            BAMTOOLS_ASSERT_MESSAGE( resultStack.size() >= 2 , "Not enough operands - cannot apply operator: &" );
+            bool topResult = resultStack.top();
+            resultStack.pop();
+            resultStack.top() &= topResult;
+        }
+        
+        // token is OR_OPERATOR
+        else if ( token == FilterEngine<FilterChecker>::OR_OPERATOR ) {
+            BAMTOOLS_ASSERT_MESSAGE( resultStack.size() >= 2 , "Not enough operands - cannot apply operator: |" );
+            bool topResult = resultStack.top();
+            resultStack.pop();
+            resultStack.top() |= topResult;
+        }
+        
+        // token is an operand 
+        else {
+            // look up PropertyFilter that matches this token 
+            filterIter = m_filters.find(token);
+            BAMTOOLS_ASSERT_MESSAGE( (filterIter != filterEnd), "Filter mentioned in rule, not found in FilterEngine" );
+            const PropertyFilter& filter = (*filterIter).second;
+            bool result = m_checker.check(filter, query);
+            resultStack.push( result );
+        }
+        
+        // pop token from ruleQueue
+        ruleQueueCopy.pop();
+    }
+    
+    // return last result
+    BAMTOOLS_ASSERT_MESSAGE( resultStack.size() == 1, "Result stack should only have one value remaining - cannot return result" );
+    return resultStack.top();
+}
+
+// return list of current filter names
+template<typename FilterChecker>
+inline const std::vector<std::string> FilterEngine<FilterChecker>::filterNames(void) {
+    // initialize stringlist
+    std::vector<std::string> names;
+    names.reserve(m_filters.size());
+    // iterate over all filters, appending filter name
+    FilterMap::const_iterator mapIter = m_filters.begin();
+    FilterMap::const_iterator mapEnd  = m_filters.end();
+    for ( ; mapIter != mapEnd; ++mapIter )
+        names.push_back( (*mapIter).first ); 
+    // return stringlist
+    return names;
+}
+
+// parse a filterValue token string that may contain comparison qualifiers (">50", "*SRR", etc.)
+template<class FilterChecker> template<typename T>
+bool FilterEngine<FilterChecker>::parseToken(const std::string& token, T& value, PropertyFilterValue::ValueCompareType& type) {
     
     // skip if token is empty
     if ( token.empty() ) return false;
@@ -244,20 +374,19 @@ bool FilterEngine::parseToken(const std::string& token, T& value, PropertyFilter
     // more than one character, check for special chars
     else {
         const int firstChar = (int)token.at(0);
-        
-        switch ( (int)firstChar ) {
+        switch ( firstChar ) {
           
-            case ( (int)FilterEngine::NOT_CHAR ) :
+            case ( FilterEngine<FilterChecker>::NOT_CHAR ) :
               
                 strippedToken = token.substr(1);       
                 type = PropertyFilterValue::NOT;
                 
                 break;
                 
-            case ( (int)FilterEngine::GREATER_THAN_CHAR ) :
+            case ( FilterEngine<FilterChecker>::GREATER_THAN_CHAR ) :
                 
                 // check for '>=' case
-                if ( token.at(1) == FilterEngine::EQUAL_CHAR ) {
+                if ( token.at(1) == FilterEngine<FilterChecker>::EQUAL_CHAR ) {
                     if ( token.length() == 2 ) return false;
                     strippedToken = token.substr(2);
                     type = PropertyFilterValue::GREATER_THAN_EQUAL;
@@ -271,10 +400,10 @@ bool FilterEngine::parseToken(const std::string& token, T& value, PropertyFilter
                 
                 break;
                 
-            case ( (int)FilterEngine::LESS_THAN_CHAR ) : 
+            case ( FilterEngine<FilterChecker>::LESS_THAN_CHAR ) : 
          
                 // check for '<=' case
-                if ( token.at(1) == FilterEngine::EQUAL_CHAR ) {
+                if ( token.at(1) == FilterEngine<FilterChecker>::EQUAL_CHAR ) {
                     if ( token.length() == 2 ) return false;
                     strippedToken = token.substr(2);
                     type = PropertyFilterValue::LESS_THAN_EQUAL;
@@ -288,10 +417,10 @@ bool FilterEngine::parseToken(const std::string& token, T& value, PropertyFilter
                 
                 break;
                 
-            case ( (int)FilterEngine::WILDCARD_CHAR ) : 
+            case ( FilterEngine<FilterChecker>::WILDCARD_CHAR ) : 
               
                 // check for *str* case (CONTAINS)
-                if ( token.at( token.length() - 1 ) == FilterEngine::WILDCARD_CHAR ) {
+                if ( token.at( token.length() - 1 ) == FilterEngine<FilterChecker>::WILDCARD_CHAR ) {
                     if ( token.length() == 2 ) return false;
                     strippedToken = token.substr(1, token.length() - 2);
                     type = PropertyFilterValue::CONTAINS;
@@ -305,11 +434,10 @@ bool FilterEngine::parseToken(const std::string& token, T& value, PropertyFilter
                 
                 break;
                
-                
             default :
               
                 // check for str* case (STARTS_WITH)
-                if ( token.at( token.length() - 1 ) == FilterEngine::WILDCARD_CHAR ) {
+                if ( token.at( token.length() - 1 ) == FilterEngine<FilterChecker>::WILDCARD_CHAR ) {
                     if ( token.length() == 2 ) return false;
                     strippedToken = token.substr(0, token.length() - 1);
                     type = PropertyFilterValue::STARTS_WITH;
@@ -348,13 +476,27 @@ bool FilterEngine::parseToken(const std::string& token, T& value, PropertyFilter
     return true;
 }
 
+// sets comparison operator between filters if no rule string given
+// default is to do an OR on each filter
+template<typename FilterChecker>
+inline void FilterEngine<FilterChecker>::setDefaultCompareType(const FilterCompareType::Type& type) {
+    // check for supported compare type
+    if ( type == FilterCompareType::AND || type == FilterCompareType::OR ) {
+        // if not the current compare type
+        if ( m_defaultCompareType != type ) {
+            m_defaultCompareType = type;
+            buildRuleQueue();
+        }
+    }
+}
+
 // sets property filter (value, type) for propertyName, on a particular filter set 
 // setProperty("filter1", "mapQuality", 50, GREATER_THAN_EQUAL)
-template<typename T>
-bool FilterEngine::setProperty(const std::string& filterName, 
-                               const std::string& propertyName, 
-                               const T& value,
-                               const PropertyFilterValue::ValueCompareType& type)
+template<class FilterChecker> template<typename T>
+bool FilterEngine<FilterChecker>::setProperty(const std::string& filterName, 
+                                              const std::string& propertyName, 
+                                              const T& value,
+                                              const PropertyFilterValue::ValueCompareType& type)
 {
     // lookup filter by name, return false if not found
     FilterMap::iterator filterIter = m_filters.find(filterName);
@@ -394,37 +536,19 @@ bool FilterEngine::setProperty(const std::string& filterName,
     } 
     
     // property already known, set as enabled
-    else 
-        (*knownPropertyIter).IsEnabled = true;
+    else (*knownPropertyIter).IsEnabled = true;
 
     // return success
     return true;
 }
 
-// returns false if query does not pass any filters on 'propertyName' 
-// returns true if property unknown (i.e. nothing has been set for this property... so query is considered to pass filter)
-template<typename T>
-bool FilterEngine::check(const std::string& propertyName, const T& query) {
-  
-    // check enabled properties list
-    // return true if no properties enabled at all OR if property is unknown to FilterEngine
-    const std::vector<std::string> enabledProperties = enabledPropertyNames();
-    if ( enabledProperties.empty() ) return true;
-    const bool found = std::binary_search( enabledProperties.begin(), enabledProperties.end(), propertyName );
-    if ( !found ) return true;
-    
-    // iterate over all filters in FilterEngine
-    FilterMap::const_iterator filterIter = m_filters.begin();
-    FilterMap::const_iterator filterEnd  = m_filters.end();
-    for ( ; filterIter != filterEnd; ++filterIter ) {
-      
-        // check query against this filter
-        const PropertyFilter& filter = (*filterIter).second;
-        if ( filter.check(propertyName, query) ) return true;
+// sets user-specified rule string & signals update of rule-expression queue
+template<typename FilterChecker>
+inline void FilterEngine<FilterChecker>::setRule(const std::string& ruleString) {
+    if ( m_ruleString != ruleString) {
+        m_ruleString = ruleString;
+        buildRuleQueue();
     }
- 
-    // query passes none of the filters with current property enabled
-    return false;
 }
 
 } // namespace BamTools

@@ -15,7 +15,6 @@ INCLUDES = -I$(API_DIR)/
 # define our source and object files
 # ----------------------------------
 SOURCES = bamtools_fasta.cpp \
-          bamtools_filter_engine.cpp \
           bamtools_options.cpp \
 	  bamtools_pileup_engine.cpp \
           bamtools_utilities.cpp 

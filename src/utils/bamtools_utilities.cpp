@@ -3,11 +3,12 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 3 September 2010
+// Last modified: 23 September 2010
 // ---------------------------------------------------------------------------
 // Provides general utilities used by BamTools sub-tools.
 // ***************************************************************************
 
+#include <algorithm>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -17,6 +18,12 @@
 using namespace std;
 using namespace BamTools;
 
+namespace BamTools {
+  
+const char REVCOMP_LOOKUP[] = {'T', 0, 'G', 'H', 0, 0, 'C', 'D', 0, 0, 0, 0, 'K', 'N', 0, 0, 0, 'Y', 'W', 'A', 'A', 'B', 'S', 'X', 'R', 0 };
+  
+} // namespace BamTools 
+  
 // check if a file exists
 bool Utilities::FileExists(const std::string& filename) { 
     ifstream f(filename.c_str(), ifstream::in);
@@ -237,4 +244,19 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamMult
     region.RightPosition = stopPos;
 
     return true;
+}
+
+void Utilities::Reverse(string& sequence) {
+    reverse(sequence.begin(), sequence.end());
+}
+
+void Utilities::ReverseComplement(std::string& sequence) {
+    
+    // do complement
+    size_t seqLength = sequence.length();
+    for ( size_t i = 0; i < seqLength; ++i )
+        sequence.replace(i, 1, 1, REVCOMP_LOOKUP[(int)sequence.at(i) - 65]);
+    
+    // reverse it
+    Reverse(sequence);
 }

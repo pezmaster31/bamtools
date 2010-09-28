@@ -34,6 +34,7 @@ namespace BamTools {
     static const string FORMAT_FASTA    = "fasta";
     static const string FORMAT_FASTQ    = "fastq";
     static const string FORMAT_JSON     = "json";
+    static const string FORMAT_YAML     = "yaml";
     static const string FORMAT_SAM      = "sam";
     static const string FORMAT_PILEUP   = "pileup";
     static const string FORMAT_WIGGLE   = "wig";
@@ -129,6 +130,7 @@ struct ConvertTool::ConvertToolPrivate {
         void PrintFasta(const BamAlignment& a);
         void PrintFastq(const BamAlignment& a);
         void PrintJson(const BamAlignment& a);
+        void PrintYaml(const BamAlignment& a);
         void PrintSam(const BamAlignment& a);
         void PrintWiggle(const BamAlignment& a);
         
@@ -214,6 +216,7 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
         else if ( m_settings->Format == FORMAT_FASTA )    pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintFasta;
         else if ( m_settings->Format == FORMAT_FASTQ )    pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintFastq;
         else if ( m_settings->Format == FORMAT_JSON )     pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintJson;
+        else if ( m_settings->Format == FORMAT_YAML )     pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintYaml;
         else if ( m_settings->Format == FORMAT_SAM )      pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintSam;
         else if ( m_settings->Format == FORMAT_WIGGLE )   pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintWiggle;
         else { 
@@ -480,6 +483,48 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a) {
 
     m_out << "}" << endl;
 }
+
+
+// Print BamAlignment in YAML format
+void ConvertTool::ConvertToolPrivate::PrintYaml(const BamAlignment& a) {
+
+
+        // write alignment name
+        m_out << "---" << endl;
+        m_out << a.Name << ":" << endl;
+
+        // write alignment data
+        m_out << "   " << "AlndBases: "  <<  a.AlignedBases << endl;
+        m_out << "   " << "Qualities: "     <<  a.Qualities << endl;
+        m_out << "   " << "Name: "          <<  a.Name << endl;
+        m_out << "   " << "Length: "        <<  a.Length << endl;
+        m_out << "   " << "TagData: "       <<  a.TagData << endl;
+        m_out << "   " << "RefID: "         <<  a.RefID << endl;
+        m_out << "   " << "RefName: "       <<  m_references[a.RefID].RefName << endl;
+        m_out << "   " << "Position: "      <<  a.Position << endl;
+        m_out << "   " << "Bin: "           <<  a.Bin << endl;
+        m_out << "   " << "MapQuality: "    <<  a.MapQuality << endl;
+        m_out << "   " << "AlignmentFlag: " <<  a.AlignmentFlag << endl;
+        m_out << "   " << "MateRefID: "     <<  a.MateRefID << endl;
+        m_out << "   " << "MatePosition: "  <<  a.MatePosition << endl;
+        m_out << "   " << "InsertSize: "    <<  a.InsertSize << endl;
+
+       // Write Cigar data
+       const vector<CigarOp>& cigarData = a.CigarData;
+       if ( !cigarData.empty() ) {
+          m_out << "   " <<  "Cigar: ";
+          vector<CigarOp>::const_iterator cigarBegin = cigarData.begin();
+          vector<CigarOp>::const_iterator cigarIter = cigarBegin;
+          vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
+          for ( ; cigarIter != cigarEnd; ++cigarIter ) {
+              const CigarOp& op = (*cigarIter);
+              m_out << op.Length << op.Type;
+          }
+       m_out << endl;
+       }
+
+}
+
 
 // print BamAlignment in SAM format
 void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {

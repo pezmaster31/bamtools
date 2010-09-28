@@ -160,7 +160,10 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
     
     // open input files
     BamMultiReader reader;
-    reader.Open(m_settings->InputFiles);
+    if (!reader.Open(m_settings->InputFiles, false)) {
+        cerr << "Could not open input files" << endl;
+        return false;
+    }
     m_references = reader.GetReferenceData();
 
     // set region if specified
@@ -463,7 +466,10 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a) {
                 case('H') : 
                     m_out << "\""; 
                     while (tagData[index]) {
-                        m_out << tagData[index];
+                        if (tagData[index] == '\"')
+                            m_out << "\\\""; // escape for json
+                        else
+                            m_out << tagData[index];
                         ++index;
                     }
                     m_out << "\""; 

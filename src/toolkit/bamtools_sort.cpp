@@ -197,7 +197,10 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
     
     // open input BAM file
     BamReader inputReader;
-    inputReader.Open(m_settings->InputBamFilename);
+    if (!inputReader.Open(m_settings->InputBamFilename)) {
+        cerr << "Could not open " << m_settings->InputBamFilename << " for reading." << endl;
+        return false;
+    }
     
     // get basic data that will be shared by all temp/output files 
     m_headerText = inputReader.GetHeaderText();

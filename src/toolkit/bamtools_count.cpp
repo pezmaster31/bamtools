@@ -80,7 +80,10 @@ int CountTool::Run(int argc, char* argv[]) {
     
     // open reader without index
     BamMultiReader reader;
-    reader.Open(m_settings->InputFiles, false, true);
+    if (!reader.Open(m_settings->InputFiles, false, true)) {
+        cerr << "ERROR: Could not open input BAM file(s)... Aborting." << endl;
+        return 1;
+    }
 
     // alignment counter
     BamAlignment al;

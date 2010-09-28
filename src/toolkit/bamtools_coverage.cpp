@@ -123,7 +123,10 @@ bool CoverageTool::CoverageToolPrivate::Run(void) {
     
     //open our BAM reader
     BamReader reader;
-    reader.Open(m_settings->InputBamFilename);
+    if (!reader.Open(m_settings->InputBamFilename)) {
+        cerr << "Could not open " << m_settings->InputBamFilename << " for reading." << endl;
+        return false;
+    }
     m_references = reader.GetReferenceData();
     
     // set up our output 'visitor'

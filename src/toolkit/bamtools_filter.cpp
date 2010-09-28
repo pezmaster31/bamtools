@@ -51,6 +51,7 @@ const string NAME_PROPERTY                = "name";
 const string POSITION_PROPERTY            = "position";
 const string QUERYBASES_PROPERTY          = "queryBases";
 const string REFERENCE_PROPERTY           = "reference";
+const string CIGAR_PROPERTY               = "cigar";
 
 // boolalpha
 const string TRUE_STR  = "true";
@@ -99,6 +100,20 @@ struct BamAlignmentChecker {
                 BAMTOOLS_ASSERT_MESSAGE( (al.RefID>=0 && (al.RefID<(int)filterToolReferences.size())), "Invalid RefID");
                 const string& refName = filterToolReferences.at(al.RefID).RefName;
                 keepAlignment &= valueFilter.check(refName);
+            }
+            else if ( propertyName == CIGAR_PROPERTY ) {
+                stringstream cigarSs;
+                const vector<CigarOp>& cigarData = al.CigarData;
+                if ( !cigarData.empty() ) {
+                    vector<CigarOp>::const_iterator cigarBegin = cigarData.begin();
+                    vector<CigarOp>::const_iterator cigarIter = cigarBegin;
+                    vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
+                    for ( ; cigarIter != cigarEnd; ++cigarIter ) {
+                        const CigarOp& op = (*cigarIter);
+                        cigarSs << op.Length << op.Type;
+                    }
+                    keepAlignment &= valueFilter.check(cigarSs.str());
+                }
             }
             else BAMTOOLS_ASSERT_UNREACHABLE;
             
@@ -403,7 +418,8 @@ bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const string& filt
         else if ( propertyName == MATEREFERENCE_PROPERTY ||
                   propertyName == NAME_PROPERTY ||
                   propertyName == QUERYBASES_PROPERTY ||
-                  propertyName == REFERENCE_PROPERTY
+                  propertyName == REFERENCE_PROPERTY ||
+                  propertyName == CIGAR_PROPERTY
                 ) 
         {
             m_filterEngine.parseToken(token, stringValue, type);
@@ -482,6 +498,7 @@ void FilterTool::FilterToolPrivate::InitProperties(void) {
     m_propertyNames.push_back(POSITION_PROPERTY);
     m_propertyNames.push_back(QUERYBASES_PROPERTY);
     m_propertyNames.push_back(REFERENCE_PROPERTY);
+    m_propertyNames.push_back(CIGAR_PROPERTY);
     
     // add vector contents to FilterEngine<BamAlignmentChecker>
     vector<string>::const_iterator propertyNameIter = m_propertyNames.begin();
@@ -628,14 +645,20 @@ bool FilterTool::FilterToolPrivate::Run(void) {
 
     // open reader without index
     BamMultiReader reader;
-    reader.Open(m_settings->InputFiles, false, true);
+    if (!reader.Open(m_settings->InputFiles, false, true)) {
+        cerr << "Could not open input files for reading." << endl;
+        return false;
+    }
     const string headerText = reader.GetHeaderText();
     filterToolReferences = reader.GetReferenceData();
     
     // open writer
     BamWriter writer;
     bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() && !m_settings->IsForceCompression );
-    writer.Open(m_settings->OutputFilename, headerText, filterToolReferences, writeUncompressed);
+    if (!writer.Open(m_settings->OutputFilename, headerText, filterToolReferences, writeUncompressed)) {
+        cerr << "Could not open " << m_settings->OutputFilename << " for writing." << endl;
+        return false;
+    }
     
     BamAlignment al;
     

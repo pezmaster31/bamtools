@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 30 August 2010
+// Last modified: 23 September 2010
 // ---------------------------------------------------------------------------
 // Provides general utilities used by BamTools sub-tools.
 // ***************************************************************************
@@ -36,7 +36,9 @@ class Utilities {
         // Same as above, but accepts a BamMultiReader
         static bool ParseRegionString(const std::string& regionString, const BamMultiReader& reader, BamRegion& region);
 
-         
+        // sequence utilities
+        static void Reverse(std::string& sequence);
+        static void ReverseComplement(std::string& sequence);
 };
 
 } // namespace BamTools

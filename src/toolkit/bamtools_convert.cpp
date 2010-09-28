@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 16 September 2010
+// Last modified: 23 September 2010
 // ---------------------------------------------------------------------------
 // Converts between BAM and a number of other formats
 // ***************************************************************************
@@ -56,8 +56,6 @@ namespace BamTools {
       
         // PileupVisitor interface implementation
         public:
-//             void Visit(const int& refId, const int& position, const vector<BamAlignment>& alignments);
-            
             void Visit(const PileupPosition& pileupData);
             
         // data members
@@ -279,28 +277,35 @@ void ConvertTool::ConvertToolPrivate::PrintFasta(const BamAlignment& a) {
     // >BamAlignment.Name
     // BamAlignment.QueryBases (up to FASTA_LINE_MAX bases per line)
     // ...
+    //
+    // N.B. - QueryBases are reverse-complemented if aligned to reverse strand
   
     // print header
     m_out << "> " << a.Name << endl;
     
+    // handle reverse strand alignment - bases 
+    string sequence = a.QueryBases;
+    if ( a.IsReverseStrand() )
+        Utilities::ReverseComplement(sequence);
+    
     // if sequence fits on single line
-    if ( a.QueryBases.length() <= FASTA_LINE_MAX )
-        m_out << a.QueryBases << endl;
+    if ( sequence.length() <= FASTA_LINE_MAX )
+        m_out << sequence << endl;
     
     // else split over multiple lines
     else {
       
         size_t position = 0;
-        size_t seqLength = a.QueryBases.length();
+        size_t seqLength = sequence.length(); // handle reverse strand alignment - bases & qualitiesth();
         
         // write subsequences to each line
         while ( position < (seqLength - FASTA_LINE_MAX) ) {
-            m_out << a.QueryBases.substr(position, FASTA_LINE_MAX) << endl;
+            m_out << sequence.substr(position, FASTA_LINE_MAX) << endl;
             position += FASTA_LINE_MAX;
         }
         
         // write final subsequence
-        m_out << a.QueryBases.substr(position) << endl;
+        m_out << sequence.substr(position) << endl;
     }
 }
 
@@ -312,11 +317,28 @@ void ConvertTool::ConvertToolPrivate::PrintFastq(const BamAlignment& a) {
     // BamAlignment.QueryBases
     // +
     // BamAlignment.Qualities
+    //
+    // N.B. - QueryBases are reverse-complemented (& Qualities reversed) if aligned to reverse strand .
+    //        Name is appended "/1" or "/2" if paired-end, to reflect which mate this entry is.
   
-    m_out << "@" << a.Name << endl
-          << a.QueryBases  << endl
-          << "+"           << endl
-          << a.Qualities   << endl;
+    // handle paired-end alignments
+    string name = a.Name;
+    if ( a.IsPaired() )
+        name.append( (a.IsFirstMate() ? "/1" : "/2") );
+  
+    // handle reverse strand alignment - bases & qualities
+    string qualities = a.Qualities;
+    string sequence  = a.QueryBases;
+    if ( a.IsReverseStrand() ) {
+        Utilities::Reverse(qualities);
+        Utilities::ReverseComplement(sequence);
+    }
+  
+    // write to output stream
+    m_out << "@" << name << endl
+          << sequence    << endl
+          << "+"         << endl
+          << qualities   << endl;
 }
 
 // print BamAlignment in JSON format

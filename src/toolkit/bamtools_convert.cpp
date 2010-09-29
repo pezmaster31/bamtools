@@ -167,8 +167,12 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
         }
     } else {
         if ( !reader.Open(m_settings->InputFiles, true) ) {
-            cerr << "Could not open input files" << endl;
-            return false;
+            if ( !reader.Open(m_settings->InputFiles, false) ) {
+                cerr << "Could not open input files" << endl;
+                return false;
+            } else {
+                cerr << "Opened reader without index file, jumping is disabled." << endl;
+            }
         }
     }
     m_references = reader.GetReferenceData();

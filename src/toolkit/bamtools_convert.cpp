@@ -160,9 +160,16 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
     
     // open input files
     BamMultiReader reader;
-    if (!reader.Open(m_settings->InputFiles, false)) {
-        cerr << "Could not open input files" << endl;
-        return false;
+    if ( !m_settings->HasInput ) { // don't attempt to open index for stdin
+        if ( !reader.Open(m_settings->InputFiles, false) ) {
+            cerr << "Could not open input files" << endl;
+            return false;
+        }
+    } else {
+        if ( !reader.Open(m_settings->InputFiles, true) ) {
+            cerr << "Could not open input files" << endl;
+            return false;
+        }
     }
     m_references = reader.GetReferenceData();
 

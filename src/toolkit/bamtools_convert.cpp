@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 23 September 2010
+// Last modified: 4 October 2010
 // ---------------------------------------------------------------------------
 // Converts between BAM and a number of other formats
 // ***************************************************************************
@@ -37,6 +37,7 @@ namespace BamTools {
     static const string FORMAT_SAM      = "sam";
     static const string FORMAT_PILEUP   = "pileup";
     static const string FORMAT_WIGGLE   = "wig";
+    static const string FORMAT_YAML     = "yaml";
 
     // other constants
     static const unsigned int FASTA_LINE_MAX = 50;
@@ -131,6 +132,7 @@ struct ConvertTool::ConvertToolPrivate {
         void PrintJson(const BamAlignment& a);
         void PrintSam(const BamAlignment& a);
         void PrintWiggle(const BamAlignment& a);
+	void PrintYaml(const BamAlignment& a);
         
         // special case - uses the PileupEngine
         bool RunPileupConversion(BamMultiReader* reader);
@@ -230,6 +232,7 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
         else if ( m_settings->Format == FORMAT_JSON )     pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintJson;
         else if ( m_settings->Format == FORMAT_SAM )      pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintSam;
         else if ( m_settings->Format == FORMAT_WIGGLE )   pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintWiggle;
+        else if ( m_settings->Format == FORMAT_YAML )     pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintYaml;
         else { 
             cerr << "Unrecognized format: " << m_settings->Format << endl;
             cerr << "Please see help|README (?) for details on supported formats " << endl;
@@ -626,6 +629,44 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
 
 void ConvertTool::ConvertToolPrivate::PrintWiggle(const BamAlignment& a) { 
     ; 
+}
+
+// Print BamAlignment in YAML format
+void ConvertTool::ConvertToolPrivate::PrintYaml(const BamAlignment& a) {
+
+    // write alignment name
+    m_out << "---" << endl;
+    m_out << a.Name << ":" << endl;
+
+    // write alignment data
+    m_out << "   " << "AlndBases: "     <<  a.AlignedBases << endl;
+    m_out << "   " << "Qualities: "     <<  a.Qualities << endl;
+    m_out << "   " << "Name: "          <<  a.Name << endl;
+    m_out << "   " << "Length: "        <<  a.Length << endl;
+    m_out << "   " << "TagData: "       <<  a.TagData << endl;
+    m_out << "   " << "RefID: "         <<  a.RefID << endl;
+    m_out << "   " << "RefName: "       <<  m_references[a.RefID].RefName << endl;
+    m_out << "   " << "Position: "      <<  a.Position << endl;
+    m_out << "   " << "Bin: "           <<  a.Bin << endl;
+    m_out << "   " << "MapQuality: "    <<  a.MapQuality << endl;
+    m_out << "   " << "AlignmentFlag: " <<  a.AlignmentFlag << endl;
+    m_out << "   " << "MateRefID: "     <<  a.MateRefID << endl;
+    m_out << "   " << "MatePosition: "  <<  a.MatePosition << endl;
+    m_out << "   " << "InsertSize: "    <<  a.InsertSize << endl;
+
+    // write Cigar data
+    const vector<CigarOp>& cigarData = a.CigarData;
+    if ( !cigarData.empty() ) {
+	m_out << "   " <<  "Cigar: ";
+	vector<CigarOp>::const_iterator cigarBegin = cigarData.begin();
+	vector<CigarOp>::const_iterator cigarIter = cigarBegin;
+	vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
+	for ( ; cigarIter != cigarEnd; ++cigarIter ) {
+	    const CigarOp& op = (*cigarIter);
+	    m_out << op.Length << op.Type;
+	}
+	m_out << endl;
+    }
 }
 
 bool ConvertTool::ConvertToolPrivate::RunPileupConversion(BamMultiReader* reader) {

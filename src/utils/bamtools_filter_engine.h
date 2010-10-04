@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 September 2010
+// Last modified: 29 September 2010
 // ---------------------------------------------------------------------------
 // Provides a generic filter engine based on filter-sets of properties,
 // with possible "rules" (compound logical expressions) to create more complex
@@ -126,7 +126,7 @@ class FilterEngine {
     // token parsing (for property filter generation)
     public:
         template<typename T>
-        bool parseToken(const std::string& token, T& value, PropertyFilterValue::ValueCompareType& type);
+        static bool parseToken(const std::string& token, T& value, PropertyFilterValue::ValueCompareType& type);
         
     // query evaluation
     public:
@@ -377,10 +377,8 @@ bool FilterEngine<FilterChecker>::parseToken(const std::string& token, T& value,
         switch ( firstChar ) {
           
             case ( FilterEngine<FilterChecker>::NOT_CHAR ) :
-              
                 strippedToken = token.substr(1);       
                 type = PropertyFilterValue::NOT;
-                
                 break;
                 
             case ( FilterEngine<FilterChecker>::GREATER_THAN_CHAR ) :
@@ -435,7 +433,6 @@ bool FilterEngine<FilterChecker>::parseToken(const std::string& token, T& value,
                 break;
                
             default :
-              
                 // check for str* case (STARTS_WITH)
                 if ( token.at( token.length() - 1 ) == FilterEngine<FilterChecker>::WILDCARD_CHAR ) {
                     if ( token.length() == 2 ) return false;

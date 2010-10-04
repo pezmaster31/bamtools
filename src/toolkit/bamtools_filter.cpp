@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 September 2010
+// Last modified: 4 October 2010
 // ---------------------------------------------------------------------------
 // Filters BAM file(s) according to some user-specified criteria.
 // ***************************************************************************
@@ -32,6 +32,7 @@ namespace BamTools {
 
 // property names
 const string ALIGNMENTFLAG_PROPERTY       = "alignmentFlag";
+const string CIGAR_PROPERTY               = "cigar";
 const string INSERTSIZE_PROPERTY          = "insertSize";
 const string ISDUPLICATE_PROPERTY         = "isDuplicate";
 const string ISFAILEDQC_PROPERTY          = "isFailedQC";
@@ -51,7 +52,7 @@ const string NAME_PROPERTY                = "name";
 const string POSITION_PROPERTY            = "position";
 const string QUERYBASES_PROPERTY          = "queryBases";
 const string REFERENCE_PROPERTY           = "reference";
-const string CIGAR_PROPERTY               = "cigar";
+const string TAG_PROPERTY                 = "tag";
 
 // boolalpha
 const string TRUE_STR  = "true";
@@ -72,7 +73,21 @@ struct BamAlignmentChecker {
             const string& propertyName = (*propertyIter).first;
             const PropertyFilterValue& valueFilter = (*propertyIter).second;
             
-            if      ( propertyName == ALIGNMENTFLAG_PROPERTY )        keepAlignment &= valueFilter.check(al.AlignmentFlag);
+            if      ( propertyName == ALIGNMENTFLAG_PROPERTY )  keepAlignment &= valueFilter.check(al.AlignmentFlag);
+	    else if ( propertyName == CIGAR_PROPERTY ) {
+                stringstream cigarSs;
+                const vector<CigarOp>& cigarData = al.CigarData;
+                if ( !cigarData.empty() ) {
+                    vector<CigarOp>::const_iterator cigarBegin = cigarData.begin();
+                    vector<CigarOp>::const_iterator cigarIter = cigarBegin;
+                    vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
+                    for ( ; cigarIter != cigarEnd; ++cigarIter ) {
+                        const CigarOp& op = (*cigarIter);
+                        cigarSs << op.Length << op.Type;
+                    }
+                    keepAlignment &= valueFilter.check(cigarSs.str());
+                }
+            }
             else if ( propertyName == INSERTSIZE_PROPERTY )           keepAlignment &= valueFilter.check(al.InsertSize);
             else if ( propertyName == ISDUPLICATE_PROPERTY )          keepAlignment &= valueFilter.check(al.IsDuplicate());
             else if ( propertyName == ISFAILEDQC_PROPERTY )           keepAlignment &= valueFilter.check(al.IsFailedQC());
@@ -101,31 +116,108 @@ struct BamAlignmentChecker {
                 const string& refName = filterToolReferences.at(al.RefID).RefName;
                 keepAlignment &= valueFilter.check(refName);
             }
-            else if ( propertyName == CIGAR_PROPERTY ) {
-                stringstream cigarSs;
-                const vector<CigarOp>& cigarData = al.CigarData;
-                if ( !cigarData.empty() ) {
-                    vector<CigarOp>::const_iterator cigarBegin = cigarData.begin();
-                    vector<CigarOp>::const_iterator cigarIter = cigarBegin;
-                    vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
-                    for ( ; cigarIter != cigarEnd; ++cigarIter ) {
-                        const CigarOp& op = (*cigarIter);
-                        cigarSs << op.Length << op.Type;
-                    }
-                    keepAlignment &= valueFilter.check(cigarSs.str());
-                }
-            }
+            else if ( propertyName == TAG_PROPERTY ) keepAlignment &= checkAlignmentTag(valueFilter, al);
             else BAMTOOLS_ASSERT_UNREACHABLE;
             
             // if alignment fails at ANY point, just quit and return false
-            if ( !keepAlignment ) 
-                return false;
+            if ( !keepAlignment ) return false;
         }
       
         BAMTOOLS_ASSERT_MESSAGE( keepAlignment, "Error in BamAlignmentChecker... keepAlignment should be true here");
         return keepAlignment;
     }
-};
+    
+    bool checkAlignmentTag(const PropertyFilterValue& valueFilter, const BamAlignment& al) {
+     
+	// ensure filter contains string data
+	Variant entireTagFilter = valueFilter.Value;
+	if ( !entireTagFilter.is_type<string>() ) return false;
+	
+	// localize string from variant
+	const string& entireTagFilterString = entireTagFilter.get<string>();
+	
+	// ensure we have at least "XX:x"
+	if ( entireTagFilterString.length() < 4 ) return false;
+	
+	// get tagName & lookup in alignment
+	// if found, set tagType to tag type character
+	// if not found, return false
+	const string& tagName = entireTagFilterString.substr(0,2);
+	char tagType = '\0';
+	if ( !al.GetTagType(tagName, tagType) ) return false;
+	  
+	// remove tagName & ":" from beginning tagFilter
+	string tagFilterString = entireTagFilterString.substr(3);
+	  
+	// switch on tag type to set tag query value & parse filter token
+	int32_t  intFilterValue,    intQueryValue;
+	uint32_t uintFilterValue,   uintQueryValue;
+	float    realFilterValue,   realQueryValue;
+	string   stringFilterValue, stringQueryValue;
+	
+	PropertyFilterValue tagFilter;
+	PropertyFilterValue::ValueCompareType compareType;
+	bool keepAlignment = false;
+	switch (tagType) {
+            
+	    // signed int tag type
+	    case 'c' :
+            case 's' : 
+            case 'i' :
+		if ( al.GetTag(tagName, intQueryValue) ) {
+		    if ( FilterEngine<BamAlignmentChecker>::parseToken(tagFilterString, intFilterValue, compareType) ) {
+			tagFilter.Value = intFilterValue;
+			tagFilter.Type  = compareType;
+			keepAlignment   = tagFilter.check(intQueryValue);
+		    }
+		}
+		break;
+		
+	    // unsigned int tag type
+            case 'C' :
+            case 'S' :
+            case 'I' : 
+		if ( al.GetTag(tagName, uintQueryValue) ) {
+		    if ( FilterEngine<BamAlignmentChecker>::parseToken(tagFilterString, uintFilterValue, compareType) ) {
+			tagFilter.Value = uintFilterValue;
+			tagFilter.Type  = compareType;
+			keepAlignment   = tagFilter.check(uintQueryValue);
+		    }
+		}
+		break;
+		
+	    // 'real' tag type
+            case 'f' :
+		if ( al.GetTag(tagName, realQueryValue) ) {
+		    if ( FilterEngine<BamAlignmentChecker>::parseToken(tagFilterString, realFilterValue, compareType) ) {
+			tagFilter.Value = realFilterValue;
+			tagFilter.Type  = compareType;
+			keepAlignment   = tagFilter.check(realQueryValue);
+		    }
+		}
+                break;
+		
+	    // string tag type
+            case 'A':
+            case 'Z':
+            case 'H':	      
+                if ( al.GetTag(tagName, stringQueryValue) ) {
+		    if ( FilterEngine<BamAlignmentChecker>::parseToken(tagFilterString, stringFilterValue, compareType) ) {
+			tagFilter.Value = stringFilterValue;
+			tagFilter.Type  = compareType;
+			keepAlignment   = tagFilter.check(stringQueryValue);
+		    }
+		}
+		break;
+		
+	    // unknown tag type
+	    default : 
+		keepAlignment = false;
+	}
+	
+	return keepAlignment;
+    }
+};    
     
 } // namespace BamTools
   
@@ -191,8 +283,7 @@ struct FilterTool::FilterSettings {
     bool HasMapQualityFilter;
     bool HasNameFilter;
     bool HasQueryBasesFilter;
-    
-//     bool HasTagFilters;
+    bool HasTagFilter; //(s)
 
     // filters
     string AlignmentFlagFilter;
@@ -200,8 +291,7 @@ struct FilterTool::FilterSettings {
     string NameFilter;
     string MapQualityFilter;
     string QueryBasesFilter;
-    
-//     vector<string> TagFilters;
+    string TagFilter;  // support multiple ?
 
     // -----------------------------------
     // AlignmentFlag filter opts
@@ -247,7 +337,7 @@ struct FilterTool::FilterSettings {
         , HasMapQualityFilter(false)
         , HasNameFilter(false)
         , HasQueryBasesFilter(false)
-//         , HasTagFilters(false)
+        , HasTagFilter(false)
         , HasIsDuplicateFilter(false)
         , HasIsFailedQCFilter(false)
         , HasIsFirstMateFilter(false)
@@ -292,13 +382,12 @@ FilterTool::FilterTool(void)
     Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
     
     OptionGroup* FilterOpts = Options::CreateOptionGroup("General Filters");
-    Options::AddValueOption("-alignmentFlag", "int",     "keep reads with this *exact* alignment flag (for more detailed queries, see below)", "", m_settings->HasAlignmentFlagFilter, m_settings->AlignmentFlagFilter, FilterOpts);
-    Options::AddValueOption("-insertSize",    "int",     "keep reads with insert size that mathces pattern",             "", m_settings->HasInsertSizeFilter, m_settings->InsertSizeFilter, FilterOpts);
-    Options::AddValueOption("-mapQuality",    "[0-255]", "keep reads with map quality that matches pattern",             "", m_settings->HasMapQualityFilter, m_settings->MapQualityFilter, FilterOpts);
-    Options::AddValueOption("-name",          "string",  "keep reads with name that matches pattern",                    "", m_settings->HasNameFilter,       m_settings->NameFilter,       FilterOpts);
-    Options::AddValueOption("-queryBases",    "string",  "keep reads with motif that mathces pattern",                   "", m_settings->HasQueryBasesFilter, m_settings->QueryBasesFilter, FilterOpts);
-    
-//     Options::AddValueOption("-tag", "TAG:VALUE", "keep reads with this key=>value pair. If multiple tags are given, reads must match all", "", m_settings->HasTagFilters, m_settings->TagFilters, FilterOpts);
+    Options::AddValueOption("-alignmentFlag", "int",        "keep reads with this *exact* alignment flag (for more detailed queries, see below)", "", m_settings->HasAlignmentFlagFilter, m_settings->AlignmentFlagFilter, FilterOpts);
+    Options::AddValueOption("-insertSize",    "int",        "keep reads with insert size that mathces pattern",             "", m_settings->HasInsertSizeFilter, m_settings->InsertSizeFilter, FilterOpts);
+    Options::AddValueOption("-mapQuality",    "[0-255]",    "keep reads with map quality that matches pattern",             "", m_settings->HasMapQualityFilter, m_settings->MapQualityFilter, FilterOpts);
+    Options::AddValueOption("-name",          "string",     "keep reads with name that matches pattern",                    "", m_settings->HasNameFilter,       m_settings->NameFilter,       FilterOpts);
+    Options::AddValueOption("-queryBases",    "string",     "keep reads with motif that mathces pattern",                   "", m_settings->HasQueryBasesFilter, m_settings->QueryBasesFilter, FilterOpts);
+    Options::AddValueOption("-tag",            "TAG:VALUE", "keep reads with this key=>value pair",                         "", m_settings->HasTagFilter,        m_settings->TagFilter,        FilterOpts);
     
     OptionGroup* AlignmentFlagOpts = Options::CreateOptionGroup("Alignment Flag Filters");
     Options::AddValueOption("-isDuplicate",         "true/false", "keep only alignments that are marked as duplicate?", "", m_settings->HasIsDuplicateFilter,         m_settings->IsDuplicateFilter,         AlignmentFlagOpts, TRUE_STR);
@@ -386,7 +475,7 @@ bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const string& filt
              propertyName == ISSECONDMATE_PROPERTY
            ) 
         {
-            m_filterEngine.parseToken(token, boolValue, type);
+            FilterEngine<BamAlignmentChecker>::parseToken(token, boolValue, type);
             m_filterEngine.setProperty(filterName, propertyName, boolValue, type);
         }
         
@@ -396,35 +485,41 @@ bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const string& filt
                   propertyName == POSITION_PROPERTY 
                 ) 
         {
-            m_filterEngine.parseToken(token, int32Value, type);
+            FilterEngine<BamAlignmentChecker>::parseToken(token, int32Value, type);
             m_filterEngine.setProperty(filterName, propertyName, int32Value, type);
         }
         
         // uint16_t conversion
         else if ( propertyName == MAPQUALITY_PROPERTY )
         {
-            m_filterEngine.parseToken(token, uint16Value, type);
+            FilterEngine<BamAlignmentChecker>::parseToken(token, uint16Value, type);
             m_filterEngine.setProperty(filterName, propertyName, uint16Value, type);
         }
         
         // uint32_t conversion
         else if ( propertyName == ALIGNMENTFLAG_PROPERTY )
         {
-            m_filterEngine.parseToken(token, uint32Value, type);
+            FilterEngine<BamAlignmentChecker>::parseToken(token, uint32Value, type);
             m_filterEngine.setProperty(filterName, propertyName, uint32Value, type);
         }
         
         // string conversion
-        else if ( propertyName == MATEREFERENCE_PROPERTY ||
+        else if ( propertyName == CIGAR_PROPERTY || 
+	          propertyName == MATEREFERENCE_PROPERTY ||
                   propertyName == NAME_PROPERTY ||
                   propertyName == QUERYBASES_PROPERTY ||
-                  propertyName == REFERENCE_PROPERTY ||
-                  propertyName == CIGAR_PROPERTY
+                  propertyName == REFERENCE_PROPERTY 
                 ) 
         {
-            m_filterEngine.parseToken(token, stringValue, type);
+            FilterEngine<BamAlignmentChecker>::parseToken(token, stringValue, type);
             m_filterEngine.setProperty(filterName, propertyName, stringValue, type);
         }
+      
+	else if (propertyName == TAG_PROPERTY ) {
+	    // this will be stored directly as the TAG:VALUE token 
+	    // (VALUE may contain compare ops, will be parsed out later)
+	    m_filterEngine.setProperty(filterName, propertyName, token, PropertyFilterValue::EXACT);
+	}
       
         // else unknown property 
         else {
@@ -479,6 +574,7 @@ void FilterTool::FilterToolPrivate::InitProperties(void) {
   
     // store property names in vector 
     m_propertyNames.push_back(ALIGNMENTFLAG_PROPERTY);
+    m_propertyNames.push_back(CIGAR_PROPERTY);
     m_propertyNames.push_back(INSERTSIZE_PROPERTY);
     m_propertyNames.push_back(ISDUPLICATE_PROPERTY);
     m_propertyNames.push_back(ISFAILEDQC_PROPERTY);
@@ -498,7 +594,7 @@ void FilterTool::FilterToolPrivate::InitProperties(void) {
     m_propertyNames.push_back(POSITION_PROPERTY);
     m_propertyNames.push_back(QUERYBASES_PROPERTY);
     m_propertyNames.push_back(REFERENCE_PROPERTY);
-    m_propertyNames.push_back(CIGAR_PROPERTY);
+    m_propertyNames.push_back(TAG_PROPERTY);
     
     // add vector contents to FilterEngine<BamAlignmentChecker>
     vector<string>::const_iterator propertyNameIter = m_propertyNames.begin();
@@ -531,7 +627,8 @@ bool FilterTool::FilterToolPrivate::ParseCommandLine(void) {
     if ( m_settings->HasMapQualityFilter )          propertyTokens.insert( make_pair(MAPQUALITY_PROPERTY,          m_settings->MapQualityFilter) );
     if ( m_settings->HasNameFilter )                propertyTokens.insert( make_pair(NAME_PROPERTY,                m_settings->NameFilter) );
     if ( m_settings->HasQueryBasesFilter )          propertyTokens.insert( make_pair(QUERYBASES_PROPERTY,          m_settings->QueryBasesFilter) );
-
+    if ( m_settings->HasTagFilter )                 propertyTokens.insert( make_pair(TAG_PROPERTY,                 m_settings->TagFilter) );
+    
     // send add these properties to filter set "COMMAND_LINE"
     return AddPropertyTokensToFilter(CMD, propertyTokens);
 }
@@ -597,9 +694,8 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
             
             // if id tag supplied
             const Json::Value id = filter["id"];
-            if ( !id.isNull() ) {
+            if ( !id.isNull() ) 
                 filterName = id.asString();
-            } 
             
             // use array index 
             else {
@@ -632,20 +728,19 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
     return success;
 }
 
-
 bool FilterTool::FilterToolPrivate::Run(void) {
     
     // set to default input if none provided
     if ( !m_settings->HasInputBamFilename ) 
         m_settings->InputFiles.push_back(Options::StandardIn());
-    
+
     // initialize defined properties & user-specified filters
     // quit if failed
     if ( !SetupFilters() ) return 1;
 
     // open reader without index
     BamMultiReader reader;
-    if (!reader.Open(m_settings->InputFiles, false, true)) {
+    if ( !reader.Open(m_settings->InputFiles, false, true) ) {
         cerr << "Could not open input files for reading." << endl;
         return false;
     }
@@ -655,7 +750,7 @@ bool FilterTool::FilterToolPrivate::Run(void) {
     // open writer
     BamWriter writer;
     bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() && !m_settings->IsForceCompression );
-    if (!writer.Open(m_settings->OutputFilename, headerText, filterToolReferences, writeUncompressed)) {
+    if ( !writer.Open(m_settings->OutputFilename, headerText, filterToolReferences, writeUncompressed) ) {
         cerr << "Could not open " << m_settings->OutputFilename << " for writing." << endl;
         return false;
     }
@@ -706,9 +801,9 @@ bool FilterTool::FilterToolPrivate::Run(void) {
             // no index data available, we have to iterate through until we
             // find overlapping alignments
             else {
-                while( reader.GetNextAlignmentCore(al) ) {
-                    if ( (al.RefID >= region.LeftRefID)  && ( (al.Position + al.Length) >= region.LeftPosition ) &&
-                          (al.RefID <= region.RightRefID) && ( al.Position <= region.RightPosition) ) 
+                while ( reader.GetNextAlignmentCore(al) ) {
+                    if ( (al.RefID >= region.LeftRefID)  && ((al.Position + al.Length) >= region.LeftPosition) &&
+                         (al.RefID <= region.RightRefID) && ( al.Position <= region.RightPosition) ) 
                     {
                         if ( CheckAlignment(al) ) 
                             writer.SaveAlignment(al);

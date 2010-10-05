@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 22 July 2010
+// Last modified: 5 October 2010
 // ---------------------------------------------------------------------------
 // Prints general alignment statistics for BAM file(s).
 // ***************************************************************************
@@ -99,19 +99,19 @@ StatsTool::StatsToolPrivate::StatsToolPrivate(StatsTool::StatsSettings* _setting
 
 StatsTool::StatsToolPrivate::~StatsToolPrivate(void) { }
 
-bool StatsTool::StatsToolPrivate::CalculateMedian(vector<int>& data, double& median) { // median is double in case of even data size, need to return average of middle 2 elements
+// median is of type double because in the case of even number of data elements, we need to return the average of middle 2 elements
+bool StatsTool::StatsToolPrivate::CalculateMedian(vector<int>& data, double& median) { 
   
     // check that data exists
     if ( data.empty() ) return false;
-  
-    size_t dataSize = data.size();
-    size_t middleIndex = dataSize / 2;
-    
+
+    // find middle element
+    size_t middleIndex = data.size() / 2;
     vector<int>::iterator target = data.begin() + middleIndex;
     nth_element(data.begin(), target, data.end());
     
     // odd number of elements
-    if ( (dataSize % 2) != 0) {
+    if ( (data.size() % 2) != 0) {
         median = (double)(*target);
         return true;
     }
@@ -278,7 +278,7 @@ int StatsTool::Run(int argc, char* argv[]) {
     if ( !m_settings->HasInput ) 
         m_settings->InputFiles.push_back(Options::StandardIn());
     
-    // run internal SortTool implementation, return success/fail
+    // run internal StatsTool implementation, return success/fail
     m_impl = new StatsToolPrivate(m_settings);
     
     if ( m_impl->Run() ) return 0;

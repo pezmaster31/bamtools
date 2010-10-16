@@ -130,7 +130,7 @@ SortTool::SortTool(void)
     , m_impl(0)
 {
     // set program details
-    Options::SetProgramInfo("bamtools sort", "sorts a BAM file", "[-in <filename>] [-out <filename>]");
+    Options::SetProgramInfo("bamtools sort", "sorts a BAM file", "[-in <filename>] [-out <filename>] [sortOptions]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");

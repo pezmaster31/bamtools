@@ -49,14 +49,12 @@ CountTool::CountTool(void)
     , m_settings(new CountSettings)
 { 
     // set program details
-    Options::SetProgramInfo("bamtools count", "prints alignment counts for a BAM file", "[-in <filename> -in <filename> ...] [-region <REGION>]");
+    Options::SetProgramInfo("bamtools count", "prints number of alignments in BAM file(s)", "[-in <filename> -in <filename> ...] [-region <REGION>]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",  "BAM filename", "the input BAM file(s)", "", m_settings->HasInput,  m_settings->InputFiles, IO_Opts, Options::StandardIn());
-    
-    OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
-    Options::AddValueOption("-region", "REGION", "genomic region. Index file is required and is read automatically if it exists as <filename>.bai or <filename>.bti. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
+    Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInput,  m_settings->InputFiles, IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-region", "REGION",       "genomic region. Index file is recommended for better performance, and is used automatically if it exists. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
 }
 
 CountTool::~CountTool(void) { 

@@ -12,12 +12,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
 #include "bamtools_header.h"
 #include "bamtools_options.h"
 #include "BamReader.h"
 #include "BamMultiReader.h"
-
 using namespace std;
 using namespace BamTools; 
   
@@ -46,7 +44,7 @@ HeaderTool::HeaderTool(void)
     , m_settings(new HeaderSettings)
 {
     // set program details
-    Options::SetProgramInfo("bamtools header", "prints header from BAM file(s)", "-in <filename> [-in <filename> ... ] ");
+    Options::SetProgramInfo("bamtools header", "prints header from BAM file(s)", "[-in <filename> -in <filename> ...] ");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
@@ -72,12 +70,10 @@ int HeaderTool::Run(int argc, char* argv[]) {
     if ( !m_settings->HasInputBamFilename ) 
         m_settings->InputFiles.push_back(Options::StandardIn());
     
-    // open files
+    // if able to open files, dump (merged) header contents to stdout
     BamMultiReader reader;
-    if ( reader.Open(m_settings->InputFiles, false) ) {      
-        // dump header contents to stdout
+    if ( reader.Open(m_settings->InputFiles, false) )    
         cout << reader.GetHeaderText() << endl;
-    }
         
     // clean up & exit
     reader.Close();

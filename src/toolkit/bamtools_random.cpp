@@ -79,10 +79,10 @@ RandomTool::RandomTool(void)
     Options::AddValueOption("-in",  "BAM filename", "the input BAM file",  "", m_settings->HasInput,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());
     Options::AddValueOption("-out", "BAM filename", "the output BAM file", "", m_settings->HasOutput, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
     Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
+    Options::AddValueOption("-region", "REGION", "only pull random alignments from within this genomic region. Index file is recommended for better performance, and is used automatically if it exists. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
     
-    OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
-    Options::AddValueOption("-n", "count", "number of alignments to grab.  Note - no duplicate checking is performed", "", m_settings->HasAlignmentCount, m_settings->AlignmentCount, FilterOpts, RANDOM_MAX_ALIGNMENT_COUNT);
-    Options::AddValueOption("-region", "REGION", "limit source of random alignment subset to a particular genomic region. Index file is recommended for better performance, and is read automatically if it exists as <filename>.bai or <filename>.bti. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
+    OptionGroup* SettingsOpts = Options::CreateOptionGroup("Settings");
+    Options::AddValueOption("-n", "count", "number of alignments to grab. Note - no duplicate checking is performed", "", m_settings->HasAlignmentCount, m_settings->AlignmentCount, SettingsOpts, RANDOM_MAX_ALIGNMENT_COUNT);
 }
 
 RandomTool::~RandomTool(void) { 

@@ -372,7 +372,7 @@ FilterTool::FilterTool(void)
     , m_impl(0)
 {
     // set program details
-    Options::SetProgramInfo("bamtools filter", "filters BAM file(s)", "-in <filename> [-in <filename> ... ] -out <filename> -region <REGION> [ [-script <filename] | [filterOptions] ]");
+    Options::SetProgramInfo("bamtools filter", "filters BAM file(s)", "[-in <filename> -in <filename> ...] [-out <filename> | [-forceCompression]] [-region <REGION>] [ [-script <filename] | [filterOptions] ]");
     
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInputBamFilename,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());

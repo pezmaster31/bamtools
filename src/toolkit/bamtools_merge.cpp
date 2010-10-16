@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 7 September 2010
+// Last modified: 13 October 2010
 // ---------------------------------------------------------------------------
 // Merges multiple BAM files into one.
 // ***************************************************************************
@@ -11,13 +11,11 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
 #include "bamtools_merge.h"
 #include "bamtools_options.h"
 #include "bamtools_utilities.h"
 #include "BamMultiReader.h"
 #include "BamWriter.h"
-
 using namespace std;
 using namespace BamTools;
 
@@ -57,16 +55,14 @@ MergeTool::MergeTool(void)
     , m_settings(new MergeSettings)
 {
     // set program details
-    Options::SetProgramInfo("bamtools merge", "merges multiple BAM files into one", "[-in <filename> -in <filename> ...] [-out <filename>]");
+    Options::SetProgramInfo("bamtools merge", "merges multiple BAM files into one", "[-in <filename> -in <filename> ...] [-out <filename> | [-forceCompression]] [-region <REGION>]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in",  "BAM filename", "the input BAM file(s)", "", m_settings->HasInputBamFilename,  m_settings->InputFiles,     IO_Opts);
     Options::AddValueOption("-out", "BAM filename", "the output BAM file",   "", m_settings->HasOutputBamFilename, m_settings->OutputFilename, IO_Opts);
     Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
-    
-    OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
-    Options::AddValueOption("-region", "REGION", "genomic region. See README for more details", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
+    Options::AddValueOption("-region", "REGION", "genomic region. See README for more details", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
 }
 
 MergeTool::~MergeTool(void) {

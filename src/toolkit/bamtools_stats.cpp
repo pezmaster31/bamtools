@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 5 October 2010
+// Last modified: 12 October 2010
 // ---------------------------------------------------------------------------
 // Prints general alignment statistics for BAM file(s).
 // ***************************************************************************
@@ -15,7 +15,6 @@
 #include <numeric>
 #include <string>
 #include <vector>
-
 #include "bamtools_stats.h"
 #include "bamtools_options.h"
 #include "BamMultiReader.h"
@@ -225,9 +224,8 @@ bool StatsTool::StatsToolPrivate::Run() {
     
     // plow through file, keeping track of stats
     BamAlignment al;
-    while ( reader.GetNextAlignmentCore(al) ) {
+    while ( reader.GetNextAlignmentCore(al) )
         ProcessAlignment(al);
-    }
     
     // print stats
     PrintStats();
@@ -246,7 +244,7 @@ StatsTool::StatsTool(void)
     , m_impl(0)
 {
     // set program details
-    Options::SetProgramInfo("bamtools stats", "prints general alignment statistics", "[-in <filename> -in <filename> ... ]");
+    Options::SetProgramInfo("bamtools stats", "prints general alignment statistics", "[-in <filename> -in <filename> ...] [statsOptions]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");

@@ -51,7 +51,7 @@ IndexTool::IndexTool(void)
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in", "BAM filename", "the input BAM file", "", m_settings->HasInputBamFilename, m_settings->InputBamFilename, IO_Opts, Options::StandardIn());
-    Options::AddOption("-bti", "create (non-standard) BamTools index file", m_settings->IsUsingBamtoolsIndex, IO_Opts);
+    Options::AddOption("-bti", "create (non-standard) BamTools index file (*.bti). Default behavior is to create standard BAM index (*.bai)", m_settings->IsUsingBamtoolsIndex, IO_Opts);
 }
 
 IndexTool::~IndexTool(void) {

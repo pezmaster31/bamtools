@@ -469,11 +469,11 @@ SplitTool::SplitTool(void)
     , m_impl(0)
 {
     // set program details
-    Options::SetProgramInfo("bamtools split", "splits a BAM file on user-specified property, creating a new BAM output file for each value found", "[-in <filename>] [-stub <filename>] < -mapped | -paired | -reference | -tag <TAG> > ");
+    Options::SetProgramInfo("bamtools split", "splits a BAM file on user-specified property, creating a new BAM output file for each value found", "[-in <filename>] [-stub <filename stub>] < -mapped | -paired | -reference | -tag <TAG> > ");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",  "BAM filename", "the input BAM file",  "", m_settings->HasInputFilename,  m_settings->InputFilename,  IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-in",   "BAM filename",  "the input BAM file",  "", m_settings->HasInputFilename,  m_settings->InputFilename,  IO_Opts, Options::StandardIn());
     Options::AddValueOption("-stub", "filename stub", "prefix stub for output BAM files (default behavior is to use input filename, without .bam extension, as stub). If input is stdin and no stub provided, a timestamp is generated as the stub.", "", m_settings->HasCustomOutputStub, m_settings->CustomOutputStub, IO_Opts);
     
     OptionGroup* SplitOpts = Options::CreateOptionGroup("Split Options");

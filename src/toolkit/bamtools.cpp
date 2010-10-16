@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 September 2010
+// Last modified: 12 October 2010
 // ---------------------------------------------------------------------------
 // Integrates a number of BamTools functionalities into a single executable.
 // ***************************************************************************
@@ -25,6 +25,7 @@ using namespace BamTools;
 
 // ------------------------------------------
 // bamtools subtool names
+
 static const string CONVERT  = "convert";
 static const string COUNT    = "count";
 static const string COVERAGE = "coverage";
@@ -39,6 +40,7 @@ static const string STATS    = "stats";
 
 // ------------------------------------------
 // bamtools help/version names
+
 static const string HELP       = "help";
 static const string LONG_HELP  = "--help";
 static const string SHORT_HELP = "-h";
@@ -46,6 +48,18 @@ static const string SHORT_HELP = "-h";
 static const string VERSION       = "version";
 static const string LONG_VERSION  = "--version";
 static const string SHORT_VERSION = "-v";
+
+static bool IsHelp(char* str) {
+    return ( str == HELP ||
+             str == LONG_HELP ||
+             str == SHORT_HELP );
+}
+
+static bool IsVersion(char* str) {
+    return ( str == VERSION ||
+             str == LONG_VERSION ||
+             str == SHORT_VERSION );
+}
 
 // ------------------------------------------
 // Subtool factory method
@@ -72,27 +86,17 @@ AbstractTool* CreateTool(const string& arg) {
 // Print help info
 int Help(int argc, char* argv[]) {
   
-    // 'bamtools help COMMAND'
+    // check for 'bamtools help COMMAND' to print tool-specific help message
     if (argc > 2) {
         
+	// determine desired sub-tool
         AbstractTool* tool = CreateTool( argv[2] );
-//         if ( argv[2] == CONVERT )  tool = new ConvertTool;
-//         if ( argv[2] == COUNT )    tool = new CountTool;
-//         if ( argv[2] == COVERAGE ) tool = new CoverageTool;
-//         if ( argv[2] == FILTER )   tool = new FilterTool;
-//         if ( argv[2] == HEADER )   tool = new HeaderTool;
-//         if ( argv[2] == INDEX )    tool = new IndexTool;
-//         if ( argv[2] == MERGE )    tool = new MergeTool;
-//         if ( argv[2] == RANDOM )   tool = new RandomTool;
-//         if ( argv[2] == SORT )     tool = new SortTool;
-//         if ( argv[2] == SPLIT )    tool = new SplitTool;
-//         if ( argv[2] == STATS )    tool = new StatsTool;
-        
+
         // if tool known, print its help screen
         if ( tool ) return tool->Help();
     }
 
-    // either 'bamtools help' or unrecognized argument after 'help'
+    // print general BamTools help message
     cerr << endl;
     cerr << "usage: bamtools [--help] COMMAND [ARGS]" << endl;
     cerr << endl;
@@ -134,27 +138,15 @@ int main(int argc, char* argv[]) {
     if ( (argc == 1) ) return Help(argc, argv);
     
     // 'bamtools help', 'bamtools --help', or 'bamtools -h'
-    if ( (argv[1] == HELP) || (argv[1] == LONG_HELP) || (argv[1] == SHORT_HELP) ) return Help(argc, argv); 
+    if ( IsHelp(argv[1]) ) return Help(argc, argv); 
     
     // 'bamtools version', 'bamtools --version', or 'bamtools -v'
-    if ( (argv[1] == VERSION) || (argv[1] == LONG_VERSION) || (argv[1] == SHORT_VERSION) ) return Version(); 
+    if ( IsVersion(argv[1]) ) return Version(); 
         
     // determine desired sub-tool
     AbstractTool* tool = CreateTool( argv[1] );
-//     if ( argv[1] == CONVERT )  tool = new ConvertTool;
-//     if ( argv[1] == COUNT )    tool = new CountTool;
-//     if ( argv[1] == COVERAGE ) tool = new CoverageTool;
-//     if ( argv[1] == FILTER )   tool = new FilterTool;
-//     if ( argv[1] == HEADER )   tool = new HeaderTool;
-//     if ( argv[1] == INDEX )    tool = new IndexTool;
-//     if ( argv[1] == MERGE )    tool = new MergeTool;
-//     if ( argv[1] == RANDOM )   tool = new RandomTool;
-//     if ( argv[1] == SORT )     tool = new SortTool;
-//     if ( argv[1] == SPLIT )    tool = new SplitTool;
-//     if ( argv[1] == STATS )    tool = new StatsTool;
     
-    // if found, run tool
+    // if found, run tool... otherwise show help
     if ( tool ) return tool->Run(argc, argv);
-    // no match found, show help
     else return Help(argc, argv); 
 }

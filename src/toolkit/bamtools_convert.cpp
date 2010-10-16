@@ -707,19 +707,17 @@ ConvertTool::ConvertTool(void)
     , m_impl(0)
 {
     // set program details
-    Options::SetProgramInfo("bamtools convert", "converts BAM to a number of other formats", "-format <FORMAT> [-in <filename> -in <filename> ...] [-out <filename>] [other options]");
+    Options::SetProgramInfo("bamtools convert", "converts BAM to a number of other formats", "-format <FORMAT> [-in <filename> -in <filename> ...] [-out <filename>] [-region <REGION>] [format-specific options]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInput,   m_settings->InputFiles,     IO_Opts, Options::StandardIn());
     Options::AddValueOption("-out",    "BAM filename", "the output BAM file",   "", m_settings->HasOutput,  m_settings->OutputFilename, IO_Opts, Options::StandardOut());
     Options::AddValueOption("-format", "FORMAT", "the output file format - see README for recognized formats", "", m_settings->HasFormat, m_settings->Format, IO_Opts);
-   
-    OptionGroup* FilterOpts = Options::CreateOptionGroup("Filters");
-    Options::AddValueOption("-region", "REGION", "genomic region. Index file is recommended for better performance, and is read automatically if it exists as <filename>.bai. See \'bamtools help index\' for more  details on creating one", "", m_settings->HasRegion, m_settings->Region, FilterOpts);
+    Options::AddValueOption("-region", "REGION", "genomic region. Index file is recommended for better performance, and is used automatically if it exists. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
     
     OptionGroup* PileupOpts = Options::CreateOptionGroup("Pileup Options");
-    Options::AddValueOption("-fasta", "FASTA filename", "FASTA reference file", "", m_settings->HasFastaFilename, m_settings->FastaFilename, PileupOpts, "");
+    Options::AddValueOption("-fasta", "FASTA filename", "FASTA reference file", "", m_settings->HasFastaFilename, m_settings->FastaFilename, PileupOpts);
     Options::AddOption("-mapqual", "print the mapping qualities", m_settings->IsPrintingPileupMapQualities, PileupOpts);
     
     OptionGroup* SamOpts = Options::CreateOptionGroup("SAM Options");

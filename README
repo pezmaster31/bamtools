@@ -1,6 +1,6 @@
-------------------------------------------------------------
+--------------------------------------------------------------------------------
 README : BAMTOOLS
-------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 BamTools: a C++ API & toolkit for reading/writing/manipulating BAM files.
 
@@ -18,41 +18,52 @@ IV.  Acknowledgements
 
 V.   Contact
 
-------------------------------------------------------------
-
+--------------------------------------------------------------------------------
 I. Introduction:
+--------------------------------------------------------------------------------
 
-BamTools provides both a programmer's API and an end-user's toolkit for handling 
+BamTools provides both a programmer's API and an end-user's toolkit for handling
 BAM files.  
 
-
+----------------------------------------
 Ia. The API: 
+----------------------------------------
 
-The API consists of 2 main modules - BamReader and BamWriter. As you would expect, 
-BamReader provides read-access to BAM files, while BamWriter handles writing data to 
-BAM files. BamReader provides an interface for random-access (jumping) in a BAM file,
-as well as generating BAM index files.
+The API consists of 2 main modules: BamReader and BamWriter. As you would 
+expect, BamReader provides read-access to BAM files, while BamWriter handles 
+writing data to BAM files. BamReader provides the interface for random-access 
+(jumping) in a BAM file, as well as generating BAM index files.
  
-BamMultiReader is an extra module that allows you to manage multiple open BAM file
-for reading. It provides some validation & bookkeeping under the hood to keep all 
-files sync'ed up for you.
+BamMultiReader is an extra module that allows you to manage multiple open BAM 
+files for reading. It provides some validation & bookkeeping under the hood to 
+keep all files sync'ed up for you.
 
 Additional files used by the API:
- - BamAux.h   : contains the common data structures and typedefs used throught the API.
- - BamIndex.* : implements both the standard BAM format index (".bai") as well as a 
-                new BamTools-specific index (".bti").
- - BGZF.*     : contains our implementation of the Broad Institute's BGZF compression format.
 
+ - BamAlignment.* : implements the BamAlignment data structure 
 
+ - BamAux.h       : contains various constants, data structures and utility 
+                    methods used throught the API.
+
+ - BamIndex.*     : implements both the standard BAM format index (".bai") as 
+                    well as a new BamTools-specific index (".bti").
+
+ - BGZF.*         : contains our implementation of the Broad Institute's BGZF 
+                    compression format.
+
+----------------------------------------
 Ib. The Toolkit:
+----------------------------------------
 
-If you've been using the BamTools since the early days, you'll notice that our 'toy' API 
-examples (BamConversion, BamDump, BamTrim,...) are now gone.  We dumped these in favor of 
-a suite of small utilities that we hope both developers and end-users find useful:
+If you've been using the BamTools since the early days, you'll notice that our 
+'toy' API examples (BamConversion, BamDump, BamTrim,...) are now gone.  We have 
+dumped these in favor of a suite of small utilities that we hope both 
+developers and end-users find useful:
 
 usage: bamtools [--help] COMMAND [ARGS]
 
 Available bamtools commands:
+
 	convert         Converts between BAM and a number of other formats
 	count           Prints number of alignments in BAM file(s)
 	coverage        Prints coverage statistics from the input BAM file	
@@ -62,65 +73,330 @@ Available bamtools commands:
 	merge           Merge multiple BAM files into single file
 	random		Select random alignments from existing BAM file(s)
 	sort            Sorts the BAM file according to some criteria
+	split		Splits a BAM file on user-specifed property, creating a 
+                            new BAM output file for each value found
 	stats           Prints some basic statistics from input BAM file(s)
 
 See 'bamtools help COMMAND' for more information on a specific command.
 
-** Follow-up explanation here **
-
-------------------------------------------------------------
-
+--------------------------------------------------------------------------------
 II. Usage : 
+--------------------------------------------------------------------------------
 
-** General usage information - perhaps explain common terms, point to SAM/BAM spec, etc **
+** General usage information - perhaps explain common terms, point to SAM/BAM 
+spec, etc **
 
-
+----------------------------------------
 IIa. The API
+----------------------------------------
 
-To use this API, you simply need to do 3 things:
+The API, as noted above, contains 2 main modules - BamReader & BamWriter - for 
+dealing with BAM files. Alignment data is made available through the 
+BamAlignment data structure.
+
+A simple (read-only) scenario for accessing BAM data would look like the 
+following:
+
+	// open our BamReader 
+	BamReader reader;
+	reader.Open("someData.bam", "someData.bam.bai");
+
+	// define our region of interest
+	// in this example: bases 0-500 on the reference "chrX"
+	int id = reader.GetReferenceID("chrX");
+	BamRegion region(id, 0, id, 500);
+	reader.SetRegion(region);
+
+	// iterate through alignments in this region,
+	// ignoring alignments with a MQ below some cutoff
+	BamAlignment al;
+	while ( reader.GetNextAlignment(al) ) {
+	    if ( al.MapQuality >= 50 )
+	        // do something
+	}
+
+	// close the reader
+	reader.Close();
+
+To use this API in your application, you simply need to do 3 things:
 
     1 - Drop the BamTools API files somewhere the compiler can find them.
-        (i.e. in your project's source tree, or somewhere else in your include path)
 
     2 - Import BamTools API with the following lines of code
-        #include "BamReader.h"     // or "BamMultiReader.h", as needed
+        #include "BamReader.h"     // (or "BamMultiReader.h") as needed
         #include "BamWriter.h"     // as needed
-        using namespace BamTools;
+        using namespace BamTools;  // all of BamTools classes/methods live in 
+                                   // this namespace
     	
-    3 - Compile with '-lz' ('l' as in Lima) to access ZLIB compression library
-	(For MSVC users, I can provide you modified zlib headers - just contact me).
+    3 - Link with '-lz' ('l' as in Lima) to access ZLIB compression library
+	(For MSVC users, I can provide you modified zlib headers - just contact 
+        me if needed).
 
-See any included programs and Makefile for more specific compiling/usage examples.
-See comments in the header files for more detailed API documentation. 
+See any included programs and Makefile for more specific compiling/usage 
+examples. See comments in the header files for more detailed API documentation.
 
-
+----------------------------------------
 IIb. The Toolkit
+----------------------------------------
 
-** More indepth overview for the toolkit commands **
+BamTools provides a small, but powerful suite of command-line utility programs 
+for manipulating and querying BAM files for data.  
 
-------------------------------------------------------------
+--------------------
+Input/Output
+--------------------
 
+All BamTools utilities handle I/O operations using a common set of arguments.
+These include:
+
+ -in <BAM file>
+
+The input BAM files(s).  
+
+    If a tool accepts multiple BAM files as input, each file gets its own "-in" 
+    option on the command line. If no "-in" is provided, the tool will attempt 
+    to read BAM data from stdin.
+
+    To read a single BAM file, use a single "-in" option:
+    > bamtools *tool* -in myData1.bam ...ARGS...
+
+    To read multiple BAM files, use multiple "-in" options:
+    > bamtools *tool* -in myData1.bam -in myData2.bam ...ARGS...
+
+    To read from stdin (if supported), omit the "-in" option: 
+    > bamtools *tool* ...ARGS...
+
+  -out <BAM file>
+
+The output BAM file. 
+
+    If a tool outputs a result BAM file, specify the filename using this option.
+    If none is provided, the tool will typically write to stdout. 
+
+    *Note: Not all tools output BAM data (e.g. count, header, etc.)
+
+ -region <REGION>
+
+A region of interest. See below for accepted 'REGION string' formats.  
+
+    Many of the tools accept this option, which allows a user to only consider 
+    alignments that overlap this region (whether counting, filtering, merging, 
+    etc.).  
+
+    An alignment is considered to overlap a region if any part of the alignments
+    intersects the left/right boundaries. Thus, a 50bp alignment at position 70 
+    will overlap a region beginning at position 100.
+
+    REGION string format
+    ----------------------
+    A proper REGION string can be formatted like any of the following examples: 
+        where 'chr1' is the name of a reference (not its ID)and '' is any valid 
+        integer position within that reference.
+
+    To read 
+    chr1               - only alignments on (entire) reference 'chr1'
+    chr1:500           - only alignments overlapping the region starting at 
+                         chr1:500 and continuing to the end of chr1
+    chr1:500..1000     - only alignments overlapping the region starting at 
+                         chr1:500 and continuing to chr1:1000
+    chr1:500..chr3:750 - only alignments overlapping the region starting at 
+                         chr1:500 and continuing to chr3:750. This 'spanning' 
+                         region assumes that the reference specified as the 
+                         right boundary will occur somewhere in the file after 
+                         the left boundary. On a sorted BAM, a REGION of 
+                         'chr4:500..chr2:1500' will produce undefined 
+                         (incorrect) results.  So don't do it. :)
+
+    *Note: Most of the tools that accept a REGION string will perform without an
+           index file, but typically at great cost to performance (having to 
+           plow through the entire file until the region of interest is found). 
+           For optimum speed, be sure that index files are available for your 
+           data.
+
+ -forceCompression
+
+Force compression of BAM output.
+
+    When tools are piped together (see details below), the default behavior is 
+    to turn off compression. This can greatly increase performance when the data
+    does not have to be constantly decompressed and recompressed. This is 
+    ignored any time an output BAM file is specified using "-out". 
+
+--------------------
+Piping
+--------------------
+
+Many of the tools in BamTools can be chained together by piping.  Any tool that 
+accepts stdin can be piped into, and any that can output stdout can be piped 
+from. For example:
+
+> bamtools filter -in data1.bam -in data2.bam -mapQuality ">50" | bamtools count
+
+will give a count of all alignments in your 2 BAM files with a mapQuality of 
+greater than 50. And of course, any tool writing to stdout can be piped into 
+other utilities. 
+
+--------------------
+The Tools
+--------------------
+
+    convert         Converts between BAM and a number of other formats
+    count           Prints number of alignments in BAM file(s)
+    coverage        Prints coverage statistics from the input BAM file	
+    filter          Filters BAM file(s) by user-specified criteria
+    header          Prints BAM header information
+    index           Generates index for BAM file
+    merge           Merge multiple BAM files into single file
+    random          Select random alignments from existing BAM file(s)
+    sort            Sorts the BAM file according to some criteria
+    split           Splits a BAM file on user-specifed property, creating a new
+                       BAM output file for each value found
+    stats           Prints some basic statistics from input BAM file(s)
+
+----------
+convert
+----------
+
+Description: converts BAM to a number of other formats
+
+Usage: bamtools convert -format <FORMAT> [-in <filename> -in <filename> ...] 
+                        [-out <filename>] [other options]
+
+Input & Output:
+  -in <BAM filename>               the input BAM file(s) [stdin]
+  -out <BAM filename>              the output BAM file [stdout]
+  -format <FORMAT>                 the output file format - see below for 
+                                       supported formats
+
+Filters:
+  -region <REGION>                 genomic region. Index file is recommended for
+                                       better performance, and is read 
+                                       automatically if it exists. See 'bamtools
+                                       help index' for more details on creating 
+                                       one.
+
+Pileup Options:
+  -fasta <FASTA filename>          FASTA reference file
+  -mapqual                         print the mapping qualities
+
+SAM Options:
+  -noheader                        omit the SAM header from output
+
+Help:
+  --help, -h                       shows this help text
+
+** Notes **
+
+    - Currently supported output formats ( BAM -> X )
+ 
+        Format type   FORMAT (command-line argument)
+        ------------  -------------------------------
+        BED           bed
+        FASTA         fasta
+        FASTQ         fastq
+        JSON          json
+        Pileup        pileup 
+        SAM           sam
+        YAML          yaml
+
+        Usage example:
+        > bamtools convert -format json -in myData.bam -out myData.json
+
+    - Pileup Options have no effect on formats other than "pileup"
+      SAM Options have no effect on formats other than "sam" 
+
+----------
+count
+----------
+
+Description: prints number of alignments in BAM file(s).
+
+Usage: bamtools count [-in <filename> -in <filename> ...] [-region <REGION>]
+
+Input & Output:
+  -in <BAM filename>               the input BAM file(s) [stdin]
+
+Filters:
+  -region <REGION>                 genomic region. Index file is required and 
+                                       is read automatically if it exists. See
+                                       'bamtools help index' for more details
+                                       on creating one.
+
+Help:
+  --help, -h                       shows this help text
+
+
+----------
+coverage
+----------
+
+
+----------
+filter
+----------
+
+
+----------
+header
+----------
+
+
+----------
+index
+----------
+
+
+----------
+merge
+----------
+
+
+----------
+random
+----------
+
+
+----------
+sort
+----------
+
+
+----------
+split
+----------
+
+
+----------
+stats
+----------
+
+
+--------------------------------------------------------------------------------
 III. License :
+--------------------------------------------------------------------------------
 
 Both the BamTools API and toolkit are released under the MIT License.
-Copyright (c) 2009-2010 Derek Barnett, Erik Garrison, Gabor Marth, Michael Stromberg
-See file LICENSE for details.
+Copyright (c) 2009-2010 Derek Barnett, Erik Garrison, Gabor Marth, 
+    Michael Stromberg
 
-------------------------------------------------------------
+See included file LICENSE for details.
 
+--------------------------------------------------------------------------------
 IV. Acknowledgements :
+--------------------------------------------------------------------------------
 
  * Aaron Quinlan for several key feature ideas and bug fix contributions
  * Baptiste Lepilleur for the public-domain JSON parser (JsonCPP)
  * Heng Li, author of SAMtools - the original C-language BAM API/toolkit.
 
-------------------------------------------------------------
-
+--------------------------------------------------------------------------------
 V. Contact :
+--------------------------------------------------------------------------------
 
-Feel free to contact me with any questions, comments, suggestions, bug reports, etc.
-  - Derek Barnett
-
+Feel free to contact me with any questions, comments, suggestions, bug reports, 
+    etc.
+  
+Derek Barnett
 Marth Lab
 Biology Dept., Boston College
 

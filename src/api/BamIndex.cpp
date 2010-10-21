@@ -635,6 +635,12 @@ bool BamStandardIndex::BamStandardIndexPrivate::GetOffsets(const BamRegion& regi
     
     // set flag & return success
     *hasAlignmentsInRegion = (offsets.size() != 0 );
+
+    // if cache mode set to none, dump the data we just loaded
+    if (m_parent->m_cacheMode == BamIndex::NoIndexCaching )
+        ClearReferenceOffsets(region.LeftRefID);
+
+    // return succes
     return true;
 }
 
@@ -1634,6 +1640,12 @@ bool BamToolsIndex::BamToolsIndexPrivate::GetOffset(const BamRegion& region, int
   
     // set flag based on whether an index entry was found for this region
     *hasAlignmentsInRegion = ( indexIter != indexEnd );
+
+    // if cache mode set to none, dump the data we just loaded
+    if (m_parent->m_cacheMode == BamIndex::NoIndexCaching )
+        ClearReferenceOffsets(region.LeftRefID);
+
+    // return success
     return true; 
 }
 

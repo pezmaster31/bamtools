@@ -3,12 +3,20 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 12 October 2010
+// Last modified: 25 October 2010
 // ---------------------------------------------------------------------------
 // Integrates a number of BamTools functionalities into a single executable.
 // ***************************************************************************
 
+// stringify version information
+#define BAMTOOLS_VER1_(x) #x
+#define BAMTOOLS_VER_(x)  BAMTOOLS_VER1_(x)
+#define BAMTOOLS_VERSION  BAMTOOLS_VER_(BT_VERSION)
+
+// includes
+#include <cstdio>
 #include <iostream>
+#include <string>
 #include "bamtools_convert.h"
 #include "bamtools_count.h"
 #include "bamtools_coverage.h"
@@ -23,9 +31,7 @@
 using namespace std;
 using namespace BamTools;
 
-// ------------------------------------------
 // bamtools subtool names
-
 static const string CONVERT  = "convert";
 static const string COUNT    = "count";
 static const string COVERAGE = "coverage";
@@ -38,31 +44,29 @@ static const string SORT     = "sort";
 static const string SPLIT    = "split";
 static const string STATS    = "stats";
 
-// ------------------------------------------
-// bamtools help/version names
-
-static const string HELP       = "help";
-static const string LONG_HELP  = "--help";
-static const string SHORT_HELP = "-h";
-
+// bamtools help/version constants
+static const string HELP          = "help";
+static const string LONG_HELP     = "--help";
+static const string SHORT_HELP    = "-h";
 static const string VERSION       = "version";
 static const string LONG_VERSION  = "--version";
 static const string SHORT_VERSION = "-v";
 
+// determine if string is a help constant
 static bool IsHelp(char* str) {
     return ( str == HELP ||
              str == LONG_HELP ||
              str == SHORT_HELP );
 }
 
+// determine if string is a version constant
 static bool IsVersion(char* str) {
     return ( str == VERSION ||
              str == LONG_VERSION ||
              str == SHORT_VERSION );
 }
 
-// ------------------------------------------
-// Subtool factory method
+// subtool factory method
 AbstractTool* CreateTool(const string& arg) {
   
     // determine tool type based on arg
@@ -82,8 +86,7 @@ AbstractTool* CreateTool(const string& arg) {
     return 0;
 }
 
-// ------------------------------------------
-// Print help info
+// print help info
 int Help(int argc, char* argv[]) {
   
     // check for 'bamtools help COMMAND' to print tool-specific help message
@@ -118,11 +121,10 @@ int Help(int argc, char* argv[]) {
     return 0;
 }
 
-// ------------------------------------------
-// Print version info
+// print version info
 int Version(void) {
     cout << endl;
-    cout << "bamtools v0.8.xx" << endl;
+    cout << "bamtools " << BAMTOOLS_VERSION << endl;
     cout << "Part of BamTools API and toolkit" << endl;
     cout << "Primary authors: Derek Barnett, Erik Garrison, Michael Stromberg" << endl;
     cout << "(c) 2009-2010 Marth Lab, Biology Dept., Boston College" << endl;
@@ -130,7 +132,6 @@ int Version(void) {
     return 0;
 }
 
-// ------------------------------------------
 // toolkit entry point
 int main(int argc, char* argv[]) {
 

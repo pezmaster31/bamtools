@@ -5,6 +5,12 @@
 # top-level
 # ==========================
 
+# define current BamTools version
+BT_MAJOR_VER = 0
+BT_MINOR_VER = 8
+BT_BUILD_VER = 1025
+export BT_VERSION = $(BT_MAJOR_VER).$(BT_MINOR_VER).$(BT_BUILD_VER)
+
 # define main directories
 export OBJ_DIR  = obj
 export BIN_DIR  = bin
@@ -12,11 +18,8 @@ export SRC_DIR  = src
 
 # define compile/link flags
 export CXX      = g++
-export CXXFLAGS = -Wall -O3 -D_FILE_OFFSET_BITS=64
+export CXXFLAGS = -Wall -O3 -D_FILE_OFFSET_BITS=64 -DBT_VERSION=$(BT_VERSION)
 export LIBS     = -lz
-
-# define current BamTools version
-export BAMTOOLS_VERSION = 0.7.0812
 
 # define source subdirectories
 SUBDIRS = $(SRC_DIR)/api \
@@ -26,7 +29,7 @@ SUBDIRS = $(SRC_DIR)/api \
 
 all:
 	@echo "Building BamTools:"
-	@echo "Version: $$BAMTOOLS_VERSION"
+	@echo "Version: $$BT_VERSION"
 	@echo "========================================================="
 	@echo ""
 	@echo "- Creating target directories"

@@ -1588,7 +1588,7 @@ void BamToolsIndex::BamToolsIndexPrivate::ClearAllData(void) {
 // clear all index offset data for desired reference
 void BamToolsIndex::BamToolsIndexPrivate::ClearReferenceOffsets(const int& refId) {
     if ( m_indexData.find(refId) == m_indexData.end() ) return;
-    vector<BamToolsIndexEntry>& offsets = m_indexData.at(refId).Offsets;
+    vector<BamToolsIndexEntry>& offsets = m_indexData[refId].Offsets;
     offsets.clear();
     m_hasFullDataCache = false;
 }
@@ -1608,8 +1608,9 @@ const off_t BamToolsIndex::BamToolsIndexPrivate::DataBeginOffset(void) const {
 bool BamToolsIndex::BamToolsIndexPrivate::GetOffset(const BamRegion& region, int64_t& offset, bool* hasAlignmentsInRegion) { 
   
     // return false if leftBound refID is not found in index data
-    if ( m_indexData.find(region.LeftRefID) == m_indexData.end()) return false;
-    
+    BamToolsIndexData::const_iterator indexIter = m_indexData.find(region.LeftRefID);
+    if ( indexIter == m_indexData.end()) return false;
+
     // load index data for region if not already cached
     if ( !IsDataLoaded(region.LeftRefID) ) {
         bool loadedOk = true;
@@ -1619,7 +1620,9 @@ bool BamToolsIndex::BamToolsIndexPrivate::GetOffset(const BamRegion& region, int
     }
 
     // localize index data for this reference (& sanity check that data actually exists)
-    const vector<BamToolsIndexEntry>& referenceOffsets = m_indexData.at(region.LeftRefID).Offsets;
+    indexIter = m_indexData.find(region.LeftRefID);
+    if ( indexIter == m_indexData.end()) return false;
+    const vector<BamToolsIndexEntry>& referenceOffsets = (*indexIter).second.Offsets;
     if ( referenceOffsets.empty() ) return false;
 
     // -------------------------------------------------------
@@ -1629,17 +1632,17 @@ bool BamToolsIndex::BamToolsIndexPrivate::GetOffset(const BamRegion& region, int
     offset = (*referenceOffsets.begin()).StartOffset;
     
     // iterate over offsets entries on this reference
-    vector<BamToolsIndexEntry>::const_iterator indexIter = referenceOffsets.begin();
-    vector<BamToolsIndexEntry>::const_iterator indexEnd  = referenceOffsets.end();
-    for ( ; indexIter != indexEnd; ++indexIter ) {
-        const BamToolsIndexEntry& entry = (*indexIter);
+    vector<BamToolsIndexEntry>::const_iterator offsetIter = referenceOffsets.begin();
+    vector<BamToolsIndexEntry>::const_iterator offsetEnd  = referenceOffsets.end();
+    for ( ; offsetIter != offsetEnd; ++offsetIter ) {
+	const BamToolsIndexEntry& entry = (*offsetIter);
         // break if alignment 'entry' overlaps region
         if ( entry.MaxEndPosition >= region.LeftPosition ) break;
-        offset = (*indexIter).StartOffset;
+	offset = (*offsetIter).StartOffset;
     }
   
     // set flag based on whether an index entry was found for this region
-    *hasAlignmentsInRegion = ( indexIter != indexEnd );
+    *hasAlignmentsInRegion = ( offsetIter != offsetEnd );
 
     // if cache mode set to none, dump the data we just loaded
     if (m_parent->m_cacheMode == BamIndex::NoIndexCaching )
@@ -1651,8 +1654,10 @@ bool BamToolsIndex::BamToolsIndexPrivate::GetOffset(const BamRegion& region, int
 
 // returns whether reference has alignments or no
 bool BamToolsIndex::BamToolsIndexPrivate::HasAlignments(const int& refId) const {
-    if ( m_indexData.find(refId) == m_indexData.end()) return false;
-    const BamToolsReferenceEntry& refEntry = m_indexData.at(refId);
+
+    BamToolsIndexData::const_iterator indexIter = m_indexData.find(refId);
+    if ( indexIter == m_indexData.end()) return false;
+    const BamToolsReferenceEntry& refEntry = (*indexIter).second;
     return refEntry.HasAlignments;
 }
 
@@ -1664,8 +1669,10 @@ bool BamToolsIndex::BamToolsIndexPrivate::HasFullDataCache(void) const {
 // returns true if index cache has data for desired reference
 bool BamToolsIndex::BamToolsIndexPrivate::IsDataLoaded(const int& refId) const {
 
-    if ( m_indexData.find(refId) == m_indexData.end() ) return false; // unknown reference
-    const BamToolsReferenceEntry& refEntry = m_indexData.at(refId);
+    BamToolsIndexData::const_iterator indexIter = m_indexData.find(refId);
+    if ( indexIter == m_indexData.end()) return false;
+    const BamToolsReferenceEntry& refEntry = (*indexIter).second;
+
     if ( !refEntry.HasAlignments ) return true; // no data period
 
     // return whether offsets list contains data

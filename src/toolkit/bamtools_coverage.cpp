@@ -36,12 +36,8 @@ class CoverageVisitor : public PileupVisitor {
   
     // PileupVisitor interface implementation
     public:
-//         void Visit(const int& refId, const int& position, const vector<BamAlignment>& alignments) {
+	// prints coverage results ( tab-delimited )
         void Visit(const PileupPosition& pileupData) {
-            // -----------------------------------------
-            // print coverage results ( tab-delimited )
-            // <refName> <0-based pos> <number of alleles>
-//             *m_out << m_references[refId].RefName << "\t" << position << "\t" << alignments.size() << endl;
             *m_out << m_references[pileupData.RefId].RefName << "\t" 
                    << pileupData.Position << "\t" 
                    << pileupData.PileupAlignments.size() << endl;

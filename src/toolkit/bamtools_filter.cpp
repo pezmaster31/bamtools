@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 4 October 2010
+// Last modified: 17 November 2010
 // ---------------------------------------------------------------------------
 // Filters BAM file(s) according to some user-specified criteria.
 // ***************************************************************************
@@ -793,7 +793,7 @@ bool FilterTool::FilterToolPrivate::Run(void) {
                 } 
               
                 // everything checks out, just iterate through specified region, filtering alignments
-                while ( reader.GetNextAlignmentCore(al) )
+		while ( reader.GetNextAlignment(al) )
                     if ( CheckAlignment(al) ) 
                         writer.SaveAlignment(al);
             } 
@@ -801,7 +801,7 @@ bool FilterTool::FilterToolPrivate::Run(void) {
             // no index data available, we have to iterate through until we
             // find overlapping alignments
             else {
-                while ( reader.GetNextAlignmentCore(al) ) {
+		while ( reader.GetNextAlignment(al) ) {
                     if ( (al.RefID >= region.LeftRefID)  && ((al.Position + al.Length) >= region.LeftPosition) &&
                          (al.RefID <= region.RightRefID) && ( al.Position <= region.RightPosition) ) 
                     {

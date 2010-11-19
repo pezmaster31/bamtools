@@ -5,9 +5,6 @@
 // ---------------------------------------------------------------------------
 // Last modified: 19 November 2010 (DB)
 // ---------------------------------------------------------------------------
-// Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
-// Institute.
-// ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
 
@@ -19,6 +16,10 @@
 #include <string>
 
 namespace BamTools {
+
+namespace Internal {
+    class BamWriterPrivate;
+} // namespace Internal
 
 class API_EXPORT BamWriter {
 
@@ -41,8 +42,7 @@ class API_EXPORT BamWriter {
 
     // private implementation
     private:
-        struct BamWriterPrivate;
-        BamWriterPrivate* d;
+	Internal::BamWriterPrivate* d;
 };
 
 } // namespace BamTools

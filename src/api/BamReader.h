@@ -5,9 +5,6 @@
 // ---------------------------------------------------------------------------
 // Last modified: 19 November 2010 (DB)
 // ---------------------------------------------------------------------------
-// Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
-// Institute.
-// ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
 
@@ -21,6 +18,10 @@
 
 namespace BamTools {
   
+namespace Internal {
+    class BamReaderPrivate;
+} // namespace Internal
+
 class API_EXPORT BamReader {
 
     // constructor / destructor
@@ -121,8 +122,7 @@ class API_EXPORT BamReader {
         
     // private implementation
     private:
-        struct BamReaderPrivate;
-        BamReaderPrivate* d;
+	Internal::BamReaderPrivate* d;
 };
 
 } // namespace BamTools

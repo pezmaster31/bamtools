@@ -17,7 +17,9 @@ add_library ( BamTools SHARED
               BamIndex.cpp 
               BamMultiReader.cpp
               BamReader.cpp
+	      BamReader_p.cpp
               BamWriter.cpp
+	      BamWriter_p.cpp
               BGZF.cpp 
             )
 

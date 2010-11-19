@@ -18,6 +18,12 @@
 
 namespace BamTools {
 
+// forward declare BamAlignment's friend classes
+namespace Internal {
+    class BamReaderPrivate;
+    class BamWriterPrivate;
+} // namespace Internal
+
 // BamAlignment data structure
 // explicitly labeled as 'struct' to indicate that (most of) its fields are public
 struct API_EXPORT BamAlignment {
@@ -141,7 +147,9 @@ struct API_EXPORT BamAlignment {
         int32_t     MatePosition;      // Position (0-based) where alignment's mate starts
         int32_t     InsertSize;        // Mate-pair insert size
           
-    public:
+    // Internal data, inaccessible to client code
+    // but available BamReaderPrivate & BamWriterPrivate
+    private:
         struct BamAlignmentSupportData {
       
             // data members
@@ -161,18 +169,9 @@ struct API_EXPORT BamAlignment {
                 , HasCoreOnly(false)
             { }
         };
-        
-        // ** THIS IS INTERNAL DATA! DO NOT ACCESS OR EDIT FROM CLIENT CODE **
-	//
-	// Intended for use by BamReader & BamWriter ONLY. No, really, I mean it.
-	//
-	// BamTools makes some assumptions about this data being pristine, so please don't tinker with it.
-	// The regular data fields above should be sufficient for client code.
-	//
-	// Technical/design note - Ideally, this would be a private data member with BamReader & BamWriter 
-	// allowed direct 'friend' access. However older compilers (especially gcc before v4.1 ) do not 
-	// propagate the friend access to BamReader/Writer's implementation inner classes. 
-        BamAlignmentSupportData SupportData;   
+	BamAlignmentSupportData SupportData;
+	friend class Internal::BamReaderPrivate;
+	friend class Internal::BamWriterPrivate;
         
     // Alignment flag query constants
     // Use the get/set methods above instead

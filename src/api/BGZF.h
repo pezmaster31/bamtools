@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 20 October 2010 (DB)
+// Last modified: 19 November 2010 (DB)
 // ---------------------------------------------------------------------------
 // BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -14,11 +14,13 @@
 #ifndef BGZF_H
 #define BGZF_H
 
+#include <api/api_global.h>
+#include "zlib.h"
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <string>
-#include "zlib.h"
 
 // Platform-specific large-file support
 #ifndef BAMTOOLS_LFS
@@ -70,7 +72,7 @@ const int BLOCK_FOOTER_LENGTH = 8;
 const int MAX_BLOCK_SIZE      = 65536;
 const int DEFAULT_BLOCK_SIZE  = 65536;
 
-struct BgzfData {
+struct API_EXPORT BgzfData {
 
     // data members
     public:

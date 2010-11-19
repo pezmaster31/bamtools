@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 18 September 2010 (DB)
+// Last modified: 19 November 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -16,6 +16,10 @@
 // precludes the need to sort merged files.
 // ***************************************************************************
 
+#include <api/BamMultiReader.h>
+#include <api/BGZF.h>
+using namespace BamTools;
+
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -23,9 +27,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "BGZF.h"
-#include "BamMultiReader.h"
-using namespace BamTools;
 using namespace std;
 
 // -----------------------------------------------------

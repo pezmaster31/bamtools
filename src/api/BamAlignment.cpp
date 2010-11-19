@@ -3,10 +3,13 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 September 2010 (DB)
+// Last modified: 19 November 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
+
+#include <api/BamAlignment.h>
+using namespace BamTools;
 
 #include <cctype>
 #include <cstdio>
@@ -15,8 +18,6 @@
 #include <exception>
 #include <map>
 #include <utility>
-#include "BamAlignment.h"
-using namespace BamTools;
 using namespace std;
 
 // default ctor

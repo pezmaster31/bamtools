@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 18 September 2010 (DB)
+// Last modified: 19 November 2010 (DB)
 // ---------------------------------------------------------------------------
 // Functionality for simultaneously reading multiple BAM files
 // ***************************************************************************
@@ -11,18 +11,19 @@
 #ifndef BAMMULTIREADER_H
 #define BAMMULTIREADER_H
 
-#include <string>
+#include <api/api_global.h>
+#include <api/BamReader.h>
 #include <map>
-#include <utility>
 #include <sstream>
-#include "BamReader.h"
+#include <string>
+#include <utility>
 
 namespace BamTools {
 
 // index mapping reference/position pairings to bamreaders and their alignments
 typedef std::multimap<std::pair<int, int>, std::pair<BamReader*, BamAlignment*> > AlignmentIndex;
 
-class BamMultiReader {
+class API_EXPORT BamMultiReader {
 
     // constructor / destructor
     public:

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 9 October 2010 (DB)
+// Last modified: 19 November 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic constants, data structures, utilities etc. 
 // used throughout the API for handling BAM files
@@ -11,6 +11,8 @@
 
 #ifndef BAMAUX_H
 #define BAMAUX_H
+
+#include <api/api_global.h>
 
 #include <fstream> 
 #include <iostream>
@@ -69,7 +71,7 @@ const int BT_SIZEOF_INT   = 4;
 // Data structs & typedefs
 
 // CIGAR operation data structure
-struct CigarOp {
+struct API_EXPORT CigarOp {
   
     // data members
     char     Type;   // Operation type (MIDNSHP)
@@ -84,7 +86,7 @@ struct CigarOp {
 };
 
 // Reference data entry
-struct RefData {
+struct API_EXPORT RefData {
    
     // data members
     std::string RefName;          // Name of reference sequence
@@ -101,7 +103,7 @@ struct RefData {
 typedef std::vector<RefData> RefVector;
 
 // General (sequential) genome region
-struct BamRegion {
+struct API_EXPORT BamRegion {
   
     // data members
     int LeftRefID;

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 13 October 2010 (DB)
+// Last modified: 19 November 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -11,15 +11,15 @@
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
 
-// C++ includes
+#include <api/BamReader.h>
+#include <api/BGZF.h>
+using namespace BamTools;
+
 #include <algorithm>
+#include <iostream>
 #include <iterator>
 #include <string>
 #include <vector>
-#include <iostream>
-#include "BGZF.h"
-#include "BamReader.h"
-using namespace BamTools;
 using namespace std;
 
 struct BamReader::BamReaderPrivate {

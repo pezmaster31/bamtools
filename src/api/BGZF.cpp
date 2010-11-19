@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 16 August 2010 (DB)
+// Last modified: 19 November 2010 (DB)
 // ---------------------------------------------------------------------------
 // BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -11,11 +11,11 @@
 // Provides the basic functionality for reading & writing BGZF files
 // ***************************************************************************
 
-#include <algorithm>
-#include "BGZF.h"
+#include <api/BGZF.h>
 using namespace BamTools;
-using std::string;
-using std::min;
+
+#include <algorithm>
+using namespace std;
 
 BgzfData::BgzfData(void)
     : UncompressedBlockSize(DEFAULT_BLOCK_SIZE)

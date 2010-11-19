@@ -3,23 +3,24 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 October 2010 (DB)
+// Last modified: 19 November 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides index functionality - both for the default (standardized) BAM 
 // index format (.bai) as well as a BamTools-specific (nonstandard) index 
 // format (.bti).
 // ***************************************************************************
 
+#include <api/BamIndex.h>
+#include <api/BamReader.h>
+#include <api/BGZF.h>
+using namespace BamTools;
+
 #include <cstdio>
 #include <cstdlib>
 #include <algorithm>
 #include <iostream>
 #include <map>
-#include "BamIndex.h"
-#include "BamReader.h"
-#include "BGZF.h"
 using namespace std;
-using namespace BamTools;
 
 // -------------------------------
 // BamIndex implementation

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 16 September 2010 (DB)
+// Last modified: 19 November 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -11,11 +11,11 @@
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
 
-#include <iostream>
-
-#include "BGZF.h"
-#include "BamWriter.h"
+#include <api/BamWriter.h>
+#include <api/BGZF.h>
 using namespace BamTools;
+
+#include <iostream>
 using namespace std;
 
 struct BamWriter::BamWriterPrivate {

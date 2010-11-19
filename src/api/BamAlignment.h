@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 9 October 2010 (DB)
+// Last modified: 19 November 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -11,15 +11,16 @@
 #ifndef BAMALIGNMENT_H
 #define BAMALIGNMENT_H
 
+#include <api/api_global.h>
+#include <api/BamAux.h>
 #include <string>
 #include <vector>
-#include "BamAux.h"
 
 namespace BamTools {
 
 // BamAlignment data structure
 // explicitly labeled as 'struct' to indicate that (most of) its fields are public
-struct BamAlignment {
+struct API_EXPORT BamAlignment {
 
     // constructors & destructor
     public:

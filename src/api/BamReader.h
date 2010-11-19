@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 13 October 2010 (DB)
+// Last modified: 19 November 2010 (DB)
 // ---------------------------------------------------------------------------
 // Uses BGZF routines were adapted from the bgzf.c code developed at the Broad
 // Institute.
@@ -14,13 +14,14 @@
 #ifndef BAMREADER_H
 #define BAMREADER_H
 
+#include <api/api_global.h>
+#include <api/BamAlignment.h>
+#include <api/BamIndex.h>
 #include <string>
-#include "BamAlignment.h"
-#include "BamIndex.h"
 
 namespace BamTools {
   
-class BamReader {
+class API_EXPORT BamReader {
 
     // constructor / destructor
     public:

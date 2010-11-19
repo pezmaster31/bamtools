@@ -12,10 +12,11 @@
 #ifndef BAM_INDEX_H
 #define BAM_INDEX_H
 
+#include <api/api_global.h>
+#include <api/BamAux.h>
 #include <iostream>
 #include <string>
 #include <vector>
-#include "BamAux.h"
 
 namespace BamTools {
 
@@ -24,7 +25,7 @@ class BgzfData;
   
 // --------------------------------------------------  
 // BamIndex base class
-class BamIndex {
+class API_EXPORT BamIndex {
 
     // specify index-caching behavior
     //

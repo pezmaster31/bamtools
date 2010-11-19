@@ -10,7 +10,10 @@
 
 #include <api/BamReader.h>
 #include <api/BamReader_p.h>
+#include <api/BamStandardIndex.h>
+#include <api/BamToolsIndex.h>
 #include <api/BGZF.h>
+
 using namespace BamTools;
 using namespace BamTools::Internal;
 

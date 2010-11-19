@@ -3,10 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 20 October 2010 (DB)
+// Last modified: 19 November 2010 (DB)
 // ---------------------------------------------------------------------------
-// Provides index functionality - both for the standardized BAM index format
-// (".bai") as well as a BamTools-specific (nonstandard) index format (".bti").
+// Provides basic BAM index interface
 // ***************************************************************************
 
 #ifndef BAM_INDEX_H
@@ -22,7 +21,12 @@ namespace BamTools {
 
 class BamReader;
 class BgzfData;
-  
+
+namespace Internal {
+  class BamStandardIndex;
+  class BamToolsIndex;
+} // namespace Internal
+
 // --------------------------------------------------  
 // BamIndex base class
 class API_EXPORT BamIndex {
@@ -129,179 +133,11 @@ class API_EXPORT BamIndex {
         BamTools::RefVector  m_references;
         BamIndex::BamIndexCacheMode m_cacheMode;
         FILE* m_indexStream;
+
+
+    friend class Internal::BamStandardIndex;
+    friend class Internal::BamToolsIndex;
 };
-
-// --------------------------------------------------
-// BamStandardIndex class
-// 
-// implements standardized (per SAM/BAM spec) index file ops
-class BamStandardIndex : public BamIndex {
-
-  
-    // ctor & dtor
-    public:
-        BamStandardIndex(BamTools::BgzfData*  bgzf, 
-                         BamTools::BamReader* reader);
-        ~BamStandardIndex(void);
-        
-    // interface (implements BamIndex virtual methods)
-    public:
-        // creates index data (in-memory) from current reader data
-        bool Build(void);
-        // returns supported file extension
-        const std::string Extension(void) const { return std::string(".bai"); }
-        // returns whether reference has alignments or no
-        bool HasAlignments(const int& referenceID) const;
-        // attempts to use index to jump to region; returns success/fail
-        // a "successful" jump indicates no error, but not whether this region has data
-        //   * thus, the method sets a flag to indicate whether there are alignments 
-        //     available after the jump position
-        bool Jump(const BamTools::BamRegion& region, bool* hasAlignmentsInRegion);
-    protected:
-        // clear all current index offset data in memory
-        void ClearAllData(void);
-        // return file position after header metadata
-        const off_t DataBeginOffset(void) const;
-        // return true if all index data is cached
-        bool HasFullDataCache(void) const;
-        // clears index data from all references except the first
-        void KeepOnlyFirstReferenceOffsets(void);
-        // load index data for all references, return true if loaded OK
-        // @saveData - save data in memory if true, just read & discard if false
-        bool LoadAllReferences(bool saveData = true);
-        // load first reference from file, return true if loaded OK
-        // @saveData - save data in memory if true, just read & discard if false
-        bool LoadFirstReference(bool saveData = true);
-        // load header data from index file, return true if loaded OK
-        bool LoadHeader(void);
-        // position file pointer to first reference begin, return true if skipped OK
-        bool SkipToFirstReference(void);
-        // write index reference data
-        bool WriteAllReferences(void);
-        // write index header data
-        bool WriteHeader(void);
-
-    // internal implementation
-    private:
-        struct BamStandardIndexPrivate;
-        BamStandardIndexPrivate* d;
-};
-
-// --------------------------------------------------
-// BamToolsIndex class
-//
-// implements BamTools-specific index file ops
-class BamToolsIndex : public BamIndex {
-
-    // ctor & dtor
-    public:
-        BamToolsIndex(BamTools::BgzfData*  bgzf, 
-                      BamTools::BamReader* reader);
-        ~BamToolsIndex(void);
-        
-    // interface (implements BamIndex virtual methods)
-    public:
-        // creates index data (in-memory) from current reader data
-        bool Build(void);
-        // returns supported file extension
-        const std::string Extension(void) const { return std::string(".bti"); }
-        // returns whether reference has alignments or no
-        bool HasAlignments(const int& referenceID) const;
-        // attempts to use index to jump to region; returns success/fail
-        // a "successful" jump indicates no error, but not whether this region has data
-        //   * thus, the method sets a flag to indicate whether there are alignments 
-        //     available after the jump position
-        bool Jump(const BamTools::BamRegion& region, bool* hasAlignmentsInRegion);
-    protected:
-        // clear all current index offset data in memory
-        void ClearAllData(void);
-        // return file position after header metadata
-        const off_t DataBeginOffset(void) const;
-        // return true if all index data is cached
-        bool HasFullDataCache(void) const;
-        // clears index data from all references except the first
-        void KeepOnlyFirstReferenceOffsets(void);
-        // load index data for all references, return true if loaded OK
-        // @saveData - save data in memory if true, just read & discard if false
-        bool LoadAllReferences(bool saveData = true);
-        // load first reference from file, return true if loaded OK
-        // @saveData - save data in memory if true, just read & discard if false
-        bool LoadFirstReference(bool saveData = true);
-        // load header data from index file, return true if loaded OK
-        bool LoadHeader(void);
-        // position file pointer to first reference begin, return true if skipped OK
-        bool SkipToFirstReference(void);
-        // write index reference data
-        bool WriteAllReferences(void);
-        // write index header data
-        bool WriteHeader(void);
-
-    // internal implementation
-    private:
-        struct BamToolsIndexPrivate;
-        BamToolsIndexPrivate* d;
-};
-
-// --------------------------------------------------
-// BamIndex factory methods
-
-// returns index based on BAM filename 'stub'
-// checks first for preferred type, returns that type if found
-// (if not found, attmempts to load other type(s), returns 0 if NONE found)
-//
-// ** default preferred type is BamToolsIndex ** use this anytime it exists
-inline
-BamIndex* BamIndex::FromBamFilename(const std::string& bamFilename, 
-                                    BamTools::BgzfData* bgzf, 
-                                    BamTools::BamReader* reader, 
-                                    const BamIndex::PreferredIndexType& type)
-{
-    // ---------------------------------------------------
-    // attempt to load preferred type first
-    
-    const std::string bamtoolsIndexFilename = bamFilename + ".bti";
-    const bool bamtoolsIndexExists = BamTools::FileExists(bamtoolsIndexFilename);
-    if ( (type == BamIndex::BAMTOOLS) && bamtoolsIndexExists )
-        return new BamToolsIndex(bgzf, reader);
-
-    const std::string standardIndexFilename = bamFilename + ".bai";
-    const bool standardIndexExists = BamTools::FileExists(standardIndexFilename);
-    if ( (type == BamIndex::STANDARD) && standardIndexExists ) 
-        return new BamStandardIndex(bgzf, reader);
-    
-    // ----------------------------------------------------
-    // preferred type could not be found, try other (non-preferred) types
-    // if none found, return 0
-    
-    if ( bamtoolsIndexExists ) return new BamToolsIndex(bgzf, reader);
-    if ( standardIndexExists ) return new BamStandardIndex(bgzf, reader);
-    return 0;
-}
-
-// returns index based on explicitly named index file (or 0 if not found)
-inline
-BamIndex* BamIndex::FromIndexFilename(const std::string&   indexFilename,
-                                      BamTools::BgzfData*  bgzf,
-                                      BamTools::BamReader* reader)
-{
-    // see if specified file exists
-    const bool indexExists = BamTools::FileExists(indexFilename);
-    if ( !indexExists ) return 0;
-  
-    const std::string bamtoolsIndexExtension(".bti");
-    const std::string standardIndexExtension(".bai");
-  
-    // if has bamtoolsIndexExtension
-    if ( indexFilename.find(bamtoolsIndexExtension) == (indexFilename.length() - bamtoolsIndexExtension.length()) )
-        return new BamToolsIndex(bgzf, reader);
-    
-     // if has standardIndexExtension
-    if ( indexFilename.find(standardIndexExtension) == (indexFilename.length() - standardIndexExtension.length()) )
-        return new BamStandardIndex(bgzf, reader);
-
-    // otherwise, unsupported file type
-    return 0;
-}
 
 } // namespace BamTools
 

@@ -15,7 +15,7 @@ using namespace BamTools::Internal;
 using namespace std;
 
 BamWriterPrivate::BamWriterPrivate(void) {
-  IsBigEndian = SystemIsBigEndian();
+    IsBigEndian = SystemIsBigEndian();
 }
 
 BamWriterPrivate::~BamWriterPrivate(void) {

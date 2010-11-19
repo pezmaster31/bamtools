@@ -8,15 +8,17 @@ I.   Introduction
      a. The API
      b. The Toolkit
 
-II.  Usage
+II.  Installation
+
+III. Usage
      a. The API
      b. The Toolkit
 
-III. License
+IV.  License
 
-IV.  Acknowledgements
+V.   Acknowledgements
 
-V.   Contact
+VI.  Contact
 
 --------------------------------------------------------------------------------
 I. Introduction:
@@ -80,14 +82,77 @@ Available bamtools commands:
 See 'bamtools help COMMAND' for more information on a specific command.
 
 --------------------------------------------------------------------------------
-II. Usage :
+II. Installation :
+--------------------------------------------------------------------------------
+
+----------------------------------------
+IIa. Get CMake
+----------------------------------------
+
+BamTools has been migrated to a CMake-based build system.  We believe that this 
+should simplify the build process across all platforms, especially as the 
+BamTools API moves into a shared library (that you link to instead of compiling 
+lots of source files directly into your application). CMake is available on all 
+major platforms, and indeed comes *out-of-the-box* with many Linux distributions.
+
+To see if you have CMake (and which version), try this command:
+
+  $ cmake --version
+
+BamTools requires CMake version >= 2.6.4. If you are missing CMake or have an 
+older version, check your OS package manager (for Linux) or download it here:
+http://www.cmake.org/cmake/resources/software.html .
+
+----------------------------------------
+IIb. Build BamTools 
+----------------------------------------
+
+Ok, now that you have CMake ready to go, let's build BamTools.  A good
+practice in building applications is to do an out-of-source build, meaning
+that we're going to set up an isolated place to hold all the intermediate 
+installation steps.
+
+In the top-level directory of BamTools, type the following commands:
+
+  $ mkdir build
+  $ cd build
+  $ cmake ..
+
+Windows users:
+This creates a Visual Studio solution file, which can then be built to create 
+the toolkit executable and API DLL's.
+
+Everybody else:
+After running cmake, just run:
+
+  $ make
+
+Then go back up to the BamTools root directory.
+
+  $ cd ..
+
+----------------------------------------
+IIIb. Check It 
+----------------------------------------
+
+Assuming the build process finished correctly, you should be able to find the 
+toolkit executable here:
+
+  ./bin/
+
+The BamTools-associated libraries will be found here:
+
+  ./lib/
+
+--------------------------------------------------------------------------------
+III. Usage :
 --------------------------------------------------------------------------------
 
 ** General usage information - perhaps explain common terms, point to SAM/BAM
 spec, etc **
 
 ----------------------------------------
-IIa. The API
+IIIa. The API
 ----------------------------------------
 
 The API, as noted above, contains 2 main modules - BamReader & BamWriter - for
@@ -120,7 +185,7 @@ following:
 
 To use this API in your application, you simply need to do 3 things:
 
-    1 - Drop the BamTools API files somewhere the compiler can find them.
+    1 - Build the BamTools library (see Installation steps above). 
 
     2 - Import BamTools API with the following lines of code
         #include "BamReader.h"     // (or "BamMultiReader.h") as needed
@@ -128,15 +193,23 @@ To use this API in your application, you simply need to do 3 things:
         using namespace BamTools;  // all of BamTools classes/methods live in
                                    // this namespace
 
-    3 - Link with '-lz' ('l' as in Lima) to access ZLIB compression library
-        (For MSVC users, I can provide you modified zlib headers - just contact
-        me if needed).
+    3 - Link with '-lbamtools' ('l' as in Lima).
 
-See any included programs and Makefile for more specific compiling/usage
-examples. See comments in the header files for more detailed API documentation.
+You may need to modify the -L flag (library path) as well to help your linker 
+find the (BAMTOOLS_ROOT)/lib directory.
+
+See any included programs for more detailed usage examples. See comments in the 
+header files for more detailed API documentation.
+
+Note - For users that don't want to bother with the new BamTools shared library
+scheme: you are certainly free to just compile the API source code directly into 
+your application, but be aware that the files involved are subject to change.  
+Meaning that filenames, number of files, etc. are not fixed.  You will also need 
+to be sure to link with '-lz' for ZLIB functionality (linking with '-lbamtools' 
+gives you this automatically).
 
 ----------------------------------------
-IIb. The Toolkit
+IIIb. The Toolkit
 ----------------------------------------
 
 BamTools provides a small, but powerful suite of command-line utility programs
@@ -717,7 +790,7 @@ Help:
   --help, -h                        shows this help text
 
 --------------------------------------------------------------------------------
-III. License :
+IV. License :
 --------------------------------------------------------------------------------
 
 Both the BamTools API and toolkit are released under the MIT License.
@@ -727,7 +800,7 @@ Copyright (c) 2009-2010 Derek Barnett, Erik Garrison, Gabor Marth,
 See included file LICENSE for details.
 
 --------------------------------------------------------------------------------
-IV. Acknowledgements :
+V. Acknowledgements :
 --------------------------------------------------------------------------------
 
  * Aaron Quinlan for several key feature ideas and bug fix contributions
@@ -735,7 +808,7 @@ IV. Acknowledgements :
  * Heng Li, author of SAMtools - the original C-language BAM API/toolkit.
 
 --------------------------------------------------------------------------------
-V. Contact :
+VI. Contact :
 --------------------------------------------------------------------------------
 
 Feel free to contact me with any questions, comments, suggestions, bug reports,

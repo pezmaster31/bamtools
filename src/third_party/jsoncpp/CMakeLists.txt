@@ -6,7 +6,7 @@
 # ==========================
 
 # add compiler definitions 
-#add_definitions(-DJSONCPP_LIBRARY) # (for proper exporting of library symbols)
+add_definitions(-DBAMTOOLS_JSONCPP_LIBRARY) # (for proper exporting of library symbols)
 
 # create jsoncpp library
 add_library ( jsoncpp SHARED 

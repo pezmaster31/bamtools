@@ -9,7 +9,7 @@
 include_directories (${BamTools_SOURCE_DIR}/src/api) 
 
 # add compiler definitions 
-#add_definitions(-DBAMTOOLS_UTILS_LIBRARY) # (for proper exporting of library symbols)
+add_definitions(-DBAMTOOLS_UTILS_LIBRARY) # (for proper exporting of library symbols)
 
 # create BamTools utils library
 add_library ( BamTools-utils SHARED 

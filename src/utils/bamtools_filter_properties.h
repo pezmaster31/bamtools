@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 30 August 2010
+// Last modified: 19 November 2010
 // ---------------------------------------------------------------------------
 // Provides support data structures & methods for FilterEngine
 //
@@ -40,18 +40,19 @@
 #ifndef BAMTOOLS_FILTER_PROPERTIES_H
 #define BAMTOOLS_FILTER_PROPERTIES_H
 
+#include <utils/bamtools_utilities.h>
+#include <utils/bamtools_variant.h>
+#include <utils/utils_global.h>
 #include <iostream>
 #include <map>
 #include <string>
-#include "bamtools_utilities.h"
-#include "bamtools_variant.h"
 
 namespace BamTools {
 
 // ----------------------------------------------------------
 // PropertyFilterValue
   
-struct PropertyFilterValue {
+struct UTILS_EXPORT PropertyFilterValue {
   
     // define valid ValueCompareTypes
     enum ValueCompareType { CONTAINS = 0
@@ -165,7 +166,7 @@ typedef std::map<std::string, PropertyFilterValue> PropertyMap;
 // ----------------------------------------------------------
 // PropertyFilter
 
-struct PropertyFilter {  
+struct UTILS_EXPORT PropertyFilter {
     // data members
     PropertyMap Properties;
 };
@@ -178,7 +179,7 @@ typedef std::map<std::string, PropertyFilter> FilterMap;
 // Property
   
 // used to store properties known to engine & keep track of enabled state
-struct Property {
+struct UTILS_EXPORT Property {
     std::string Name;
     bool IsEnabled;
     Property(const std::string& name, bool isEnabled = false) 

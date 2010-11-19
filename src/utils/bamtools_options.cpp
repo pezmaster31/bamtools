@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 7 September 2010
+// Last modified: 19 November 2010
 // ---------------------------------------------------------------------------
 // Parses command line arguments and creates a help menu
 // ---------------------------------------------------------------------------
@@ -17,14 +17,15 @@
 // *  (BamTools namespace, added stdin/stdout) (DB)
 // ***************************************************************************
 
-#include "bamtools_options.h"
+#include <utils/bamtools_options.h>
+using namespace BamTools;
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <iomanip>
 #include <sstream>
 using namespace std;
-using namespace BamTools;
 
 string Options::m_programName;                   // the program name
 string Options::m_description;                   // the main description

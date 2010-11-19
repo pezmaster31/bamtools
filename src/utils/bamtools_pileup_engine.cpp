@@ -3,15 +3,16 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 16 September 2010
+// Last modified: 19 November 2010
 // ---------------------------------------------------------------------------
 // Provides pileup at position functionality for various tools.
 // ***************************************************************************
 
-#include <iostream>
-#include "bamtools_pileup_engine.h"
-using namespace std;
+#include <utils/bamtools_pileup_engine.h>
 using namespace BamTools;
+
+#include <iostream>
+using namespace std;
 
 // ---------------------------------------------
 // PileupEnginePrivate implementation

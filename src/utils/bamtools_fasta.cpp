@@ -8,6 +8,9 @@
 // Provides FASTA reading/indexing functionality.
 // ***************************************************************************
 
+#include <utils/bamtools_fasta.h>
+using namespace BamTools;
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -15,9 +18,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include "bamtools_fasta.h"
 using namespace std;
-using namespace BamTools;
 
 struct Fasta::FastaPrivate {
   

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 7 September 2010
+// Last modified: 19 November 2010
 // ---------------------------------------------------------------------------
 // Parses command line arguments and creates a help menu
 // ---------------------------------------------------------------------------
@@ -20,10 +20,12 @@
 #ifndef BAMTOOLS_OPTIONS_H
 #define BAMTOOLS_OPTIONS_H
 
+#include <utils/bamtools_variant.h>
+#include <utils/utils_global.h>
+
 #include <map>
 #include <string>
 #include <vector>
-#include "bamtools_variant.h"
 
 #ifndef WIN32
     #include <stdint.h>
@@ -45,7 +47,7 @@ namespace BamTools {
   #define strtoui64 strtoull
 #endif
 
-struct Option {
+struct UTILS_EXPORT Option {
   
     // data members
     std::string Argument;
@@ -62,7 +64,7 @@ struct Option {
     { }
 };
 
-struct OptionValue {
+struct UTILS_EXPORT OptionValue {
   
     // data members
     bool* pFoundArgument;
@@ -83,12 +85,12 @@ struct OptionValue {
     { } 
 };
 
-struct OptionGroup {
+struct UTILS_EXPORT OptionGroup {
     std::string Name;
     std::vector<Option> Options;
 };
 
-class Options {
+class UTILS_EXPORT Options {
   
     // add option/argument rules
     public:

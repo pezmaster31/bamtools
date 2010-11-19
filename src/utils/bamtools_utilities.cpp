@@ -3,20 +3,21 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 23 September 2010
+// Last modified: 19 November 2010
 // ---------------------------------------------------------------------------
 // Provides general utilities used by BamTools sub-tools.
 // ***************************************************************************
+
+#include <api/BamMultiReader.h>
+#include <api/BamReader.h>
+#include <utils/bamtools_utilities.h>
+using namespace BamTools;
 
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
-#include "bamtools_utilities.h"
-#include "BamReader.h"
-#include "BamMultiReader.h"
 using namespace std;
-using namespace BamTools;
 
 namespace BamTools {
   

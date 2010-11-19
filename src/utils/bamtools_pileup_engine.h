@@ -11,14 +11,15 @@
 #ifndef BAMTOOLS_PILEUP_ENGINE_H
 #define BAMTOOLS_PILEUP_ENGINE_H
 
+#include <api/BamAlignment.h>
+#include <utils/utils_global.h>
 #include <vector>
-#include "BamAlignment.h"
 
 namespace BamTools {
 
 // contains auxiliary data about a single BamAlignment
 // at current position considered
-struct PileupAlignment {
+struct UTILS_EXPORT PileupAlignment {
   
     // data members
     BamAlignment Alignment;
@@ -46,7 +47,7 @@ struct PileupAlignment {
 };
   
 // contains all data at a position
-struct PileupPosition {
+struct UTILS_EXPORT PileupPosition {
   
     // data members
     int RefId;
@@ -63,7 +64,7 @@ struct PileupPosition {
     { }
 };
   
-class PileupVisitor {
+class UTILS_EXPORT PileupVisitor {
   
     public:
         PileupVisitor(void) { }
@@ -73,7 +74,7 @@ class PileupVisitor {
         virtual void Visit(const PileupPosition& pileupData) =0;
 };
 
-class PileupEngine {
+class UTILS_EXPORT PileupEngine {
   
     public:
         PileupEngine(void);

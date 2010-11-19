@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 23 September 2010
+// Last modified: 19 November 2010
 // ---------------------------------------------------------------------------
 // Provides general utilities used by BamTools sub-tools.
 // ***************************************************************************
@@ -11,10 +11,11 @@
 #ifndef BAMTOOLS_UTILITIES_H
 #define BAMTOOLS_UTILITIES_H
 
+#include <api/BamAux.h>
+#include <utils/utils_global.h>
 #include <cassert>
 #include <stdexcept>
 #include <string>
-#include "BamAux.h"
 
 #define BAMTOOLS_ASSERT_UNREACHABLE assert( false )
 #define BAMTOOLS_ASSERT_MESSAGE( condition, message ) if (!( condition )) throw std::runtime_error( message );
@@ -24,7 +25,7 @@ namespace BamTools {
 class BamReader;
 class BamMultiReader;
 
-class Utilities {
+class UTILS_EXPORT Utilities {
   
     public: 
         // check if a file exists

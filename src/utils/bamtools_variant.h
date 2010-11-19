@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 2 June 2010
+// Last modified: 19 November 2010
 // ---------------------------------------------------------------------------
 // Provides a template-based variant type
 // ---------------------------------------------------------------------------
@@ -18,13 +18,14 @@
 #ifndef BAMTOOLS_VARIANT_H
 #define BAMTOOLS_VARIANT_H
 
+#include <utils/utils_global.h>
 #include <stdexcept>
-#include <typeinfo>
 #include <string>
+#include <typeinfo>
 
 namespace BamTools {
 
-class Variant {
+class UTILS_EXPORT Variant {
   
     public:
         Variant(void) : data(NULL) { }

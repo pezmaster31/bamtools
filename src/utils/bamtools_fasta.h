@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 13 July 2010
+// Last modified: 19 November 2010
 // ---------------------------------------------------------------------------
 // Provides FASTA reading/indexing functionality.
 // ***************************************************************************
@@ -11,11 +11,12 @@
 #ifndef BAMTOOLS_FASTA_H
 #define BAMTOOLS_FASTA_H
 
+#include <utils/utils_global.h>
 #include <string>
 
 namespace BamTools {
 
-class Fasta {  
+class UTILS_EXPORT Fasta {
   
     // ctor & dtor
     public:

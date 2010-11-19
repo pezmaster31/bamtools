@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 September 2010
+// Last modified: 19 November 2010
 // ---------------------------------------------------------------------------
 // Provides a compound rule parser for FilterEngine.
 // ***************************************************************************
@@ -11,10 +11,10 @@
 #ifndef BAMTOOLS_FILTER_RULEPARSER_H
 #define BAMTOOLS_FILTER_RULEPARSER_H
 
+#include <utils/bamtools_utilities.h>
 #include <queue>
 #include <stack>
 #include <string>
-#include "bamtools_utilities.h"
 
 namespace BamTools {
 

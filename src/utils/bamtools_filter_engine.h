@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 29 September 2010
+// Last modified: 19 November 2010
 // ---------------------------------------------------------------------------
 // Provides a generic filter engine based on filter-sets of properties,
 // with possible "rules" (compound logical expressions) to create more complex
@@ -42,23 +42,23 @@
 #ifndef BAMTOOLS_FILTER_ENGINE_H
 #define BAMTOOLS_FILTER_ENGINE_H
 
+#include <utils/bamtools_filter_properties.h>
+#include <utils/bamtools_filter_ruleparser.h>
+#include <utils/bamtools_utilities.h>
+#include <utils/utils_global.h>
 #include <algorithm>
 #include <iostream>
 #include <map>
 #include <queue>
 #include <sstream>
 #include <stack>
-#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
-#include "bamtools_filter_properties.h"
-#include "bamtools_filter_ruleparser.h"
-#include "bamtools_utilities.h"
 
 namespace BamTools {
 
-struct FilterCompareType {    
+struct UTILS_EXPORT FilterCompareType {
     enum Type { AND = 0
               , NOT
               , OR
@@ -69,7 +69,7 @@ struct FilterCompareType {
 // FilterEngine
   
 template <typename FilterChecker>
-class FilterEngine {
+class UTILS_EXPORT FilterEngine {
   
     // ctor & dtor
     public:

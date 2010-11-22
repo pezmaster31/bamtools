@@ -132,9 +132,9 @@ struct API_EXPORT BamRegion {
     
     // member functions
     void clear(void) { LeftRefID = -1; LeftPosition = -1; RightRefID = -1; RightPosition = -1; }
-    bool isLeftBoundSpecified(void) const { return ( LeftRefID != -1 && LeftPosition != -1 ); }
+    bool isLeftBoundSpecified(void) const { return ( LeftRefID >= 0 && LeftPosition >= 0 ); }
     bool isNull(void) const { return ( !isLeftBoundSpecified() && !isRightBoundSpecified() ); }
-    bool isRightBoundSpecified(void) const { return ( RightRefID != -1 && RightPosition != -1 ); }
+    bool isRightBoundSpecified(void) const { return ( RightRefID >= 0 && RightPosition >= 0 ); }
 };
 
 // ----------------------------------------------------------------

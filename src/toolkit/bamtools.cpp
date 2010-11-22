@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 25 October 2010
+// Last modified: 22 November 2010
 // ---------------------------------------------------------------------------
 // Integrates a number of BamTools functionalities into a single executable.
 // ***************************************************************************
@@ -16,6 +16,7 @@
 // includes
 #include <cstdio>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include "bamtools_convert.h"
 #include "bamtools_count.h"
@@ -28,6 +29,7 @@
 #include "bamtools_sort.h"
 #include "bamtools_split.h"
 #include "bamtools_stats.h"
+#include "bamtools_version.h"
 using namespace std;
 using namespace BamTools;
 
@@ -123,8 +125,14 @@ int Help(int argc, char* argv[]) {
 
 // print version info
 int Version(void) {
+
+    stringstream versionStream("");
+    versionStream << BAMTOOLS_VERSION_MAJOR << "."
+		  << BAMTOOLS_VERSION_MINOR << "."
+		  << BAMTOOLS_VERSION_BUILD;
+
     cout << endl;
-    cout << "bamtools " << BAMTOOLS_VERSION << endl;
+    cout << "bamtools " << versionStream.str() << endl;
     cout << "Part of BamTools API and toolkit" << endl;
     cout << "Primary authors: Derek Barnett, Erik Garrison, Michael Stromberg" << endl;
     cout << "(c) 2009-2010 Marth Lab, Biology Dept., Boston College" << endl;

@@ -3,15 +3,15 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010 (DB)
+// Last modified: 22 November 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the standardized BAM index format (".bai")
 // ***************************************************************************
 
 #include <api/BamAlignment.h>
 #include <api/BamReader.h>
-#include <api/BamStandardIndex.h>
 #include <api/BGZF.h>
+#include <api/internal/BamStandardIndex_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
 

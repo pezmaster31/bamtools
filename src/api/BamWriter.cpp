@@ -3,13 +3,13 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010 (DB)
+// Last modified: 22 November 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
 
 #include <api/BamWriter.h>
-#include <api/BamWriter_p.h>
+#include <api/internal/BamWriter_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
 

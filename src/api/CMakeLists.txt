@@ -17,12 +17,12 @@ add_library ( BamTools SHARED
               BamIndex.cpp 
               BamMultiReader.cpp
               BamReader.cpp
-	      BamReader_p.cpp
-	      BamStandardIndex.cpp
-	      BamToolsIndex.cpp
               BamWriter.cpp
-	      BamWriter_p.cpp
-              BGZF.cpp 
+              BGZF.cpp
+	      internal/BamReader_p.cpp
+	      internal/BamStandardIndex_p.cpp
+	      internal/BamToolsIndex_p.cpp
+	      internal/BamWriter_p.cpp
             )
 
 # link BamTools library with zlib automatically
@@ -33,3 +33,4 @@ set_target_properties( BamTools PROPERTIES
                        SOVERSION   0.9.0
                        OUTPUT_NAME bamtools
                      )
+

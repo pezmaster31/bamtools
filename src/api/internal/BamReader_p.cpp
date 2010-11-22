@@ -3,17 +3,16 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010 (DB)
+// Last modified: 22 November 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
 
 #include <api/BamReader.h>
-#include <api/BamReader_p.h>
-#include <api/BamStandardIndex.h>
-#include <api/BamToolsIndex.h>
 #include <api/BGZF.h>
-
+#include <api/internal/BamReader_p.h>
+#include <api/internal/BamStandardIndex_p.h>
+#include <api/internal/BamToolsIndex_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
 

@@ -3,15 +3,15 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010 (DB)
+// Last modified: 22 November 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the BamTools index format (".bti")
 // ***************************************************************************
 
 #include <api/BamAlignment.h>
 #include <api/BamReader.h>
-#include <api/BamToolsIndex.h>
 #include <api/BGZF.h>
+#include <api/internal/BamToolsIndex_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
 

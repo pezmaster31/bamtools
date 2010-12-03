@@ -52,7 +52,9 @@ void BamReaderPrivate::AdjustRegion(BamRegion& region) {
     // see if any references in region have alignments
     HasAlignmentsInRegion = false;
     int currentId = region.LeftRefID;
-    while ( currentId <= region.RightRefID ) {
+
+    const int rightBoundRefId = ( region.isRightBoundSpecified() ? region.RightRefID : References.size() - 1 );
+    while ( currentId <= rightBoundRefId ) {
 	HasAlignmentsInRegion = Index->HasAlignments(currentId);
 	if ( HasAlignmentsInRegion ) break;
 	++currentId;

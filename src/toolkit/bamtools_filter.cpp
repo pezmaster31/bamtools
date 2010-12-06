@@ -740,7 +740,7 @@ bool FilterTool::FilterToolPrivate::Run(void) {
 
     // open reader without index
     BamMultiReader reader;
-    if ( !reader.Open(m_settings->InputFiles, false, true) ) {
+    if ( !reader.Open(m_settings->InputFiles, false, false) ) {
         cerr << "Could not open input files for reading." << endl;
         return false;
     }
@@ -774,7 +774,7 @@ bool FilterTool::FilterToolPrivate::Run(void) {
 
             // attempt to re-open reader with index files
             reader.Close();
-            bool openedOK = reader.Open(m_settings->InputFiles, true, true );
+	    bool openedOK = reader.Open(m_settings->InputFiles, true, false );
             
             // if error
             if ( !openedOK ) {

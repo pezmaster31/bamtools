@@ -21,6 +21,7 @@ add_executable ( bamtools
                  bamtools_index.cpp
                  bamtools_merge.cpp
                  bamtools_random.cpp
+		 bamtools_revert.cpp
                  bamtools_sort.cpp
                  bamtools_split.cpp
                  bamtools_stats.cpp

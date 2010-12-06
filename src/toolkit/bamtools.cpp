@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 22 November 2010
+// Last modified: 5 December 2010
 // ---------------------------------------------------------------------------
 // Integrates a number of BamTools functionalities into a single executable.
 // ***************************************************************************
@@ -26,6 +26,7 @@
 #include "bamtools_index.h"
 #include "bamtools_merge.h"
 #include "bamtools_random.h"
+#include "bamtools_revert.h"
 #include "bamtools_sort.h"
 #include "bamtools_split.h"
 #include "bamtools_stats.h"
@@ -42,6 +43,7 @@ static const string HEADER   = "header";
 static const string INDEX    = "index";
 static const string MERGE    = "merge";
 static const string RANDOM   = "random";
+static const string REVERT   = "revert";
 static const string SORT     = "sort";
 static const string SPLIT    = "split";
 static const string STATS    = "stats";
@@ -80,6 +82,7 @@ AbstractTool* CreateTool(const string& arg) {
     if ( arg == INDEX )    return new IndexTool;
     if ( arg == MERGE )    return new MergeTool;
     if ( arg == RANDOM )   return new RandomTool;
+    if ( arg == REVERT )   return new RevertTool;
     if ( arg == SORT )     return new SortTool;
     if ( arg == SPLIT )    return new SplitTool;
     if ( arg == STATS )    return new StatsTool;

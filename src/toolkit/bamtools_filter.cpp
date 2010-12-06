@@ -736,7 +736,7 @@ bool FilterTool::FilterToolPrivate::Run(void) {
 
     // initialize defined properties & user-specified filters
     // quit if failed
-    if ( !SetupFilters() ) return 1;
+    if ( !SetupFilters() ) return false;
 
     // open reader without index
     BamMultiReader reader;
@@ -779,7 +779,7 @@ bool FilterTool::FilterToolPrivate::Run(void) {
             // if error
             if ( !openedOK ) {
                 cerr << "ERROR: Could not open input BAM file(s)... Aborting." << endl;
-                return 1;
+		return false;
             }
             
             // if index data available, we can use SetRegion
@@ -789,7 +789,7 @@ bool FilterTool::FilterToolPrivate::Run(void) {
                 if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {
                     cerr << "ERROR: Region requested, but could not set BamReader region to REGION: " << m_settings->Region << " Aborting." << endl;
                     reader.Close();
-                    return 1;
+		    return false;
                 } 
               
                 // everything checks out, just iterate through specified region, filtering alignments
@@ -817,14 +817,14 @@ bool FilterTool::FilterToolPrivate::Run(void) {
             cerr << "ERROR: Could not parse REGION - " << m_settings->Region << endl;
             cerr << "Be sure REGION is in valid format (see README) and that coordinates are valid for selected references" << endl;
             reader.Close();
-            return 1;
+	    return false;
         }
     }
 
     // clean up & exit
     reader.Close();
     writer.Close();
-    return 0;
+    return true;
 }
 
 bool FilterTool::FilterToolPrivate::SetupFilters(void) {

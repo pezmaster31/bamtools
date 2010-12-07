@@ -81,134 +81,142 @@ bool BamReaderPrivate::BuildCharData(BamAlignment& bAlignment) {
     const unsigned int tagDataOffset  = qualDataOffset + bAlignment.SupportData.QuerySequenceLength;
     const unsigned int tagDataLength  = dataLength - tagDataOffset;
 
+    // check offsets to see what char data exists
+    const bool hasSeqData  = ( seqDataOffset  < dataLength );
+    const bool hasQualData = ( qualDataOffset < dataLength );
+    const bool hasTagData  = ( tagDataOffset  < dataLength );
+
     // set up char buffers
     const char* allCharData = bAlignment.SupportData.AllCharData.data();
-    const char* seqData     = ((const char*)allCharData) + seqDataOffset;
-    const char* qualData    = ((const char*)allCharData) + qualDataOffset;
-	  char* tagData     = ((char*)allCharData) + tagDataOffset;
+    const char* seqData     = ( hasSeqData  ? (((const char*)allCharData) + seqDataOffset)  : (const char*)0 );
+    const char* qualData    = ( hasQualData ? (((const char*)allCharData) + qualDataOffset) : (const char*)0 );
+          char* tagData     = ( hasTagData  ? (((char*)allCharData) + tagDataOffset)        : (char*)0 );
 
     // store alignment name (relies on null char in name as terminator)
     bAlignment.Name.assign((const char*)(allCharData));
 
     // save query sequence
     bAlignment.QueryBases.clear();
-    bAlignment.QueryBases.reserve(bAlignment.SupportData.QuerySequenceLength);
-    for (unsigned int i = 0; i < bAlignment.SupportData.QuerySequenceLength; ++i) {
-	char singleBase = DNA_LOOKUP[ ( (seqData[(i/2)] >> (4*(1-(i%2)))) & 0xf ) ];
-	bAlignment.QueryBases.append(1, singleBase);
+    if ( hasSeqData ) {
+        bAlignment.QueryBases.reserve(bAlignment.SupportData.QuerySequenceLength);
+        for (unsigned int i = 0; i < bAlignment.SupportData.QuerySequenceLength; ++i) {
+            char singleBase = DNA_LOOKUP[ ( (seqData[(i/2)] >> (4*(1-(i%2)))) & 0xf ) ];
+            bAlignment.QueryBases.append(1, singleBase);
+        }
     }
 
     // save qualities, converting from numeric QV to 'FASTQ-style' ASCII character
     bAlignment.Qualities.clear();
-    bAlignment.Qualities.reserve(bAlignment.SupportData.QuerySequenceLength);
-    for (unsigned int i = 0; i < bAlignment.SupportData.QuerySequenceLength; ++i) {
-	char singleQuality = (char)(qualData[i]+33);
-	bAlignment.Qualities.append(1, singleQuality);
+    if ( hasQualData ) {
+        bAlignment.Qualities.reserve(bAlignment.SupportData.QuerySequenceLength);
+        for (unsigned int i = 0; i < bAlignment.SupportData.QuerySequenceLength; ++i) {
+            char singleQuality = (char)(qualData[i]+33);
+            bAlignment.Qualities.append(1, singleQuality);
+        }
     }
 
     // if QueryBases is empty (and this is a allowed case)
     if ( bAlignment.QueryBases.empty() )
-	bAlignment.AlignedBases = bAlignment.QueryBases;
+        bAlignment.AlignedBases = bAlignment.QueryBases;
 
     // if QueryBases contains data, then build AlignedBases using CIGAR data
     else {
 
-	// resize AlignedBases
-	bAlignment.AlignedBases.clear();
-	bAlignment.AlignedBases.reserve(bAlignment.SupportData.QuerySequenceLength);
+        // resize AlignedBases
+        bAlignment.AlignedBases.clear();
+        bAlignment.AlignedBases.reserve(bAlignment.SupportData.QuerySequenceLength);
 
-	// iterate over CigarOps
-	int k = 0;
-	vector<CigarOp>::const_iterator cigarIter = bAlignment.CigarData.begin();
-	vector<CigarOp>::const_iterator cigarEnd  = bAlignment.CigarData.end();
-	for ( ; cigarIter != cigarEnd; ++cigarIter ) {
+        // iterate over CigarOps
+        int k = 0;
+        vector<CigarOp>::const_iterator cigarIter = bAlignment.CigarData.begin();
+        vector<CigarOp>::const_iterator cigarEnd  = bAlignment.CigarData.end();
+        for ( ; cigarIter != cigarEnd; ++cigarIter ) {
 
-	    const CigarOp& op = (*cigarIter);
-	    switch(op.Type) {
+            const CigarOp& op = (*cigarIter);
+            switch(op.Type) {
 
-		case ('M') :
-		case ('I') :
-		    bAlignment.AlignedBases.append(bAlignment.QueryBases.substr(k, op.Length)); // for 'M', 'I' - write bases
-		    // fall through
+            case ('M') :
+            case ('I') :
+                bAlignment.AlignedBases.append(bAlignment.QueryBases.substr(k, op.Length)); // for 'M', 'I' - write bases
+                // fall through
 
-		case ('S') :
-		    k += op.Length;                                     // for 'S' - soft clip, skip over query bases
-		    break;
+            case ('S') :
+                k += op.Length;                                     // for 'S' - soft clip, skip over query bases
+                break;
 
-		case ('D') :
-		    bAlignment.AlignedBases.append(op.Length, '-');     // for 'D' - write gap character
-		    break;
+            case ('D') :
+                bAlignment.AlignedBases.append(op.Length, '-');     // for 'D' - write gap character
+                break;
 
-		case ('P') :
-		    bAlignment.AlignedBases.append( op.Length, '*' );   // for 'P' - write padding character
-		    break;
+            case ('P') :
+                bAlignment.AlignedBases.append( op.Length, '*' );   // for 'P' - write padding character
+                break;
 
-		case ('N') :
-		    bAlignment.AlignedBases.append( op.Length, 'N' );  // for 'N' - write N's, skip bases in original query sequence
-		    break;
+            case ('N') :
+                bAlignment.AlignedBases.append( op.Length, 'N' );  // for 'N' - write N's, skip bases in original query sequence
+                break;
 
-		case ('H') :
-		    break;  // for 'H' - hard clip, do nothing to AlignedBases, move to next op
+            case ('H') :
+                break;  // for 'H' - hard clip, do nothing to AlignedBases, move to next op
 
-		default:
-		    fprintf(stderr, "ERROR: Invalid Cigar op type\n"); // shouldn't get here
-		    exit(1);
-	    }
-	}
+            default:
+                fprintf(stderr, "ERROR: Invalid Cigar op type\n"); // shouldn't get here
+                exit(1);
+            }
+        }
     }
 
-    // -----------------------
-    // Added: 3-25-2010 DB
-    // Fixed: endian-correctness for tag data
-    // -----------------------
-    if ( IsBigEndian ) {
-	int i = 0;
-	while ( (unsigned int)i < tagDataLength ) {
-
-	    i += 2; // skip tag type (e.g. "RG", "NM", etc)
-	    uint8_t type = toupper(tagData[i]);     // lower & upper case letters have same meaning
-	    ++i;                                    // skip value type
-
-	    switch (type) {
-
-		case('A') :
-		case('C') :
-		    ++i;
-		    break;
-
-		case('S') :
-		    SwapEndian_16p(&tagData[i]);
-		    i += sizeof(uint16_t);
-		    break;
-
-		case('F') :
-		case('I') :
-		    SwapEndian_32p(&tagData[i]);
-		    i += sizeof(uint32_t);
-		    break;
-
-		case('D') :
-		    SwapEndian_64p(&tagData[i]);
-		    i += sizeof(uint64_t);
-		    break;
-
-		case('H') :
-		case('Z') :
-		    while (tagData[i]) { ++i; }
-		    ++i; // increment one more for null terminator
-		    break;
-
-		default :
-		    fprintf(stderr, "ERROR: Invalid tag value type\n"); // shouldn't get here
-		    exit(1);
-	    }
-	}
-    }
-
-    // store TagData
+    // save tag data
     bAlignment.TagData.clear();
-    bAlignment.TagData.resize(tagDataLength);
-    memcpy((char*)bAlignment.TagData.data(), tagData, tagDataLength);
+    if ( hasTagData ) {
+        if ( IsBigEndian ) {
+            int i = 0;
+            while ( (unsigned int)i < tagDataLength ) {
+
+                i += 2; // skip tag type (e.g. "RG", "NM", etc)
+                uint8_t type = toupper(tagData[i]);     // lower & upper case letters have same meaning
+                ++i;                                    // skip value type
+
+                switch (type) {
+
+                case('A') :
+                case('C') :
+                    ++i;
+                    break;
+
+                case('S') :
+                    SwapEndian_16p(&tagData[i]);
+                    i += sizeof(uint16_t);
+                    break;
+
+                case('F') :
+                case('I') :
+                    SwapEndian_32p(&tagData[i]);
+                    i += sizeof(uint32_t);
+                    break;
+
+                case('D') :
+                    SwapEndian_64p(&tagData[i]);
+                    i += sizeof(uint64_t);
+                    break;
+
+                case('H') :
+                case('Z') :
+                    while (tagData[i]) { ++i; }
+                    ++i; // increment one more for null terminator
+                    break;
+
+                default :
+                    fprintf(stderr, "ERROR: Invalid tag value type\n"); // shouldn't get here
+                    exit(1);
+                }
+            }
+        }
+
+        // store tagData in alignment
+        bAlignment.TagData.resize(tagDataLength);
+        memcpy((char*)bAlignment.TagData.data(), tagData, tagDataLength);
+    }
 
     // clear the core-only flag
     bAlignment.SupportData.HasCoreOnly = false;

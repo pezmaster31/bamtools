@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010 (DB)
+// Last modified: 13 December 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -52,15 +52,20 @@ struct API_EXPORT BamAlignment {
     public:        
         void SetIsDuplicate(bool ok);           // Sets "PCR duplicate" flag        
         void SetIsFailedQC(bool ok);            // Sets "failed quality control" flag        
-        void SetIsFirstMate(bool ok);           // Sets "alignment is first mate" flag        
-        void SetIsMateUnmapped(bool ok);        // Sets "alignment's mate is mapped" flag        
+        void SetIsFirstMate(bool ok);           // Sets "alignment is first mate" flag
+        void SetIsMapped(bool ok);              // Sets "alignment is mapped" flag
+        void SetIsMateMapped(bool ok);          // Sets "alignment's mate is mapped" flag
         void SetIsMateReverseStrand(bool ok);   // Sets "alignment's mate mapped to reverse strand" flag        
-        void SetIsPaired(bool ok);              // Sets "alignment part of paired-end read" flag        
+        void SetIsPaired(bool ok);              // Sets "alignment part of paired-end read" flag
+        void SetIsPrimaryAlignment(bool ok);    // Sets "position is primary alignment" flag
         void SetIsProperPair(bool ok);          // Sets "alignment is part of read that satisfied paired-end resolution" flag        
         void SetIsReverseStrand(bool ok);       // Sets "alignment mapped to reverse strand" flag        
-        void SetIsSecondaryAlignment(bool ok);  // Sets "position is primary alignment" flag        
-        void SetIsSecondMate(bool ok);          // Sets "alignment is second mate on read" flag        
-        void SetIsUnmapped(bool ok);            // Sets "alignment is mapped" flag
+        void SetIsSecondMate(bool ok);          // Sets "alignment is second mate on read" flag
+
+        // legacy methods (deprecated, but available)
+        void SetIsMateUnmapped(bool ok);        // Complement of IsMateMapped() flag
+        void SetIsSecondaryAlignment(bool ok);  // Complement of IsPrimaryAlignment() flag
+        void SetIsUnmapped(bool ok);            // Complement of IsMapped() flag
 
     // Tag data access methods
     public:

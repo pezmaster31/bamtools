@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010 (DB)
+// Last modified: 13 December 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -69,9 +69,12 @@ bool BamAlignment::IsSecondMate(void) const        { return ( (AlignmentFlag & R
 void BamAlignment::SetIsDuplicate(bool ok)          { if (ok) AlignmentFlag |= DUPLICATE;     else AlignmentFlag &= ~DUPLICATE; }
 void BamAlignment::SetIsFailedQC(bool ok)           { if (ok) AlignmentFlag |= QC_FAILED;     else AlignmentFlag &= ~QC_FAILED; }
 void BamAlignment::SetIsFirstMate(bool ok)          { if (ok) AlignmentFlag |= READ_1;        else AlignmentFlag &= ~READ_1; }
+void BamAlignment::SetIsMapped(bool ok)             { SetIsUnmapped(!ok); }
+void BamAlignment::SetIsMateMapped(bool ok)         { SetIsMateUnmapped(!ok); }
 void BamAlignment::SetIsMateUnmapped(bool ok)       { if (ok) AlignmentFlag |= MATE_UNMAPPED; else AlignmentFlag &= ~MATE_UNMAPPED; }
 void BamAlignment::SetIsMateReverseStrand(bool ok)  { if (ok) AlignmentFlag |= MATE_REVERSE;  else AlignmentFlag &= ~MATE_REVERSE; }
 void BamAlignment::SetIsPaired(bool ok)             { if (ok) AlignmentFlag |= PAIRED;        else AlignmentFlag &= ~PAIRED; }
+void BamAlignment::SetIsPrimaryAlignment(bool ok)   { SetIsSecondaryAlignment(!ok); }
 void BamAlignment::SetIsProperPair(bool ok)         { if (ok) AlignmentFlag |= PROPER_PAIR;   else AlignmentFlag &= ~PROPER_PAIR; }
 void BamAlignment::SetIsReverseStrand(bool ok)      { if (ok) AlignmentFlag |= REVERSE;       else AlignmentFlag &= ~REVERSE; }
 void BamAlignment::SetIsSecondaryAlignment(bool ok) { if (ok) AlignmentFlag |= SECONDARY;     else AlignmentFlag &= ~SECONDARY; }
@@ -425,6 +428,7 @@ bool BamAlignment::GetTag(const string& tag, uint32_t& destination) const {
         const char type = *(pTagData - 1);
         int destinationLength = 0;
         switch (type) {
+
             // 1 byte data
             case 'A':
             case 'c':
@@ -619,7 +623,11 @@ bool BamAlignment::RemoveTag(const string& tag) {
     return false;
 }
 
-bool BamAlignment::FindTag(const string& tag, char* &pTagData, const unsigned int& tagDataLength, unsigned int& numBytesParsed) {
+bool BamAlignment::FindTag(const string& tag,
+                           char* &pTagData,
+                           const unsigned int& tagDataLength,
+                           unsigned int& numBytesParsed)
+{
 
     while ( numBytesParsed < tagDataLength ) {
 

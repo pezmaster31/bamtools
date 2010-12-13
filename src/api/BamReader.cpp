@@ -38,9 +38,9 @@ bool BamReader::IsIndexLoaded(void) const { return HasIndex(); }
 bool BamReader::IsOpen(void) const { return d->mBGZF.IsOpen; }
 bool BamReader::Jump(int refID, int position)  { return d->SetRegion( BamRegion(refID, position) ); }
 bool BamReader::Open(const std::string& filename,
-		     const std::string& indexFilename,
-		     const bool lookForIndex,
-		     const bool preferStandardIndex)
+                     const std::string& indexFilename,
+                     const bool lookForIndex,
+                     const bool preferStandardIndex)
 {
     return d->Open(filename, indexFilename, lookForIndex, preferStandardIndex);
 }

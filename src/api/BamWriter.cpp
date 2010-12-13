@@ -29,14 +29,14 @@ BamWriter::~BamWriter(void) {
 
 // closes the alignment archive
 void BamWriter::Close(void) {
-  d->Close();
+    d->Close();
 }
 
 // opens the alignment archive
 bool BamWriter::Open(const string& filename,
-		     const string& samHeader,
-		     const RefVector& referenceSequences,
-		     bool isWriteUncompressed)
+                     const string& samHeader,
+                     const RefVector& referenceSequences,
+                     bool isWriteUncompressed)
 {
     return d->Open(filename, samHeader, referenceSequences, isWriteUncompressed);
 }

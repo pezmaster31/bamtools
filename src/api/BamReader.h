@@ -44,9 +44,9 @@ class API_EXPORT BamReader {
         bool Jump(int refID, int position = 0);
         // opens BAM file (and optional BAM index file, if provided)
         // @lookForIndex - if no indexFilename provided, look in BAM file's directory for an existing index file
-	//   default behavior is to skip index file search if no index filename given
+        //   default behavior is to skip index file search if no index filename given
         // @preferStandardIndex - if true, give priority in index file searching to standard BAM index (*.bai)
-	//   default behavior is to prefer the BamToolsIndex (*.bti) if both are available
+        //   default behavior is to prefer the BamToolsIndex (*.bti) if both are available
         bool Open(const std::string& filename, 
                   const std::string& indexFilename = "", 
                   const bool lookForIndex = false, 
@@ -67,7 +67,7 @@ class API_EXPORT BamReader {
         // retrieves next available alignment core data (returns success/fail)
         // ** DOES NOT parse any character data (read name, bases, qualities, tag data) **
         // useful for operations requiring ONLY aligner-related information 
-	// (refId/position, alignment flags, CIGAR, mapQuality, etc)
+        // (refId/position, alignment flags, CIGAR, mapQuality, etc)
         bool GetNextAlignmentCore(BamAlignment& bAlignment);
 
         // ----------------------
@@ -93,36 +93,36 @@ class API_EXPORT BamReader {
         // default behavior is to create the BAM standard index (".bai")
         // set flag to false to create the BamTools-specific index (".bti")
         bool CreateIndex(bool useStandardIndex = true);
-	// returns whether index data is available for reading 
-	// (e.g. if true, BamReader should be able to seek to a region)
-	bool HasIndex(void) const;
-	// change the index caching behavior
-	// default BamReader/Index mode is LimitedIndexCaching
-	// @mode - can be either FullIndexCaching, LimitedIndexCaching, 
-	//   or NoIndexCaching. See BamIndex.h for more details
+        // returns whether index data is available for reading
+        // (e.g. if true, BamReader should be able to seek to a region)
+        bool HasIndex(void) const;
+        // change the index caching behavior
+        // default BamReader/Index mode is LimitedIndexCaching
+        // @mode - can be either FullIndexCaching, LimitedIndexCaching,
+        //   or NoIndexCaching. See BamIndex.h for more details
         void SetIndexCacheMode(const BamIndex::BamIndexCacheMode mode);
 	
     // deprecated methods
     public:
 	
-	// deprecated (but still available): prefer HasIndex() instead
-	//
-	// Deprecated purely for API semantic clarity - HasIndex() should be clearer 
-	// than IsIndexLoaded() in light of the new caching modes that may clear the 
-	// index data from memory, but leave the index file open for later random access 
-	// seeks.
-	//
-	// For example, what would (IsIndexLoaded() == true) mean when cacheMode has been 
-	// explicitly set to NoIndexCaching? This is confusing at best, misleading about 
-	// current memory behavior at worst.
-	//
-	// returns whether index data is available 
-	// (e.g. if true, BamReader should be able to seek to a region)
+        // deprecated (but still available): prefer HasIndex() instead
+        //
+        // Deprecated purely for API semantic clarity - HasIndex() should be clearer
+        // than IsIndexLoaded() in light of the new caching modes that may clear the
+        // index data from memory, but leave the index file open for later random access
+        // seeks.
+        //
+        // For example, what would (IsIndexLoaded() == true) mean when cacheMode has been
+        // explicitly set to NoIndexCaching? This is confusing at best, misleading about
+        // current memory behavior at worst.
+        //
+        // returns whether index data is available
+        // (e.g. if true, BamReader should be able to seek to a region)
         bool IsIndexLoaded(void) const;
         
     // private implementation
     private:
-	Internal::BamReaderPrivate* d;
+        Internal::BamReaderPrivate* d;
 };
 
 } // namespace BamTools

@@ -44,12 +44,12 @@ BamIndex* BamIndex::FromBamFilename(const std::string& bamFilename,
     const std::string bamtoolsIndexFilename = bamFilename + ".bti";
     const bool bamtoolsIndexExists = BamTools::FileExists(bamtoolsIndexFilename);
     if ( (type == BamIndex::BAMTOOLS) && bamtoolsIndexExists )
-	return new BamToolsIndex(bgzf, reader);
+        return new BamToolsIndex(bgzf, reader);
 
     const std::string standardIndexFilename = bamFilename + ".bai";
     const bool standardIndexExists = BamTools::FileExists(standardIndexFilename);
     if ( (type == BamIndex::STANDARD) && standardIndexExists )
-	return new BamStandardIndex(bgzf, reader);
+        return new BamStandardIndex(bgzf, reader);
 
     // ----------------------------------------------------
     // preferred type could not be found, try other (non-preferred) types
@@ -57,7 +57,7 @@ BamIndex* BamIndex::FromBamFilename(const std::string& bamFilename,
 
     if ( bamtoolsIndexExists ) return new BamToolsIndex(bgzf, reader);
     if ( standardIndexExists ) return new BamStandardIndex(bgzf, reader);
-    return 0;
+        return 0;
 }
 
 // returns index based on explicitly named index file (or 0 if not found)
@@ -74,11 +74,11 @@ BamIndex* BamIndex::FromIndexFilename(const std::string&   indexFilename,
 
     // if has bamtoolsIndexExtension
     if ( indexFilename.find(bamtoolsIndexExtension) == (indexFilename.length() - bamtoolsIndexExtension.length()) )
-	return new BamToolsIndex(bgzf, reader);
+        return new BamToolsIndex(bgzf, reader);
 
      // if has standardIndexExtension
     if ( indexFilename.find(standardIndexExtension) == (indexFilename.length() - standardIndexExtension.length()) )
-	return new BamStandardIndex(bgzf, reader);
+        return new BamStandardIndex(bgzf, reader);
 
     // otherwise, unsupported file type
     return 0;

@@ -74,7 +74,7 @@ struct BamAlignmentChecker {
             const PropertyFilterValue& valueFilter = (*propertyIter).second;
             
             if      ( propertyName == ALIGNMENTFLAG_PROPERTY )  keepAlignment &= valueFilter.check(al.AlignmentFlag);
-	    else if ( propertyName == CIGAR_PROPERTY ) {
+            else if ( propertyName == CIGAR_PROPERTY ) {
                 stringstream cigarSs;
                 const vector<CigarOp>& cigarData = al.CigarData;
                 if ( !cigarData.empty() ) {
@@ -129,93 +129,93 @@ struct BamAlignmentChecker {
     
     bool checkAlignmentTag(const PropertyFilterValue& valueFilter, const BamAlignment& al) {
      
-	// ensure filter contains string data
-	Variant entireTagFilter = valueFilter.Value;
-	if ( !entireTagFilter.is_type<string>() ) return false;
-	
-	// localize string from variant
-	const string& entireTagFilterString = entireTagFilter.get<string>();
-	
-	// ensure we have at least "XX:x"
-	if ( entireTagFilterString.length() < 4 ) return false;
-	
-	// get tagName & lookup in alignment
-	// if found, set tagType to tag type character
-	// if not found, return false
-	const string& tagName = entireTagFilterString.substr(0,2);
-	char tagType = '\0';
-	if ( !al.GetTagType(tagName, tagType) ) return false;
-	  
-	// remove tagName & ":" from beginning tagFilter
-	string tagFilterString = entireTagFilterString.substr(3);
-	  
-	// switch on tag type to set tag query value & parse filter token
-	int32_t  intFilterValue,    intQueryValue;
-	uint32_t uintFilterValue,   uintQueryValue;
-	float    realFilterValue,   realQueryValue;
-	string   stringFilterValue, stringQueryValue;
-	
-	PropertyFilterValue tagFilter;
-	PropertyFilterValue::ValueCompareType compareType;
-	bool keepAlignment = false;
-	switch (tagType) {
-            
-	    // signed int tag type
-	    case 'c' :
-            case 's' : 
+        // ensure filter contains string data
+        Variant entireTagFilter = valueFilter.Value;
+        if ( !entireTagFilter.is_type<string>() ) return false;
+
+        // localize string from variant
+        const string& entireTagFilterString = entireTagFilter.get<string>();
+
+        // ensure we have at least "XX:x"
+        if ( entireTagFilterString.length() < 4 ) return false;
+
+        // get tagName & lookup in alignment
+        // if found, set tagType to tag type character
+        // if not found, return false
+        const string& tagName = entireTagFilterString.substr(0,2);
+        char tagType = '\0';
+        if ( !al.GetTagType(tagName, tagType) ) return false;
+
+        // remove tagName & ":" from beginning tagFilter
+        string tagFilterString = entireTagFilterString.substr(3);
+
+        // switch on tag type to set tag query value & parse filter token
+        int32_t  intFilterValue,    intQueryValue;
+        uint32_t uintFilterValue,   uintQueryValue;
+        float    realFilterValue,   realQueryValue;
+        string   stringFilterValue, stringQueryValue;
+
+        PropertyFilterValue tagFilter;
+        PropertyFilterValue::ValueCompareType compareType;
+        bool keepAlignment = false;
+        switch (tagType) {
+
+            // signed int tag type
+            case 'c' :
+            case 's' :
             case 'i' :
-		if ( al.GetTag(tagName, intQueryValue) ) {
-		    if ( FilterEngine<BamAlignmentChecker>::parseToken(tagFilterString, intFilterValue, compareType) ) {
-			tagFilter.Value = intFilterValue;
-			tagFilter.Type  = compareType;
-			keepAlignment   = tagFilter.check(intQueryValue);
-		    }
-		}
-		break;
-		
-	    // unsigned int tag type
+                if ( al.GetTag(tagName, intQueryValue) ) {
+                    if ( FilterEngine<BamAlignmentChecker>::parseToken(tagFilterString, intFilterValue, compareType) ) {
+                        tagFilter.Value = intFilterValue;
+                        tagFilter.Type  = compareType;
+                        keepAlignment   = tagFilter.check(intQueryValue);
+                    }
+                }
+                break;
+
+            // unsigned int tag type
             case 'C' :
             case 'S' :
-            case 'I' : 
-		if ( al.GetTag(tagName, uintQueryValue) ) {
-		    if ( FilterEngine<BamAlignmentChecker>::parseToken(tagFilterString, uintFilterValue, compareType) ) {
-			tagFilter.Value = uintFilterValue;
-			tagFilter.Type  = compareType;
-			keepAlignment   = tagFilter.check(uintQueryValue);
-		    }
-		}
-		break;
-		
-	    // 'real' tag type
-            case 'f' :
-		if ( al.GetTag(tagName, realQueryValue) ) {
-		    if ( FilterEngine<BamAlignmentChecker>::parseToken(tagFilterString, realFilterValue, compareType) ) {
-			tagFilter.Value = realFilterValue;
-			tagFilter.Type  = compareType;
-			keepAlignment   = tagFilter.check(realQueryValue);
-		    }
-		}
+            case 'I' :
+                if ( al.GetTag(tagName, uintQueryValue) ) {
+                    if ( FilterEngine<BamAlignmentChecker>::parseToken(tagFilterString, uintFilterValue, compareType) ) {
+                        tagFilter.Value = uintFilterValue;
+                        tagFilter.Type  = compareType;
+                        keepAlignment   = tagFilter.check(uintQueryValue);
+                    }
+                }
                 break;
-		
-	    // string tag type
+
+            // 'real' tag type
+            case 'f' :
+                if ( al.GetTag(tagName, realQueryValue) ) {
+                    if ( FilterEngine<BamAlignmentChecker>::parseToken(tagFilterString, realFilterValue, compareType) ) {
+                        tagFilter.Value = realFilterValue;
+                        tagFilter.Type  = compareType;
+                        keepAlignment   = tagFilter.check(realQueryValue);
+                    }
+                }
+                break;
+
+            // string tag type
             case 'A':
             case 'Z':
-            case 'H':	      
+            case 'H':
                 if ( al.GetTag(tagName, stringQueryValue) ) {
-		    if ( FilterEngine<BamAlignmentChecker>::parseToken(tagFilterString, stringFilterValue, compareType) ) {
-			tagFilter.Value = stringFilterValue;
-			tagFilter.Type  = compareType;
-			keepAlignment   = tagFilter.check(stringQueryValue);
-		    }
-		}
-		break;
-		
-	    // unknown tag type
-	    default : 
-		keepAlignment = false;
-	}
-	
-	return keepAlignment;
+                    if ( FilterEngine<BamAlignmentChecker>::parseToken(tagFilterString, stringFilterValue, compareType) ) {
+                        tagFilter.Value = stringFilterValue;
+                        tagFilter.Type  = compareType;
+                        keepAlignment   = tagFilter.check(stringQueryValue);
+                    }
+                }
+                break;
+
+            // unknown tag type
+            default :
+                keepAlignment = false;
+        }
+
+        return keepAlignment;
     }
 };    
     
@@ -774,12 +774,12 @@ bool FilterTool::FilterToolPrivate::Run(void) {
 
             // attempt to re-open reader with index files
             reader.Close();
-	    bool openedOK = reader.Open(m_settings->InputFiles, true, false );
+            bool openedOK = reader.Open(m_settings->InputFiles, true, false );
             
             // if error
             if ( !openedOK ) {
                 cerr << "ERROR: Could not open input BAM file(s)... Aborting." << endl;
-		return false;
+                return false;
             }
             
             // if index data available, we can use SetRegion
@@ -789,19 +789,19 @@ bool FilterTool::FilterToolPrivate::Run(void) {
                 if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {
                     cerr << "ERROR: Region requested, but could not set BamReader region to REGION: " << m_settings->Region << " Aborting." << endl;
                     reader.Close();
-		    return false;
+                    return false;
                 } 
               
                 // everything checks out, just iterate through specified region, filtering alignments
-		while ( reader.GetNextAlignment(al) )
+                while ( reader.GetNextAlignment(al) )
                     if ( CheckAlignment(al) ) 
                         writer.SaveAlignment(al);
-            } 
+                }
             
             // no index data available, we have to iterate through until we
             // find overlapping alignments
             else {
-		while ( reader.GetNextAlignment(al) ) {
+                while ( reader.GetNextAlignment(al) ) {
                     if ( (al.RefID >= region.LeftRefID)  && ((al.Position + al.Length) >= region.LeftPosition) &&
                          (al.RefID <= region.RightRefID) && ( al.Position <= region.RightPosition) ) 
                     {
@@ -817,7 +817,7 @@ bool FilterTool::FilterToolPrivate::Run(void) {
             cerr << "ERROR: Could not parse REGION - " << m_settings->Region << endl;
             cerr << "Be sure REGION is in valid format (see README) and that coordinates are valid for selected references" << endl;
             reader.Close();
-	    return false;
+            return false;
         }
     }
 

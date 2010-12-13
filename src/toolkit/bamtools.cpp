@@ -3,21 +3,12 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 5 December 2010
+// Last modified: 13 December 2010
 // ---------------------------------------------------------------------------
 // Integrates a number of BamTools functionalities into a single executable.
 // ***************************************************************************
 
-// stringify version information
-#define BAMTOOLS_VER1_(x) #x
-#define BAMTOOLS_VER_(x)  BAMTOOLS_VER1_(x)
-#define BAMTOOLS_VERSION  BAMTOOLS_VER_(BT_VERSION)
-
 // includes
-#include <cstdio>
-#include <iostream>
-#include <sstream>
-#include <string>
 #include "bamtools_convert.h"
 #include "bamtools_count.h"
 #include "bamtools_coverage.h"
@@ -31,8 +22,14 @@
 #include "bamtools_split.h"
 #include "bamtools_stats.h"
 #include "bamtools_version.h"
-using namespace std;
+
+#include <cstdio>
+#include <iostream>
+#include <sstream>
+#include <string>
+
 using namespace BamTools;
+using namespace std;
 
 // bamtools subtool names
 static const string CONVERT  = "convert";
@@ -117,6 +114,7 @@ int Help(int argc, char* argv[]) {
     cerr << "\tindex           Generates index for BAM file" << endl;
     cerr << "\tmerge           Merge multiple BAM files into single file" << endl;
     cerr << "\trandom          Select random alignments from existing BAM file(s)" << endl;
+    cerr << "\trevert          Removes duplicate marks and restores original base qualities" << endl;
     cerr << "\tsort            Sorts the BAM file according to some criteria" << endl;
     cerr << "\tsplit           Splits a BAM file on user-specified property, creating a new BAM output file for each value found" << endl;
     cerr << "\tstats           Prints some basic statistics from input BAM file(s)" << endl;
@@ -131,8 +129,8 @@ int Version(void) {
 
     stringstream versionStream("");
     versionStream << BAMTOOLS_VERSION_MAJOR << "."
-		  << BAMTOOLS_VERSION_MINOR << "."
-		  << BAMTOOLS_VERSION_BUILD;
+                  << BAMTOOLS_VERSION_MINOR << "."
+                  << BAMTOOLS_VERSION_BUILD;
 
     cout << endl;
     cout << "bamtools " << versionStream.str() << endl;

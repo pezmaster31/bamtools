@@ -179,36 +179,36 @@ bool BamReaderPrivate::BuildCharData(BamAlignment& bAlignment) {
 
                 switch (type) {
 
-                case('A') :
-                case('C') :
-                    ++i;
-                    break;
+                    case('A') :
+                    case('C') :
+                        ++i;
+                        break;
 
-                case('S') :
-                    SwapEndian_16p(&tagData[i]);
-                    i += sizeof(uint16_t);
-                    break;
+                    case('S') :
+                        SwapEndian_16p(&tagData[i]);
+                        i += sizeof(uint16_t);
+                        break;
 
-                case('F') :
-                case('I') :
-                    SwapEndian_32p(&tagData[i]);
-                    i += sizeof(uint32_t);
-                    break;
+                    case('F') :
+                    case('I') :
+                        SwapEndian_32p(&tagData[i]);
+                        i += sizeof(uint32_t);
+                        break;
 
-                case('D') :
-                    SwapEndian_64p(&tagData[i]);
-                    i += sizeof(uint64_t);
-                    break;
+                    case('D') :
+                        SwapEndian_64p(&tagData[i]);
+                        i += sizeof(uint64_t);
+                        break;
 
-                case('H') :
-                case('Z') :
-                    while (tagData[i]) { ++i; }
-                    ++i; // increment one more for null terminator
-                    break;
+                    case('H') :
+                    case('Z') :
+                        while (tagData[i]) { ++i; }
+                        ++i; // increment one more for null terminator
+                        break;
 
-                default :
-                    fprintf(stderr, "ERROR: Invalid tag value type\n"); // shouldn't get here
-                    exit(1);
+                    default :
+                        fprintf(stderr, "ERROR: Invalid tag value type\n"); // shouldn't get here
+                        exit(1);
                 }
             }
         }

@@ -63,7 +63,7 @@ class API_EXPORT BamIndex {
         virtual bool Jump(const BamTools::BamRegion& region, bool* hasAlignmentsInRegion) =0;
         // loads existing data from file into memory
         virtual bool Load(const std::string& filename);
-	// change the index caching behavior
+        // change the index caching behavior
         virtual void SetCacheMode(const BamIndexCacheMode mode);
         // writes in-memory index data out to file 
         // N.B. - (this is the original BAM filename, method will modify it to use applicable extension)
@@ -135,6 +135,7 @@ class API_EXPORT BamIndex {
         FILE* m_indexStream;
 
 
+    // friends
     friend class Internal::BamStandardIndex;
     friend class Internal::BamToolsIndex;
 };

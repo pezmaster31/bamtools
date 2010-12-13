@@ -24,37 +24,37 @@ using namespace BamTools;
 
 namespace BamTools {
   
-    // string constants
-    static const string SPLIT_MAPPED_TOKEN    = ".MAPPED";
-    static const string SPLIT_UNMAPPED_TOKEN  = ".UNMAPPED";
-    static const string SPLIT_PAIRED_TOKEN    = ".PAIRED_END";
-    static const string SPLIT_SINGLE_TOKEN    = ".SINGLE_END";
-    static const string SPLIT_REFERENCE_TOKEN = ".REF_";
+// string constants
+static const string SPLIT_MAPPED_TOKEN    = ".MAPPED";
+static const string SPLIT_UNMAPPED_TOKEN  = ".UNMAPPED";
+static const string SPLIT_PAIRED_TOKEN    = ".PAIRED_END";
+static const string SPLIT_SINGLE_TOKEN    = ".SINGLE_END";
+static const string SPLIT_REFERENCE_TOKEN = ".REF_";
 
-    string GetTimestampString(void) {
-      
-        // get human readable timestamp
-        time_t currentTime;
-        time(&currentTime);
-        stringstream timeStream("");
-        timeStream << ctime(&currentTime);
-        
-        // convert whitespace to '_'
-        string timeString = timeStream.str();
-        size_t found = timeString.find(" ");
-        while (found != string::npos) {
-            timeString.replace(found, 1, "_");
-            found = timeString.find(" ", found+1);
-        }
-        return timeString;
+string GetTimestampString(void) {
+
+    // get human readable timestamp
+    time_t currentTime;
+    time(&currentTime);
+    stringstream timeStream("");
+    timeStream << ctime(&currentTime);
+
+    // convert whitespace to '_'
+    string timeString = timeStream.str();
+    size_t found = timeString.find(" ");
+    while (found != string::npos) {
+        timeString.replace(found, 1, "_");
+        found = timeString.find(" ", found+1);
     }
-    
-    // remove copy of filename without extension 
-    // (so /path/to/file.txt becomes /path/to/file )
-    string RemoveFilenameExtension(const string& filename) {
-        size_t found = filename.rfind(".");
-        return filename.substr(0, found);
-    }
+    return timeString;
+}
+
+// remove copy of filename without extension
+// (so /path/to/file.txt becomes /path/to/file )
+string RemoveFilenameExtension(const string& filename) {
+    size_t found = filename.rfind(".");
+    return filename.substr(0, found);
+}
     
 } // namespace BamTools
 

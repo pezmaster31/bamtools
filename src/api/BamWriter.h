@@ -42,7 +42,7 @@ class API_EXPORT BamWriter {
 
     // private implementation
     private:
-	Internal::BamWriterPrivate* d;
+        Internal::BamWriterPrivate* d;
 };
 
 } // namespace BamTools

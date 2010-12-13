@@ -89,7 +89,7 @@ int CountTool::Run(int argc, char* argv[]) {
     
     // if no region specified, count entire file 
     if ( !m_settings->HasRegion ) {
-        while ( reader.GetNextAlignmentCore(al) ) 
+        while ( reader.GetNextAlignmentCore(al) )
             ++alignmentCount;
     }
     

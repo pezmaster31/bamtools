@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 5 December 2010
+// Last modified: 13 December 2010
 // ---------------------------------------------------------------------------
 // Prints general alignment statistics for BAM file(s).
 // ***************************************************************************
@@ -37,12 +37,12 @@ struct RevertTool::RevertSettings {
     // constructor
     RevertSettings(void)
         : HasInput(false)
-	, HasOutput(false)
-	, IsForceCompression(false)
-	, IsKeepDuplicateFlag(false)
-	, IsKeepQualities(false)
-	, InputFilename(Options::StandardIn())
-	, OutputFilename(Options::StandardOut())
+        , HasOutput(false)
+        , IsForceCompression(false)
+        , IsKeepDuplicateFlag(false)
+        , IsKeepQualities(false)
+        , InputFilename(Options::StandardIn())
+        , OutputFilename(Options::StandardOut())
     { }
 };  
 
@@ -62,12 +62,12 @@ struct RevertTool::RevertToolPrivate {
         
     // internal methods
     private:
-	void RevertAlignment(BamAlignment& al);
+        void RevertAlignment(BamAlignment& al);
         
     // data members
     private:
         RevertTool::RevertSettings* m_settings;
-	string m_OQ;
+        string m_OQ;
 };
 
 RevertTool::RevertToolPrivate::RevertToolPrivate(RevertTool::RevertSettings* settings)
@@ -84,16 +84,16 @@ void RevertTool::RevertToolPrivate::RevertAlignment(BamAlignment& al) {
 
     // replace Qualities with OQ, if requested
     if ( !m_settings->IsKeepQualities ) {
-	string originalQualities;
-	if ( al.GetTag(m_OQ, originalQualities) ) {
-	    al.Qualities = originalQualities;
-	    al.RemoveTag(m_OQ);
-	}
+        string originalQualities;
+        if ( al.GetTag(m_OQ, originalQualities) ) {
+            al.Qualities = originalQualities;
+            al.RemoveTag(m_OQ);
+        }
     }
 
     // clear duplicate flag, if requested
     if ( !m_settings->IsKeepDuplicateFlag )
-	al.SetIsDuplicate(false);
+        al.SetIsDuplicate(false);
 }
 
 bool RevertTool::RevertToolPrivate::Run(void) {
@@ -101,7 +101,7 @@ bool RevertTool::RevertToolPrivate::Run(void) {
     // opens the BAM file without checking for indexes
     BamReader reader;
     if ( !reader.Open(m_settings->InputFilename) ) {
-	cerr << "Could not open input BAM file... quitting." << endl;
+        cerr << "Could not open input BAM file... quitting." << endl;
         return false;
     }
 
@@ -120,7 +120,7 @@ bool RevertTool::RevertToolPrivate::Run(void) {
     // plow through file, reverting alignments
     BamAlignment al;
     while ( reader.GetNextAlignment(al) ) {
-	RevertAlignment(al);
+        RevertAlignment(al);
         writer.SaveAlignment(al);
     }
     

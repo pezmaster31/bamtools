@@ -132,7 +132,7 @@ struct ConvertTool::ConvertToolPrivate {
         void PrintJson(const BamAlignment& a);
         void PrintSam(const BamAlignment& a);
         void PrintWiggle(const BamAlignment& a);
-	void PrintYaml(const BamAlignment& a);
+        void PrintYaml(const BamAlignment& a);
         
         // special case - uses the PileupEngine
         bool RunPileupConversion(BamMultiReader* reader);
@@ -249,7 +249,7 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
             
             // iterate through file, doing conversion
             BamAlignment a;
-            while ( reader.GetNextAlignment(a) ) 
+            while ( reader.GetNextAlignment(a) )
               (this->*pFunction)(a);
             
             // set flag for successful conversion
@@ -657,15 +657,15 @@ void ConvertTool::ConvertToolPrivate::PrintYaml(const BamAlignment& a) {
     // write Cigar data
     const vector<CigarOp>& cigarData = a.CigarData;
     if ( !cigarData.empty() ) {
-	m_out << "   " <<  "Cigar: ";
-	vector<CigarOp>::const_iterator cigarBegin = cigarData.begin();
-	vector<CigarOp>::const_iterator cigarIter = cigarBegin;
-	vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
-	for ( ; cigarIter != cigarEnd; ++cigarIter ) {
-	    const CigarOp& op = (*cigarIter);
-	    m_out << op.Length << op.Type;
-	}
-	m_out << endl;
+        m_out << "   " <<  "Cigar: ";
+        vector<CigarOp>::const_iterator cigarBegin = cigarData.begin();
+        vector<CigarOp>::const_iterator cigarIter = cigarBegin;
+        vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
+        for ( ; cigarIter != cigarEnd; ++cigarIter ) {
+            const CigarOp& op = (*cigarIter);
+            m_out << op.Length << op.Type;
+        }
+        m_out << endl;
     }
 }
 

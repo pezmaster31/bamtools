@@ -266,9 +266,8 @@ bool SortTool::SortToolPrivate::MergeSortedRuns(void) {
     
     // while data available in temp files
     BamAlignment al;
-    while ( multiReader.GetNextAlignmentCore(al) ) {
+    while ( multiReader.GetNextAlignmentCore(al) )
         mergedWriter.SaveAlignment(al);
-    }
   
     // close readers
     multiReader.Close();

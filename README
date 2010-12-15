@@ -144,6 +144,10 @@ The BamTools-associated libraries will be found here:
 
   ./lib/
 
+The BamTools API headers will be found here:
+ 
+  ./include/*
+
 --------------------------------------------------------------------------------
 III. Usage :
 --------------------------------------------------------------------------------
@@ -183,20 +187,34 @@ following:
         // close the reader
         reader.Close();
 
-To use this API in your application, you simply need to do 3 things:
+To use this API in your application, you simply need to do the following:
 
     1 - Build the BamTools library (see Installation steps above). 
 
-    2 - Import BamTools API with the following lines of code
-        #include "BamReader.h"     // (or "BamMultiReader.h") as needed
-        #include "BamWriter.h"     // as needed
-        using namespace BamTools;  // all of BamTools classes/methods live in
+    2 - Import BamTools API functionality as needed, for example:
+
+        #include "api/BamReader.h"     
+        #include "api/BamWriter.h"     
+        using namespace BamTools;  // all BamTools classes/methods live within
                                    // this namespace
 
-    3 - Link with '-lbamtools' ('l' as in Lima).
+    3 - In your own build step, point your include path to the 
+        (BAMTOOLS_ROOT)/include directory. Link your app with '-lbamtools' ('l'
+        as in Lima).
 
-You may need to modify the -L flag (library path) as well to help your linker 
+* You may need to modify the -L flag (library path) as well to help your linker 
 find the (BAMTOOLS_ROOT)/lib directory.
+
+* Depending on your platform and where you install the BamTools API library, you 
+may also need to adjust how your app locates the library at runtime. For
+Windows users, this can be as simple as dropping the DLL in the same folder as
+your executable.  For *nix users (using gcc at least), you can add the following
+to your app's CXXFLAGS:
+
+  -Wl,-rpath,$(BAMTOOLS_LIB_DIR)
+
+where BAMTOOLS_LIB_DIR is, as you would guess, the directory containing the libs.
+An alternative is to set your local LD_LIBRARY_PATH environment variable.
 
 See any included programs for more detailed usage examples. See comments in the 
 header files for more detailed API documentation.

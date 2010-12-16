@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 June 2010 (DB)
+// Last modified: 16 December 2010 (DB)
 // ---------------------------------------------------------------------------
 // Sorts an input BAM file (default by position) and stores in a new BAM file.
 // ***************************************************************************
@@ -207,21 +207,42 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
     m_references = inputReader.GetReferenceData();
     
     // set up alignments buffer
+    BamAlignment al;
     vector<BamAlignment> buffer;
     buffer.reserve(m_settings->MaxBufferCount);
     
-    // while data available
-    BamAlignment al;
-    while ( inputReader.GetNextAlignmentCore(al)) {
-        
-        // store alignments in buffer
-        buffer.push_back(al);
-        
-        // if buffer is full, handle contents (sort & write to temp file)
-        if ( buffer.size() == m_settings->MaxBufferCount )
-            HandleBufferContents(buffer);
+    // if sorting by name, we need to generate full char data
+    // so can't use GetNextAlignmentCore()
+    if ( m_settings->IsSortingByName ) {
+
+        // iterate through file
+        while ( inputReader.GetNextAlignment(al)) {
+
+            // store alignments in buffer
+            buffer.push_back(al);
+
+            // if buffer is full, handle contents (sort & write to temp file)
+            if ( buffer.size() == m_settings->MaxBufferCount )
+                HandleBufferContents(buffer);
+        }
+
     }
-    
+
+    // sorting by position, can take advantage of GNACore() speedup
+    else {
+
+        // iterate through file
+        while ( inputReader.GetNextAlignmentCore(al)) {
+
+            // store alignments in buffer
+            buffer.push_back(al);
+
+            // if buffer is full, handle contents (sort & write to temp file)
+            if ( buffer.size() == m_settings->MaxBufferCount )
+                HandleBufferContents(buffer);
+        }
+    }
+
     // handle any remaining buffer contents
     if ( buffer.size() > 0 )
         HandleBufferContents(buffer);

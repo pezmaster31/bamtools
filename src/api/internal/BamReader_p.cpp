@@ -28,7 +28,7 @@ BamReaderPrivate::BamReaderPrivate(BamReader* parent)
     , Index(0)
     , HasIndex(false)
     , AlignmentsBeginOffset(0)
-//    , m_header(0)
+    //    , m_header(0)
     , IndexCacheMode(BamIndex::LimitedIndexCaching)
     , HasAlignmentsInRegion(true)
     , Parent(parent)
@@ -55,9 +55,9 @@ void BamReaderPrivate::AdjustRegion(BamRegion& region) {
 
     const int rightBoundRefId = ( region.isRightBoundSpecified() ? region.RightRefID : References.size() - 1 );
     while ( currentId <= rightBoundRefId ) {
-	HasAlignmentsInRegion = Index->HasAlignments(currentId);
-	if ( HasAlignmentsInRegion ) break;
-	++currentId;
+        HasAlignmentsInRegion = Index->HasAlignments(currentId);
+        if ( HasAlignmentsInRegion ) break;
+        ++currentId;
     }
 
     // if no data found on any reference in region
@@ -66,163 +66,9 @@ void BamReaderPrivate::AdjustRegion(BamRegion& region) {
     // if left bound of desired region had no data, use first reference that had data
     // otherwise, leave requested region as-is
     if ( currentId != region.LeftRefID ) {
-	region.LeftRefID = currentId;
-	region.LeftPosition = 0;
+        region.LeftRefID = currentId;
+        region.LeftPosition = 0;
     }
-}
-
-// fills out character data for BamAlignment data
-bool BamReaderPrivate::BuildCharData(BamAlignment& bAlignment) {
-
-    // calculate character lengths/offsets
-    const unsigned int dataLength     = bAlignment.SupportData.BlockLength - BAM_CORE_SIZE;
-    const unsigned int seqDataOffset  = bAlignment.SupportData.QueryNameLength + (bAlignment.SupportData.NumCigarOperations * 4);
-    const unsigned int qualDataOffset = seqDataOffset + (bAlignment.SupportData.QuerySequenceLength+1)/2;
-    const unsigned int tagDataOffset  = qualDataOffset + bAlignment.SupportData.QuerySequenceLength;
-    const unsigned int tagDataLength  = dataLength - tagDataOffset;
-
-    // check offsets to see what char data exists
-    const bool hasSeqData  = ( seqDataOffset  < dataLength );
-    const bool hasQualData = ( qualDataOffset < dataLength );
-    const bool hasTagData  = ( tagDataOffset  < dataLength );
-
-    // set up char buffers
-    const char* allCharData = bAlignment.SupportData.AllCharData.data();
-    const char* seqData     = ( hasSeqData  ? (((const char*)allCharData) + seqDataOffset)  : (const char*)0 );
-    const char* qualData    = ( hasQualData ? (((const char*)allCharData) + qualDataOffset) : (const char*)0 );
-          char* tagData     = ( hasTagData  ? (((char*)allCharData) + tagDataOffset)        : (char*)0 );
-
-    // store alignment name (relies on null char in name as terminator)
-    bAlignment.Name.assign((const char*)(allCharData));
-
-    // save query sequence
-    bAlignment.QueryBases.clear();
-    if ( hasSeqData ) {
-        bAlignment.QueryBases.reserve(bAlignment.SupportData.QuerySequenceLength);
-        for (unsigned int i = 0; i < bAlignment.SupportData.QuerySequenceLength; ++i) {
-            char singleBase = DNA_LOOKUP[ ( (seqData[(i/2)] >> (4*(1-(i%2)))) & 0xf ) ];
-            bAlignment.QueryBases.append(1, singleBase);
-        }
-    }
-
-    // save qualities, converting from numeric QV to 'FASTQ-style' ASCII character
-    bAlignment.Qualities.clear();
-    if ( hasQualData ) {
-        bAlignment.Qualities.reserve(bAlignment.SupportData.QuerySequenceLength);
-        for (unsigned int i = 0; i < bAlignment.SupportData.QuerySequenceLength; ++i) {
-            char singleQuality = (char)(qualData[i]+33);
-            bAlignment.Qualities.append(1, singleQuality);
-        }
-    }
-
-    // if QueryBases is empty (and this is a allowed case)
-    if ( bAlignment.QueryBases.empty() )
-        bAlignment.AlignedBases = bAlignment.QueryBases;
-
-    // if QueryBases contains data, then build AlignedBases using CIGAR data
-    else {
-
-        // resize AlignedBases
-        bAlignment.AlignedBases.clear();
-        bAlignment.AlignedBases.reserve(bAlignment.SupportData.QuerySequenceLength);
-
-        // iterate over CigarOps
-        int k = 0;
-        vector<CigarOp>::const_iterator cigarIter = bAlignment.CigarData.begin();
-        vector<CigarOp>::const_iterator cigarEnd  = bAlignment.CigarData.end();
-        for ( ; cigarIter != cigarEnd; ++cigarIter ) {
-
-            const CigarOp& op = (*cigarIter);
-            switch(op.Type) {
-
-            case ('M') :
-            case ('I') :
-                bAlignment.AlignedBases.append(bAlignment.QueryBases.substr(k, op.Length)); // for 'M', 'I' - write bases
-                // fall through
-
-            case ('S') :
-                k += op.Length;                                     // for 'S' - soft clip, skip over query bases
-                break;
-
-            case ('D') :
-                bAlignment.AlignedBases.append(op.Length, '-');     // for 'D' - write gap character
-                break;
-
-            case ('P') :
-                bAlignment.AlignedBases.append( op.Length, '*' );   // for 'P' - write padding character
-                break;
-
-            case ('N') :
-                bAlignment.AlignedBases.append( op.Length, 'N' );  // for 'N' - write N's, skip bases in original query sequence
-                break;
-
-            case ('H') :
-                break;  // for 'H' - hard clip, do nothing to AlignedBases, move to next op
-
-            default:
-                fprintf(stderr, "ERROR: Invalid Cigar op type\n"); // shouldn't get here
-                exit(1);
-            }
-        }
-    }
-
-    // save tag data
-    bAlignment.TagData.clear();
-    if ( hasTagData ) {
-        if ( IsBigEndian ) {
-            int i = 0;
-            while ( (unsigned int)i < tagDataLength ) {
-
-                i += 2; // skip tag type (e.g. "RG", "NM", etc)
-                uint8_t type = toupper(tagData[i]);     // lower & upper case letters have same meaning
-                ++i;                                    // skip value type
-
-                switch (type) {
-
-                    case('A') :
-                    case('C') :
-                        ++i;
-                        break;
-
-                    case('S') :
-                        SwapEndian_16p(&tagData[i]);
-                        i += sizeof(uint16_t);
-                        break;
-
-                    case('F') :
-                    case('I') :
-                        SwapEndian_32p(&tagData[i]);
-                        i += sizeof(uint32_t);
-                        break;
-
-                    case('D') :
-                        SwapEndian_64p(&tagData[i]);
-                        i += sizeof(uint64_t);
-                        break;
-
-                    case('H') :
-                    case('Z') :
-                        while (tagData[i]) { ++i; }
-                        ++i; // increment one more for null terminator
-                        break;
-
-                    default :
-                        fprintf(stderr, "ERROR: Invalid tag value type\n"); // shouldn't get here
-                        exit(1);
-                }
-            }
-        }
-
-        // store tagData in alignment
-        bAlignment.TagData.resize(tagDataLength);
-        memcpy((char*)bAlignment.TagData.data(), tagData, tagDataLength);
-    }
-
-    // clear the core-only flag
-    bAlignment.SupportData.HasCoreOnly = false;
-
-    // return success
-    return true;
 }
 
 // clear index data structure
@@ -243,10 +89,11 @@ void BamReaderPrivate::Close(void) {
 
     // clear out header data
     HeaderText.clear();
-//    if ( m_header ) {
-//	delete m_header;
-//	m_header = 0;
-//    }
+
+    //    if ( m_header ) {
+    //	delete m_header;
+    //	m_header = 0;
+    //    }
 
     // clear out region flags
     Region.clear();
@@ -262,9 +109,9 @@ bool BamReaderPrivate::CreateIndex(bool useStandardIndex) {
 
     // create index based on type requested
     if ( useStandardIndex )
-	Index = new BamStandardIndex(&mBGZF, Parent);
+        Index = new BamStandardIndex(&mBGZF, Parent);
     else
-	Index = new BamToolsIndex(&mBGZF, Parent);
+        Index = new BamToolsIndex(&mBGZF, Parent);
 
     // set index cache mode to full for writing
     Index->SetCacheMode(BamIndex::FullIndexCaching);
@@ -291,10 +138,10 @@ const string BamReaderPrivate::GetHeaderText(void) const {
 
     return HeaderText;
 
-//    if ( m_header )
-//	return m_header->Text();
-//    else
-//	return string("");
+    //    if ( m_header )
+    //	return m_header->Text();
+    //    else
+    //	return string("");
 }
 
 // get next alignment (from specified region, if given)
@@ -302,7 +149,7 @@ bool BamReaderPrivate::GetNextAlignment(BamAlignment& bAlignment) {
 
     // if valid alignment found, attempt to parse char data, and return success/failure
     if ( GetNextAlignmentCore(bAlignment) )
-	return BuildCharData(bAlignment);
+        return bAlignment.BuildCharData();
 
     // no valid alignment found
     else return false;
@@ -316,33 +163,33 @@ bool BamReaderPrivate::GetNextAlignmentCore(BamAlignment& bAlignment) {
 
     // if region is set but has no alignments
     if ( !Region.isNull() && !HasAlignmentsInRegion )
-	return false;
+        return false;
 
     // if valid alignment available
     if ( LoadNextAlignment(bAlignment) ) {
 
-	// set core-only flag
-	bAlignment.SupportData.HasCoreOnly = true;
+        // set core-only flag
+        bAlignment.SupportData.HasCoreOnly = true;
 
-	// if region not specified with at least a left boundary, return success
-	if ( !Region.isLeftBoundSpecified() ) return true;
+        // if region not specified with at least a left boundary, return success
+        if ( !Region.isLeftBoundSpecified() ) return true;
 
-	// determine region state (before, within, after)
-	BamReaderPrivate::RegionState state = IsOverlap(bAlignment);
+        // determine region state (before, within, after)
+        BamReaderPrivate::RegionState state = IsOverlap(bAlignment);
 
-	// if alignment lies after region, return false
-	if ( state == AFTER_REGION ) return false;
+        // if alignment lies after region, return false
+        if ( state == AFTER_REGION ) return false;
 
-	while ( state != WITHIN_REGION ) {
-	    // if no valid alignment available (likely EOF) return failure
-	    if ( !LoadNextAlignment(bAlignment) ) return false;
-	    // if alignment lies after region, return false (no available read within region)
-	    state = IsOverlap(bAlignment);
-	    if ( state == AFTER_REGION ) return false;
-	}
+        while ( state != WITHIN_REGION ) {
+            // if no valid alignment available (likely EOF) return failure
+            if ( !LoadNextAlignment(bAlignment) ) return false;
+            // if alignment lies after region, return false (no available read within region)
+            state = IsOverlap(bAlignment);
+            if ( state == AFTER_REGION ) return false;
+        }
 
-	// return success (alignment found that overlaps region)
-	return true;
+        // return success (alignment found that overlaps region)
+        return true;
     }
 
     // no valid alignment
@@ -357,7 +204,7 @@ int BamReaderPrivate::GetReferenceID(const string& refName) const {
     RefVector::const_iterator refIter = References.begin();
     RefVector::const_iterator refEnd  = References.end();
     for ( ; refIter != refEnd; ++refIter)
-	refNames.push_back( (*refIter).RefName );
+        refNames.push_back( (*refIter).RefName );
 
     // return 'index-of' refName ( if not found, returns refNames.size() )
     return distance(refNames.begin(), find(refNames.begin(), refNames.end(), refName));
@@ -368,77 +215,85 @@ int BamReaderPrivate::GetReferenceID(const string& refName) const {
 BamReaderPrivate::RegionState BamReaderPrivate::IsOverlap(BamAlignment& bAlignment) {
 
     // if alignment is on any reference sequence before left bound
-    if ( bAlignment.RefID < Region.LeftRefID ) return BEFORE_REGION;
+    if ( bAlignment.RefID < Region.LeftRefID )
+        return BEFORE_REGION;
 
     // if alignment starts on left bound reference
     else if ( bAlignment.RefID == Region.LeftRefID ) {
 
-	// if alignment starts at or after left boundary
-	if ( bAlignment.Position >= Region.LeftPosition) {
+        // if alignment starts at or after left boundary
+        if ( bAlignment.Position >= Region.LeftPosition) {
 
-	    // if right boundary is specified AND
-	    // left/right boundaries are on same reference AND
-	    // alignment starts past right boundary
-	    if ( Region.isRightBoundSpecified() &&
-		 Region.LeftRefID == Region.RightRefID &&
-		 bAlignment.Position > Region.RightPosition )
-		return AFTER_REGION;
+            // if right boundary is specified AND
+            // left/right boundaries are on same reference AND
+            // alignment starts past right boundary
+            if ( Region.isRightBoundSpecified() &&
+                 Region.LeftRefID == Region.RightRefID &&
+                 bAlignment.Position > Region.RightPosition )
+                return AFTER_REGION;
 
-	    // otherwise, alignment is within region
-	    return WITHIN_REGION;
-	}
+            // otherwise, alignment is within region
+            else
+                return WITHIN_REGION;
+        }
 
-	// alignment starts before left boundary
-	else {
-	    // check if alignment overlaps left boundary
-	    if ( bAlignment.GetEndPosition() >= Region.LeftPosition ) return WITHIN_REGION;
-	    else return BEFORE_REGION;
-	}
+        // alignment starts before left boundary
+        else {
+            // check if alignment overlaps left boundary
+            if ( bAlignment.GetEndPosition() >= Region.LeftPosition )
+                return WITHIN_REGION;
+            else
+                return BEFORE_REGION;
+        }
     }
 
     // alignment starts on a reference after the left bound
     else {
 
-	// if region has a right boundary
-	if ( Region.isRightBoundSpecified() ) {
+        // if region has a right boundary
+        if ( Region.isRightBoundSpecified() ) {
 
-	    // alignment is on reference between boundaries
-	    if ( bAlignment.RefID < Region.RightRefID ) return WITHIN_REGION;
+            // alignment is on reference between boundaries
+            if ( bAlignment.RefID < Region.RightRefID )
+                return WITHIN_REGION;
 
-	    // alignment is on reference after right boundary
-	    else if ( bAlignment.RefID > Region.RightRefID ) return AFTER_REGION;
+            // alignment is on reference after right boundary
+            else if ( bAlignment.RefID > Region.RightRefID )
+             return AFTER_REGION;
 
-	    // alignment is on right bound reference
-	    else {
-		// check if alignment starts before or at right boundary
-		if ( bAlignment.Position <= Region.RightPosition ) return WITHIN_REGION;
-		else return AFTER_REGION;
-	    }
-	}
+            // alignment is on right bound reference
+            else {
+                // check if alignment starts before or at right boundary
+                if ( bAlignment.Position <= Region.RightPosition )
+                    return WITHIN_REGION;
+                else
+                    return AFTER_REGION;
+            }
+        }
 
-	// otherwise, alignment is after left bound reference, but there is no right boundary
-	else return WITHIN_REGION;
+        // otherwise, alignment is after left bound reference, but there is no right boundary
+        else return WITHIN_REGION;
     }
 }
 
 // load BAM header data
 void BamReaderPrivate::LoadHeaderData(void) {
 
-//    m_header = new BamHeader(&mBGZF);
-//    bool headerLoadedOk = m_header->Load();
-//    if ( !headerLoadedOk )
-//	cerr << "BamReader could not load header" << endl;
+    //    m_header = new BamHeader(&mBGZF);
+    //    bool headerLoadedOk = m_header->Load();
+    //    if ( !headerLoadedOk )
+    //	cerr << "BamReader could not load header" << endl;
 
     // check to see if proper BAM header
     char buffer[4];
     if (mBGZF.Read(buffer, 4) != 4) {
-	fprintf(stderr, "Could not read header type\n");
-	exit(1);
+        fprintf(stderr, "Could not read header type\n");
+        exit(1);
     }
 
     if (strncmp(buffer, "BAM\001", 4)) {
-	fprintf(stderr, "wrong header type!\n");
-	exit(1);
+        fprintf(stderr, "wrong header type!\n");
+        exit(1);
     }
 
     // get BAM header text length
@@ -464,24 +319,24 @@ bool BamReaderPrivate::LoadIndex(const bool lookForIndex, const bool preferStand
     // if no index filename provided, so we need to look for available index files
     if ( IndexFilename.empty() ) {
 
-	// attempt to load BamIndex based on current Filename provided & preferStandardIndex flag
-	const BamIndex::PreferredIndexType type = (preferStandardIndex ? BamIndex::STANDARD : BamIndex::BAMTOOLS);
-	Index = BamIndex::FromBamFilename(Filename, &mBGZF, Parent, type);
+        // attempt to load BamIndex based on current Filename provided & preferStandardIndex flag
+        const BamIndex::PreferredIndexType type = (preferStandardIndex ? BamIndex::STANDARD : BamIndex::BAMTOOLS);
+        Index = BamIndex::FromBamFilename(Filename, &mBGZF, Parent, type);
 
-	// if null, return failure
-	if ( Index == 0 ) return false;
+        // if null, return failure
+        if ( Index == 0 ) return false;
 
-	// generate proper IndexFilename based on type of index created
-	IndexFilename = Filename + Index->Extension();
+        // generate proper IndexFilename based on type of index created
+        IndexFilename = Filename + Index->Extension();
     }
 
     else {
 
-	// attempt to load BamIndex based on IndexFilename provided by client
-	Index = BamIndex::FromIndexFilename(IndexFilename, &mBGZF, Parent);
+        // attempt to load BamIndex based on IndexFilename provided by client
+        Index = BamIndex::FromIndexFilename(IndexFilename, &mBGZF, Parent);
 
-	// if null, return failure
-	if ( Index == 0 ) return false;
+        // if null, return failure
+        if ( Index == 0 ) return false;
     }
 
     // set cache mode for BamIndex
@@ -509,11 +364,12 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& bAlignment) {
 
     // read in core alignment data, make sure the right size of data was read
     char x[BAM_CORE_SIZE];
-    if ( mBGZF.Read(x, BAM_CORE_SIZE) != BAM_CORE_SIZE ) return false;
+    if ( mBGZF.Read(x, BAM_CORE_SIZE) != BAM_CORE_SIZE )
+        return false;
 
     if ( IsBigEndian ) {
-	for ( int i = 0; i < BAM_CORE_SIZE; i+=sizeof(uint32_t) )
-	    SwapEndian_32p(&x[i]);
+    for ( int i = 0; i < BAM_CORE_SIZE; i+=sizeof(uint32_t) )
+        SwapEndian_32p(&x[i]);
     }
 
     // set BamAlignment 'core' and 'support' data
@@ -544,32 +400,32 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& bAlignment) {
 
     if ( mBGZF.Read(allCharData, dataLength) == (signed int)dataLength) {
 
-	// store 'allCharData' in supportData structure
-	bAlignment.SupportData.AllCharData.assign((const char*)allCharData, dataLength);
+        // store 'allCharData' in supportData structure
+        bAlignment.SupportData.AllCharData.assign((const char*)allCharData, dataLength);
 
-	// set success flag
-	readCharDataOK = true;
+        // set success flag
+        readCharDataOK = true;
 
-	// save CIGAR ops
-	// need to calculate this here so that  BamAlignment::GetEndPosition() performs correctly,
-	// even when GetNextAlignmentCore() is called
-	const unsigned int cigarDataOffset = bAlignment.SupportData.QueryNameLength;
-	uint32_t* cigarData = (uint32_t*)(allCharData + cigarDataOffset);
-	CigarOp op;
-	bAlignment.CigarData.clear();
-	bAlignment.CigarData.reserve(bAlignment.SupportData.NumCigarOperations);
-	for (unsigned int i = 0; i < bAlignment.SupportData.NumCigarOperations; ++i) {
+        // save CIGAR ops
+        // need to calculate this here so that  BamAlignment::GetEndPosition() performs correctly,
+        // even when GetNextAlignmentCore() is called
+        const unsigned int cigarDataOffset = bAlignment.SupportData.QueryNameLength;
+        uint32_t* cigarData = (uint32_t*)(allCharData + cigarDataOffset);
+        CigarOp op;
+        bAlignment.CigarData.clear();
+        bAlignment.CigarData.reserve(bAlignment.SupportData.NumCigarOperations);
+        for (unsigned int i = 0; i < bAlignment.SupportData.NumCigarOperations; ++i) {
 
-	    // swap if necessary
-	    if ( IsBigEndian ) SwapEndian_32(cigarData[i]);
+            // swap if necessary
+            if ( IsBigEndian ) SwapEndian_32(cigarData[i]);
 
-	    // build CigarOp structure
-	    op.Length = (cigarData[i] >> BAM_CIGAR_SHIFT);
-	    op.Type   = CIGAR_LOOKUP[ (cigarData[i] & BAM_CIGAR_MASK) ];
+            // build CigarOp structure
+            op.Length = (cigarData[i] >> BAM_CIGAR_SHIFT);
+            op.Type   = CIGAR_LOOKUP[ (cigarData[i] & BAM_CIGAR_MASK) ];
 
-	    // save CigarOp
-	    bAlignment.CigarData.push_back(op);
-	}
+            // save CigarOp
+            bAlignment.CigarData.push_back(op);
+        }
     }
 
     free(allCharData);
@@ -590,26 +446,26 @@ void BamReaderPrivate::LoadReferenceData(void) {
     // iterate over all references in header
     for (unsigned int i = 0; i != numberRefSeqs; ++i) {
 
-	// get length of reference name
-	mBGZF.Read(buffer, 4);
-	unsigned int refNameLength = BgzfData::UnpackUnsignedInt(buffer);
-	if ( IsBigEndian ) SwapEndian_32(refNameLength);
-	char* refName = (char*)calloc(refNameLength, 1);
+        // get length of reference name
+        mBGZF.Read(buffer, 4);
+        unsigned int refNameLength = BgzfData::UnpackUnsignedInt(buffer);
+        if ( IsBigEndian ) SwapEndian_32(refNameLength);
+        char* refName = (char*)calloc(refNameLength, 1);
 
-	// get reference name and reference sequence length
-	mBGZF.Read(refName, refNameLength);
-	mBGZF.Read(buffer, 4);
-	int refLength = BgzfData::UnpackSignedInt(buffer);
-	if ( IsBigEndian ) SwapEndian_32(refLength);
+        // get reference name and reference sequence length
+        mBGZF.Read(refName, refNameLength);
+        mBGZF.Read(buffer, 4);
+        int refLength = BgzfData::UnpackSignedInt(buffer);
+        if ( IsBigEndian ) SwapEndian_32(refLength);
 
-	// store data for reference
-	RefData aReference;
-	aReference.RefName   = (string)((const char*)refName);
-	aReference.RefLength = refLength;
-	References.push_back(aReference);
+        // store data for reference
+        RefData aReference;
+        aReference.RefName   = (string)((const char*)refName);
+        aReference.RefLength = refLength;
+        References.push_back(aReference);
 
-	// clean up calloc-ed temp variable
-	free(refName);
+        // clean up calloc-ed temp variable
+        free(refName);
     }
 }
 
@@ -621,12 +477,15 @@ void BamReaderPrivate::MarkReferences(void) {
 
     // mark empty references
     for ( int i = 0; i < (int)References.size(); ++i )
-	References.at(i).RefHasAlignments = Index->HasAlignments(i);
+        References.at(i).RefHasAlignments = Index->HasAlignments(i);
 }
 
 // opens BAM file (and index)
-bool BamReaderPrivate::Open(const string& filename, const string& indexFilename, const bool lookForIndex, const bool preferStandardIndex) {
-
+bool BamReaderPrivate::Open(const string& filename,
+                            const string& indexFilename,
+                            const bool lookForIndex,
+                            const bool preferStandardIndex)
+{
     // store filenames
     Filename = filename;
     IndexFilename = indexFilename;
@@ -644,12 +503,12 @@ bool BamReaderPrivate::Open(const string& filename, const string& indexFilename,
     // if no index filename provided
     if ( IndexFilename.empty() ) {
 
-	// client did not specify that index SHOULD be found
-	// useful for cases where sequential access is all that is required
-	if ( !lookForIndex ) return true;
+        // client did not specify that index SHOULD be found
+        // useful for cases where sequential access is all that is required
+        if ( !lookForIndex ) return true;
 
-	// otherwise, look for index file, return success/fail
-	return LoadIndex(lookForIndex, preferStandardIndex) ;
+        // otherwise, look for index file, return success/fail
+        else return LoadIndex(lookForIndex, preferStandardIndex) ;
     }
 
     // client supplied an index filename
@@ -709,8 +568,8 @@ bool BamReaderPrivate::SetRegion(const BamRegion& region) {
     // (this is useful in a MultiBamReader setting where some BAM files may lack data in regions
     // that other BAMs have data)
     if ( !HasAlignmentsInRegion ) {
-	Region = adjustedRegion;
-	return true;
+        Region = adjustedRegion;
+        return true;
     }
 
     // attempt jump to user-specified region return false if jump could not be performed at all

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 13 December 2010 (DB)
+// Last modified: 22 December 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -25,7 +25,6 @@ namespace Internal {
 } // namespace Internal
 
 // BamAlignment data structure
-// explicitly labeled as 'struct' to indicate that (most of) its fields are public
 struct API_EXPORT BamAlignment {
 
     // constructors & destructor
@@ -122,6 +121,11 @@ struct API_EXPORT BamAlignment {
         // @tag - two character tag name
         bool RemoveTag(const std::string& tag);
 
+    // Populate an alignment retrieved by BamAlignment::GetNextAlignmentCore() with full character data
+    // (read name, bases, qualities, tag data)
+    public:
+        bool BuildCharData(void);
+
     // Additional data access methods
     public:
         // calculates & returns alignment end position, based on starting position and CIGAR operations
@@ -136,21 +140,21 @@ struct API_EXPORT BamAlignment {
 
     // Data members
     public:
-        std::string Name;              // Read name
-        int32_t     Length;            // Query length
-        std::string QueryBases;        // 'Original' sequence (as reported from sequencing machine)
-        std::string AlignedBases;      // 'Aligned' sequence (includes any indels, padding, clipping)
-        std::string Qualities;         // FASTQ qualities (ASCII characters, not numeric values)
-        std::string TagData;           // Tag data (accessor methods will pull the requested information out)
-        int32_t     RefID;             // ID number for reference sequence
-        int32_t     Position;          // Position (0-based) where alignment starts
-        uint16_t    Bin;               // Bin in BAM file where this alignment resides
-        uint16_t    MapQuality;        // Mapping quality score
-        uint32_t    AlignmentFlag;     // Alignment bit-flag - see Is<something>() methods to query this value, SetIs<something>() methods to manipulate 
+        std::string Name;               // Read name
+        int32_t     Length;             // Query length
+        std::string QueryBases;         // 'Original' sequence (as reported from sequencing machine)
+        std::string AlignedBases;       // 'Aligned' sequence (includes any indels, padding, clipping)
+        std::string Qualities;          // FASTQ qualities (ASCII characters, not numeric values)
+        std::string TagData;            // Tag data (accessor methods will pull the requested information out)
+        int32_t     RefID;              // ID number for reference sequence
+        int32_t     Position;           // Position (0-based) where alignment starts
+        uint16_t    Bin;                // Bin in BAM file where this alignment resides
+        uint16_t    MapQuality;         // Mapping quality score
+        uint32_t    AlignmentFlag;      // Alignment bit-flag - see Is<something>() methods to query this value, SetIs<something>() methods to manipulate
         std::vector<CigarOp> CigarData; // CIGAR operations for this alignment
-        int32_t     MateRefID;         // ID number for reference sequence where alignment's mate was aligned
-        int32_t     MatePosition;      // Position (0-based) where alignment's mate starts
-        int32_t     InsertSize;        // Mate-pair insert size
+        int32_t     MateRefID;          // ID number for reference sequence where alignment's mate was aligned
+        int32_t     MatePosition;       // Position (0-based) where alignment's mate starts
+        int32_t     InsertSize;         // Mate-pair insert size
           
     // Internal data, inaccessible to client code
     // but available BamReaderPrivate & BamWriterPrivate

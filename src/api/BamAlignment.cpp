@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 13 December 2010 (DB)
+// Last modified: 22 December 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -19,6 +19,8 @@ using namespace BamTools;
 #include <map>
 #include <utility>
 using namespace std;
+
+const char* DNA_LOOKUP = "=ACMGRSVTWYHKDBN";
 
 // default ctor
 BamAlignment::BamAlignment(void) 
@@ -80,6 +82,174 @@ void BamAlignment::SetIsReverseStrand(bool ok)      { if (ok) AlignmentFlag |= R
 void BamAlignment::SetIsSecondaryAlignment(bool ok) { if (ok) AlignmentFlag |= SECONDARY;     else AlignmentFlag &= ~SECONDARY; }
 void BamAlignment::SetIsSecondMate(bool ok)         { if (ok) AlignmentFlag |= READ_2;        else AlignmentFlag &= ~READ_2; }
 void BamAlignment::SetIsUnmapped(bool ok)           { if (ok) AlignmentFlag |= UNMAPPED;      else AlignmentFlag &= ~UNMAPPED; }
+
+// fills out character data
+bool BamAlignment::BuildCharData(void) {
+
+    // skip if char data already parsed
+    if ( !SupportData.HasCoreOnly ) return true;
+
+    // check system endianness
+    bool IsBigEndian = BamTools::SystemIsBigEndian();
+
+    // calculate character lengths/offsets
+    const unsigned int dataLength     = SupportData.BlockLength - BAM_CORE_SIZE;
+    const unsigned int seqDataOffset  = SupportData.QueryNameLength + (SupportData.NumCigarOperations * 4);
+    const unsigned int qualDataOffset = seqDataOffset + (SupportData.QuerySequenceLength+1)/2;
+    const unsigned int tagDataOffset  = qualDataOffset + SupportData.QuerySequenceLength;
+    const unsigned int tagDataLength  = dataLength - tagDataOffset;
+
+    // check offsets to see what char data exists
+    const bool hasSeqData  = ( seqDataOffset  < dataLength );
+    const bool hasQualData = ( qualDataOffset < dataLength );
+    const bool hasTagData  = ( tagDataOffset  < dataLength );
+
+    // set up char buffers
+    const char* allCharData = SupportData.AllCharData.data();
+    const char* seqData     = ( hasSeqData  ? (((const char*)allCharData) + seqDataOffset)  : (const char*)0 );
+    const char* qualData    = ( hasQualData ? (((const char*)allCharData) + qualDataOffset) : (const char*)0 );
+          char* tagData     = ( hasTagData  ? (((char*)allCharData) + tagDataOffset)        : (char*)0 );
+
+    // store alignment name (relies on null char in name as terminator)
+    Name.assign((const char*)(allCharData));
+
+    // save query sequence
+    QueryBases.clear();
+    if ( hasSeqData ) {
+        QueryBases.reserve(SupportData.QuerySequenceLength);
+        for (unsigned int i = 0; i < SupportData.QuerySequenceLength; ++i) {
+            char singleBase = DNA_LOOKUP[ ( (seqData[(i/2)] >> (4*(1-(i%2)))) & 0xf ) ];
+            QueryBases.append(1, singleBase);
+        }
+    }
+
+    // save qualities, converting from numeric QV to 'FASTQ-style' ASCII character
+    Qualities.clear();
+    if ( hasQualData ) {
+        Qualities.reserve(SupportData.QuerySequenceLength);
+        for (unsigned int i = 0; i < SupportData.QuerySequenceLength; ++i) {
+            char singleQuality = (char)(qualData[i]+33);
+            Qualities.append(1, singleQuality);
+        }
+    }
+
+    // clear previous AlignedBases
+    AlignedBases.clear();
+
+    // if QueryBases has data, build AlignedBases using CIGAR data
+    // otherwise, AlignedBases will remain empty (this case IS allowed)
+    if ( !QueryBases.empty() ) {
+
+        // resize AlignedBases
+        AlignedBases.reserve(SupportData.QuerySequenceLength);
+
+        // iterate over CigarOps
+        int k = 0;
+        vector<CigarOp>::const_iterator cigarIter = CigarData.begin();
+        vector<CigarOp>::const_iterator cigarEnd  = CigarData.end();
+        for ( ; cigarIter != cigarEnd; ++cigarIter ) {
+
+            const CigarOp& op = (*cigarIter);
+            switch(op.Type) {
+
+                // for 'M', 'I' - write bases
+                case ('M') :
+                case ('I') :
+                    AlignedBases.append(QueryBases.substr(k, op.Length));
+                    // fall through
+
+                // for 'S' - soft clip, do not write bases
+                // but increment placeholder 'k'
+                case ('S') :
+                    k += op.Length;
+                    break;
+
+                // for 'D' - write gap character
+                case ('D') :
+                    AlignedBases.append(op.Length, '-');
+                    break;
+
+                // for 'P' - write padding character
+                case ('P') :
+                    AlignedBases.append( op.Length, '*' );
+                    break;
+
+                // for 'N' - write N's, skip bases in original query sequence
+                case ('N') :
+                    AlignedBases.append( op.Length, 'N' );
+                    break;
+
+                // for 'H' - hard clip, do nothing to AlignedBases, move to next op
+                case ('H') :
+                    break;
+
+                // shouldn't get here
+                default:
+                    fprintf(stderr, "ERROR: Invalid Cigar op type\n");
+                    exit(1);
+            }
+        }
+    }
+
+    // save tag data
+    TagData.clear();
+    if ( hasTagData ) {
+        if ( IsBigEndian ) {
+            int i = 0;
+            while ( (unsigned int)i < tagDataLength ) {
+
+                i += 2;                                 // skip tagType chars (e.g. "RG", "NM", etc.)
+                uint8_t type = toupper(tagData[i]);     // lower & upper case letters have same meaning
+                ++i;                                    // skip valueType char (e.g. 'A', 'I', 'Z', etc.)
+
+                switch (type) {
+
+                    case('A') :
+                    case('C') :
+                        ++i;
+                        break;
+
+                    case('S') :
+                        SwapEndian_16p(&tagData[i]);
+                        i += sizeof(uint16_t);
+                        break;
+
+                    case('F') :
+                    case('I') :
+                        SwapEndian_32p(&tagData[i]);
+                        i += sizeof(uint32_t);
+                        break;
+
+                    case('D') :
+                        SwapEndian_64p(&tagData[i]);
+                        i += sizeof(uint64_t);
+                        break;
+
+                    case('H') :
+                    case('Z') :
+                        while (tagData[i]) { ++i; }
+                        ++i; // increment one more for null terminator
+                        break;
+
+                    // shouldn't get here
+                    default :
+                        fprintf(stderr, "ERROR: Invalid tag value type\n");
+                        exit(1);
+                }
+            }
+        }
+
+        // store tagData in alignment
+        TagData.resize(tagDataLength);
+        memcpy((char*)TagData.data(), tagData, tagDataLength);
+    }
+
+    // clear the core-only flag
+    SupportData.HasCoreOnly = false;
+
+    // return success
+    return true;
+}
 
 // calculates alignment end position, based on starting position and CIGAR operations
 int BamAlignment::GetEndPosition(bool usePadded, bool zeroBased) const {

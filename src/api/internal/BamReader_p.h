@@ -36,99 +36,97 @@ class BamReaderPrivate {
 
     // enums
     public: enum RegionState { BEFORE_REGION = 0
-			     , WITHIN_REGION
-			     , AFTER_REGION
-			     };
+                             , WITHIN_REGION
+                             , AFTER_REGION
+                             };
 
     // ctor & dtor
     public:
-	BamReaderPrivate(BamReader* parent);
-	~BamReaderPrivate(void);
+        BamReaderPrivate(BamReader* parent);
+        ~BamReaderPrivate(void);
 
     // 'public' interface to BamReader
     public:
 
-	// file operations
-	void Close(void);
-	bool Open(const std::string& filename,
-		  const std::string& indexFilename,
-		  const bool lookForIndex,
-		  const bool preferStandardIndex);
-	bool Rewind(void);
-	bool SetRegion(const BamRegion& region);
+        // file operations
+        void Close(void);
+        bool Open(const std::string& filename,
+                  const std::string& indexFilename,
+                  const bool lookForIndex,
+                  const bool preferStandardIndex);
+        bool Rewind(void);
+        bool SetRegion(const BamRegion& region);
 
-	// access alignment data
-	bool GetNextAlignment(BamAlignment& bAlignment);
-	bool GetNextAlignmentCore(BamAlignment& bAlignment);
+        // access alignment data
+        bool GetNextAlignment(BamAlignment& bAlignment);
+        bool GetNextAlignmentCore(BamAlignment& bAlignment);
 
-	// access auxiliary data
-	const std::string GetHeaderText(void) const;
-	int GetReferenceID(const std::string& refName) const;
+        // access auxiliary data
+        const std::string GetHeaderText(void) const;
+        int GetReferenceID(const std::string& refName) const;
 
-	// index operations
-	bool CreateIndex(bool useStandardIndex);
-	void SetIndexCacheMode(const BamIndex::BamIndexCacheMode mode);
+        // index operations
+        bool CreateIndex(bool useStandardIndex);
+        void SetIndexCacheMode(const BamIndex::BamIndexCacheMode mode);
 
     // 'internal' methods
     public:
 
-	// ---------------------------------------
-	// reading alignments and auxiliary data
+        // ---------------------------------------
+        // reading alignments and auxiliary data
 
-	// adjusts requested region if necessary (depending on where data actually begins)
-	void AdjustRegion(BamRegion& region);
-	// fills out character data for BamAlignment data
-	bool BuildCharData(BamAlignment& bAlignment);
-	// checks to see if alignment overlaps current region
-	RegionState IsOverlap(BamAlignment& bAlignment);
-	// retrieves header text from BAM file
-	void LoadHeaderData(void);
-	// retrieves BAM alignment under file pointer
-	bool LoadNextAlignment(BamAlignment& bAlignment);
-	// builds reference data structure from BAM file
-	void LoadReferenceData(void);
-	// mark references with 'HasAlignments' status
-	void MarkReferences(void);
+        // adjusts requested region if necessary (depending on where data actually begins)
+        void AdjustRegion(BamRegion& region);
+        // checks to see if alignment overlaps current region
+        RegionState IsOverlap(BamAlignment& bAlignment);
+        // retrieves header text from BAM file
+        void LoadHeaderData(void);
+        // retrieves BAM alignment under file pointer
+        bool LoadNextAlignment(BamAlignment& bAlignment);
+        // builds reference data structure from BAM file
+        void LoadReferenceData(void);
+        // mark references with 'HasAlignments' status
+        void MarkReferences(void);
 
-	// ---------------------------------
-	// index file handling
+        // ---------------------------------
+        // index file handling
 
-	// clear out inernal index data structure
-	void ClearIndex(void);
-	// loads index from BAM index file
-	bool LoadIndex(const bool lookForIndex, const bool preferStandardIndex);
+        // clear out inernal index data structure
+        void ClearIndex(void);
+        // loads index from BAM index file
+        bool LoadIndex(const bool lookForIndex, const bool preferStandardIndex);
 
     // data members
     public:
 
-	// general file data
-	BgzfData  mBGZF;
-	std::string HeaderText;
-	BamIndex* Index;
-	RefVector References;
-	bool      HasIndex;
-	int64_t   AlignmentsBeginOffset;
-	std::string    Filename;
-	std::string    IndexFilename;
+        // general file data
+        BgzfData  mBGZF;
+        std::string HeaderText;
+        BamIndex* Index;
+        RefVector References;
+        bool      HasIndex;
+        int64_t   AlignmentsBeginOffset;
+        std::string    Filename;
+        std::string    IndexFilename;
 
-//	Internal::BamHeader* m_header;
+        //	Internal::BamHeader* m_header;
 
-	// index caching mode
-	BamIndex::BamIndexCacheMode IndexCacheMode;
+        // index caching mode
+        BamIndex::BamIndexCacheMode IndexCacheMode;
 
-	// system data
-	bool IsBigEndian;
+        // system data
+        bool IsBigEndian;
 
-	// user-specified region values
-	BamRegion Region;
-	bool HasAlignmentsInRegion;
+        // user-specified region values
+        BamRegion Region;
+        bool HasAlignmentsInRegion;
 
-	// parent BamReader
-	BamReader* Parent;
+        // parent BamReader
+        BamReader* Parent;
 
-	// BAM character constants
-	const char* DNA_LOOKUP;
-	const char* CIGAR_LOOKUP;
+        // BAM character constants
+        const char* DNA_LOOKUP;
+        const char* CIGAR_LOOKUP;
 };
 
 } // namespace Internal

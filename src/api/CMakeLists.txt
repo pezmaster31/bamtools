@@ -19,6 +19,7 @@ add_library( BamTools SHARED
              BamReader.cpp
              BamWriter.cpp
              BGZF.cpp
+             internal/BamMultiReader_p.cpp
              internal/BamReader_p.cpp
              internal/BamStandardIndex_p.cpp
              internal/BamToolsIndex_p.cpp
@@ -36,6 +37,7 @@ add_library( BamTools-static STATIC
              BamReader.cpp
              BamWriter.cpp
              BGZF.cpp
+             internal/BamMultiReader_p.cpp
              internal/BamReader_p.cpp
              internal/BamStandardIndex_p.cpp
              internal/BamToolsIndex_p.cpp

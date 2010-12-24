@@ -206,7 +206,7 @@ To use this API in your application, you simply need to do the following:
 find the (BAMTOOLS_ROOT)/lib directory.
 
 * Depending on your platform and where you install the BamTools API library, you 
-may also need to adjust how your app locates the library at runtime. For
+may also need to adjust how your app locates the shared library at runtime. For
 Windows users, this can be as simple as dropping the DLL in the same folder as
 your executable.  For *nix users (using gcc at least), you can add the following
 to your app's CXXFLAGS:
@@ -215,6 +215,9 @@ to your app's CXXFLAGS:
 
 where BAMTOOLS_LIB_DIR is, as you would guess, the directory containing the libs.
 An alternative is to set your local LD_LIBRARY_PATH environment variable.
+
+Another alternative is to use the newly provided static library libbamtools.a and 
+resolve this issue at compile/link time, instead of runtime.
 
 See any included programs for more detailed usage examples. See comments in the 
 header files for more detailed API documentation.

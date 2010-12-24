@@ -11,7 +11,7 @@ include_directories( ${BamTools_SOURCE_DIR}/src )
 # add compiler definitions 
 add_definitions( -DBAMTOOLS_API_LIBRARY ) # (for proper exporting of library symbols)
 
-# create main BamTools API library
+# create main BamTools API shared library
 add_library( BamTools SHARED
              BamAlignment.cpp
              BamIndex.cpp
@@ -24,17 +24,34 @@ add_library( BamTools SHARED
              internal/BamToolsIndex_p.cpp
              internal/BamWriter_p.cpp
            )
+# set shared lib properties
+set_target_properties( BamTools PROPERTIES SOVERSION "0.9.0" )
+set_target_properties( BamTools PROPERTIES OUTPUT_NAME "bamtools" )
 
-# link BamTools library with zlib automatically
+# create main BamTools API static library
+add_library( BamTools-static STATIC
+             BamAlignment.cpp
+             BamIndex.cpp
+             BamMultiReader.cpp
+             BamReader.cpp
+             BamWriter.cpp
+             BGZF.cpp
+             internal/BamReader_p.cpp
+             internal/BamStandardIndex_p.cpp
+             internal/BamToolsIndex_p.cpp
+             internal/BamWriter_p.cpp
+           )
+# set static lib properties
+set_target_properties( BamTools-static PROPERTIES OUTPUT_NAME "bamtools" )
+set_target_properties( BamTools-static PROPERTIES PREFIX "lib" )
+
+# link libraries with zlib automatically
 target_link_libraries( BamTools z )
+target_link_libraries( BamTools-static z )
 
-# set BamTools library properties
-set_target_properties( BamTools PROPERTIES
-                       SOVERSION   0.9.0
-                       OUTPUT_NAME bamtools
-                     )
-
+# set library install destinations
 install( TARGETS BamTools LIBRARY DESTINATION "lib/bamtools")
+install( TARGETS BamTools-static ARCHIVE DESTINATION "lib/bamtools")
 
 # export API headers
 include(../ExportHeader.cmake)

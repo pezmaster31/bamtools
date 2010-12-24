@@ -26,7 +26,7 @@ add_library( BamTools SHARED
              internal/BamWriter_p.cpp
            )
 # set shared lib properties
-set_target_properties( BamTools PROPERTIES SOVERSION "0.9.0" )
+set_target_properties( BamTools PROPERTIES SOVERSION "0.9.1" )
 set_target_properties( BamTools PROPERTIES OUTPUT_NAME "bamtools" )
 
 # create main BamTools API static library

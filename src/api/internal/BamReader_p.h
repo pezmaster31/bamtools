@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010 (DB)
+// Last modified: 11 January 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
@@ -24,13 +24,17 @@
 #include <api/BamAlignment.h>
 #include <api/BamIndex.h>
 #include <api/BGZF.h>
+#include <api/SamHeader.h>
 #include <string>
 
 namespace BamTools {
 
 class BamReader;
+class SamHeader;
 
 namespace Internal {
+
+class BamHeader;
 
 class BamReaderPrivate {
 
@@ -63,6 +67,7 @@ class BamReaderPrivate {
 
         // access auxiliary data
         const std::string GetHeaderText(void) const;
+        SamHeader GetSamHeader(void) const;
         int GetReferenceID(const std::string& refName) const;
 
         // index operations
@@ -101,7 +106,6 @@ class BamReaderPrivate {
 
         // general file data
         BgzfData  mBGZF;
-        std::string HeaderText;
         BamIndex* Index;
         RefVector References;
         bool      HasIndex;
@@ -109,7 +113,6 @@ class BamReaderPrivate {
         std::string    Filename;
         std::string    IndexFilename;
 
-        //	Internal::BamHeader* m_header;
 
         // index caching mode
         BamIndex::BamIndexCacheMode IndexCacheMode;
@@ -123,6 +126,7 @@ class BamReaderPrivate {
 
         // parent BamReader
         BamReader* Parent;
+        BamHeader* m_header;
 
         // BAM character constants
         const char* DNA_LOOKUP;

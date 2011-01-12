@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010 (DB)
+// Last modified: 11 January 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -13,6 +13,7 @@
 
 #include <api/api_global.h>
 #include <api/BamAlignment.h>
+#include <api/SamHeader.h>
 #include <string>
 
 namespace BamTools {
@@ -32,10 +33,15 @@ class API_EXPORT BamWriter {
     public:
         // closes the alignment archive
         void Close(void);
-        // opens the alignment archive
+        // opens the alignment archive (using std::string SAM header)
         bool Open(const std::string& filename, 
                   const std::string& samHeader, 
                   const BamTools::RefVector& referenceSequences, 
+                  bool writeUncompressed = false);
+        // opens the alignment archive (using SamHeader object)
+        bool Open(const std::string& filename,
+                  const SamHeader& samHeader,
+                  const BamTools::RefVector& referenceSequences,
                   bool writeUncompressed = false);
         // saves the alignment to the alignment archive
         void SaveAlignment(const BamTools::BamAlignment& al);

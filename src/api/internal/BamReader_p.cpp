@@ -3,13 +3,14 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 22 November 2010 (DB)
+// Last modified: 11 January 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
 
 #include <api/BamReader.h>
 #include <api/BGZF.h>
+#include <api/internal/BamHeader_p.h>
 #include <api/internal/BamReader_p.h>
 #include <api/internal/BamStandardIndex_p.h>
 #include <api/internal/BamToolsIndex_p.h>
@@ -24,14 +25,13 @@ using namespace std;
 
 // constructor
 BamReaderPrivate::BamReaderPrivate(BamReader* parent)
-    : HeaderText("")
-    , Index(0)
+    : Index(0)
     , HasIndex(false)
     , AlignmentsBeginOffset(0)
-    //    , m_header(0)
     , IndexCacheMode(BamIndex::LimitedIndexCaching)
     , HasAlignmentsInRegion(true)
     , Parent(parent)
+    , m_header(new BamHeader)
     , DNA_LOOKUP("=ACMGRSVTWYHKDBN")
     , CIGAR_LOOKUP("MIDNSHP")
 {
@@ -40,7 +40,11 @@ BamReaderPrivate::BamReaderPrivate(BamReader* parent)
 
 // destructor
 BamReaderPrivate::~BamReaderPrivate(void) {
+
     Close();
+
+    delete m_header;
+    m_header = 0;
 }
 
 // adjusts requested region if necessary (depending on where data actually begins)
@@ -88,12 +92,7 @@ void BamReaderPrivate::Close(void) {
     ClearIndex();
 
     // clear out header data
-    HeaderText.clear();
-
-    //    if ( m_header ) {
-    //	delete m_header;
-    //	m_header = 0;
-    //    }
+    m_header->Clear();
 
     // clear out region flags
     Region.clear();
@@ -135,13 +134,11 @@ bool BamReaderPrivate::CreateIndex(bool useStandardIndex) {
 }
 
 const string BamReaderPrivate::GetHeaderText(void) const {
+    return m_header->ToString();
+}
 
-    return HeaderText;
-
-    //    if ( m_header )
-    //	return m_header->Text();
-    //    else
-    //	return string("");
+SamHeader BamReaderPrivate::GetSamHeader(void) const {
+    return m_header->ToSamHeader();
 }
 
 // get next alignment (from specified region, if given)
@@ -278,36 +275,7 @@ BamReaderPrivate::RegionState BamReaderPrivate::IsOverlap(BamAlignment& bAlignme
 
 // load BAM header data
 void BamReaderPrivate::LoadHeaderData(void) {
-
-    //    m_header = new BamHeader(&mBGZF);
-    //    bool headerLoadedOk = m_header->Load();
-    //    if ( !headerLoadedOk )
-    //	cerr << "BamReader could not load header" << endl;
-
-    // check to see if proper BAM header
-    char buffer[4];
-    if (mBGZF.Read(buffer, 4) != 4) {
-        fprintf(stderr, "Could not read header type\n");
-        exit(1);
-    }
-
-    if (strncmp(buffer, "BAM\001", 4)) {
-        fprintf(stderr, "wrong header type!\n");
-        exit(1);
-    }
-
-    // get BAM header text length
-    mBGZF.Read(buffer, 4);
-    unsigned int headerTextLength = BgzfData::UnpackUnsignedInt(buffer);
-    if ( IsBigEndian ) SwapEndian_32(headerTextLength);
-
-    // get BAM header text
-    char* headerText = (char*)calloc(headerTextLength + 1, 1);
-    mBGZF.Read(headerText, headerTextLength);
-    HeaderText = (string)((const char*)headerText);
-
-    // clean up calloc-ed temp variable
-    free(headerText);
+     m_header->Load(&mBGZF);
 }
 
 // load existing index data from BAM index file (".bti" OR ".bai"), return success/fail

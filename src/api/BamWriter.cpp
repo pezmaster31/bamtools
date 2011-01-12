@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 22 November 2010 (DB)
+// Last modified: 11 January 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -32,13 +32,22 @@ void BamWriter::Close(void) {
     d->Close();
 }
 
-// opens the alignment archive
+// opens the alignment archive (using std::string SAM header)
 bool BamWriter::Open(const string& filename,
                      const string& samHeader,
                      const RefVector& referenceSequences,
                      bool isWriteUncompressed)
 {
     return d->Open(filename, samHeader, referenceSequences, isWriteUncompressed);
+}
+
+// opens the alignment archive (using SamHeader object)
+bool BamWriter::Open(const string& filename,
+                     const SamHeader& samHeader,
+                     const RefVector& referenceSequences,
+                     bool isWriteUncompressed)
+{
+    return d->Open(filename, samHeader.ToString(), referenceSequences, isWriteUncompressed);
 }
 
 // saves the alignment to the alignment archive

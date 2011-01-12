@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 22 November 2010 (DB)
+// Last modified: 11 January 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
@@ -55,6 +55,7 @@ bool BamReader::GetNextAlignment(BamAlignment& bAlignment) { return d->GetNextAl
 bool BamReader::GetNextAlignmentCore(BamAlignment& bAlignment) { return d->GetNextAlignmentCore(bAlignment); }
 
 // access auxiliary data
+SamHeader BamReader::GetHeader(void) const { return d->GetSamHeader(); }
 const string BamReader::GetHeaderText(void) const { return d->GetHeaderText(); }
 int BamReader::GetReferenceCount(void) const { return d->References.size(); }
 const RefVector& BamReader::GetReferenceData(void) const { return d->References; }

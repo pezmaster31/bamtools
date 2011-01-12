@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 22 November 2010 (DB)
+// Last modified: 11 January 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -14,16 +14,13 @@ using namespace BamTools;
 using namespace BamTools::Internal;
 using namespace std;
 
+// ctor
 BamWriterPrivate::BamWriterPrivate(void) {
     IsBigEndian = SystemIsBigEndian();
 }
 
+// dtor
 BamWriterPrivate::~BamWriterPrivate(void) {
-    mBGZF.Close();
-}
-
-// closes the alignment archive
-void BamWriterPrivate::Close(void) {
     mBGZF.Close();
 }
 
@@ -36,6 +33,11 @@ const unsigned int BamWriterPrivate::CalculateMinimumBin(const int begin, int en
     if( (begin >> 23) == (end >> 23) ) return    9 + (begin >> 23);
     if( (begin >> 26) == (end >> 26) ) return    1 + (begin >> 26);
     return 0;
+}
+
+// closes the alignment archive
+void BamWriterPrivate::Close(void) {
+    mBGZF.Close();
 }
 
 // creates a cigar string from the supplied alignment
@@ -52,35 +54,21 @@ void BamWriterPrivate::CreatePackedCigar(const vector<CigarOp>& cigarOperations,
     vector<CigarOp>::const_iterator coIter;
     for(coIter = cigarOperations.begin(); coIter != cigarOperations.end(); ++coIter) {
 
-	switch(coIter->Type) {
-	    case 'M':
-		  cigarOp = BAM_CMATCH;
-		  break;
-	    case 'I':
-		  cigarOp = BAM_CINS;
-		  break;
-	    case 'D':
-		  cigarOp = BAM_CDEL;
-		  break;
-	    case 'N':
-		  cigarOp = BAM_CREF_SKIP;
-		  break;
-	    case 'S':
-		  cigarOp = BAM_CSOFT_CLIP;
-		  break;
-	    case 'H':
-		  cigarOp = BAM_CHARD_CLIP;
-		  break;
-	    case 'P':
-		  cigarOp = BAM_CPAD;
-		  break;
-	    default:
-		  fprintf(stderr, "ERROR: Unknown cigar operation found: %c\n", coIter->Type);
-		  exit(1);
-	}
+        switch(coIter->Type) {
+            case 'M': cigarOp = BAM_CMATCH; break;
+            case 'I': cigarOp = BAM_CINS; break;
+            case 'D': cigarOp = BAM_CDEL; break;
+            case 'N': cigarOp = BAM_CREF_SKIP; break;
+            case 'S': cigarOp = BAM_CSOFT_CLIP; break;
+            case 'H': cigarOp = BAM_CHARD_CLIP; break;
+            case 'P': cigarOp = BAM_CPAD; break;
+            default:
+              fprintf(stderr, "ERROR: Unknown cigar operation found: %c\n", coIter->Type);
+              exit(1);
+        }
 
-	*pPackedCigar = coIter->Length << BAM_CIGAR_SHIFT | cigarOp;
-	pPackedCigar++;
+        *pPackedCigar = coIter->Length << BAM_CIGAR_SHIFT | cigarOp;
+        pPackedCigar++;
     }
 }
 
@@ -99,49 +87,30 @@ void BamWriterPrivate::EncodeQuerySequence(const string& query, string& encodedQ
 
     while(*pQuery) {
 
-	switch(*pQuery) {
+        switch(*pQuery) {
+            case '=': nucleotideCode = 0; break;
+            case 'A': nucleotideCode = 1; break;
+            case 'C': nucleotideCode = 2; break;
+            case 'G': nucleotideCode = 4; break;
+            case 'T': nucleotideCode = 8; break;
+            case 'N': nucleotideCode = 15; break;
+            default:
+                fprintf(stderr, "ERROR: Only the following bases are supported in the BAM format: {=, A, C, G, T, N}. Found [%c]\n", *pQuery);
+                exit(1);
+        }
 
-	    case '=':
-		nucleotideCode = 0;
-		break;
+        // pack the nucleotide code
+        if(useHighWord) {
+            *pEncodedQuery = nucleotideCode << 4;
+            useHighWord = false;
+        } else {
+            *pEncodedQuery |= nucleotideCode;
+            pEncodedQuery++;
+            useHighWord = true;
+        }
 
-	    case 'A':
-		nucleotideCode = 1;
-		break;
-
-	    case 'C':
-		nucleotideCode = 2;
-		break;
-
-	    case 'G':
-		nucleotideCode = 4;
-		break;
-
-	    case 'T':
-		nucleotideCode = 8;
-		break;
-
-	    case 'N':
-		nucleotideCode = 15;
-		break;
-
-	    default:
-		fprintf(stderr, "ERROR: Only the following bases are supported in the BAM format: {=, A, C, G, T, N}. Found [%c]\n", *pQuery);
-		exit(1);
-	}
-
-	// pack the nucleotide code
-	if(useHighWord) {
-	    *pEncodedQuery = nucleotideCode << 4;
-	    useHighWord = false;
-	} else {
-	    *pEncodedQuery |= nucleotideCode;
-	    pEncodedQuery++;
-	    useHighWord = true;
-	}
-
-	// increment the query position
-	pQuery++;
+        // increment the query position
+        pQuery++;
     }
 }
 
@@ -153,7 +122,7 @@ bool BamWriterPrivate::Open(const string& filename,
 {
     // open the BGZF file for writing, return failure if error
     if ( !mBGZF.Open(filename, "wb", isWriteUncompressed) )
-	return false;
+        return false;
 
     // ================
     // write the header
@@ -182,21 +151,22 @@ bool BamWriterPrivate::Open(const string& filename,
     // write the sequence dictionary
     // =============================
 
-    RefVector::const_iterator rsIter;
-    for(rsIter = referenceSequences.begin(); rsIter != referenceSequences.end(); rsIter++) {
+    RefVector::const_iterator rsIter = referenceSequences.begin();
+    RefVector::const_iterator rsEnd  = referenceSequences.end();
+    for( ; rsIter != rsEnd; ++rsIter ) {
 
-	// write the reference sequence name length
-	uint32_t referenceSequenceNameLen = rsIter->RefName.size() + 1;
-	if (IsBigEndian) SwapEndian_32(referenceSequenceNameLen);
-	mBGZF.Write((char*)&referenceSequenceNameLen, BT_SIZEOF_INT);
+        // write the reference sequence name length
+        uint32_t referenceSequenceNameLen = rsIter->RefName.size() + 1;
+        if (IsBigEndian) SwapEndian_32(referenceSequenceNameLen);
+        mBGZF.Write((char*)&referenceSequenceNameLen, BT_SIZEOF_INT);
 
-	// write the reference sequence name
-	mBGZF.Write(rsIter->RefName.c_str(), referenceSequenceNameLen);
+        // write the reference sequence name
+        mBGZF.Write(rsIter->RefName.c_str(), referenceSequenceNameLen);
 
-	// write the reference sequence length
-	int32_t referenceLength = rsIter->RefLength;
-	if (IsBigEndian) SwapEndian_32(referenceLength);
-	mBGZF.Write((char*)&referenceLength, BT_SIZEOF_INT);
+        // write the reference sequence length
+        int32_t referenceLength = rsIter->RefLength;
+        if (IsBigEndian) SwapEndian_32(referenceLength);
+        mBGZF.Write((char*)&referenceLength, BT_SIZEOF_INT);
     }
 
     // return success
@@ -210,170 +180,172 @@ void BamWriterPrivate::SaveAlignment(const BamAlignment& al) {
     // (as a result of BamReader::GetNextAlignmentCore())
     if ( al.SupportData.HasCoreOnly ) {
 
-	// write the block size
-	unsigned int blockSize = al.SupportData.BlockLength;
-	if (IsBigEndian) SwapEndian_32(blockSize);
-	mBGZF.Write((char*)&blockSize, BT_SIZEOF_INT);
+        // write the block size
+        unsigned int blockSize = al.SupportData.BlockLength;
+        if (IsBigEndian) SwapEndian_32(blockSize);
+        mBGZF.Write((char*)&blockSize, BT_SIZEOF_INT);
 
-	// assign the BAM core data
-	uint32_t buffer[8];
-	buffer[0] = al.RefID;
-	buffer[1] = al.Position;
-	buffer[2] = (al.Bin << 16) | (al.MapQuality << 8) | al.SupportData.QueryNameLength;
-	buffer[3] = (al.AlignmentFlag << 16) | al.SupportData.NumCigarOperations;
-	buffer[4] = al.SupportData.QuerySequenceLength;
-	buffer[5] = al.MateRefID;
-	buffer[6] = al.MatePosition;
-	buffer[7] = al.InsertSize;
+        // assign the BAM core data
+        uint32_t buffer[8];
+        buffer[0] = al.RefID;
+        buffer[1] = al.Position;
+        buffer[2] = (al.Bin << 16) | (al.MapQuality << 8) | al.SupportData.QueryNameLength;
+        buffer[3] = (al.AlignmentFlag << 16) | al.SupportData.NumCigarOperations;
+        buffer[4] = al.SupportData.QuerySequenceLength;
+        buffer[5] = al.MateRefID;
+        buffer[6] = al.MatePosition;
+        buffer[7] = al.InsertSize;
 
-	// swap BAM core endian-ness, if necessary
-	if ( IsBigEndian ) {
-	    for ( int i = 0; i < 8; ++i )
-		SwapEndian_32(buffer[i]);
-	}
+        // swap BAM core endian-ness, if necessary
+        if ( IsBigEndian ) {
+            for ( int i = 0; i < 8; ++i )
+            SwapEndian_32(buffer[i]);
+        }
 
-	// write the BAM core
-	mBGZF.Write((char*)&buffer, BAM_CORE_SIZE);
+        // write the BAM core
+        mBGZF.Write((char*)&buffer, BAM_CORE_SIZE);
 
-	// write the raw char data
-	mBGZF.Write((char*)al.SupportData.AllCharData.data(), al.SupportData.BlockLength-BAM_CORE_SIZE);
+        // write the raw char data
+        mBGZF.Write((char*)al.SupportData.AllCharData.data(), al.SupportData.BlockLength-BAM_CORE_SIZE);
     }
 
     // otherwise, BamAlignment should contain character in the standard fields: Name, QueryBases, etc
     // ( resulting from BamReader::GetNextAlignment() *OR* being generated directly by client code )
     else {
 
-	// calculate char lengths
-	const unsigned int nameLength         = al.Name.size() + 1;
-	const unsigned int numCigarOperations = al.CigarData.size();
-	const unsigned int queryLength        = al.QueryBases.size();
-	const unsigned int tagDataLength      = al.TagData.size();
+        // calculate char lengths
+        const unsigned int nameLength         = al.Name.size() + 1;
+        const unsigned int numCigarOperations = al.CigarData.size();
+        const unsigned int queryLength        = al.QueryBases.size();
+        const unsigned int tagDataLength      = al.TagData.size();
 
-	// no way to tell if BamAlignment.Bin is already defined (no default, invalid value)
-	// force calculation of Bin before storing
-	const int endPosition = al.GetEndPosition();
-	const unsigned int alignmentBin = CalculateMinimumBin(al.Position, endPosition);
+        // no way to tell if BamAlignment.Bin is already defined (no default, invalid value)
+        // force calculation of Bin before storing
+        const int endPosition = al.GetEndPosition();
+        const unsigned int alignmentBin = CalculateMinimumBin(al.Position, endPosition);
 
-	// create our packed cigar string
-	string packedCigar;
-	CreatePackedCigar(al.CigarData, packedCigar);
-	const unsigned int packedCigarLength = packedCigar.size();
+        // create our packed cigar string
+        string packedCigar;
+        CreatePackedCigar(al.CigarData, packedCigar);
+        const unsigned int packedCigarLength = packedCigar.size();
 
-	// encode the query
-	string encodedQuery;
-	EncodeQuerySequence(al.QueryBases, encodedQuery);
-	const unsigned int encodedQueryLength = encodedQuery.size();
+        // encode the query
+        string encodedQuery;
+        EncodeQuerySequence(al.QueryBases, encodedQuery);
+        const unsigned int encodedQueryLength = encodedQuery.size();
 
-	// write the block size
-	const unsigned int dataBlockSize = nameLength + packedCigarLength + encodedQueryLength + queryLength + tagDataLength;
-	unsigned int blockSize = BAM_CORE_SIZE + dataBlockSize;
-	if (IsBigEndian) SwapEndian_32(blockSize);
-	mBGZF.Write((char*)&blockSize, BT_SIZEOF_INT);
+        // write the block size
+        const unsigned int dataBlockSize = nameLength +
+                                           packedCigarLength +
+                                           encodedQueryLength +
+                                           queryLength +
+                                           tagDataLength;
+        unsigned int blockSize = BAM_CORE_SIZE + dataBlockSize;
+        if (IsBigEndian) SwapEndian_32(blockSize);
+        mBGZF.Write((char*)&blockSize, BT_SIZEOF_INT);
 
-	// assign the BAM core data
-	uint32_t buffer[8];
-	buffer[0] = al.RefID;
-	buffer[1] = al.Position;
-	buffer[2] = (alignmentBin << 16) | (al.MapQuality << 8) | nameLength;
-	buffer[3] = (al.AlignmentFlag << 16) | numCigarOperations;
-	buffer[4] = queryLength;
-	buffer[5] = al.MateRefID;
-	buffer[6] = al.MatePosition;
-	buffer[7] = al.InsertSize;
+        // assign the BAM core data
+        uint32_t buffer[8];
+        buffer[0] = al.RefID;
+        buffer[1] = al.Position;
+        buffer[2] = (alignmentBin << 16) | (al.MapQuality << 8) | nameLength;
+        buffer[3] = (al.AlignmentFlag << 16) | numCigarOperations;
+        buffer[4] = queryLength;
+        buffer[5] = al.MateRefID;
+        buffer[6] = al.MatePosition;
+        buffer[7] = al.InsertSize;
 
-	// swap BAM core endian-ness, if necessary
-	if ( IsBigEndian ) {
-	    for ( int i = 0; i < 8; ++i )
-		SwapEndian_32(buffer[i]);
-	}
+        // swap BAM core endian-ness, if necessary
+        if ( IsBigEndian ) {
+            for ( int i = 0; i < 8; ++i )
+            SwapEndian_32(buffer[i]);
+        }
 
-	// write the BAM core
-	mBGZF.Write((char*)&buffer, BAM_CORE_SIZE);
+        // write the BAM core
+        mBGZF.Write((char*)&buffer, BAM_CORE_SIZE);
 
-	// write the query name
-	mBGZF.Write(al.Name.c_str(), nameLength);
+        // write the query name
+        mBGZF.Write(al.Name.c_str(), nameLength);
 
-	// write the packed cigar
-	if ( IsBigEndian ) {
+        // write the packed cigar
+        if ( IsBigEndian ) {
 
-	    char* cigarData = (char*)calloc(sizeof(char), packedCigarLength);
-	    memcpy(cigarData, packedCigar.data(), packedCigarLength);
+            char* cigarData = (char*)calloc(sizeof(char), packedCigarLength);
+            memcpy(cigarData, packedCigar.data(), packedCigarLength);
 
-	    for (unsigned int i = 0; i < packedCigarLength; ++i) {
-		if ( IsBigEndian )
-		  SwapEndian_32p(&cigarData[i]);
-	    }
+            for (unsigned int i = 0; i < packedCigarLength; ++i) {
+                if ( IsBigEndian )
+                    SwapEndian_32p(&cigarData[i]);
+            }
 
-	    mBGZF.Write(cigarData, packedCigarLength);
-	    free(cigarData);
-	}
-	else
-	    mBGZF.Write(packedCigar.data(), packedCigarLength);
+            mBGZF.Write(cigarData, packedCigarLength);
+            free(cigarData);
+        }
+        else
+            mBGZF.Write(packedCigar.data(), packedCigarLength);
 
-	// write the encoded query sequence
-	mBGZF.Write(encodedQuery.data(), encodedQueryLength);
+        // write the encoded query sequence
+        mBGZF.Write(encodedQuery.data(), encodedQueryLength);
 
-	// write the base qualities
-	string baseQualities(al.Qualities);
-	char* pBaseQualities = (char*)al.Qualities.data();
-	for(unsigned int i = 0; i < queryLength; i++) {
-	    pBaseQualities[i] -= 33;
-	}
-	mBGZF.Write(pBaseQualities, queryLength);
+        // write the base qualities
+        char* pBaseQualities = (char*)al.Qualities.data();
+        for(unsigned int i = 0; i < queryLength; i++)
+            pBaseQualities[i] -= 33; // FASTQ conversion
+        mBGZF.Write(pBaseQualities, queryLength);
 
-	// write the read group tag
-	if ( IsBigEndian ) {
+        // write the read group tag
+        if ( IsBigEndian ) {
 
-	    char* tagData = (char*)calloc(sizeof(char), tagDataLength);
-	    memcpy(tagData, al.TagData.data(), tagDataLength);
+            char* tagData = (char*)calloc(sizeof(char), tagDataLength);
+            memcpy(tagData, al.TagData.data(), tagDataLength);
 
-	    int i = 0;
-	    while ( (unsigned int)i < tagDataLength ) {
+            int i = 0;
+            while ( (unsigned int)i < tagDataLength ) {
 
-		i += 2;                                 // skip tag type (e.g. "RG", "NM", etc)
-		uint8_t type = toupper(tagData[i]);     // lower & upper case letters have same meaning
-		++i;                                    // skip value type
+                i += 2;                                 // skip tag type (e.g. "RG", "NM", etc)
+                uint8_t type = toupper(tagData[i]);     // lower & upper case letters have same meaning
+                ++i;                                    // skip value type
 
-		switch (type) {
+                switch (type) {
 
-		    case('A') :
-		    case('C') :
-			++i;
-			break;
+                    case('A') :
+                    case('C') :
+                        ++i;
+                        break;
 
-		    case('S') :
-			SwapEndian_16p(&tagData[i]);
-			i+=2; // sizeof(uint16_t)
-			break;
+                    case('S') :
+                        SwapEndian_16p(&tagData[i]);
+                        i+=2; // sizeof(uint16_t)
+                        break;
 
-		    case('F') :
-		    case('I') :
-			SwapEndian_32p(&tagData[i]);
-			i+=4; // sizeof(uint32_t)
-			break;
+                    case('F') :
+                    case('I') :
+                        SwapEndian_32p(&tagData[i]);
+                        i+=4; // sizeof(uint32_t)
+                        break;
 
-		    case('D') :
-			SwapEndian_64p(&tagData[i]);
-			i+=8; // sizeof(uint64_t)
-			break;
+                    case('D') :
+                        SwapEndian_64p(&tagData[i]);
+                        i+=8; // sizeof(uint64_t)
+                        break;
 
-		    case('H') :
-		    case('Z') :
-			while (tagData[i]) { ++i; }
-			++i; // increment one more for null terminator
-			break;
+                    case('H') :
+                    case('Z') :
+                        while (tagData[i]) { ++i; }
+                        ++i; // increment one more for null terminator
+                        break;
 
-		    default :
-			fprintf(stderr, "ERROR: Invalid tag value type\n"); // shouldn't get here
-			free(tagData);
-			exit(1);
-		}
-	    }
+                    default :
+                        fprintf(stderr, "ERROR: Invalid tag value type\n"); // shouldn't get here
+                        free(tagData);
+                        exit(1);
+                }
+            }
 
-	    mBGZF.Write(tagData, tagDataLength);
-	    free(tagData);
-	}
-	else
-	    mBGZF.Write(al.TagData.data(), tagDataLength);
+            mBGZF.Write(tagData, tagDataLength);
+            free(tagData);
+        }
+        else
+            mBGZF.Write(al.TagData.data(), tagDataLength);
     }
 }

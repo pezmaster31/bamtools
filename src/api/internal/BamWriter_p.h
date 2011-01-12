@@ -27,6 +27,9 @@
 #include <vector>
 
 namespace BamTools {
+
+class SamHeader;
+
 namespace Internal {
 
 class BamWriterPrivate {
@@ -43,6 +46,10 @@ class BamWriterPrivate {
 		  const std::string& samHeader,
 		  const BamTools::RefVector& referenceSequences,
 		  bool isWriteUncompressed);
+    bool Open(const std::string& filename,
+              const std::string& samHeader,
+              const BamTools::RefVector& referenceSequences,
+              bool isWriteUncompressed);
 	void SaveAlignment(const BamAlignment& al);
 
     // internal methods

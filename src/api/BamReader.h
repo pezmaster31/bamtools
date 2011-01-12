@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010 (DB)
+// Last modified: 11 January 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
@@ -14,6 +14,7 @@
 #include <api/api_global.h>
 #include <api/BamAlignment.h>
 #include <api/BamIndex.h>
+#include <api/SamHeader.h>
 #include <string>
 
 namespace BamTools {
@@ -74,6 +75,8 @@ class API_EXPORT BamReader {
         // access auxiliary data
         // ----------------------
 
+        // returns SamHeader object - see SamHeader.h for more info
+        SamHeader GetHeader(void) const;
         // returns SAM header text
         const std::string GetHeaderText(void) const;
         // returns number of reference sequences

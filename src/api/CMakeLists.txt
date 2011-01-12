@@ -24,6 +24,7 @@ set( BamToolsAPISources
         SamReadGroupDictionary.cpp
         SamSequence.cpp
         SamSequenceDictionary.cpp
+        internal/BamHeader_p.cpp
         internal/BamMultiReader_p.cpp
         internal/BamReader_p.cpp
         internal/BamStandardIndex_p.cpp
@@ -36,7 +37,7 @@ set( BamToolsAPISources
 
 # create main BamTools API shared library
 add_library( BamTools SHARED ${BamToolsAPISources} )
-set_target_properties( BamTools PROPERTIES SOVERSION "0.9.1" )
+set_target_properties( BamTools PROPERTIES SOVERSION "0.9.2" )
 set_target_properties( BamTools PROPERTIES OUTPUT_NAME "bamtools" )
 
 # create main BamTools API static library

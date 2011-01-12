@@ -23,8 +23,8 @@ struct API_EXPORT SamHeader {
 
     // ctor & dtor
     public:
-        explicit SamHeader(const std::string& headerText = "");
-        explicit SamHeader(const SamHeader& other);
+        SamHeader(const std::string& headerText = "");
+        SamHeader(const SamHeader& other);
         ~SamHeader(void);
 
     // query/modify entire SamHeader at once

@@ -29,7 +29,7 @@ class API_EXPORT SamReadGroupDictionary {
     // ctor & dtor
     public:
         SamReadGroupDictionary(void);
-        explicit SamReadGroupDictionary(const SamReadGroupDictionary& other);
+        SamReadGroupDictionary(const SamReadGroupDictionary& other);
         ~SamReadGroupDictionary(void);
 
     // query/modify read group data

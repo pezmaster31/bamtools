@@ -137,7 +137,7 @@ const string BamReaderPrivate::GetHeaderText(void) const {
     return m_header->ToString();
 }
 
-SamHeader BamReaderPrivate::GetSamHeader(void) const {
+const SamHeader BamReaderPrivate::GetSamHeader(void) const {
     return m_header->ToSamHeader();
 }
 

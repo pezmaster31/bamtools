@@ -46,10 +46,6 @@ class BamWriterPrivate {
 		  const std::string& samHeader,
 		  const BamTools::RefVector& referenceSequences,
 		  bool isWriteUncompressed);
-    bool Open(const std::string& filename,
-              const std::string& samHeader,
-              const BamTools::RefVector& referenceSequences,
-              bool isWriteUncompressed);
 	void SaveAlignment(const BamAlignment& al);
 
     // internal methods

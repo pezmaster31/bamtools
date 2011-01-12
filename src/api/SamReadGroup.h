@@ -22,7 +22,7 @@ class API_EXPORT SamReadGroup {
     public:
         SamReadGroup(void);
         SamReadGroup(const std::string& id);
-        explicit SamReadGroup(const SamReadGroup& other);
+        SamReadGroup(const SamReadGroup& other);
         ~SamReadGroup(void);
 
     // public methods

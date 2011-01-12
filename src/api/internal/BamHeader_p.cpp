@@ -31,8 +31,14 @@ struct BamHeader::BamHeaderPrivate {
 
     // ctor
     BamHeaderPrivate(void)
-        : m_samHeader(0)
+        : m_samHeader(new SamHeader(""))
     { }
+
+    // dtor
+    ~BamHeaderPrivate(void) {
+        delete m_samHeader;
+        m_samHeader = 0;
+    }
 
     // 'public' interface
     bool Load(BgzfData* stream);
@@ -110,7 +116,7 @@ bool BamHeader::BamHeaderPrivate::ReadHeaderText(BgzfData* stream, const uint32_
     const unsigned bytesRead = stream->Read(headerText, length);
     const bool readOk = ( bytesRead == length );
     if ( readOk )
-        m_samHeader = new SamHeader( (string)((const char*)headerText) );
+        m_samHeader->SetHeaderText( (string)((const char*)headerText) );
     else
         fprintf(stderr, "BAM header error - could not read header text\n");
 
@@ -134,8 +140,7 @@ BamHeader::~BamHeader(void) {
 }
 
 void BamHeader::Clear(void) {
-    delete d->m_samHeader;
-    d->m_samHeader = new SamHeader("");
+    d->m_samHeader->Clear();
 }
 
 bool BamHeader::IsValid(void) const {

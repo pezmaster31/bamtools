@@ -58,6 +58,16 @@ void SamHeader::Clear(void) {
     Comments.clear();
 }
 
+void SamHeader::SetHeaderText(const std::string& headerText) {
+
+    // clear prior data
+    Clear();
+
+    // parse header text into data
+    SamFormatParser parser(*this);
+    parser.Parse(headerText);
+}
+
 // retrieve the SAM header, with any local modifications
 string SamHeader::ToString(void) const {
     SamFormatPrinter printer(*this);

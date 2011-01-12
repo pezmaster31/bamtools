@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 23 December 2010 (DB)
+// Last modified: 12 January 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for querying/manipulating SAM header data
 // **************************************************************************
@@ -37,6 +37,9 @@ struct API_EXPORT SamHeader {
         // @verbose - if true, validation errors & warnings will be printed to stderr
         // otherwise, output is suppressed and only validation check occurs
         bool IsValid(bool verbose = false) const;
+
+        // replaces SamHeader contents with headerText
+        void SetHeaderText(const std::string& headerText);
 
         // retrieves the printable, SAM-formatted header
         // (with any local modifications since construction)

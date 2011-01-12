@@ -1,5 +1,25 @@
+// ***************************************************************************
+// SamHeaderVersion.h (c) 2010 Derek Barnett
+// Marth Lab, Department of Biology, Boston College
+// All rights reserved.
+// ---------------------------------------------------------------------------
+// Last modified: 23 December 2010 (DB)
+// ---------------------------------------------------------------------------
+// Provides functionality for comparing SAM header versions
+// *************************************************************************
+
 #ifndef SAM_HEADERVERSION_P_H
 #define SAM_HEADERVERSION_P_H
+
+//  -------------
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the BamTools API.  It exists purely as an
+// implementation detail. This header file may change from version to version
+// without notice, or even be removed.
+//
+// We mean it.
 
 #include <api/SamConstants.h>
 #include <sstream>

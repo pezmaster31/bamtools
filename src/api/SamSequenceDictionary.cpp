@@ -1,3 +1,13 @@
+// ***************************************************************************
+// SamSequenceDictionary.cpp (c) 2010 Derek Barnett
+// Marth Lab, Department of Biology, Boston College
+// All rights reserved.
+// ---------------------------------------------------------------------------
+// Last modified: 23 December 2010 (DB)
+// ---------------------------------------------------------------------------
+// Provides container operations for collection of sequence entries
+// *************************************************************************
+
 #include <api/SamSequenceDictionary.h>
 using namespace BamTools;
 
@@ -6,6 +16,11 @@ using namespace std;
 
 // ctor
 SamSequenceDictionary::SamSequenceDictionary(void) { }
+
+// copy ctor
+SamSequenceDictionary::SamSequenceDictionary(const SamSequenceDictionary& other)
+    : m_data(other.m_data)
+{ }
 
 // dtor
 SamSequenceDictionary::~SamSequenceDictionary(void) {

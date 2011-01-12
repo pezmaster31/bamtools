@@ -22,6 +22,16 @@ SamSequence::SamSequence(const string& name)
     , Species("")
 { }
 
+// copy ctor
+SamSequence::SamSequence(const SamSequence& other)
+    : Name(other.Name)
+    , Length(other.Length)
+    , AssemblyID(other.AssemblyID)
+    , Checksum(other.Checksum)
+    , URI(other.URI)
+    , Species(other.Species)
+{ }
+
 // dtor
 SamSequence::~SamSequence(void) {
     Clear();

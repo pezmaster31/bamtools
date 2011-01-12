@@ -16,6 +16,7 @@ using namespace BamTools;
 using namespace BamTools::Internal;
 using namespace std;
 
+// ctor
 SamHeader::SamHeader(const string& headerText)
     : Version("")
     , SortOrder("")
@@ -28,6 +29,19 @@ SamHeader::SamHeader(const string& headerText)
     parser.Parse(headerText);
 }
 
+// copy ctor
+SamHeader::SamHeader(const SamHeader& other)
+    : Version(other.Version)
+    , SortOrder(other.SortOrder)
+    , GroupOrder(other.GroupOrder)
+    , Sequences(other.Sequences)
+    , ReadGroups(other.ReadGroups)
+    , ProgramName(other.ProgramName)
+    , ProgramVersion(other.ProgramVersion)
+    , ProgramCommandLine(other.ProgramCommandLine)
+{ }
+
+// dtor
 SamHeader::~SamHeader(void) {
     Clear();
 }

@@ -21,6 +21,7 @@ class API_EXPORT SamSequence {
     // ctor & dtor
     public:
         SamSequence(const std::string& name = "");
+        explicit SamSequence(const SamSequence& other);
         ~SamSequence(void);
 
     // public methods

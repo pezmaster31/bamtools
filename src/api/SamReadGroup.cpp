@@ -38,6 +38,19 @@ SamReadGroup::SamReadGroup(const string& id)
     , SequencingTechnology("")
 { }
 
+// copy ctor
+SamReadGroup::SamReadGroup(const SamReadGroup& other)
+    : ID(other.ID)
+    , Sample(other.Sample)
+    , Library(other.Library)
+    , Description(other.Description)
+    , PlatformUnit(other.PlatformUnit)
+    , PredictedInsertSize(other.PredictedInsertSize)
+    , SequencingCenter(other.SequencingCenter)
+    , ProductionDate(other.ProductionDate)
+    , SequencingTechnology(other.SequencingTechnology)
+{ }
+
 // dtor
 SamReadGroup::~SamReadGroup(void) {
     Clear();

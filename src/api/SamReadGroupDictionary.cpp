@@ -18,6 +18,11 @@ using namespace std;
 // ctor
 SamReadGroupDictionary::SamReadGroupDictionary(void) { }
 
+// copy ctor
+SamReadGroupDictionary::SamReadGroupDictionary(const SamReadGroupDictionary& other)
+    : m_data(other.m_data)
+{ }
+
 // dtor
 SamReadGroupDictionary::~SamReadGroupDictionary(void) {
     m_data.clear();

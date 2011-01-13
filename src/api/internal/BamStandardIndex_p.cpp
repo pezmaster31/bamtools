@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 22 November 2010 (DB)
+// Last modified: 13 January 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the standardized BAM index format (".bai")
 // ***************************************************************************
@@ -46,11 +46,11 @@ int BamStandardIndex::BinsFromRegion(const BamRegion& region,
     // if right bound specified AND left&right bounds are on same reference
     // OK to use right bound position
     if ( isRightBoundSpecified && ( region.LeftRefID == region.RightRefID ) )
-	end = (unsigned int)region.RightPosition;
+        end = (unsigned int)region.RightPosition;
 
     // otherwise, use end of left bound reference as cutoff
     else
-	end = (unsigned int)m_references.at(region.LeftRefID).RefLength - 1;
+        end = (unsigned int)m_references.at(region.LeftRefID).RefLength - 1;
 
     // initialize list, bin '0' always a valid bin
     int i = 0;
@@ -73,7 +73,7 @@ bool BamStandardIndex::Build(void) {
 
     // be sure reader & BGZF file are valid & open for reading
     if ( m_reader == 0 || m_BGZF == 0 || !m_BGZF->IsOpen )
-	return false;
+        return false;
 
     // move file pointer to beginning of alignments
     m_reader->Rewind();
@@ -105,80 +105,80 @@ bool BamStandardIndex::Build(void) {
     BamAlignment bAlignment;
     while ( m_reader->GetNextAlignmentCore(bAlignment) ) {
 
-	// change of chromosome, save ID, reset bin
-	if ( lastRefID != bAlignment.RefID ) {
-	    lastRefID = bAlignment.RefID;
-	    lastBin   = defaultValue;
-	}
+        // change of chromosome, save ID, reset bin
+        if ( lastRefID != bAlignment.RefID ) {
+            lastRefID = bAlignment.RefID;
+            lastBin   = defaultValue;
+        }
 
-	// if lastCoordinate greater than BAM position - file not sorted properly
-	else if ( lastCoordinate > bAlignment.Position ) {
-	    fprintf(stderr, "BAM file not properly sorted:\n");
-	    fprintf(stderr, "Alignment %s : %d > %d on reference (id = %d)", bAlignment.Name.c_str(),
-		    lastCoordinate, bAlignment.Position, bAlignment.RefID);
-	    exit(1);
-	}
+        // if lastCoordinate greater than BAM position - file not sorted properly
+        else if ( lastCoordinate > bAlignment.Position ) {
+            fprintf(stderr, "BAM file not properly sorted:\n");
+            fprintf(stderr, "Alignment %s : %d > %d on reference (id = %d)", bAlignment.Name.c_str(),
+                lastCoordinate, bAlignment.Position, bAlignment.RefID);
+            exit(1);
+        }
 
-	// if valid reference && BAM bin spans some minimum cutoff (smaller bin ids span larger regions)
-	if ( (bAlignment.RefID >= 0) && (bAlignment.Bin < 4681) ) {
+        // if valid reference && BAM bin spans some minimum cutoff (smaller bin ids span larger regions)
+        if ( (bAlignment.RefID >= 0) && (bAlignment.Bin < 4681) ) {
 
-	    // save linear offset entry (matched to BAM entry refID)
-	    BamStandardIndexData::iterator indexIter = m_indexData.find(bAlignment.RefID);
-	    if ( indexIter == m_indexData.end() ) return false; // error
-	    ReferenceIndex& refIndex = (*indexIter).second;
-	    LinearOffsetVector& offsets = refIndex.Offsets;
-	    SaveLinearOffset(offsets, bAlignment, lastOffset);
-	}
+            // save linear offset entry (matched to BAM entry refID)
+            BamStandardIndexData::iterator indexIter = m_indexData.find(bAlignment.RefID);
+            if ( indexIter == m_indexData.end() ) return false; // error
+            ReferenceIndex& refIndex = (*indexIter).second;
+            LinearOffsetVector& offsets = refIndex.Offsets;
+            SaveLinearOffset(offsets, bAlignment, lastOffset);
+        }
 
-	// if current BamAlignment bin != lastBin, "then possibly write the binning index"
-	if ( bAlignment.Bin != lastBin ) {
+        // if current BamAlignment bin != lastBin, "then possibly write the binning index"
+        if ( bAlignment.Bin != lastBin ) {
 
-	    // if not first time through
-	    if ( saveBin != defaultValue ) {
+            // if not first time through
+            if ( saveBin != defaultValue ) {
 
-		// save Bam bin entry
-		BamStandardIndexData::iterator indexIter = m_indexData.find(saveRefID);
-		if ( indexIter == m_indexData.end() ) return false; // error
-		ReferenceIndex& refIndex = (*indexIter).second;
-		BamBinMap& binMap = refIndex.Bins;
-		SaveBinEntry(binMap, saveBin, saveOffset, lastOffset);
-	    }
+                // save Bam bin entry
+                BamStandardIndexData::iterator indexIter = m_indexData.find(saveRefID);
+                if ( indexIter == m_indexData.end() ) return false; // error
+                ReferenceIndex& refIndex = (*indexIter).second;
+                BamBinMap& binMap = refIndex.Bins;
+                SaveBinEntry(binMap, saveBin, saveOffset, lastOffset);
+            }
 
-	    // update saveOffset
-	    saveOffset = lastOffset;
+            // update saveOffset
+            saveOffset = lastOffset;
 
-	    // update bin values
-	    saveBin = bAlignment.Bin;
-	    lastBin = bAlignment.Bin;
+            // update bin values
+            saveBin = bAlignment.Bin;
+            lastBin = bAlignment.Bin;
 
-	    // update saveRefID
-	    saveRefID = bAlignment.RefID;
+            // update saveRefID
+            saveRefID = bAlignment.RefID;
 
-	    // if invalid RefID, break out
-	    if ( saveRefID < 0 ) break;
-	}
+            // if invalid RefID, break out
+            if ( saveRefID < 0 ) break;
+        }
 
-	// make sure that current file pointer is beyond lastOffset
-	if ( m_BGZF->Tell() <= (int64_t)lastOffset ) {
-	    fprintf(stderr, "Error in BGZF offsets.\n");
-	    exit(1);
-	}
+        // make sure that current file pointer is beyond lastOffset
+        if ( m_BGZF->Tell() <= (int64_t)lastOffset ) {
+            fprintf(stderr, "Error in BGZF offsets.\n");
+            exit(1);
+        }
 
-	// update lastOffset
-	lastOffset = m_BGZF->Tell();
+        // update lastOffset
+        lastOffset = m_BGZF->Tell();
 
-	// update lastCoordinate
-	lastCoordinate = bAlignment.Position;
+        // update lastCoordinate
+        lastCoordinate = bAlignment.Position;
     }
 
     // save any leftover BAM data (as long as refID is valid)
     if ( saveRefID >= 0 ) {
-	// save Bam bin entry
-	BamStandardIndexData::iterator indexIter = m_indexData.find(saveRefID);
-	if ( indexIter == m_indexData.end() ) return false; // error
-	ReferenceIndex& refIndex = (*indexIter).second;
-	BamBinMap& binMap = refIndex.Bins;
-	SaveBinEntry(binMap, saveBin, saveOffset, lastOffset);
+        // save Bam bin entry
+        BamStandardIndexData::iterator indexIter = m_indexData.find(saveRefID);
+        if ( indexIter == m_indexData.end() ) return false; // error
+        ReferenceIndex& refIndex = (*indexIter).second;
+        BamBinMap& binMap = refIndex.Bins;
+        SaveBinEntry(binMap, saveBin, saveOffset, lastOffset);
     }
 
     // simplify index by merging chunks
@@ -190,12 +190,12 @@ bool BamStandardIndex::Build(void) {
     BamStandardIndexData::iterator indexEnd  = m_indexData.end();
     for ( int i = 0; indexIter != indexEnd; ++indexIter, ++i ) {
 
-	// get reference index data
-	ReferenceIndex& refIndex = (*indexIter).second;
-	LinearOffsetVector& offsets = refIndex.Offsets;
+        // get reference index data
+        ReferenceIndex& refIndex = (*indexIter).second;
+        LinearOffsetVector& offsets = refIndex.Offsets;
 
-	// sort linear offsets
-	sort(offsets.begin(), offsets.end());
+        // sort linear offsets
+        sort(offsets.begin(), offsets.end());
     }
 
     // rewind file pointer to beginning of alignments, return success/fail
@@ -211,9 +211,9 @@ bool BamStandardIndex::CheckMagicNumber(void) {
 
     // compare to expected value
     if ( strncmp(magic, "BAI\1", 4) != 0 ) {
-	fprintf(stderr, "Problem with index file - invalid format.\n");
-	fclose(m_indexStream);
-	return false;
+        fprintf(stderr, "Problem with index file - invalid format.\n");
+        fclose(m_indexStream);
+        return false;
     }
 
     // return success/failure of load
@@ -225,8 +225,8 @@ void BamStandardIndex::ClearAllData(void) {
     BamStandardIndexData::const_iterator indexIter = m_indexData.begin();
     BamStandardIndexData::const_iterator indexEnd  = m_indexData.end();
     for ( ; indexIter != indexEnd; ++indexIter ) {
-	const int& refId = (*indexIter).first;
-	ClearReferenceOffsets(refId);
+        const int& refId = (*indexIter).first;
+        ClearReferenceOffsets(refId);
     }
 }
 
@@ -259,14 +259,14 @@ bool BamStandardIndex::GetOffsets(const BamRegion& region,
 {
     // return false if leftBound refID is not found in index data
     if ( m_indexData.find(region.LeftRefID) == m_indexData.end() )
-	return false;
+        return false;
 
     // load index data for region if not already cached
     if ( !IsDataLoaded(region.LeftRefID) ) {
-	bool loadedOk = true;
-	loadedOk &= SkipToReference(region.LeftRefID);
-	loadedOk &= LoadReference(region.LeftRefID);
-	if ( !loadedOk ) return false;
+        bool loadedOk = true;
+        loadedOk &= SkipToReference(region.LeftRefID);
+        loadedOk &= LoadReference(region.LeftRefID);
+        if ( !loadedOk ) return false;
     }
 
     // calculate which bins overlap this region
@@ -287,22 +287,22 @@ bool BamStandardIndex::GetOffsets(const BamRegion& region,
     // store all alignment 'chunk' starts (file offsets) for bins in this region
     for ( int i = 0; i < numBins; ++i ) {
 
-	const uint16_t binKey = bins[i];
-	map<uint32_t, ChunkVector>::const_iterator binIter = binMap.find(binKey);
-	if ( (binIter != binMap.end()) && ((*binIter).first == binKey) ) {
+        const uint16_t binKey = bins[i];
+        map<uint32_t, ChunkVector>::const_iterator binIter = binMap.find(binKey);
+        if ( (binIter != binMap.end()) && ((*binIter).first == binKey) ) {
 
-	    // iterate over chunks
-	    const ChunkVector& chunks = (*binIter).second;
-	    std::vector<Chunk>::const_iterator chunksIter = chunks.begin();
-	    std::vector<Chunk>::const_iterator chunksEnd  = chunks.end();
-	    for ( ; chunksIter != chunksEnd; ++chunksIter) {
+            // iterate over chunks
+            const ChunkVector& chunks = (*binIter).second;
+            std::vector<Chunk>::const_iterator chunksIter = chunks.begin();
+            std::vector<Chunk>::const_iterator chunksEnd  = chunks.end();
+            for ( ; chunksIter != chunksEnd; ++chunksIter) {
 
-		// if valid chunk found, store its file offset
-		const Chunk& chunk = (*chunksIter);
-		if ( chunk.Stop > minOffset )
-		    offsets.push_back( chunk.Start );
-	    }
-	}
+                // if valid chunk found, store its file offset
+                const Chunk& chunk = (*chunksIter);
+                if ( chunk.Stop > minOffset )
+                    offsets.push_back( chunk.Start );
+            }
+        }
     }
 
     // clean up memory
@@ -356,19 +356,19 @@ bool BamStandardIndex::Jump(const BamRegion& region, bool* hasAlignmentsInRegion
 
     // be sure reader & BGZF file are valid & open for reading
     if ( m_reader == 0 || m_BGZF == 0 || !m_BGZF->IsOpen )
-	return false;
+        return false;
 
     // make sure left-bound position is valid
     if ( region.LeftPosition > m_references.at(region.LeftRefID).RefLength )
-	return false;
+        return false;
 
     // calculate offsets for this region
     // if failed, print message, set flag, and return failure
     vector<int64_t> offsets;
     if ( !GetOffsets(region, region.isRightBoundSpecified(), offsets, hasAlignmentsInRegion) ) {
-	fprintf(stderr, "ERROR: Could not jump: unable to calculate offset(s) for specified region.\n");
-	*hasAlignmentsInRegion = false;
-	return false;
+        fprintf(stderr, "ERROR: Could not jump: unable to calculate offset(s) for specified region.\n");
+        *hasAlignmentsInRegion = false;
+        return false;
     }
 
     // iterate through offsets
@@ -376,26 +376,26 @@ bool BamStandardIndex::Jump(const BamRegion& region, bool* hasAlignmentsInRegion
     bool result = true;
     for ( vector<int64_t>::const_iterator o = offsets.begin(); o != offsets.end(); ++o) {
 
-	// attempt seek & load first available alignment
-	// set flag to true if data exists
-	result &= m_BGZF->Seek(*o);
-	*hasAlignmentsInRegion = m_reader->GetNextAlignmentCore(bAlignment);
+        // attempt seek & load first available alignment
+        // set flag to true if data exists
+        result &= m_BGZF->Seek(*o);
+        *hasAlignmentsInRegion = m_reader->GetNextAlignmentCore(bAlignment);
 
-	// if this alignment corresponds to desired position
-	// return success of seeking back to the offset before the 'current offset' (to cover overlaps)
-	if ( ((bAlignment.RefID == region.LeftRefID) &&
-	       ((bAlignment.Position + bAlignment.Length) > region.LeftPosition)) ||
-	     (bAlignment.RefID > region.LeftRefID) )
-	{
-	    if ( o != offsets.begin() ) --o;
-	    return m_BGZF->Seek(*o);
-	}
+        // if this alignment corresponds to desired position
+        // return success of seeking back to the offset before the 'current offset' (to cover overlaps)
+        if ( ((bAlignment.RefID == region.LeftRefID) &&
+             ((bAlignment.Position + bAlignment.Length) > region.LeftPosition)) ||
+             (bAlignment.RefID > region.LeftRefID) )
+        {
+            if ( o != offsets.begin() ) --o;
+                return m_BGZF->Seek(*o);
+        }
     }
 
     // if error in jumping, print message & set flag
     if ( !result ) {
-	fprintf(stderr, "ERROR: Could not jump: unable to determine correct offset for specified region.\n");
-	*hasAlignmentsInRegion = false;
+        fprintf(stderr, "ERROR: Could not jump: unable to determine correct offset for specified region.\n");
+        *hasAlignmentsInRegion = false;
     }
 
     // return success/failure
@@ -413,9 +413,9 @@ void BamStandardIndex::KeepOnlyReferenceOffsets(const int& refId) {
     BamStandardIndexData::iterator mapIter = m_indexData.begin();
     BamStandardIndexData::iterator mapEnd  = m_indexData.end();
     for ( ; mapIter != mapEnd; ++mapIter ) {
-	const int entryRefId = (*mapIter).first;
-	if ( entryRefId != refId )
-	    ClearReferenceOffsets(entryRefId);
+        const int entryRefId = (*mapIter).first;
+        if ( entryRefId != refId )
+            ClearReferenceOffsets(entryRefId);
     }
 }
 
@@ -427,16 +427,16 @@ bool BamStandardIndex::LoadAllReferences(bool saveData) {
     // get number of reference sequences
     uint32_t numReferences;
     if ( !LoadReferenceCount((int&)numReferences) )
-	return false;
+        return false;
 
     // iterate over reference entries
     bool loadedOk = true;
     for ( int i = 0; i < (int)numReferences; ++i )
-	loadedOk &= LoadReference(i, saveData);
+        loadedOk &= LoadReference(i, saveData);
 
     // set flag
     if ( loadedOk && saveData )
-	m_hasFullDataCache = true;
+        m_hasFullDataCache = true;
 
     // return success/failure of loading references
     return loadedOk;
@@ -471,7 +471,7 @@ bool BamStandardIndex::LoadBin(ReferenceIndex& refEntry, bool saveData) {
 
     // store bin entry
     if ( chunksOk && saveData )
-	refEntry.Bins.insert(pair<uint32_t, ChunkVector>(binId, chunks));
+        refEntry.Bins.insert(pair<uint32_t, ChunkVector>(binId, chunks));
 
     // return success/failure of load
     return ( (elementsRead == 1) && chunksOk );
@@ -492,7 +492,7 @@ bool BamStandardIndex::LoadBins(ReferenceIndex& refEntry, bool saveData) {
     // iterate over bins
     bool binsOk = true;
     for ( int i = 0; i < numBins; ++i )
-	binsOk &= LoadBin(refEntry, saveData);
+        binsOk &= LoadBin(refEntry, saveData);
 
     // return success/failure of load
     return ( (elementsRead == 1) && binsOk );
@@ -512,8 +512,8 @@ bool BamStandardIndex::LoadChunk(ChunkVector& chunks, bool saveData) {
 
     // swap endian-ness if necessary
     if ( m_isBigEndian ) {
-	SwapEndian_64(start);
-	SwapEndian_64(stop);
+        SwapEndian_64(start);
+        SwapEndian_64(stop);
     }
 
     // save data if requested
@@ -538,7 +538,7 @@ bool BamStandardIndex::LoadChunks(ChunkVector& chunks, bool saveData) {
     // iterate over chunks
     bool chunksOk = true;
     for ( int i = 0; i < (int)numChunks; ++i )
-	chunksOk &= LoadChunk(chunks, saveData);
+        chunksOk &= LoadChunk(chunks, saveData);
 
     // sort chunk vector
     sort( chunks.begin(), chunks.end(), ChunkLessThan );
@@ -565,9 +565,9 @@ bool BamStandardIndex::LoadLinearOffsets(ReferenceIndex& refEntry, bool saveData
     // iterate over linear offsets
     uint64_t linearOffset;
     for ( int i = 0; i < numLinearOffsets; ++i ) {
-	elementsRead += fread(&linearOffset, sizeof(linearOffset), 1, m_indexStream);
-	if ( m_isBigEndian ) SwapEndian_64(linearOffset);
-	if ( saveData ) linearOffsets.push_back(linearOffset);
+        elementsRead += fread(&linearOffset, sizeof(linearOffset), 1, m_indexStream);
+        if ( m_isBigEndian ) SwapEndian_64(linearOffset);
+        if ( saveData ) linearOffsets.push_back(linearOffset);
     }
 
     // sort linear offsets
@@ -594,9 +594,9 @@ bool BamStandardIndex::LoadReference(const int& refId, bool saveData) {
 
     // if reference not previously loaded, create new entry
     if ( indexIter == m_indexData.end() ) {
-	ReferenceIndex newEntry;
-	newEntry.HasAlignments = false;
-	m_indexData.insert( pair<int32_t, ReferenceIndex>(refId, newEntry) );
+        ReferenceIndex newEntry;
+        newEntry.HasAlignments = false;
+        m_indexData.insert( pair<int32_t, ReferenceIndex>(refId, newEntry) );
     }
 
     // load reference data
@@ -629,49 +629,49 @@ void BamStandardIndex::MergeChunks(void) {
     BamStandardIndexData::iterator indexEnd  = m_indexData.end();
     for ( ; indexIter != indexEnd; ++indexIter ) {
 
-	// get BAM bin map for this reference
-	ReferenceIndex& refIndex = (*indexIter).second;
-	BamBinMap& bamBinMap = refIndex.Bins;
+        // get BAM bin map for this reference
+        ReferenceIndex& refIndex = (*indexIter).second;
+        BamBinMap& bamBinMap = refIndex.Bins;
 
-	// iterate over BAM bins
-	BamBinMap::iterator binIter = bamBinMap.begin();
-	BamBinMap::iterator binEnd  = bamBinMap.end();
-	for ( ; binIter != binEnd; ++binIter ) {
+        // iterate over BAM bins
+        BamBinMap::iterator binIter = bamBinMap.begin();
+        BamBinMap::iterator binEnd  = bamBinMap.end();
+        for ( ; binIter != binEnd; ++binIter ) {
 
-	    // get chunk vector for this bin
-	    ChunkVector& binChunks = (*binIter).second;
-	    if ( binChunks.size() == 0 ) continue;
+            // get chunk vector for this bin
+            ChunkVector& binChunks = (*binIter).second;
+            if ( binChunks.size() == 0 ) continue;
 
-	    ChunkVector mergedChunks;
-	    mergedChunks.push_back( binChunks[0] );
+            ChunkVector mergedChunks;
+            mergedChunks.push_back( binChunks[0] );
 
-	    // iterate over chunks
-	    int i = 0;
-	    ChunkVector::iterator chunkIter = binChunks.begin();
-	    ChunkVector::iterator chunkEnd  = binChunks.end();
-	    for ( ++chunkIter; chunkIter != chunkEnd; ++chunkIter) {
+            // iterate over chunks
+            int i = 0;
+            ChunkVector::iterator chunkIter = binChunks.begin();
+            ChunkVector::iterator chunkEnd  = binChunks.end();
+            for ( ++chunkIter; chunkIter != chunkEnd; ++chunkIter) {
 
-		// get 'currentChunk' based on numeric index
-		Chunk& currentChunk = mergedChunks[i];
+                // get 'currentChunk' based on numeric index
+                Chunk& currentChunk = mergedChunks[i];
 
-		// get iteratorChunk based on vector iterator
-		Chunk& iteratorChunk = (*chunkIter);
+                // get iteratorChunk based on vector iterator
+                Chunk& iteratorChunk = (*chunkIter);
 
-		// if chunk ends where (iterator) chunk starts, then merge
-		if ( currentChunk.Stop>>16 == iteratorChunk.Start>>16 )
-		    currentChunk.Stop = iteratorChunk.Stop;
+                // if chunk ends where (iterator) chunk starts, then merge
+                if ( currentChunk.Stop>>16 == iteratorChunk.Start>>16 )
+                    currentChunk.Stop = iteratorChunk.Stop;
 
-		// otherwise
-		else {
-		    // set currentChunk + 1 to iteratorChunk
-		    mergedChunks.push_back(iteratorChunk);
-		    ++i;
-		}
-	    }
+                // otherwise
+                else {
+                    // set currentChunk + 1 to iteratorChunk
+                    mergedChunks.push_back(iteratorChunk);
+                    ++i;
+                }
+            }
 
-	    // saved merged chunk vector
-	    (*binIter).second = mergedChunks;
-	}
+            // saved merged chunk vector
+            (*binIter).second = mergedChunks;
+        }
     }
 }
 
@@ -689,15 +689,15 @@ void BamStandardIndex::SaveBinEntry(BamBinMap& binMap,
 
     // if entry doesn't exist
     if ( binIter == binMap.end() ) {
-	ChunkVector newChunks;
-	newChunks.push_back(newChunk);
-	binMap.insert( pair<uint32_t, ChunkVector>(saveBin, newChunks));
+        ChunkVector newChunks;
+        newChunks.push_back(newChunk);
+        binMap.insert( pair<uint32_t, ChunkVector>(saveBin, newChunks));
     }
 
     // otherwise
     else {
-	ChunkVector& binChunks = (*binIter).second;
-	binChunks.push_back( newChunk );
+        ChunkVector& binChunks = (*binIter).second;
+        binChunks.push_back( newChunk );
     }
 }
 
@@ -714,19 +714,19 @@ void BamStandardIndex::SaveLinearOffset(LinearOffsetVector& offsets,
     int oldSize = offsets.size();
     int newSize = endOffset + 1;
     if ( oldSize < newSize )
-	offsets.resize(newSize, 0);
+        offsets.resize(newSize, 0);
 
     // store offset
     for( int i = beginOffset + 1; i <= endOffset; ++i ) {
-	if ( offsets[i] == 0 )
-	    offsets[i] = lastOffset;
-    }
+        if ( offsets[i] == 0 )
+            offsets[i] = lastOffset;
+        }
 }
 
 // initializes index data structure to hold @count references
 void BamStandardIndex::SetReferenceCount(const int& count) {
     for ( int i = 0; i < count; ++i )
-	m_indexData[i].HasAlignments = false;
+        m_indexData[i].HasAlignments = false;
 }
 
 bool BamStandardIndex::SkipToFirstReference(void) {
@@ -750,8 +750,8 @@ bool BamStandardIndex::SkipToReference(const int& refId) {
     bool skippedOk = true;
     int currentRefId = 0;
     while (currentRefId != refId) {
-	skippedOk &= LoadReference(currentRefId, false);
-	++currentRefId;
+        skippedOk &= LoadReference(currentRefId, false);
+        ++currentRefId;
     }
 
     // return success
@@ -788,7 +788,7 @@ bool BamStandardIndex::WriteAllReferences(void) {
     BamStandardIndexData::const_iterator indexIter = m_indexData.begin();
     BamStandardIndexData::const_iterator indexEnd  = m_indexData.end();
     for ( ; indexIter != indexEnd; ++ indexIter )
-	refsOk &= WriteReference( (*indexIter).second );
+        refsOk &= WriteReference( (*indexIter).second );
 
     // return success/failure of write
     return ( (elementsWritten == 1) && refsOk );
@@ -826,7 +826,7 @@ bool BamStandardIndex::WriteBins(const BamBinMap& bins) {
     BamBinMap::const_iterator binIter = bins.begin();
     BamBinMap::const_iterator binEnd  = bins.end();
     for ( ; binIter != binEnd; ++binIter )
-	binsOk &= WriteBin( (*binIter).first, (*binIter).second );
+        binsOk &= WriteBin( (*binIter).first, (*binIter).second );
 
     // return success/failure of write
     return ( (elementsWritten == 1) && binsOk );
@@ -843,8 +843,8 @@ bool BamStandardIndex::WriteChunk(const Chunk& chunk) {
 
     // swap endian-ness if necessary
     if ( m_isBigEndian ) {
-	SwapEndian_64(start);
-	SwapEndian_64(stop);
+        SwapEndian_64(start);
+        SwapEndian_64(stop);
     }
 
     // write to index file
@@ -870,7 +870,7 @@ bool BamStandardIndex::WriteChunks(const ChunkVector& chunks) {
     ChunkVector::const_iterator chunkIter = chunks.begin();
     ChunkVector::const_iterator chunkEnd  = chunks.end();
     for ( ; chunkIter != chunkEnd; ++chunkIter )
-	chunksOk &= WriteChunk( (*chunkIter) );
+        chunksOk &= WriteChunk( (*chunkIter) );
 
     // return success/failure of write
     return ( (elementsWritten == 1) && chunksOk );
@@ -891,10 +891,10 @@ bool BamStandardIndex::WriteLinearOffsets(const LinearOffsetVector& offsets) {
     LinearOffsetVector::const_iterator offsetEnd  = offsets.end();
     for ( ; offsetIter != offsetEnd; ++offsetIter ) {
 
-	// write linear offset
-	uint64_t linearOffset = (*offsetIter);
-	if ( m_isBigEndian ) SwapEndian_64(linearOffset);
-	elementsWritten += fwrite(&linearOffset, sizeof(linearOffset), 1, m_indexStream);
+        // write linear offset
+        uint64_t linearOffset = (*offsetIter);
+        if ( m_isBigEndian ) SwapEndian_64(linearOffset);
+        elementsWritten += fwrite(&linearOffset, sizeof(linearOffset), 1, m_indexStream);
     }
 
     // return success/failure of write

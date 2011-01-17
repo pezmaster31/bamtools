@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 23 December 2010 (DB)
+// Last modified: 13 January 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for validating SamHeader data
 // ***************************************************************************
@@ -18,11 +18,10 @@ using namespace BamTools::Internal;
 #include <iostream>
 #include <set>
 #include <sstream>
-#include <vector>
 using namespace std;
 
-// -------------------------------------------------------------------
-// Allow validation rules to vary between SAM header versions
+// ------------------------------------------------------------------------
+// Allow validation rules to vary, as needed, between SAM header versions
 //
 // use SAM_VERSION_X_Y to tag important changes
 //
@@ -35,87 +34,22 @@ using namespace std;
 static const SamHeaderVersion SAM_VERSION_1_0 = SamHeaderVersion(1,0);
 static const SamHeaderVersion SAM_VERSION_1_3 = SamHeaderVersion(1,3);
 
-// -----------------------------------------
-// SamHeaderValidatorPrivate implementation
+// TODO: This functionality is currently unused.
+//       Make validation "version-aware."
+//
+// ------------------------------------------------------------------------
 
-class SamHeaderValidator::SamHeaderValidatorPrivate {
+const string SamHeaderValidator::ERROR_PREFIX = "ERROR: ";
+const string SamHeaderValidator::WARN_PREFIX  = "WARNING: ";
+const string SamHeaderValidator::NEWLINE      = "\n";
 
-    // ctor & dtor
-    public:
-        SamHeaderValidatorPrivate(const SamHeader& header);
-        ~SamHeaderValidatorPrivate(void) { }
-
-    // 'public' methods
-    public:
-        bool Validate(bool verbose);
-
-    // internal validation methods
-    private:
-
-        // validate header metadata
-        bool ValidateMetadata(void);
-        bool ValidateVersion(void);
-        bool ContainsOnlyDigits(const string& s);
-        bool ValidateSortOrder(void);
-        bool ValidateGroupOrder(void);
-
-        // validate sequence dictionary
-        bool ValidateSequenceDictionary(void);
-        bool ContainsUniqueSequenceNames(void);
-        bool CheckNameFormat(const string& name);
-        bool ValidateSequence(const SamSequence& seq);
-        bool CheckLengthInRange(const string& length);
-
-        // validate read group dictionary
-        bool ValidateReadGroupDictionary(void);
-        bool ValidateReadGroup(const SamReadGroup& rg);
-        bool ContainsUniqueIDsAndPlatformUnits(void);
-        bool CheckReadGroupID(const string& id);
-        bool CheckSequencingTechnology(const string& technology);
-        bool Is454(const string& technology);
-        bool IsHelicos(const string& technology);
-        bool IsIllumina(const string& technology);
-        bool IsPacBio(const string& technology);
-        bool IsSolid(const string& technology);
-
-        // validate program data
-        bool ValidateProgramData(void);
-        bool ContainsUniqueProgramIds(void);
-        bool ValidatePreviousProgramIds(void);
-
-    // error reporting
-    private:
-        void AddError(const string& message);
-        void AddWarning(const string& message);
-        void PrintErrorMessages(void);
-        void PrintWarningMessages(void);
-
-    // data members
-    private:
-        const SamHeader&       m_header;
-        const SamHeaderVersion m_version;
-
-        bool m_isVerboseOutput;
-        const string ERROR_PREFIX;
-        const string WARN_PREFIX;
-        const string NEWLINE;
-        vector<string> m_errorMessages;
-        vector<string> m_warningMessages;
-};
-
-SamHeaderValidator::SamHeaderValidatorPrivate::SamHeaderValidatorPrivate(const SamHeader& header)
+SamHeaderValidator::SamHeaderValidator(const SamHeader& header)
     : m_header(header)
-    , m_version( header.Version )
-    , m_isVerboseOutput(false)
-    , ERROR_PREFIX("ERROR: ")
-    , WARN_PREFIX("WARNING: ")
-    , NEWLINE("\n")
 { }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::Validate(bool verbose) {
+SamHeaderValidator::~SamHeaderValidator(void) { }
 
-    // set error reporting mode
-    m_isVerboseOutput = verbose;
+bool SamHeaderValidator::Validate(bool verbose) {
 
     // validate header components
     bool isValid = true;
@@ -125,7 +59,7 @@ bool SamHeaderValidator::SamHeaderValidatorPrivate::Validate(bool verbose) {
     isValid &= ValidateProgramData();
 
     // report errors if desired
-    if ( m_isVerboseOutput ) {
+    if ( verbose ) {
         PrintErrorMessages();
         PrintWarningMessages();
     }
@@ -134,7 +68,7 @@ bool SamHeaderValidator::SamHeaderValidatorPrivate::Validate(bool verbose) {
     return isValid;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::ValidateMetadata(void) {
+bool SamHeaderValidator::ValidateMetadata(void) {
     bool isValid = true;
     isValid &= ValidateVersion();
     isValid &= ValidateSortOrder();
@@ -142,7 +76,7 @@ bool SamHeaderValidator::SamHeaderValidatorPrivate::ValidateMetadata(void) {
     return isValid;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::ValidateVersion(void) {
+bool SamHeaderValidator::ValidateVersion(void) {
 
     const string& version = m_header.Version;
 
@@ -181,12 +115,12 @@ bool SamHeaderValidator::SamHeaderValidatorPrivate::ValidateVersion(void) {
 }
 
 // assumes non-empty input string
-bool SamHeaderValidator::SamHeaderValidatorPrivate::ContainsOnlyDigits(const string& s) {
+bool SamHeaderValidator::ContainsOnlyDigits(const string& s) {
     const size_t nonDigitPosition = s.find_first_not_of(Constants::SAM_DIGITS);
     return ( nonDigitPosition == string::npos ) ;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::ValidateSortOrder(void) {
+bool SamHeaderValidator::ValidateSortOrder(void) {
 
     const string& sortOrder = m_header.SortOrder;
 
@@ -208,7 +142,7 @@ bool SamHeaderValidator::SamHeaderValidatorPrivate::ValidateSortOrder(void) {
     return false;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::ValidateGroupOrder(void) {
+bool SamHeaderValidator::ValidateGroupOrder(void) {
 
     const string& groupOrder = m_header.GroupOrder;
 
@@ -227,7 +161,7 @@ bool SamHeaderValidator::SamHeaderValidatorPrivate::ValidateGroupOrder(void) {
     return false;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::ValidateSequenceDictionary(void) {
+bool SamHeaderValidator::ValidateSequenceDictionary(void) {
 
     // TODO: warn/error if no sequences ?
 
@@ -249,7 +183,7 @@ bool SamHeaderValidator::SamHeaderValidatorPrivate::ValidateSequenceDictionary(v
     return isValid;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::ContainsUniqueSequenceNames(void) {
+bool SamHeaderValidator::ContainsUniqueSequenceNames(void) {
 
     bool isValid = true;
     set<string> sequenceNames;
@@ -280,14 +214,14 @@ bool SamHeaderValidator::SamHeaderValidatorPrivate::ContainsUniqueSequenceNames(
     return isValid;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::ValidateSequence(const SamSequence& seq) {
+bool SamHeaderValidator::ValidateSequence(const SamSequence& seq) {
     bool isValid = true;
     isValid &= CheckNameFormat(seq.Name);
     isValid &= CheckLengthInRange(seq.Length);
     return isValid;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::CheckNameFormat(const string& name) {
+bool SamHeaderValidator::CheckNameFormat(const string& name) {
 
     // invalid if name is empty
     if ( name.empty() ) {
@@ -305,7 +239,7 @@ bool SamHeaderValidator::SamHeaderValidatorPrivate::CheckNameFormat(const string
     return true;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::CheckLengthInRange(const string& length) {
+bool SamHeaderValidator::CheckLengthInRange(const string& length) {
 
     // invalid if empty
     if ( length.empty() ) {
@@ -328,7 +262,7 @@ bool SamHeaderValidator::SamHeaderValidatorPrivate::CheckLengthInRange(const str
     return true;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::ValidateReadGroupDictionary(void) {
+bool SamHeaderValidator::ValidateReadGroupDictionary(void) {
 
     // TODO: warn/error if no read groups ?
 
@@ -350,7 +284,7 @@ bool SamHeaderValidator::SamHeaderValidatorPrivate::ValidateReadGroupDictionary(
     return isValid;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::ContainsUniqueIDsAndPlatformUnits(void) {
+bool SamHeaderValidator::ContainsUniqueIDsAndPlatformUnits(void) {
 
     bool isValid = true;
     set<string> readGroupIds;
@@ -402,14 +336,14 @@ bool SamHeaderValidator::SamHeaderValidatorPrivate::ContainsUniqueIDsAndPlatform
     return isValid;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::ValidateReadGroup(const SamReadGroup& rg) {
+bool SamHeaderValidator::ValidateReadGroup(const SamReadGroup& rg) {
     bool isValid = true;
     isValid &= CheckReadGroupID(rg.ID);
     isValid &= CheckSequencingTechnology(rg.SequencingTechnology);
     return isValid;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::CheckReadGroupID(const string& id) {
+bool SamHeaderValidator::CheckReadGroupID(const string& id) {
 
     // invalid if empty
     if ( id.empty() ) {
@@ -421,7 +355,7 @@ bool SamHeaderValidator::SamHeaderValidatorPrivate::CheckReadGroupID(const strin
     return true;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::CheckSequencingTechnology(const string& technology) {
+bool SamHeaderValidator::CheckSequencingTechnology(const string& technology) {
 
     // if no technology provided, no problem, just return OK
     if ( technology.empty() ) return true;
@@ -440,45 +374,45 @@ bool SamHeaderValidator::SamHeaderValidatorPrivate::CheckSequencingTechnology(co
     return false;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::Is454(const string& technology) {
+bool SamHeaderValidator::Is454(const string& technology) {
     return ( technology == Constants::SAM_RG_SEQTECHNOLOGY_454 ||
              technology == Constants::SAM_RG_SEQTECHNOLOGY_LS454_LOWER ||
              technology == Constants::SAM_RG_SEQTECHNOLOGY_LS454_UPPER
            );
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::IsHelicos(const string& technology) {
+bool SamHeaderValidator::IsHelicos(const string& technology) {
     return ( technology == Constants::SAM_RG_SEQTECHNOLOGY_HELICOS_LOWER ||
              technology == Constants::SAM_RG_SEQTECHNOLOGY_HELICOS_UPPER
            );
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::IsIllumina(const string& technology) {
+bool SamHeaderValidator::IsIllumina(const string& technology) {
     return ( technology == Constants::SAM_RG_SEQTECHNOLOGY_ILLUMINA_LOWER ||
              technology == Constants::SAM_RG_SEQTECHNOLOGY_ILLUMINA_UPPER
            );
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::IsPacBio(const string& technology) {
+bool SamHeaderValidator::IsPacBio(const string& technology) {
     return ( technology == Constants::SAM_RG_SEQTECHNOLOGY_PACBIO_LOWER ||
              technology == Constants::SAM_RG_SEQTECHNOLOGY_PACBIO_UPPER
            );
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::IsSolid(const string& technology) {
+bool SamHeaderValidator::IsSolid(const string& technology) {
     return ( technology == Constants::SAM_RG_SEQTECHNOLOGY_SOLID_LOWER ||
              technology == Constants::SAM_RG_SEQTECHNOLOGY_SOLID_UPPER
            );
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::ValidateProgramData(void) {
+bool SamHeaderValidator::ValidateProgramData(void) {
     bool isValid = true;
     isValid &= ContainsUniqueProgramIds();
     isValid &= ValidatePreviousProgramIds();
     return isValid;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::ContainsUniqueProgramIds(void) {
+bool SamHeaderValidator::ContainsUniqueProgramIds(void) {
     bool isValid = true;
     // TODO: once we have ability to handle multiple @PG entries,
     // check here for duplicate ID's
@@ -486,21 +420,21 @@ bool SamHeaderValidator::SamHeaderValidatorPrivate::ContainsUniqueProgramIds(voi
     return isValid;
 }
 
-bool SamHeaderValidator::SamHeaderValidatorPrivate::ValidatePreviousProgramIds(void) {
+bool SamHeaderValidator::ValidatePreviousProgramIds(void) {
     bool isValid = true;
     // TODO: check that PP entries are valid later, after we get multiple @PG-entry handling
     // just return true for now
     return isValid;
 }
-void SamHeaderValidator::SamHeaderValidatorPrivate::AddError(const string& message) {
+void SamHeaderValidator::AddError(const string& message) {
     m_errorMessages.push_back(ERROR_PREFIX + message + NEWLINE);
 }
 
-void SamHeaderValidator::SamHeaderValidatorPrivate::AddWarning(const string& message) {
+void SamHeaderValidator::AddWarning(const string& message) {
     m_warningMessages.push_back(WARN_PREFIX + message + NEWLINE);
 }
 
-void SamHeaderValidator::SamHeaderValidatorPrivate::PrintErrorMessages(void) {
+void SamHeaderValidator::PrintErrorMessages(void) {
 
     // skip if no error messages
     if ( m_errorMessages.empty() ) return;
@@ -515,7 +449,7 @@ void SamHeaderValidator::SamHeaderValidatorPrivate::PrintErrorMessages(void) {
         cerr << (*errorIter);
 }
 
-void SamHeaderValidator::SamHeaderValidatorPrivate::PrintWarningMessages(void) {
+void SamHeaderValidator::PrintWarningMessages(void) {
 
     // skip if no warning messages
     if ( m_warningMessages.empty() ) return;
@@ -529,17 +463,3 @@ void SamHeaderValidator::SamHeaderValidatorPrivate::PrintWarningMessages(void) {
     for ( ; warnIter != warnEnd; ++warnIter )
         cerr << (*warnIter);
 }
-
-// -----------------------------------
-// SamHeaderValidator implementation
-
-SamHeaderValidator::SamHeaderValidator(const BamTools::SamHeader& header)
-    : d( new SamHeaderValidatorPrivate(header) )
-{ }
-
-SamHeaderValidator::~SamHeaderValidator(void) {
-    delete d;
-    d = 0;
-}
-
-bool SamHeaderValidator::Validate(bool verbose) { return d->Validate(verbose); }

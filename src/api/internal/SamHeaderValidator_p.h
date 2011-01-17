@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 23 December 2010 (DB)
+// Last modified: 13 January 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for validating SamHeader data
 // ***************************************************************************
@@ -27,23 +27,78 @@
 namespace BamTools {
 
 class SamHeader;
+class SamReadGroup;
+class SamSequence;
 
 namespace Internal {
 
 class SamHeaderValidator {
 
+    // ctor & dtor
     public:
-        SamHeaderValidator(const BamTools::SamHeader& header);
+        SamHeaderValidator(const SamHeader& header);
         ~SamHeaderValidator(void);
 
+    // SamHeaderValidator interface
     public:
-        // validates SamHeader data
-        // prints error & warning messages to stderr when (verbose == true)
+        // validates SamHeader data, returns true/false accordingly
+        // prints error & warning messages to stderr when @verbose is true
         bool Validate(bool verbose = false);
 
+    // internal methods
     private:
-        struct SamHeaderValidatorPrivate;
-        SamHeaderValidatorPrivate* d;
+
+        // validate header metadata
+        bool ValidateMetadata(void);
+        bool ValidateVersion(void);
+        bool ContainsOnlyDigits(const std::string& s);
+        bool ValidateSortOrder(void);
+        bool ValidateGroupOrder(void);
+
+        // validate sequence dictionary
+        bool ValidateSequenceDictionary(void);
+        bool ContainsUniqueSequenceNames(void);
+        bool CheckNameFormat(const std::string& name);
+        bool ValidateSequence(const SamSequence& seq);
+        bool CheckLengthInRange(const std::string& length);
+
+        // validate read group dictionary
+        bool ValidateReadGroupDictionary(void);
+        bool ValidateReadGroup(const SamReadGroup& rg);
+        bool ContainsUniqueIDsAndPlatformUnits(void);
+        bool CheckReadGroupID(const std::string& id);
+        bool CheckSequencingTechnology(const std::string& technology);
+        bool Is454(const std::string& technology);
+        bool IsHelicos(const std::string& technology);
+        bool IsIllumina(const std::string& technology);
+        bool IsPacBio(const std::string& technology);
+        bool IsSolid(const std::string& technology);
+
+        // validate program data
+        bool ValidateProgramData(void);
+        bool ContainsUniqueProgramIds(void);
+        bool ValidatePreviousProgramIds(void);
+
+        // error reporting
+        void AddError(const std::string& message);
+        void AddWarning(const std::string& message);
+        void PrintErrorMessages(void);
+        void PrintWarningMessages(void);
+
+    // data members
+    private:
+
+        // SamHeader being validated
+        const SamHeader& m_header;
+
+        // error reporting helpers
+        static const std::string ERROR_PREFIX;
+        static const std::string WARN_PREFIX;
+        static const std::string NEWLINE;
+
+        // error reporting messages
+        std::vector<std::string> m_errorMessages;
+        std::vector<std::string> m_warningMessages;
 };
 
 } // namespace Internal

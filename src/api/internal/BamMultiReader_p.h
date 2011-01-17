@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 23 December 2010 (DB)
+// Last modified: 17 January 2011 (DB)
 // ---------------------------------------------------------------------------
 // Functionality for simultaneously reading multiple BAM files
 // *************************************************************************
@@ -70,6 +70,7 @@ class BamMultiReaderPrivate {
 
     // internal methods
     private:
+        IBamMultiMerger* CreateMergerForCurrentSortOrder(void) const;
         const std::string ExtractReadGroup(const std::string& headerLine) const;
         bool LoadNextAlignment(BamAlignment& al, bool coreMode);
         void SaveNextAlignment(BamTools::BamReader* reader, BamTools::BamAlignment* alignment);
@@ -86,10 +87,10 @@ class BamMultiReaderPrivate {
 
         IBamMultiMerger* m_alignments;
         bool m_isCoreMode;
-        bool m_isSortedByPosition;
+        BamMultiReader::SortOrder m_sortOrder;
 };
 
-} // namesapce Internal
+} // namespace Internal
 } // namespace BamTools
 
 #endif // BAMMULTIREADER_P_H

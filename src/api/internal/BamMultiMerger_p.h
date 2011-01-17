@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010 (DB)
+// Last modified: 17 January 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides merging functionality for BamMultiReader.  At this point, supports
 // sorting results by (refId, position) or by read name.
@@ -25,6 +25,7 @@
 #include <api/BamAlignment.h>
 #include <api/BamReader.h>
 #include <map>
+#include <queue>
 #include <string>
 #include <utility>
 
@@ -96,6 +97,25 @@ class ReadNameMultiMerger : public IBamMultiMerger {
         IndexType m_data;
 };
 
+// IBamMultiMerger implementation - unsorted BAM file(s)
+class UnsortedMultiMerger : public IBamMultiMerger {
+
+    public:
+        UnsortedMultiMerger(void) : IBamMultiMerger() { }
+        ~UnsortedMultiMerger(void) { }
+
+    public:
+        void Add(const ReaderAlignment& value);
+        void Clear(void);
+        const ReaderAlignment& First(void) const;
+        const int Size(void) const;
+        ReaderAlignment TakeFirst(void);
+
+    private:
+        typedef std::queue<ReaderAlignment> IndexType;
+        IndexType m_data;
+};
+
 // ------------------------------------------
 // PositionMultiMerger implementation
 
@@ -150,6 +170,31 @@ inline ReaderAlignment ReadNameMultiMerger::TakeFirst(void) {
     ReaderAlignment next = (*first).second;
     m_data.erase(first);
     return next;
+}
+
+// ------------------------------------------
+// UnsortedMultiMerger implementation
+
+inline void UnsortedMultiMerger::Add(const ReaderAlignment& value) {
+    m_data.push(value);
+}
+
+inline void UnsortedMultiMerger::Clear(void) {
+    m_data.clear();
+}
+
+inline const ReaderAlignment& UnsortedMultiMerger::First(void) const {
+    return m_data.front();
+}
+
+inline const int UnsortedMultiMerger::Size(void) const {
+    return m_data.size();
+}
+
+inline ReaderAlignment UnsortedMultiMerger::TakeFirst(void) {
+    ReaderAlignment first = m_data.front();
+    m_data.pop();
+    return first;
 }
 
 } // namespace Internal

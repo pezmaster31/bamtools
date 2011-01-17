@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 23 December 2010 (DB)
+// Last modified: 17 January 2011 (DB)
 // ---------------------------------------------------------------------------
 // Functionality for simultaneously reading multiple BAM files
 // ***************************************************************************
@@ -82,7 +82,10 @@ class API_EXPORT BamMultiReader {
         bool HasOpenReaders(void);
         // set sort order for merging BAM files (i.e. which alignment from the files is 'next'?)
         // default behavior is to sort by position, use this method to handle BAMs sorted by read name
-        enum SortOrder { SortedByPosition = 0, SortedByReadName};
+        enum SortOrder { SortedByPosition = 0
+                       , SortedByReadName
+                       , Unsorted
+                       };
         void SetSortOrder(const SortOrder& order);
 
         // ----------------------

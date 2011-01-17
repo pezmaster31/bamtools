@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 23 December 2010 (DB)
+// Last modified: 17 January 2011 (DB)
 // ---------------------------------------------------------------------------
 // Functionality for simultaneously reading multiple BAM files
 // *************************************************************************
@@ -26,7 +26,7 @@ using namespace std;
 BamMultiReaderPrivate::BamMultiReaderPrivate(void)
     : m_alignments(0)
     , m_isCoreMode(false)
-    , m_isSortedByPosition(true)
+    , m_sortOrder(BamMultiReader::SortedByPosition)
 { }
 
 // dtor
@@ -66,9 +66,9 @@ void BamMultiReaderPrivate::Close(void) {
     // clear out readers
     m_readers.clear();
 
-    // reset flags
+    // reset default flags
     m_isCoreMode = false;
-    m_isSortedByPosition = true;
+    m_sortOrder = BamMultiReader::SortedByPosition;
 }
 
 // saves index data to BAM index files (".bai"/".bti") where necessary, returns success/fail
@@ -82,6 +82,16 @@ bool BamMultiReaderPrivate::CreateIndexes(bool useStandardIndex) {
         result &= reader->CreateIndex(useStandardIndex);
     }
     return result;
+}
+
+IBamMultiMerger* BamMultiReaderPrivate::CreateMergerForCurrentSortOrder(void) const {
+    switch ( m_sortOrder ) {
+        case ( BamMultiReader::SortedByPosition ) : return new PositionMultiMerger;
+        case ( BamMultiReader::SortedByReadName ) : return new ReadNameMultiMerger;
+        case ( BamMultiReader::Unsorted )         : return new UnsortedMultiMerger;
+        default : //print error
+            return 0;
+    }
 }
 
 const string BamMultiReaderPrivate::ExtractReadGroup(const string& headerLine) const {
@@ -305,10 +315,8 @@ bool BamMultiReaderPrivate::Open(const vector<string>& filenames,
     }
 
     // create alignment cache based on sorting mode
-    if ( m_isSortedByPosition )
-        m_alignments = new PositionMultiMerger;
-    else
-        m_alignments = new ReadNameMultiMerger;
+    m_alignments = CreateMergerForCurrentSortOrder();
+    if ( m_alignments == 0 ) return false;
 
     // iterate over filenames
     vector<string>::const_iterator filenameIter = filenames.begin();
@@ -382,8 +390,8 @@ bool BamMultiReaderPrivate::Rewind(void) {
 
 void BamMultiReaderPrivate::SaveNextAlignment(BamReader* reader, BamAlignment* alignment) {
 
-    // must be in core mode && sorting by position to call GNACore()
-    if ( m_isCoreMode && m_isSortedByPosition ) {
+    // must be in core mode && NOT sorting by read name to call GNACore()
+    if ( m_isCoreMode && m_sortOrder != BamMultiReader::SortedByReadName ) {
         if ( reader->GetNextAlignmentCore(*alignment) )
             m_alignments->Add( make_pair(reader, alignment) );
     }
@@ -432,21 +440,15 @@ bool BamMultiReaderPrivate::SetRegion(const BamRegion& region) {
 
 void BamMultiReaderPrivate::SetSortOrder(const BamMultiReader::SortOrder& order) {
 
-    const BamMultiReader::SortOrder oldSortOrder = ( m_isSortedByPosition ? BamMultiReader::SortedByPosition
-                                                                          : BamMultiReader::SortedByReadName ) ;
     // skip if no change needed
-    if ( oldSortOrder == order ) return;
+    if ( m_sortOrder == order ) return;
 
-    // create new alignment cache
-    IBamMultiMerger* newAlignmentCache(0);
-    if ( order == BamMultiReader::SortedByPosition ) {
-        newAlignmentCache = new PositionMultiMerger;
-        m_isSortedByPosition = true;
-    }
-    else {
-        newAlignmentCache = new ReadNameMultiMerger;
-        m_isSortedByPosition = false;
-    }
+    // set new sort order
+    m_sortOrder = order;
+
+    // create new alignment cache based on sort order
+    IBamMultiMerger* newAlignmentCache = CreateMergerForCurrentSortOrder();
+    if ( newAlignmentCache == 0 ) return; // print error?
 
     // copy old cache contents to new cache
     while ( m_alignments->Size() > 0 ) {

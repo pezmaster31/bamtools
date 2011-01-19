@@ -180,7 +180,8 @@ inline void UnsortedMultiMerger::Add(const ReaderAlignment& value) {
 }
 
 inline void UnsortedMultiMerger::Clear(void) {
-    m_data.clear();
+    for (size_t i = 0; i < m_data.size(); ++i )
+        m_data.pop();
 }
 
 inline const ReaderAlignment& UnsortedMultiMerger::First(void) const {

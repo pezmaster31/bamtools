@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 23 December 2010 (DB)
+// Last modified: 19 January 2010 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for comparing SAM header versions
 // *************************************************************************
@@ -80,7 +80,7 @@ void SamHeaderVersion::SetVersion(const std::string& version) {
 
             // store major version if non-empty and contains only digits
             const std::string& majorVersion = version.substr(0, periodFound);
-            if ( majorVersion.empty() ) {
+            if ( !majorVersion.empty() ) {
                 const size_t nonDigitFound = majorVersion.find_first_not_of(Constants::SAM_DIGITS);
                 if ( nonDigitFound == std::string::npos ) {
                     std::stringstream major(majorVersion);
@@ -90,7 +90,7 @@ void SamHeaderVersion::SetVersion(const std::string& version) {
 
             // store minor version if non-empty and contains only digits
             const std::string& minorVersion = version.substr(periodFound + 1);
-            if ( minorVersion.empty() ) {
+            if ( !minorVersion.empty() ) {
                 const size_t nonDigitFound = minorVersion.find_first_not_of(Constants::SAM_DIGITS);
                 if ( nonDigitFound == std::string::npos ) {
                     std::stringstream minor(minorVersion);

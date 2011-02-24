@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 January 2010 (DB)
+// Last modified: 24 February 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for comparing SAM header versions
 // *************************************************************************
@@ -59,8 +59,8 @@ class SamHeaderVersion {
         unsigned int MajorVersion(void) const { return m_majorVersion; }
         unsigned int MinorVersion(void) const { return m_minorVersion; }
 
-        inline void SetVersion(const std::string& version);
-        inline std::string ToString(void) const;
+        void SetVersion(const std::string& version);
+        std::string ToString(void) const;
 
     // data members
     private:
@@ -74,28 +74,28 @@ void SamHeaderVersion::SetVersion(const std::string& version) {
     // do nothing if version is empty
     if ( !version.empty() ) {
 
+        std::stringstream versionStream("");
+
         // do nothing if period not found
         const size_t periodFound = version.find(Constants::SAM_PERIOD);
         if ( periodFound != std::string::npos ) {
 
             // store major version if non-empty and contains only digits
             const std::string& majorVersion = version.substr(0, periodFound);
+            versionStream.str(majorVersion);
             if ( !majorVersion.empty() ) {
                 const size_t nonDigitFound = majorVersion.find_first_not_of(Constants::SAM_DIGITS);
-                if ( nonDigitFound == std::string::npos ) {
-                    std::stringstream major(majorVersion);
-                    major >> m_majorVersion;
-                }
+                if ( nonDigitFound == std::string::npos )
+                    versionStream >> m_majorVersion;
             }
 
             // store minor version if non-empty and contains only digits
             const std::string& minorVersion = version.substr(periodFound + 1);
+            versionStream.str(minorVersion);
             if ( !minorVersion.empty() ) {
                 const size_t nonDigitFound = minorVersion.find_first_not_of(Constants::SAM_DIGITS);
-                if ( nonDigitFound == std::string::npos ) {
-                    std::stringstream minor(minorVersion);
-                    minor >> m_minorVersion;
-                }
+                if ( nonDigitFound == std::string::npos )
+                    versionStream >> m_minorVersion;
             }
         }
     }

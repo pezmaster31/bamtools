@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010
+// Last modified: 26 January 2011
 // ---------------------------------------------------------------------------
 // Provides general utilities used by BamTools sub-tools.
 // ***************************************************************************
@@ -33,9 +33,13 @@ class UTILS_EXPORT Utilities {
         
         // Parses a region string, uses reader to do validation (valid ID's, positions), stores in Region struct
         // Returns success (true/false)
-        static bool ParseRegionString(const std::string& regionString, const BamReader& reader, BamRegion& region);
+        static bool ParseRegionString(const std::string& regionString,
+                                      const BamReader& reader,
+                                      BamRegion& region);
         // Same as above, but accepts a BamMultiReader
-        static bool ParseRegionString(const std::string& regionString, const BamMultiReader& reader, BamRegion& region);
+        static bool ParseRegionString(const std::string& regionString,
+                                      const BamMultiReader& reader,
+                                      BamRegion& region);
 
         // sequence utilities
         static void Reverse(std::string& sequence);

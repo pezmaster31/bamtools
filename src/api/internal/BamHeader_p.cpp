@@ -3,15 +3,15 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 25 December 2010 (DB)
+// Last modified: 21 March 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for handling BAM headers.
 // ***************************************************************************
 
 #include <api/BamAux.h>
 #include <api/BamConstants.h>
-#include <api/BGZF.h>
 #include <api/internal/BamHeader_p.h>
+#include <api/internal/BgzfStream_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
 
@@ -21,35 +21,45 @@ using namespace BamTools::Internal;
 #include <iostream>
 using namespace std;
 
-// ---------------------------------
-// BamHeaderPrivate implementation
+// ctor
+BamHeader::BamHeader(void) { }
 
-struct BamHeader::BamHeaderPrivate {
+// dtor
+BamHeader::~BamHeader(void) { }
 
-    // data members
-    SamHeader* m_samHeader;
+// reads magic number from BGZF stream, returns true if valid
+bool BamHeader::CheckMagicNumber(BgzfStream* stream) {
 
-    // ctor
-    BamHeaderPrivate(void)
-        : m_samHeader(new SamHeader(""))
-    { }
-
-    // dtor
-    ~BamHeaderPrivate(void) {
-        delete m_samHeader;
-        m_samHeader = 0;
+    // try to read magic number
+    char buffer[Constants::BAM_HEADER_MAGIC_LENGTH];
+    if ( stream->Read(buffer, Constants::BAM_HEADER_MAGIC_LENGTH) != (int)Constants::BAM_HEADER_MAGIC_LENGTH ) {
+        fprintf(stderr, "BamHeader ERROR: could not read magic number\n");
+        return false;
     }
 
-    // 'public' interface
-    bool Load(BgzfData* stream);
+    // validate magic number
+    if ( strncmp(buffer, Constants::BAM_HEADER_MAGIC, Constants::BAM_HEADER_MAGIC_LENGTH) != 0 ) {
+        fprintf(stderr, "BamHeader ERROR: invalid magic number\n");
+        return false;
+    }
 
-    // internal methods
-    bool CheckMagicNumber(BgzfData* stream);
-    bool ReadHeaderLength(BgzfData* stream, uint32_t& length);
-    bool ReadHeaderText(BgzfData* stream, const uint32_t& length);
-};
+    // all checks out
+    return true;
+}
 
-bool BamHeader::BamHeaderPrivate::Load(BgzfData* stream) {
+// clear SamHeader data
+void BamHeader::Clear(void) {
+    m_header.Clear();
+}
+
+// return true if SamHeader data is valid
+bool BamHeader::IsValid(void) const {
+    return m_header.IsValid();
+}
+
+// load BAM header ('magic number' and SAM header text) from BGZF stream
+// returns true if all OK
+bool BamHeader::Load(BgzfStream* stream) {
 
     // cannot load if invalid stream
     if ( stream == 0 )
@@ -72,42 +82,27 @@ bool BamHeader::BamHeaderPrivate::Load(BgzfData* stream) {
     return true;
 }
 
-bool BamHeader::BamHeaderPrivate::CheckMagicNumber(BgzfData* stream) {
-
-    // try to read magic number
-    char buffer[Constants::BAM_HEADER_MAGIC_SIZE];
-    if ( stream->Read(buffer, Constants::BAM_HEADER_MAGIC_SIZE) != (int)Constants::BAM_HEADER_MAGIC_SIZE ) {
-        fprintf(stderr, "BAM header error - could not read magic number\n");
-        return false;
-    }
-
-    // validate magic number
-    if ( strncmp(buffer, Constants::BAM_HEADER_MAGIC, Constants::BAM_HEADER_MAGIC_SIZE) != 0 ) {
-        fprintf(stderr, "BAM header error - invalid magic number\n");
-        return false;
-    }
-
-    // all checks out
-    return true;
-}
-
-bool BamHeader::BamHeaderPrivate::ReadHeaderLength(BgzfData* stream, uint32_t& length) {
+// reads SAM header text length from BGZF stream, stores it in @length
+// returns read success/fail status
+bool BamHeader::ReadHeaderLength(BgzfStream* stream, uint32_t& length) {
 
     // attempt to read BAM header text length
     char buffer[sizeof(uint32_t)];
     if ( stream->Read(buffer, sizeof(uint32_t)) != sizeof(uint32_t) ) {
-        fprintf(stderr, "BAM header error - could not read header length\n");
+        fprintf(stderr, "BamHeader ERROR: could not read header length\n");
         return false;
     }
 
     // convert char buffer to length, return success
-    length = BgzfData::UnpackUnsignedInt(buffer);
+    length = BamTools::UnpackUnsignedInt(buffer);
     if ( BamTools::SystemIsBigEndian() )
-        SwapEndian_32(length);
+        BamTools::SwapEndian_32(length);
     return true;
 }
 
-bool BamHeader::BamHeaderPrivate::ReadHeaderText(BgzfData* stream, const uint32_t& length) {
+// reads SAM header text from BGZF stream, stores in SamHeader object
+// returns read success/fail status
+bool BamHeader::ReadHeaderText(BgzfStream* stream, const uint32_t& length) {
 
     // set up destination buffer
     char* headerText = (char*)calloc(length + 1, 1);
@@ -116,9 +111,9 @@ bool BamHeader::BamHeaderPrivate::ReadHeaderText(BgzfData* stream, const uint32_
     const unsigned bytesRead = stream->Read(headerText, length);
     const bool readOk = ( bytesRead == length );
     if ( readOk )
-        m_samHeader->SetHeaderText( (string)((const char*)headerText) );
+        m_header.SetHeaderText( (string)((const char*)headerText) );
     else
-        fprintf(stderr, "BAM header error - could not read header text\n");
+        fprintf(stderr, "BamHeader ERROR: could not read header text\n");
 
     // clean up calloc-ed temp variable (on success or fail)
     free(headerText);
@@ -127,34 +122,12 @@ bool BamHeader::BamHeaderPrivate::ReadHeaderText(BgzfData* stream, const uint32_
     return readOk;
 }
 
-// --------------------------
-// BamHeader implementation
-
-BamHeader::BamHeader(void)
-    : d(new BamHeaderPrivate)
-{ }
-
-BamHeader::~BamHeader(void) {
-    delete d;
-    d = 0;
-}
-
-void BamHeader::Clear(void) {
-    d->m_samHeader->Clear();
-}
-
-bool BamHeader::IsValid(void) const {
-    return d->m_samHeader->IsValid();
-}
-
-bool BamHeader::Load(BgzfData* stream) {
-    return d->Load(stream);
-}
-
+// returns *copy* of SamHeader data object
 SamHeader BamHeader::ToSamHeader(void) const {
-    return *(d->m_samHeader);
+    return m_header;
 }
 
+// returns SAM-formatted string of header data
 string BamHeader::ToString(void) const {
-    return d->m_samHeader->ToString();
+    return m_header.ToString();
 }

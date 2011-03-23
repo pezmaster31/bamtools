@@ -3,23 +3,25 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 3 September 2010 (DB)
+// Last modified: 21 March 2011 (DB)
 // ---------------------------------------------------------------------------
 // Grab a random subset of alignments.
 // ***************************************************************************
+
+#include "bamtools_random.h"
+
+#include <api/BamMultiReader.h>
+#include <api/BamWriter.h>
+#include <utils/bamtools_options.h>
+#include <utils/bamtools_utilities.h>
+using namespace BamTools;
 
 #include <ctime>
 #include <cstdlib>
 #include <iostream>
 #include <string>
 #include <vector>
-#include "bamtools_random.h"
-#include "bamtools_options.h"
-#include "bamtools_utilities.h"
-#include "BamMultiReader.h"
-#include "BamWriter.h"
 using namespace std;
-using namespace BamTools; 
   
 namespace BamTools {
   
@@ -27,7 +29,7 @@ namespace BamTools {
 const unsigned int RANDOM_MAX_ALIGNMENT_COUNT = 10000;
 
 // utility methods for RandomTool
-const int getRandomInt(const int& lowerBound, const int& upperBound) {
+int getRandomInt(const int& lowerBound, const int& upperBound) {
     const int range = (upperBound - lowerBound) + 1;
     return ( lowerBound + (int)(range * (double)rand()/((double)RAND_MAX + 1)) );
 }
@@ -107,33 +109,40 @@ int RandomTool::Run(int argc, char* argv[]) {
     // open our reader
     BamMultiReader reader;
     if ( !reader.Open(m_settings->InputFiles) ) {
-        cerr << "ERROR: Could not open input BAM file(s)." << endl;
+        cerr << "bamtools random ERROR: could not open input BAM file(s)... Aborting." << endl;
         return 1;
     }
      
+    // look up index files for all BAM files
+    reader.LocateIndexes();
+
     // make sure index data is available
-    if ( !reader.IsIndexLoaded() ) {
-        cerr << "ERROR: Could not load index data for all input BAM file(s)." << endl;
-        cerr << "\'bamtools random\' requires valid index files to provide efficient performance." << endl;
+    if ( !reader.HasIndexes() ) {
+        cerr << "bamtools random ERROR: could not load index data for all input BAM file(s)... Aborting." << endl;
         reader.Close();
         return 1;
-      
     }
      
     // get BamReader metadata  
     const string headerText = reader.GetHeaderText();
     const RefVector references = reader.GetReferenceData();
     if ( references.empty() ) {
-        cerr << "ERROR: No reference data available - required to perform random access throughtout input file(s)." << endl;
+        cerr << "bamtools random ERROR: no reference data available... Aborting." << endl;
         reader.Close();
         return 1;
     }
     
-    // open our writer
+    // determine compression mode for BamWriter
+    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() &&
+                              !m_settings->IsForceCompression );
+    BamWriter::CompressionMode compressionMode = BamWriter::Compressed;
+    if ( writeUncompressed ) compressionMode = BamWriter::Uncompressed;
+
+    // open BamWriter
     BamWriter writer;
-    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() && !m_settings->IsForceCompression );
-    if ( !writer.Open(m_settings->OutputFilename, headerText, references, writeUncompressed) ) {
-        cerr << "ERROR: Could not open BamWriter." << endl;
+    writer.SetCompressionMode(compressionMode);
+    if ( !writer.Open(m_settings->OutputFilename, headerText, references) ) {
+        cerr << "bamtools random ERROR: could not open " << m_settings->OutputFilename << " for writing... Aborting." << endl;
         reader.Close();
         return 1;
     }
@@ -141,8 +150,9 @@ int RandomTool::Run(int argc, char* argv[]) {
     // if user specified a REGION constraint, attempt to parse REGION string 
     BamRegion region; 
     if ( m_settings->HasRegion && !Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
-        cerr << "ERROR: Could not parse REGION: " << m_settings->Region << endl;
-        cerr << "Be sure REGION is in valid format (see README) and that coordinates are valid for selected references" << endl;
+        cerr << "bamtools random ERROR: could not parse REGION: " << m_settings->Region << endl;
+        cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
+             << endl;
         reader.Close();
         writer.Close();
         return 1;

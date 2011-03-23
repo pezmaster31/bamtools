@@ -3,9 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 1 June 2010
+// Last modified: 18 January 2011
 // ---------------------------------------------------------------------------
-// Creates a BAM index (".bai") file for the provided BAM file
+// Creates a BAM index file.
 // ***************************************************************************
 
 #ifndef BAMTOOLS_INDEX_H

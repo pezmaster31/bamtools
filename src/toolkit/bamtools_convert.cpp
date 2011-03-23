@@ -3,25 +3,27 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 4 October 2010
+// Last modified: 21 March 2011
 // ---------------------------------------------------------------------------
 // Converts between BAM and a number of other formats
 // ***************************************************************************
+
+#include "bamtools_convert.h"
+
+#include <api/BamConstants.h>
+#include <api/BamMultiReader.h>
+#include <utils/bamtools_fasta.h>
+#include <utils/bamtools_options.h>
+#include <utils/bamtools_pileup_engine.h>
+#include <utils/bamtools_utilities.h>
+using namespace BamTools;
 
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
-#include "bamtools_convert.h"
-#include "bamtools_fasta.h"
-#include "bamtools_options.h"
-#include "bamtools_pileup_engine.h"
-#include "bamtools_utilities.h"
-#include "BGZF.h"
-#include "BamMultiReader.h"
 using namespace std;
-using namespace BamTools;
   
 namespace BamTools { 
   
@@ -29,15 +31,13 @@ namespace BamTools {
     // ConvertTool constants
   
     // supported conversion format command-line names
-    static const string FORMAT_BED      = "bed";
-    static const string FORMAT_BEDGRAPH = "bedgraph";
-    static const string FORMAT_FASTA    = "fasta";
-    static const string FORMAT_FASTQ    = "fastq";
-    static const string FORMAT_JSON     = "json";
-    static const string FORMAT_SAM      = "sam";
-    static const string FORMAT_PILEUP   = "pileup";
-    static const string FORMAT_WIGGLE   = "wig";
-    static const string FORMAT_YAML     = "yaml";
+    static const string FORMAT_BED    = "bed";
+    static const string FORMAT_FASTA  = "fasta";
+    static const string FORMAT_FASTQ  = "fastq";
+    static const string FORMAT_JSON   = "json";
+    static const string FORMAT_SAM    = "sam";
+    static const string FORMAT_PILEUP = "pileup";
+    static const string FORMAT_YAML   = "yaml";
 
     // other constants
     static const unsigned int FASTA_LINE_MAX = 50;
@@ -126,12 +126,10 @@ struct ConvertTool::ConvertToolPrivate {
     // internal methods
     private:
         void PrintBed(const BamAlignment& a);
-        void PrintBedGraph(const BamAlignment& a);
         void PrintFasta(const BamAlignment& a);
         void PrintFastq(const BamAlignment& a);
         void PrintJson(const BamAlignment& a);
         void PrintSam(const BamAlignment& a);
-        void PrintWiggle(const BamAlignment& a);
         void PrintYaml(const BamAlignment& a);
         
         // special case - uses the PileupEngine
@@ -162,33 +160,40 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
     
     // open input files
     BamMultiReader reader;
-    if ( !m_settings->HasInput ) { // don't attempt to open index for stdin
-        if ( !reader.Open(m_settings->InputFiles, false) ) {
-            cerr << "Could not open input files" << endl;
+    if ( !reader.Open(m_settings->InputFiles) ) {
+        cerr << "bamtools convert ERROR: could not open input BAM file(s)... Aborting." << endl;
+        return false;
+    }
+
+    // if input is not stdin & a region is provided, look for index files
+    if ( m_settings->HasInput && m_settings->HasRegion ) {
+        if ( !reader.LocateIndexes() ) {
+            cerr << "bamtools convert ERROR: could not locate index file(s)... Aborting." << endl;
             return false;
         }
-    } else {
-        if ( !reader.Open(m_settings->InputFiles, true) ) {
-            if ( !reader.Open(m_settings->InputFiles, false) ) {
-                cerr << "Could not open input files" << endl;
-                return false;
-            } else {
-                cerr << "Opened reader without index file, jumping is disabled." << endl;
-            }
-        }
     }
+
+    // retrieve reference data
     m_references = reader.GetReferenceData();
 
     // set region if specified
     BamRegion region;
     if ( m_settings->HasRegion ) {
         if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
-            if ( !reader.SetRegion(region) ) {
-                cerr << "Could not set BamReader region to REGION: " << m_settings->Region << endl;
-                return false;
+
+            if ( reader.HasIndexes() ) {
+                if ( !reader.SetRegion(region) ) {
+                    cerr << "bamtools convert ERROR: set region failed. Check that REGION describes a valid range" << endl;
+                    reader.Close();
+                    return false;
+                }
             }
+
         } else {
-            cerr << "Could not parse REGION: " << m_settings->Region << endl;
+            cerr << "bamtools convert ERROR: could not parse REGION: " << m_settings->Region << endl;
+            cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
+                 << endl;
+            reader.Close();
             return false;
         }
     }
@@ -200,7 +205,8 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
         // open output file stream
         outFile.open(m_settings->OutputFilename.c_str());
         if ( !outFile ) {
-            cerr << "Could not open " << m_settings->OutputFilename << " for output" << endl; 
+            cerr << "bamtools convert ERROR: could not open " << m_settings->OutputFilename
+                 << " for output" << endl;
             return false; 
         }
         
@@ -225,17 +231,15 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
         
         // set function pointer to proper conversion method
         void (BamTools::ConvertTool::ConvertToolPrivate::*pFunction)(const BamAlignment&) = 0;
-        if      ( m_settings->Format == FORMAT_BED )      pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintBed;
-        else if ( m_settings->Format == FORMAT_BEDGRAPH ) pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintBedGraph;
-        else if ( m_settings->Format == FORMAT_FASTA )    pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintFasta;
-        else if ( m_settings->Format == FORMAT_FASTQ )    pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintFastq;
-        else if ( m_settings->Format == FORMAT_JSON )     pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintJson;
-        else if ( m_settings->Format == FORMAT_SAM )      pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintSam;
-        else if ( m_settings->Format == FORMAT_WIGGLE )   pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintWiggle;
-        else if ( m_settings->Format == FORMAT_YAML )     pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintYaml;
+        if      ( m_settings->Format == FORMAT_BED )   pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintBed;
+        else if ( m_settings->Format == FORMAT_FASTA ) pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintFasta;
+        else if ( m_settings->Format == FORMAT_FASTQ ) pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintFastq;
+        else if ( m_settings->Format == FORMAT_JSON )  pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintJson;
+        else if ( m_settings->Format == FORMAT_SAM )   pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintSam;
+        else if ( m_settings->Format == FORMAT_YAML )  pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintYaml;
         else { 
-            cerr << "Unrecognized format: " << m_settings->Format << endl;
-            cerr << "Please see help|README (?) for details on supported formats " << endl;
+            cerr << "bamtools convert ERROR: unrecognized format: " << m_settings->Format << endl;
+            cerr << "Please see documentation for list of supported formats " << endl;
             formatError = true;
             convertedOk = false;
         }
@@ -250,7 +254,7 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
             // iterate through file, doing conversion
             BamAlignment a;
             while ( reader.GetNextAlignment(a) )
-              (this->*pFunction)(a);
+                (this->*pFunction)(a);
             
             // set flag for successful conversion
             convertedOk = true;
@@ -259,9 +263,9 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
     
     // ------------------------
     // clean up & exit
-    
     reader.Close();
-    if ( m_settings->HasOutput ) outFile.close();
+    if ( m_settings->HasOutput )
+        outFile.close();
     return convertedOk;   
 }
 
@@ -281,10 +285,6 @@ void ConvertTool::ConvertToolPrivate::PrintBed(const BamAlignment& a) {
           << a.Name << "\t"
           << a.MapQuality << "\t"
           << (a.IsReverseStrand() ? "-" : "+") << endl;
-}
-
-void ConvertTool::ConvertToolPrivate::PrintBedGraph(const BamAlignment& a) { 
-    ; 
 }
 
 // print BamAlignment in FASTA format
@@ -376,11 +376,12 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a) {
     if ( !cigarData.empty() ) {
         m_out << "\"cigar\":[";
         vector<CigarOp>::const_iterator cigarBegin = cigarData.begin();
-        vector<CigarOp>::const_iterator cigarIter = cigarBegin;
-        vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
+        vector<CigarOp>::const_iterator cigarIter  = cigarBegin;
+        vector<CigarOp>::const_iterator cigarEnd   = cigarData.end();
         for ( ; cigarIter != cigarEnd; ++cigarIter ) {
             const CigarOp& op = (*cigarIter);
-            if (cigarIter != cigarBegin) m_out << ",";
+            if (cigarIter != cigarBegin)
+                m_out << ",";
             m_out << "\"" << op.Length << op.Type << "\"";
         }
         m_out << "],";
@@ -403,23 +404,25 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a) {
         string::const_iterator s = a.Qualities.begin();
         m_out << "\"qualities\":[" << static_cast<short>(*s) - 33;
         ++s;
-        for (; s != a.Qualities.end(); ++s) {
+        for ( ; s != a.Qualities.end(); ++s )
             m_out << "," << static_cast<short>(*s) - 33;
-        }
         m_out << "],";
     }
     
+    // write alignment's source BAM file
+    m_out << "\"filename\":" << a.Filename << ",";
+
     // write tag data
     const char* tagData = a.TagData.c_str();
     const size_t tagDataLength = a.TagData.length();
     size_t index = 0;
-    if (index < tagDataLength) {
+    if ( index < tagDataLength ) {
 
         m_out << "\"tags\":{";
         
         while ( index < tagDataLength ) {
 
-            if (index > 0)
+            if ( index > 0 )
                 m_out << ",";
             
             // write tag name
@@ -429,55 +432,45 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a) {
             // get data type
             char type = a.TagData.at(index);
             ++index;
-            
-            switch (type) {
-                case('A') : 
+            switch ( type ) {
+                case (Constants::BAM_TAG_TYPE_ASCII) :
                     m_out << "\"" << tagData[index] << "\"";
                     ++index; 
                     break;
                 
-                case('C') : 
+                case (Constants::BAM_TAG_TYPE_INT8)  :
+                case (Constants::BAM_TAG_TYPE_UINT8) :
                     m_out << (int)tagData[index]; 
                     ++index; 
                     break;
                 
-                case('c') : 
-                    m_out << (int)tagData[index];
-                    ++index; 
+                case (Constants::BAM_TAG_TYPE_INT16) :
+                    m_out << BamTools::UnpackSignedShort(&tagData[index]);
+                    index += sizeof(int16_t);
                     break;
-                
-                case('S') : 
-                    m_out << BgzfData::UnpackUnsignedShort(&tagData[index]); 
-                    index += 2; 
+
+                case (Constants::BAM_TAG_TYPE_UINT16) :
+                    m_out << BamTools::UnpackUnsignedShort(&tagData[index]);
+                    index += sizeof(uint16_t);
                     break;
                     
-                case('s') : 
-                    m_out << BgzfData::UnpackSignedShort(&tagData[index]);
-                    index += 2; 
+                case (Constants::BAM_TAG_TYPE_INT32) :
+                    m_out << BamTools::UnpackSignedInt(&tagData[index]);
+                    index += sizeof(int32_t);
+                    break;
+
+                case (Constants::BAM_TAG_TYPE_UINT32) :
+                    m_out << BamTools::UnpackUnsignedInt(&tagData[index]);
+                    index += sizeof(uint32_t);
+                    break;
+
+                case (Constants::BAM_TAG_TYPE_FLOAT) :
+                    m_out << BamTools::UnpackFloat(&tagData[index]);
+                    index += sizeof(float);
                     break;
                 
-                case('I') : 
-                    m_out << BgzfData::UnpackUnsignedInt(&tagData[index]);
-                    index += 4; 
-                    break;
-                
-                case('i') : 
-                    m_out << BgzfData::UnpackSignedInt(&tagData[index]);
-                    index += 4; 
-                    break;
-                
-                case('f') : 
-                    m_out << BgzfData::UnpackFloat(&tagData[index]);
-                    index += 4; 
-                    break;
-                
-                case('d') : 
-                    m_out << BgzfData::UnpackDouble(&tagData[index]);
-                    index += 8; 
-                    break;
-                
-                case('Z') :
-                case('H') : 
+                case (Constants::BAM_TAG_TYPE_HEX)    :
+                case (Constants::BAM_TAG_TYPE_STRING) :
                     m_out << "\""; 
                     while (tagData[index]) {
                         if (tagData[index] == '\"')
@@ -534,19 +527,26 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
     
     // write mate reference name, mate position, & insert size
     if ( a.IsPaired() && (a.MateRefID >= 0) && (a.MateRefID < (int)m_references.size()) ) {
-        if ( a.MateRefID == a.RefID ) m_out << "=\t";
-        else m_out << m_references[a.MateRefID].RefName << "\t";
+        if ( a.MateRefID == a.RefID )
+            m_out << "=\t";
+        else
+            m_out << m_references[a.MateRefID].RefName << "\t";
         m_out << a.MatePosition+1 << "\t" << a.InsertSize << "\t";
     } 
-    else m_out << "*\t0\t0\t";
+    else
+        m_out << "*\t0\t0\t";
     
     // write sequence
-    if ( a.QueryBases.empty() ) m_out << "*\t";
-    else m_out << a.QueryBases << "\t";
+    if ( a.QueryBases.empty() )
+        m_out << "*\t";
+    else
+        m_out << a.QueryBases << "\t";
     
     // write qualities
-    if ( a.Qualities.empty() ) m_out << "*";
-    else m_out << a.Qualities;
+    if ( a.Qualities.empty() )
+        m_out << "*";
+    else
+        m_out << a.Qualities;
     
     // write tag data
     const char* tagData = a.TagData.c_str();
@@ -563,61 +563,52 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
         // get data type
         char type = a.TagData.at(index);
         ++index;
-        switch (type) {
-            case('A') : 
-                m_out << "A:" << tagData[index]; 
-                ++index; 
+        switch ( type ) {
+            case (Constants::BAM_TAG_TYPE_ASCII) :
+                m_out << "A:" << tagData[index];
+                ++index;
                 break;
-            
-            case('C') : 
-                m_out << "i:" << (int)tagData[index]; 
-                ++index; 
-                break;
-            
-            case('c') : 
+
+            case (Constants::BAM_TAG_TYPE_INT8)  :
+            case (Constants::BAM_TAG_TYPE_UINT8) :
                 m_out << "i:" << (int)tagData[index];
-                ++index; 
+                ++index;
                 break;
-            
-            case('S') : 
-                m_out << "i:" << BgzfData::UnpackUnsignedShort(&tagData[index]);
-                index += 2; 
+
+            case (Constants::BAM_TAG_TYPE_INT16) :
+                m_out << "i:" << BamTools::UnpackSignedShort(&tagData[index]);
+                index += sizeof(int16_t);
                 break;
-                
-            case('s') : 
-                m_out << "i:" << BgzfData::UnpackSignedShort(&tagData[index]);
-                index += 2; 
+
+            case (Constants::BAM_TAG_TYPE_UINT16) :
+                m_out << "i:" << BamTools::UnpackUnsignedShort(&tagData[index]);
+                index += sizeof(uint16_t);
                 break;
-            
-            case('I') :
-                m_out << "i:" << BgzfData::UnpackUnsignedInt(&tagData[index]);
-                index += 4; 
+
+            case (Constants::BAM_TAG_TYPE_INT32) :
+                m_out << "i:" << BamTools::UnpackSignedInt(&tagData[index]);
+                index += sizeof(int32_t);
                 break;
-            
-            case('i') : 
-                m_out << "i:" << BgzfData::UnpackSignedInt(&tagData[index]);
-                index += 4; 
+
+            case (Constants::BAM_TAG_TYPE_UINT32) :
+                m_out << "i:" << BamTools::UnpackUnsignedInt(&tagData[index]);
+                index += sizeof(uint32_t);
                 break;
-            
-            case('f') : 
-                m_out << "f:" << BgzfData::UnpackFloat(&tagData[index]);
-                index += 4; 
+
+            case (Constants::BAM_TAG_TYPE_FLOAT) :
+                m_out << "f:" << BamTools::UnpackFloat(&tagData[index]);
+                index += sizeof(float);
                 break;
-            
-            case('d') : 
-                m_out << "d:" << BgzfData::UnpackDouble(&tagData[index]);
-                index += 8; 
-                break;
-            
-            case('Z') :
-            case('H') : 
+
+            case (Constants::BAM_TAG_TYPE_HEX)    :
+            case (Constants::BAM_TAG_TYPE_STRING) :
                 m_out << type << ":";
                 while (tagData[index]) {
                     m_out << tagData[index];
                     ++index;
                 }
-                ++index; 
-                break;      
+                ++index;
+                break;
         }
 
         if ( tagData[index] == '\0') 
@@ -625,10 +616,6 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
     }
 
     m_out << endl;
-}
-
-void ConvertTool::ConvertToolPrivate::PrintWiggle(const BamAlignment& a) { 
-    ; 
 }
 
 // Print BamAlignment in YAML format
@@ -639,28 +626,29 @@ void ConvertTool::ConvertToolPrivate::PrintYaml(const BamAlignment& a) {
     m_out << a.Name << ":" << endl;
 
     // write alignment data
-    m_out << "   " << "AlndBases: "     <<  a.AlignedBases << endl;
-    m_out << "   " << "Qualities: "     <<  a.Qualities << endl;
-    m_out << "   " << "Name: "          <<  a.Name << endl;
-    m_out << "   " << "Length: "        <<  a.Length << endl;
-    m_out << "   " << "TagData: "       <<  a.TagData << endl;
-    m_out << "   " << "RefID: "         <<  a.RefID << endl;
-    m_out << "   " << "RefName: "       <<  m_references[a.RefID].RefName << endl;
-    m_out << "   " << "Position: "      <<  a.Position << endl;
-    m_out << "   " << "Bin: "           <<  a.Bin << endl;
-    m_out << "   " << "MapQuality: "    <<  a.MapQuality << endl;
-    m_out << "   " << "AlignmentFlag: " <<  a.AlignmentFlag << endl;
-    m_out << "   " << "MateRefID: "     <<  a.MateRefID << endl;
-    m_out << "   " << "MatePosition: "  <<  a.MatePosition << endl;
-    m_out << "   " << "InsertSize: "    <<  a.InsertSize << endl;
+    m_out << "   " << "AlndBases: "     << a.AlignedBases << endl;
+    m_out << "   " << "Qualities: "     << a.Qualities << endl;
+    m_out << "   " << "Name: "          << a.Name << endl;
+    m_out << "   " << "Length: "        << a.Length << endl;
+    m_out << "   " << "TagData: "       << a.TagData << endl;
+    m_out << "   " << "RefID: "         << a.RefID << endl;
+    m_out << "   " << "RefName: "       << m_references[a.RefID].RefName << endl;
+    m_out << "   " << "Position: "      << a.Position << endl;
+    m_out << "   " << "Bin: "           << a.Bin << endl;
+    m_out << "   " << "MapQuality: "    << a.MapQuality << endl;
+    m_out << "   " << "AlignmentFlag: " << a.AlignmentFlag << endl;
+    m_out << "   " << "MateRefID: "     << a.MateRefID << endl;
+    m_out << "   " << "MatePosition: "  << a.MatePosition << endl;
+    m_out << "   " << "InsertSize: "    << a.InsertSize << endl;
+    m_out << "   " << "Filename: "      << a.Filename << endl;
 
     // write Cigar data
     const vector<CigarOp>& cigarData = a.CigarData;
     if ( !cigarData.empty() ) {
         m_out << "   " <<  "Cigar: ";
         vector<CigarOp>::const_iterator cigarBegin = cigarData.begin();
-        vector<CigarOp>::const_iterator cigarIter = cigarBegin;
-        vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
+        vector<CigarOp>::const_iterator cigarIter  = cigarBegin;
+        vector<CigarOp>::const_iterator cigarEnd   = cigarData.end();
         for ( ; cigarIter != cigarEnd; ++cigarIter ) {
             const CigarOp& op = (*cigarIter);
             m_out << op.Length << op.Type;
@@ -799,7 +787,7 @@ void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData ) {
     char referenceBase('N');
     if ( m_hasFasta && (pileupData.Position < m_references[pileupData.RefId].RefLength) ) {
         if ( !m_fasta.GetBase(pileupData.RefId, pileupData.Position, referenceBase ) ) {
-            cerr << "Pileup error : Could not read reference base from FASTA file" << endl;
+            cerr << "bamtools convert ERROR: pileup conversion - could not read reference base from FASTA file" << endl;
             return;
         }
     }
@@ -836,11 +824,11 @@ void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData ) {
                  toupper(base) == toupper(referenceBase) ||
                  tolower(base) == tolower(referenceBase) ) 
             {
-                base = (ba.IsReverseStrand() ? ',' : '.' );
+                base = ( ba.IsReverseStrand() ? ',' : '.' );
             }
             
             // mismatches reference
-            else base = (ba.IsReverseStrand() ? tolower(base) : toupper(base) );
+            else base = ( ba.IsReverseStrand() ? tolower(base) : toupper(base) );
             
             // store base
             bases << base;
@@ -861,7 +849,7 @@ void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData ) {
                     char deletedBase('N');
                     if ( m_hasFasta && (pileupData.Position+i < m_references[pileupData.RefId].RefLength) ) {
                         if ( !m_fasta.GetBase(pileupData.RefId, pileupData.Position+i, deletedBase ) ) {
-                            cerr << "Pileup error : Could not read reference base from FASTA file" << endl;
+                            cerr << "bamtools convert ERROR: pileup conversion - could not read reference base from FASTA file" << endl;
                             return;
                         }
                     }
@@ -874,7 +862,8 @@ void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData ) {
         else bases << '*';
         
         // if end of read segment
-        if ( pa.IsSegmentEnd ) bases << '$';
+        if ( pa.IsSegmentEnd )
+            bases << '$';
         
         // store current base quality
         baseQualities << ba.Qualities.at(pa.PositionInAlignment);

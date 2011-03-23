@@ -3,9 +3,10 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 18 September 2010 (DB)
+// Last modified: 21 March 2011 (DB)
 // ---------------------------------------------------------------------------
-// 
+// Splits a BAM file on user-specified property, creating a new BAM output
+// file for each value found.
 // ***************************************************************************
 
 #ifndef BAMTOOLS_SPLIT_H

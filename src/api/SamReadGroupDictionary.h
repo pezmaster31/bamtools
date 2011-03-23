@@ -3,10 +3,10 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 23 December 2010 (DB)
+// Last modified: 4 March 2011 (DB)
 // ---------------------------------------------------------------------------
-// Provides container operations for collection of read group entries
-// *************************************************************************
+// Provides methods for operating on a collection of SamReadGroup entries.
+// ***************************************************************************
 
 #ifndef SAM_READGROUP_DICTIONARY_H
 #define SAM_READGROUP_DICTIONARY_H
@@ -22,8 +22,6 @@ typedef std::vector<SamReadGroup>             SamReadGroupContainer;
 typedef SamReadGroupContainer::iterator       SamReadGroupIterator;
 typedef SamReadGroupContainer::const_iterator SamReadGroupConstIterator;
 
-// stores read groups
-// can access read groups using SamReadGroup object or (std::string) read group ID tag
 class API_EXPORT SamReadGroupDictionary {
 
     // ctor & dtor
@@ -34,15 +32,15 @@ class API_EXPORT SamReadGroupDictionary {
 
     // query/modify read group data
     public:
-        // add a read group
+        // adds a read group
         void Add(const SamReadGroup& readGroup);
-        void Add(const std::string& readGroupIds);
+        void Add(const std::string& readGroupId);
 
-        // add multiple read groups
+        // adds multiple read groups
         void Add(const std::vector<SamReadGroup>& readGroups);
         void Add(const std::vector<std::string>& readGroupIds);
 
-        // clear all read groups records
+        // clears all read group entries
         void Clear(void);
 
         // returns true if dictionary contains this read group
@@ -52,39 +50,32 @@ class API_EXPORT SamReadGroupDictionary {
         // returns true if dictionary is empty
         bool IsEmpty(void) const;
 
-        // remove a single read group (does nothing if read group not found)
+        // removes read group, if found
         void Remove(const SamReadGroup& readGroup);
         void Remove(const std::string& readGroupId);
 
-        // remove multiple read groups
+        // removes multiple read groups
         void Remove(const std::vector<SamReadGroup>& readGroups);
         void Remove(const std::vector<std::string>& readGroupIds);
 
-        // returns size of dictionary (number of current elements)
+        // returns number of read groups in dictionary
         int Size(void) const;
 
-        // retrieves the SamReadGroup object associated with this ID
-        // if readGroupId is unknown, a new SamReadGroup is created with this ID (and no other data)
-        // and a reference to this new read group entry is returned (like std::map)
-        //
-        // * To avoid these partial entries being created, it is recommended to check
-        //   for existence first using Contains()
+        // retrieves a modifiable reference to the SamReadGroup object associated with this ID
         SamReadGroup& operator[](const std::string& readGroupId);
 
-    // retrieve read group iterators
-    // these are typedefs for STL iterators and thus are compatible with STL containers/algorithms
+    // retrieve STL-compatible iterators
     public:
-        SamReadGroupIterator      Begin(void);
-        SamReadGroupConstIterator Begin(void) const;
-        SamReadGroupConstIterator ConstBegin(void) const;
-        SamReadGroupIterator      End(void);
-        SamReadGroupConstIterator End(void) const;
-        SamReadGroupConstIterator ConstEnd(void) const;
+        SamReadGroupIterator      Begin(void);              // returns iterator to begin()
+        SamReadGroupConstIterator Begin(void) const;        // returns const_iterator to begin()
+        SamReadGroupConstIterator ConstBegin(void) const;   // returns const_iterator to begin()
+        SamReadGroupIterator      End(void);                // returns iterator to end()
+        SamReadGroupConstIterator End(void) const;          // returns const_iterator to end()
+        SamReadGroupConstIterator ConstEnd(void) const;     // returns const_iterator to end()
 
     // internal methods
     private:
         int IndexOf(const SamReadGroup& readGroup) const;
-        int IndexOf(const std::string& readGroupId) const;
 
     // data members
     private:

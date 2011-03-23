@@ -3,27 +3,29 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 17 November 2010
+// Last modified: 21 March 2011
 // ---------------------------------------------------------------------------
 // Filters BAM file(s) according to some user-specified criteria.
 // ***************************************************************************
+
+#include "bamtools_filter.h"
+
+#include <api/BamMultiReader.h>
+#include <api/BamWriter.h>
+#include <utils/bamtools_filter_engine.h>
+#include <utils/bamtools_options.h>
+#include <utils/bamtools_utilities.h>
+using namespace BamTools;
+
+#include <jsoncpp/json.h>
+using namespace Json;
 
 #include <cstdio>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
-#include "bamtools_filter.h"
-#include "bamtools_filter_engine.h"
-#include "bamtools_options.h"
-#include "bamtools_utilities.h"
-#include "BamReader.h"
-#include "BamMultiReader.h"
-#include "BamWriter.h"
-#include "jsoncpp/json.h"
 using namespace std;
-using namespace BamTools; 
-using namespace Json;
   
 namespace BamTools {
   
@@ -377,8 +379,8 @@ FilterTool::FilterTool(void)
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInputBamFilename,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());
     Options::AddValueOption("-out",    "BAM filename", "the output BAM file",   "", m_settings->HasOutputBamFilename, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
-    Options::AddValueOption("-region", "REGION",       "only read data from this genomic region (see README for more details)", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
-    Options::AddValueOption("-script", "filename",     "the filter script file (see README for more details)", "", m_settings->HasScriptFilename, m_settings->ScriptFilename, IO_Opts);
+    Options::AddValueOption("-region", "REGION",       "only read data from this genomic region (see documentation for more details)", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
+    Options::AddValueOption("-script", "filename",     "the filter script file (see documentation for more details)", "", m_settings->HasScriptFilename, m_settings->ScriptFilename, IO_Opts);
     Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
     
     OptionGroup* FilterOpts = Options::CreateOptionGroup("General Filters");
@@ -387,7 +389,7 @@ FilterTool::FilterTool(void)
     Options::AddValueOption("-mapQuality",    "[0-255]",    "keep reads with map quality that matches pattern",             "", m_settings->HasMapQualityFilter, m_settings->MapQualityFilter, FilterOpts);
     Options::AddValueOption("-name",          "string",     "keep reads with name that matches pattern",                    "", m_settings->HasNameFilter,       m_settings->NameFilter,       FilterOpts);
     Options::AddValueOption("-queryBases",    "string",     "keep reads with motif that mathces pattern",                   "", m_settings->HasQueryBasesFilter, m_settings->QueryBasesFilter, FilterOpts);
-    Options::AddValueOption("-tag",            "TAG:VALUE", "keep reads with this key=>value pair",                         "", m_settings->HasTagFilter,        m_settings->TagFilter,        FilterOpts);
+    Options::AddValueOption("-tag",           "TAG:VALUE",  "keep reads with this key=>value pair",                         "", m_settings->HasTagFilter,        m_settings->TagFilter,        FilterOpts);
     
     OptionGroup* AlignmentFlagOpts = Options::CreateOptionGroup("Alignment Flag Filters");
     Options::AddValueOption("-isDuplicate",         "true/false", "keep only alignments that are marked as duplicate?", "", m_settings->HasIsDuplicateFilter,         m_settings->IsDuplicateFilter,         AlignmentFlagOpts, TRUE_STR);
@@ -439,8 +441,10 @@ FilterTool::FilterToolPrivate::FilterToolPrivate(FilterTool::FilterSettings* set
 // destructor
 FilterTool::FilterToolPrivate::~FilterToolPrivate(void) { }
 
-bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const string& filterName, const map<string, string>& propertyTokens) {
-
+bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const string& filterName,
+                                                              const map<string,
+                                                              string>& propertyTokens)
+{
     // dummy temp values for token parsing
     bool boolValue;
     int32_t int32Value;
@@ -515,7 +519,7 @@ bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const string& filt
             m_filterEngine.setProperty(filterName, propertyName, stringValue, type);
         }
       
-	else if (propertyName == TAG_PROPERTY ) {
+    else if ( propertyName == TAG_PROPERTY ) {
 	    // this will be stored directly as the TAG:VALUE token 
 	    // (VALUE may contain compare ops, will be parsed out later)
 	    m_filterEngine.setProperty(filterName, propertyName, token, PropertyFilterValue::EXACT);
@@ -523,7 +527,7 @@ bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const string& filt
       
         // else unknown property 
         else {
-            cerr << "Unknown property: " << propertyName << "!" << endl;
+            cerr << "bamtools filter ERROR: unknown property - " << propertyName << endl;
             return false;
         }
     }
@@ -539,7 +543,8 @@ const string FilterTool::FilterToolPrivate::GetScriptContents(void) {
     // open script for reading
     FILE* inFile = fopen(m_settings->ScriptFilename.c_str(), "rb");
     if ( !inFile ) {
-        cerr << "FilterTool error: Could not open script: " << m_settings->ScriptFilename << " for reading" << endl;
+        cerr << "bamtools filter ERROR: could not open script: "
+             << m_settings->ScriptFilename << " for reading" << endl;
         return false;
     }
     
@@ -555,7 +560,7 @@ const string FilterTool::FilterToolPrivate::GetScriptContents(void) {
         
         // read next block of data
         if ( fgets(buffer, 1024, inFile) == 0 ) {
-            cerr << "FilterTool error : could not read from script" << endl;
+            cerr << "bamtools filter ERROR: could not read script contents" << endl;
             return false;
         }
         
@@ -671,7 +676,8 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
     Json::Reader reader;
     if ( !reader.parse(document, root) ) {
         // use built-in error reporting mechanism to alert user what was wrong with the script
-        cerr  << "Failed to parse configuration\n" << reader.getFormatedErrorMessages();
+        cerr  << "bamtools filter ERROR: failed to parse script - see error message(s) below" << endl
+              << reader.getFormatedErrorMessages();
         return false;     
     }
 
@@ -740,24 +746,32 @@ bool FilterTool::FilterToolPrivate::Run(void) {
 
     // open reader without index
     BamMultiReader reader;
-    if ( !reader.Open(m_settings->InputFiles, false, false) ) {
-        cerr << "Could not open input files for reading." << endl;
+    if ( !reader.Open(m_settings->InputFiles) ) {
+        cerr << "bamtools filter ERROR: could not open input files for reading." << endl;
         return false;
     }
+
+    // retrieve reader header & reference data
     const string headerText = reader.GetHeaderText();
     filterToolReferences = reader.GetReferenceData();
     
-    // open writer
+    // determine compression mode for BamWriter
+    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() &&
+                              !m_settings->IsForceCompression );
+    BamWriter::CompressionMode compressionMode = BamWriter::Compressed;
+    if ( writeUncompressed ) compressionMode = BamWriter::Uncompressed;
+
+    // open BamWriter
     BamWriter writer;
-    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() && !m_settings->IsForceCompression );
-    if ( !writer.Open(m_settings->OutputFilename, headerText, filterToolReferences, writeUncompressed) ) {
-        cerr << "Could not open " << m_settings->OutputFilename << " for writing." << endl;
+    writer.SetCompressionMode(compressionMode);
+    if ( !writer.Open(m_settings->OutputFilename, headerText, filterToolReferences) ) {
+        cerr << "bamtools filter ERROR: could not open " << m_settings->OutputFilename << " for writing." << endl;
+        reader.Close();
         return false;
     }
-    
-    BamAlignment al;
-    
+
     // if no region specified, filter entire file 
+    BamAlignment al;
     if ( !m_settings->HasRegion ) {
         while ( reader.GetNextAlignment(al) ) {
             if ( CheckAlignment(al) ) 
@@ -772,22 +786,15 @@ bool FilterTool::FilterToolPrivate::Run(void) {
         BamRegion region;
         if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
 
-            // attempt to re-open reader with index files
-            reader.Close();
-            bool openedOK = reader.Open(m_settings->InputFiles, true, false );
-            
-            // if error
-            if ( !openedOK ) {
-                cerr << "ERROR: Could not open input BAM file(s)... Aborting." << endl;
-                return false;
-            }
-            
-            // if index data available, we can use SetRegion
-            if ( reader.IsIndexLoaded() ) {
-              
+            // attempt to find index files
+            reader.LocateIndexes();
+
+            // if index data available for all BAM files, we can use SetRegion
+            if ( reader.HasIndexes() ) {
+
                 // attempt to use SetRegion(), if failed report error
                 if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {
-                    cerr << "ERROR: Region requested, but could not set BamReader region to REGION: " << m_settings->Region << " Aborting." << endl;
+                    cerr << "bamtools filter ERROR: set region failed. Check that REGION describes a valid range" << endl;
                     reader.Close();
                     return false;
                 } 
@@ -814,8 +821,9 @@ bool FilterTool::FilterToolPrivate::Run(void) {
         
         // error parsing REGION string
         else {
-            cerr << "ERROR: Could not parse REGION - " << m_settings->Region << endl;
-            cerr << "Be sure REGION is in valid format (see README) and that coordinates are valid for selected references" << endl;
+            cerr << "bamtools filter ERROR: could not parse REGION: " << m_settings->Region << endl;
+            cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
+                 << endl;
             reader.Close();
             return false;
         }
@@ -829,11 +837,12 @@ bool FilterTool::FilterToolPrivate::Run(void) {
 
 bool FilterTool::FilterToolPrivate::SetupFilters(void) {
   
-    // add known properties to FilterEngine<BamAlignmentChecker>
+    // set up filter engine with supported properties
     InitProperties();
     
     // parse script for filter rules, if given
-    if ( m_settings->HasScriptFilename ) return ParseScript();
+    if ( m_settings->HasScriptFilename )
+        return ParseScript();
     
     // otherwise check command line for filters
     else return ParseCommandLine();

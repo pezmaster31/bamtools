@@ -3,10 +3,18 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 16 December 2010 (DB)
+// Last modified: 21 March 2011 (DB)
 // ---------------------------------------------------------------------------
 // Sorts an input BAM file (default by position) and stores in a new BAM file.
 // ***************************************************************************
+
+#include "bamtools_sort.h"
+
+#include <api/SamConstants.h>
+#include <api/BamMultiReader.h>
+#include <api/BamWriter.h>
+#include <utils/bamtools_options.h>
+using namespace BamTools;
 
 #include <cstdio>
 #include <algorithm>
@@ -14,26 +22,19 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "bamtools_sort.h"
-#include "bamtools_options.h"
-#include "BamReader.h"
-#include "BamMultiReader.h"
-#include "BamWriter.h"
-
 using namespace std;
-using namespace BamTools;
 
 namespace BamTools {
   
     // defaults
     //
     // ** These defaults should be tweaked & 'optimized' per testing ** //
+    //
     //    I say 'optimized' because each system will naturally perform
     //    differently.  We will attempt to determine a sensible 
     //    compromise that should perform well on average.
-    const unsigned int SORT_DEFAULT_MAX_BUFFER_COUNT  = 10000; // max numberOfAlignments for buffer
-    const unsigned int SORT_DEFAULT_MAX_BUFFER_MEMORY = 1024;  // Mb
+    const unsigned int SORT_DEFAULT_MAX_BUFFER_COUNT  = 500000;  // max numberOfAlignments for buffer
+    const unsigned int SORT_DEFAULT_MAX_BUFFER_MEMORY = 1024;    // Mb
 
     // -----------------------------------
     // comparison objects (for sorting) 
@@ -197,13 +198,18 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
     
     // open input BAM file
     BamReader inputReader;
-    if (!inputReader.Open(m_settings->InputBamFilename)) {
-        cerr << "Could not open " << m_settings->InputBamFilename << " for reading." << endl;
+    if ( !inputReader.Open(m_settings->InputBamFilename) ) {
+        cerr << "bamtools sort ERROR: could not open " << m_settings->InputBamFilename
+             << " for reading... Aborting." << endl;
         return false;
     }
     
     // get basic data that will be shared by all temp/output files 
-    m_headerText = inputReader.GetHeaderText();
+    SamHeader header = inputReader.GetHeader();
+    header.SortOrder = ( m_settings->IsSortingByName
+                       ? Constants::SAM_HD_SORTORDER_QUERYNAME
+                       : Constants::SAM_HD_SORTORDER_COORDINATE );
+    m_headerText = header.ToString();
     m_references = inputReader.GetReferenceData();
     
     // set up alignments buffer
@@ -232,7 +238,7 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
     else {
 
         // iterate through file
-        while ( inputReader.GetNextAlignmentCore(al)) {
+        while ( inputReader.GetNextAlignmentCore(al) ) {
 
             // store alignments in buffer
             buffer.push_back(al);
@@ -270,6 +276,7 @@ bool SortTool::SortToolPrivate::HandleBufferContents(vector<BamAlignment>& buffe
     ++m_numberOfRuns;
     
     // return success/fail of writing to temp file
+    // TODO: a failure returned here is not actually caught and handled anywhere
     return success;
 }
 
@@ -279,11 +286,25 @@ bool SortTool::SortToolPrivate::MergeSortedRuns(void) {
     // open up multi reader for all of our temp files
     // this might get broken up if we do a multi-pass system later ??
     BamMultiReader multiReader;
-    multiReader.Open(m_tempFilenames, false, true);
+    if ( !multiReader.Open(m_tempFilenames) ) {
+        cerr << "bamtools sort ERROR: could not open BamMultiReader for merging temp files... Aborting." << endl;
+        return false;
+    }
+
+    // set sort order for merge
+    if ( m_settings->IsSortingByName )
+        multiReader.SetSortOrder(BamMultiReader::SortedByReadName);
+    else
+        multiReader.SetSortOrder(BamMultiReader::SortedByPosition);
     
     // open writer for our completely sorted output BAM file
     BamWriter mergedWriter;
-    mergedWriter.Open(m_settings->OutputBamFilename, m_headerText, m_references);
+    if ( !mergedWriter.Open(m_settings->OutputBamFilename, m_headerText, m_references) ) {
+        cerr << "bamtools sort ERROR: could not open " << m_settings->OutputBamFilename
+             << " for writing... Aborting." << endl;
+        multiReader.Close();
+        return false;
+    }
     
     // while data available in temp files
     BamAlignment al;
@@ -332,7 +353,11 @@ bool SortTool::SortToolPrivate::WriteTempFile(const vector<BamAlignment>& buffer
 
     // open temp file for writing
     BamWriter tempWriter;
-    tempWriter.Open(tempFilename, m_headerText, m_references);
+    if ( !tempWriter.Open(tempFilename, m_headerText, m_references) ) {
+        cerr << "bamtools sort ERROR: could not open " << tempFilename
+             << " for writing." << endl;
+        return false;
+    }
   
     // write data
     vector<BamAlignment>::const_iterator buffIter = buffer.begin();

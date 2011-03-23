@@ -18,18 +18,20 @@ set( BamToolsAPISources
         BamMultiReader.cpp
         BamReader.cpp
         BamWriter.cpp
-        BGZF.cpp
         SamHeader.cpp
         SamReadGroup.cpp
         SamReadGroupDictionary.cpp
         SamSequence.cpp
         SamSequenceDictionary.cpp
         internal/BamHeader_p.cpp
+        internal/BamIndexFactory_p.cpp
         internal/BamMultiReader_p.cpp
+        internal/BamRandomAccessController_p.cpp
         internal/BamReader_p.cpp
         internal/BamStandardIndex_p.cpp
         internal/BamToolsIndex_p.cpp
         internal/BamWriter_p.cpp
+        internal/BgzfStream_p.cpp
         internal/SamFormatParser_p.cpp
         internal/SamFormatPrinter_p.cpp
         internal/SamHeaderValidator_p.cpp
@@ -37,7 +39,7 @@ set( BamToolsAPISources
 
 # create main BamTools API shared library
 add_library( BamTools SHARED ${BamToolsAPISources} )
-set_target_properties( BamTools PROPERTIES SOVERSION "0.9.3" )
+set_target_properties( BamTools PROPERTIES SOVERSION "1.0.0" )
 set_target_properties( BamTools PROPERTIES OUTPUT_NAME "bamtools" )
 
 # create main BamTools API static library
@@ -64,7 +66,6 @@ ExportHeader(APIHeaders BamIndex.h               ${ApiIncludeDir})
 ExportHeader(APIHeaders BamMultiReader.h         ${ApiIncludeDir})
 ExportHeader(APIHeaders BamReader.h              ${ApiIncludeDir})
 ExportHeader(APIHeaders BamWriter.h              ${ApiIncludeDir})
-ExportHeader(APIHeaders BGZF.h                   ${ApiIncludeDir})
 ExportHeader(APIHeaders SamConstants.h           ${ApiIncludeDir})
 ExportHeader(APIHeaders SamHeader.h              ${ApiIncludeDir})
 ExportHeader(APIHeaders SamReadGroup.h           ${ApiIncludeDir})

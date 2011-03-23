@@ -3,9 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 17 January 2011 (DB)
+// Last modified: 15 March 2011 (DB)
 // ---------------------------------------------------------------------------
-// Functionality for simultaneously reading multiple BAM files
+// Convenience class for reading multiple BAM files.
 // ***************************************************************************
 
 #ifndef BAMMULTIREADER_H
@@ -26,6 +26,12 @@ namespace Internal {
 
 class API_EXPORT BamMultiReader {
 
+    public:
+        enum SortOrder { SortedByPosition = 0
+                       , SortedByReadName
+                       , Unsorted
+                       };
+
     // constructor / destructor
     public:
         BamMultiReader(void);
@@ -38,77 +44,78 @@ class API_EXPORT BamMultiReader {
         // BAM file operations
         // ----------------------
 
-        // close BAM files
+        // closes all open BAM files
         void Close(void);
-        // opens BAM files (and optional BAM index files, if provided)
-        // @openIndexes - triggers index opening, useful for suppressing
-        // error messages during merging of files in which we may not have
-        // indexes.
-        // @coreMode - setup our first alignments using GetNextAlignmentCore();
-        // also useful for merging
-        // @preferStandardIndex - look for standard BAM index ".bai" first.  If false,
-        // will look for BamTools index ".bti".
-        bool Open(const std::vector<std::string>& filenames,
-                  bool openIndexes = true,
-                  bool coreMode = false,
-                  bool preferStandardIndex = false);
-        // returns whether underlying BAM readers ALL have an index loaded
-        // this is useful to indicate whether Jump() or SetRegion() are possible
-        bool IsIndexLoaded(void) const;
-        // performs random-access jump to reference, position
+        // close only the requested BAM file
+        void CloseFile(const std::string& filename);
+        // returns list of filenames for all open BAM files
+        const std::vector<std::string> Filenames(void) const;
+        // returns true if multireader has any open BAM files
+        bool HasOpenReaders(void) const;
+        // performs random-access jump within current BAM files
         bool Jump(int refID, int position = 0);
-        // list files associated with this multireader
-        void PrintFilenames(void) const;
-        // sets the target region
-        bool SetRegion(const BamRegion& region);
-        bool SetRegion(const int& leftRefID,
-                       const int& leftBound,
-                       const int& rightRefID,
-                       const int& rightBound);
+        // opens BAM files
+        bool Open(const std::vector<std::string>& filenames);
+        // opens a single BAM file, adding to any other current BAM files
+        bool OpenFile(const std::string& filename);
         // returns file pointers to beginning of alignments
         bool Rewind(void);
+        // sets the target region of interest
+        bool SetRegion(const BamRegion& region);
+        // sets the target region of interest
+        bool SetRegion(const int& leftRefID,
+                       const int& leftPosition,
+                       const int& rightRefID,
+                       const int& rightPosition);
 
         // ----------------------
         // access alignment data
         // ----------------------
 
-        // retrieves next available alignment (returns success/fail) from all files
+        // retrieves next available alignment
         bool GetNextAlignment(BamAlignment& alignment);
-        // retrieves next available alignment (returns success/fail) from all files
-        // and populates the support data with information about the alignment
-        // *** BUT DOES NOT PARSE CHARACTER DATA FROM THE ALIGNMENT
+        // retrieves next available alignmnet (without populating the alignment's string data fields)
         bool GetNextAlignmentCore(BamAlignment& alignment);
-        // ... should this be private?
-        bool HasOpenReaders(void);
-        // set sort order for merging BAM files (i.e. which alignment from the files is 'next'?)
-        // default behavior is to sort by position, use this method to handle BAMs sorted by read name
-        enum SortOrder { SortedByPosition = 0
-                       , SortedByReadName
-                       , Unsorted
-                       };
+
+        // sets the expected sorting order for reading across multiple BAM files
         void SetSortOrder(const SortOrder& order);
 
         // ----------------------
         // access auxiliary data
         // ----------------------
 
+        // returns unified SAM header for all files
+        SamHeader GetHeader(void) const;
         // returns unified SAM header text for all files
-        const std::string GetHeaderText(void) const;
+        std::string GetHeaderText(void) const;
         // returns number of reference sequences
-        const int GetReferenceCount(void) const;
-        // returns vector of reference objects
+        int GetReferenceCount(void) const;
+        // returns all reference sequence entries.
         const BamTools::RefVector GetReferenceData(void) const;
-        // returns reference id (used for BamMultiReader::Jump()) for the given reference name
-        const int GetReferenceID(const std::string& refName) const;
+        // returns the ID of the reference with this name.
+        int GetReferenceID(const std::string& refName) const;
 
         // ----------------------
         // BAM index operations
         // ----------------------
 
-        // creates index for BAM files which lack them, saves to files (default = bamFilename + ".bai")
-        bool CreateIndexes(bool useStandardIndex = true);
-        // sets the index caching mode for the readers
-        void SetIndexCacheMode(const BamIndex::BamIndexCacheMode mode);
+        // creates index files for current BAM files
+        bool CreateIndexes(const BamIndex::IndexType& type = BamIndex::STANDARD);
+        // returns true if all BAM files have index data available
+        bool HasIndexes(void) const;
+        // looks for index files that match current BAM files
+        bool LocateIndexes(const BamIndex::IndexType& preferredType = BamIndex::STANDARD);
+        // opens index files for current BAM files.
+        bool OpenIndexes(const std::vector<std::string>& indexFilenames);
+        // changes the caching behavior of the index data
+        void SetIndexCacheMode(const BamIndex::IndexCacheMode& mode);
+
+    // deprecated methods
+    public:
+        // returns \c true if all BAM files have index data available.
+        bool IsIndexLoaded(void) const;
+        // convenience method for printing filenames to stdout
+        void PrintFilenames(void) const;
 
     // private implementation
     private:

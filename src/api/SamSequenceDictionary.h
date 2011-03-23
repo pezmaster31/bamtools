@@ -3,10 +3,10 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 23 December 2010 (DB)
+// Last modified: 20 March 2011
 // ---------------------------------------------------------------------------
-// Provides container operations for collection of sequence entries
-// *************************************************************************
+// Provides methods for operating on a collection of SamSequence entries.
+// ***************************************************************************
 
 #ifndef SAM_SEQUENCE_DICTIONARY_H
 #define SAM_SEQUENCE_DICTIONARY_H
@@ -14,6 +14,7 @@
 #include <api/api_global.h>
 #include <api/SamSequence.h>
 #include <string>
+#include <map>
 #include <vector>
 
 namespace BamTools {
@@ -32,15 +33,15 @@ class API_EXPORT SamSequenceDictionary {
 
     // query/modify sequence data
     public:
-        // add a sequence
+        // adds a sequence
         void Add(const SamSequence& sequence);
-        void Add(const std::string& sequenceNames);
+        void Add(const std::string& name, const int& length);
 
-        // add multiple sequences
+        // adds multiple sequences
         void Add(const std::vector<SamSequence>& sequences);
-        void Add(const std::vector<std::string>& sequenceNames);
+        void Add(const std::map<std::string, int>& sequenceMap);
 
-        // clear all sequence records
+        // clears all sequence entries
         void Clear(void);
 
         // returns true if dictionary contains this sequence
@@ -50,39 +51,33 @@ class API_EXPORT SamSequenceDictionary {
         // returns true if dictionary is empty
         bool IsEmpty(void) const;
 
-        // remove a single sequence (does nothing if sequence not found)
+        // removes sequence, if found
         void Remove(const SamSequence& sequence);
         void Remove(const std::string& sequenceName);
 
-        // remove multiple sequences
+        // removes multiple sequences
         void Remove(const std::vector<SamSequence>& sequences);
         void Remove(const std::vector<std::string>& sequenceNames);
 
-        // returns size of dictionary (number of current elements)
+        // returns number of sequences in dictionary
         int Size(void) const;
 
-        // retrieves the SamSequence object associated with this name
-        // if sequenceName is unknown, a new SamSequence is created with this name (and invalid length 0)
-        // and a reference to this new sequence entry is returned (like std::map)
-        //
-        // * To avoid these partial entries being created, it is recommended to check
-        //   for existence first using Contains()
+        // retrieves a modifiable reference to the SamSequence object associated with this name
         SamSequence& operator[](const std::string& sequenceName);
 
-    // retrieve sequence iterators
-    // these are typedefs for STL iterators and thus are compatible with STL containers/algorithms
+    // retrieve STL-compatible iterators
     public:
-        SamSequenceIterator      Begin(void);
-        SamSequenceConstIterator Begin(void) const;
-        SamSequenceConstIterator ConstBegin(void) const;
-        SamSequenceIterator      End(void);
-        SamSequenceConstIterator End(void) const;
-        SamSequenceConstIterator ConstEnd(void) const;
+        SamSequenceIterator      Begin(void);               // returns iterator to begin()
+        SamSequenceConstIterator Begin(void) const;         // returns const_iterator to begin()
+        SamSequenceConstIterator ConstBegin(void) const;    // returns const_iterator to begin()
+        SamSequenceIterator      End(void);                 // returns iterator to end()
+        SamSequenceConstIterator End(void) const;           // returns const_iterator to end()
+        SamSequenceConstIterator ConstEnd(void) const;      // returns const_iterator to end()
 
     // internal methods
     private:
         int IndexOf(const SamSequence& sequence) const;
-        int IndexOf(const std::string& sequenceName) const;
+        int IndexOf(const std::string& name) const;
 
     // data members
     private:

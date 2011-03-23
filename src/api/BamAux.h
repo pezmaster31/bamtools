@@ -3,115 +3,91 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010 (DB)
+// Last modified: 4 March 2011 (DB)
 // ---------------------------------------------------------------------------
-// Provides the basic constants, data structures, utilities etc. 
-// used throughout the API for handling BAM files
+// Provides data structures & utility methods that are used throughout the API.
 // ***************************************************************************
 
 #ifndef BAMAUX_H
 #define BAMAUX_H
 
 #include <api/api_global.h>
-
 #include <fstream> 
 #include <iostream>
 #include <string>
 #include <vector>
 
-// Platform-specific large-file support
-#ifndef BAMTOOLS_LFS
-#define BAMTOOLS_LFS
-    #ifdef WIN32
-        #define ftell64(a)     _ftelli64(a)
-        #define fseek64(a,b,c) _fseeki64(a,b,c)
-    #else
-        #define ftell64(a)     ftello(a)
-        #define fseek64(a,b,c) fseeko(a,b,c)
-    #endif
-#endif // BAMTOOLS_LFS
+/*! \file BamAux.h
 
-// Platform-specific type definitions
-#ifndef BAMTOOLS_TYPES
-#define BAMTOOLS_TYPES
-    #ifdef _MSC_VER
-        typedef char                 int8_t;
-        typedef unsigned char       uint8_t;
-        typedef short               int16_t;
-        typedef unsigned short     uint16_t;
-        typedef int                 int32_t;
-        typedef unsigned int       uint32_t;
-        typedef long long           int64_t;
-        typedef unsigned long long uint64_t;
-    #else
-        #include <stdint.h>
-    #endif
-#endif // BAMTOOLS_TYPES
+    Provides data structures & utility methods that are used throughout the API.
+*/
+/*! \namespace BamTools
+    \brief Contains all BamTools classes & methods.
 
+    The BamTools API contained in this namespace contains classes and methods
+    for reading, writing, and manipulating BAM alignment files.
+*/
 namespace BamTools {
 
 // ----------------------------------------------------------------
-// ----------------------------------------------------------------
-// BAM constants
+// CigarOp
 
-const int BAM_CMATCH      = 0;
-const int BAM_CINS        = 1;
-const int BAM_CDEL        = 2;
-const int BAM_CREF_SKIP   = 3;
-const int BAM_CSOFT_CLIP  = 4;
-const int BAM_CHARD_CLIP  = 5;
-const int BAM_CPAD        = 6;
-const int BAM_CIGAR_SHIFT = 4;
-const int BAM_CIGAR_MASK  = ((1 << BAM_CIGAR_SHIFT) - 1);
-const int BAM_CORE_SIZE   = 32;
-const int BT_SIZEOF_INT   = 4;
+/*! \struct BamTools::CigarOp
+    \brief Represents a CIGAR alignment operation.
 
-// ----------------------------------------------------------------
-// ----------------------------------------------------------------
-// Data structs & typedefs
-
-// CIGAR operation data structure
+    \sa http://samtools.sourceforge.net/SAM-1.3.pdf for more details on using CIGAR operations.
+*/
 struct API_EXPORT CigarOp {
   
-    // data members
-    char     Type;   // Operation type (MIDNSHP)
-    uint32_t Length; // Operation length (number of bases)
+    char     Type;   //!< CIGAR operation type (MIDNSHP)
+    uint32_t Length; //!< CIGAR operation length (number of bases)
     
-    // constructor
+    //! constructor
     CigarOp(const char type = '\0', 
-            const uint32_t length = 0) 
+            const uint32_t& length = 0)
         : Type(type)
         , Length(length) 
     { }
 };
 
-// Reference data entry
+// ----------------------------------------------------------------
+// RefData
+
+/*! \struct BamTools::RefData
+    \brief Represents a reference sequence entry
+*/
 struct API_EXPORT RefData {
    
-    // data members
-    std::string RefName;          // Name of reference sequence
-    int32_t     RefLength;        // Length of reference sequence
-    bool        RefHasAlignments; // True if BAM file contains alignments mapped to reference sequence
+    std::string RefName;    //!< name of reference sequence
+    int32_t     RefLength;  //!< length of reference sequence
     
-    // constructor
-    RefData(const int32_t& length = 0, 
-            bool ok = false)
-        : RefLength(length)
-        , RefHasAlignments(ok)
+    //! constructor
+    RefData(const std::string& name = "",
+            const int32_t& length = 0)
+        : RefName(name)
+        , RefLength(length)
     { }
 };
+
+//! convenience typedef for vector of RefData entries
 typedef std::vector<RefData> RefVector;
 
-// General (sequential) genome region
+// ----------------------------------------------------------------
+// BamRegion
+
+/*! \struct BamTools::BamRegion
+    \brief Represents a sequential genomic region
+
+    Allowed to span multiple (sequential) references.
+*/
 struct API_EXPORT BamRegion {
   
-    // data members
-    int LeftRefID;
-    int LeftPosition;
-    int RightRefID;
-    int RightPosition;
+    int LeftRefID;      //!< reference ID for region's left boundary
+    int LeftPosition;   //!< position for region's left boundary
+    int RightRefID;     //!< reference ID for region's right boundary
+    int RightPosition;  //!< position for region's right boundary
     
-    // constructor
+    //! constructor
     BamRegion(const int& leftID   = -1, 
               const int& leftPos  = -1,
               const int& rightID  = -1,
@@ -122,42 +98,75 @@ struct API_EXPORT BamRegion {
         , RightPosition(rightPos)
     { }
     
-    // copy constructor
+    //! copy constructor
     BamRegion(const BamRegion& other)
-	: LeftRefID(other.LeftRefID)
-	, LeftPosition(other.LeftPosition)
-	, RightRefID(other.RightRefID)
-	, RightPosition(other.RightPosition)
+        : LeftRefID(other.LeftRefID)
+        , LeftPosition(other.LeftPosition)
+        , RightRefID(other.RightRefID)
+        , RightPosition(other.RightPosition)
     { }
     
-    // member functions
-    void clear(void) { LeftRefID = -1; LeftPosition = -1; RightRefID = -1; RightPosition = -1; }
-    bool isLeftBoundSpecified(void) const { return ( LeftRefID >= 0 && LeftPosition >= 0 ); }
-    bool isNull(void) const { return ( !isLeftBoundSpecified() && !isRightBoundSpecified() ); }
-    bool isRightBoundSpecified(void) const { return ( RightRefID >= 0 && RightPosition >= 0 ); }
+    //! Clears region boundaries
+    void clear(void) {
+        LeftRefID  = -1; LeftPosition  = -1;
+        RightRefID = -1; RightPosition = -1;
+    }
+
+    //! Returns true if region has a left boundary
+    bool isLeftBoundSpecified(void) const {
+        return ( LeftRefID >= 0 && LeftPosition >= 0 );
+    }
+
+    //! Returns true if region boundaries are not defined
+    bool isNull(void) const {
+        return ( !isLeftBoundSpecified() && !isRightBoundSpecified() );
+    }
+
+    //! Returns true if region has a right boundary
+    bool isRightBoundSpecified(void) const {
+        return ( RightRefID >= 0 && RightPosition >= 0 );
+    }
 };
 
 // ----------------------------------------------------------------
-// ----------------------------------------------------------------
-// General utilities 
+// General utility methods
 
-// returns true if system is big endian
-inline bool SystemIsBigEndian(void) {
-   const uint16_t one = 0x0001;
-   return ((*(char*) &one) == 0 );
+/*! \fn bool FileExists(const std::string& filename)
+    \brief checks if file exists
+
+    Attempts to open file in a read-only mode.
+
+    \return \c true if file can be opened successfully
+*/
+API_EXPORT inline bool FileExists(const std::string& filename) {
+    std::ifstream f(filename.c_str(), std::ifstream::in);
+    return !f.fail();
 }
 
-// swaps endianness of 16-bit value 'in place'
-inline void SwapEndian_16(int16_t& x) {
+/*! \fn void SwapEndian_16(int16_t& x)
+    \brief swaps endianness of signed 16-bit integer, in place
+
+    Swaps endian representation of value in \a x.
+*/
+API_EXPORT inline void SwapEndian_16(int16_t& x) {
     x = ((x >> 8) | (x << 8));
 }
 
-inline void SwapEndian_16(uint16_t& x) {
+/*! \fn void SwapEndian_16(uint16_t& x)
+    \brief swaps endianness of unsigned 16-bit integer, in place
+
+    Swaps endian representation of value in \a x.
+*/
+API_EXPORT inline void SwapEndian_16(uint16_t& x) {
     x = ((x >> 8) | (x << 8));
 }
 
-// swaps endianness of 32-bit value 'in-place'
-inline void SwapEndian_32(int32_t& x) {
+/*! \fn void SwapEndian_32(int32_t& x)
+    \brief swaps endianness of signed 32-bit integer, in place
+
+    Swaps endian representation of value in \a x.
+*/
+API_EXPORT inline void SwapEndian_32(int32_t& x) {
     x = ( (x >> 24) | 
          ((x << 8) & 0x00FF0000) | 
          ((x >> 8) & 0x0000FF00) | 
@@ -165,7 +174,12 @@ inline void SwapEndian_32(int32_t& x) {
         );
 }
 
-inline void SwapEndian_32(uint32_t& x) {
+/*! \fn void SwapEndian_32(uint32_t& x)
+    \brief swaps endianness of unsigned 32-bit integer, in place
+
+    Swaps endian representation of value in \a x.
+*/
+API_EXPORT inline void SwapEndian_32(uint32_t& x) {
     x = ( (x >> 24) | 
          ((x << 8) & 0x00FF0000) | 
          ((x >> 8) & 0x0000FF00) | 
@@ -173,8 +187,12 @@ inline void SwapEndian_32(uint32_t& x) {
         );
 }
 
-// swaps endianness of 64-bit value 'in-place'
-inline void SwapEndian_64(int64_t& x) {
+/*! \fn void SwapEndian_64(int64_t& x)
+    \brief swaps endianness of signed 64-bit integer, in place
+
+    Swaps endian representation of value in \a x.
+*/
+API_EXPORT inline void SwapEndian_64(int64_t& x) {
     x = ( (x >> 56) | 
          ((x << 40) & 0x00FF000000000000ll) |
          ((x << 24) & 0x0000FF0000000000ll) |
@@ -186,7 +204,12 @@ inline void SwapEndian_64(int64_t& x) {
         );
 }
 
-inline void SwapEndian_64(uint64_t& x) {
+/*! \fn void SwapEndian_64(uint64_t& x)
+    \brief swaps endianness of unsigned 64-bit integer, in place
+
+    Swaps endian representation of value in \a x.
+*/
+API_EXPORT inline void SwapEndian_64(uint64_t& x) {
     x = ( (x >> 56) | 
          ((x << 40) & 0x00FF000000000000ll) |
          ((x << 24) & 0x0000FF0000000000ll) |
@@ -198,28 +221,235 @@ inline void SwapEndian_64(uint64_t& x) {
         );
 }
 
-// swaps endianness of 'next 2 bytes' in a char buffer (in-place)
-inline void SwapEndian_16p(char* data) {
+/*! \fn void SwapEndian_16p(char* data)
+    \brief swaps endianness of the next 2 bytes in a buffer, in place
+
+    Swaps endian representation the next 2 bytes in \a data.
+*/
+API_EXPORT inline void SwapEndian_16p(char* data) {
     uint16_t& value = (uint16_t&)*data; 
     SwapEndian_16(value);
 }
 
-// swaps endianness of 'next 4 bytes' in a char buffer (in-place)
-inline void SwapEndian_32p(char* data) {
+/*! \fn void SwapEndian_32p(char* data)
+    \brief swaps endianness of the next 4 bytes in a buffer, in place
+
+    Swaps endian representation the next 4 bytes in \a data.
+*/
+API_EXPORT inline void SwapEndian_32p(char* data) {
     uint32_t& value = (uint32_t&)*data; 
     SwapEndian_32(value);
 }
 
-// swaps endianness of 'next 8 bytes' in a char buffer (in-place)
-inline void SwapEndian_64p(char* data) {
+/*! \fn void SwapEndian_64p(char* data)
+    \brief swaps endianness of the next 8 bytes in a buffer, in place
+
+    Swaps endian representation the next 8 bytes in \a data.
+*/
+API_EXPORT inline void SwapEndian_64p(char* data) {
     uint64_t& value = (uint64_t&)*data; 
     SwapEndian_64(value);
 }
 
-// returns whether file exists (can be opened OK)
-inline bool FileExists(const std::string& filename) {
-    std::ifstream f(filename.c_str(), std::ifstream::in);
-    return !f.fail();
+/*! \fn bool SystemIsBigEndian(void)
+    \brief checks host architecture's byte order
+    \return \c true if system uses big-endian ordering
+*/
+API_EXPORT inline bool SystemIsBigEndian(void) {
+   const uint16_t one = 0x0001;
+   return ((*(char*) &one) == 0 );
+}
+
+/*! \fn void PackUnsignedInt(char* buffer, unsigned int value)
+    \brief stores unsigned integer value in a byte buffer
+
+    \param buffer destination buffer
+    \param value  unsigned integer to 'pack' in buffer
+*/
+API_EXPORT inline void PackUnsignedInt(char* buffer, unsigned int value) {
+    buffer[0] = (char)value;
+    buffer[1] = (char)(value >> 8);
+    buffer[2] = (char)(value >> 16);
+    buffer[3] = (char)(value >> 24);
+}
+
+/*! \fn void PackUnsignedShort(char* buffer, unsigned short value)
+    \brief stores unsigned short integer value in a byte buffer
+
+    \param buffer destination buffer
+    \param value  unsigned short integer to 'pack' in buffer
+*/
+API_EXPORT inline void PackUnsignedShort(char* buffer, unsigned short value) {
+    buffer[0] = (char)value;
+    buffer[1] = (char)(value >> 8);
+}
+
+/*! \fn double UnpackDouble(const char* buffer)
+    \brief reads a double value from byte buffer
+
+    \param buffer source byte buffer
+    \return the (double) value read from the buffer
+*/
+API_EXPORT inline double UnpackDouble(const char* buffer) {
+    union { double value; unsigned char valueBuffer[sizeof(double)]; } un;
+    un.value = 0;
+    un.valueBuffer[0] = buffer[0];
+    un.valueBuffer[1] = buffer[1];
+    un.valueBuffer[2] = buffer[2];
+    un.valueBuffer[3] = buffer[3];
+    un.valueBuffer[4] = buffer[4];
+    un.valueBuffer[5] = buffer[5];
+    un.valueBuffer[6] = buffer[6];
+    un.valueBuffer[7] = buffer[7];
+    return un.value;
+}
+
+/*! \fn double UnpackDouble(char* buffer)
+    \brief reads a double value from byte buffer
+
+    This is an overloaded function.
+
+    \param buffer source byte buffer
+    \return the (double) value read from the buffer
+*/
+API_EXPORT inline double UnpackDouble(char* buffer) {
+    return UnpackDouble( (const char*)buffer );
+}
+
+/*! \fn double UnpackFloat(const char* buffer)
+    \brief reads a float value from byte buffer
+
+    \param buffer source byte buffer
+    \return the (float) value read from the buffer
+*/
+API_EXPORT inline float UnpackFloat(const char* buffer) {
+    union { float value; unsigned char valueBuffer[sizeof(float)]; } un;
+    un.value = 0;
+    un.valueBuffer[0] = buffer[0];
+    un.valueBuffer[1] = buffer[1];
+    un.valueBuffer[2] = buffer[2];
+    un.valueBuffer[3] = buffer[3];
+    return un.value;
+}
+
+/*! \fn double UnpackFloat(char* buffer)
+    \brief reads a float value from byte buffer
+
+    This is an overloaded function.
+
+    \param buffer source byte buffer
+    \return the (float) value read from the buffer
+*/
+API_EXPORT inline float UnpackFloat(char* buffer) {
+    return UnpackFloat( (const char*)buffer );
+}
+
+/*! \fn signed int UnpackSignedInt(const char* buffer)
+    \brief reads a signed integer value from byte buffer
+
+    \param buffer source byte buffer
+    \return the (signed int) value read from the buffer
+*/
+API_EXPORT inline signed int UnpackSignedInt(const char* buffer) {
+    union { signed int value; unsigned char valueBuffer[sizeof(signed int)]; } un;
+    un.value = 0;
+    un.valueBuffer[0] = buffer[0];
+    un.valueBuffer[1] = buffer[1];
+    un.valueBuffer[2] = buffer[2];
+    un.valueBuffer[3] = buffer[3];
+    return un.value;
+}
+
+/*! \fn signed int UnpackSignedInt(char* buffer)
+    \brief reads a signed integer value from byte buffer
+
+    This is an overloaded function.
+
+    \param buffer source byte buffer
+    \return the (signed int) value read from the buffer
+*/
+API_EXPORT inline signed int UnpackSignedInt(char* buffer) {
+    return UnpackSignedInt( (const char*) buffer );
+}
+
+/*! \fn signed short UnpackSignedShort(const char* buffer)
+    \brief reads a signed short integer value from byte buffer
+
+    \param buffer source byte buffer
+    \return the (signed short) value read from the buffer
+*/
+API_EXPORT inline signed short UnpackSignedShort(const char* buffer) {
+    union { signed short value; unsigned char valueBuffer[sizeof(signed short)]; } un;
+    un.value = 0;
+    un.valueBuffer[0] = buffer[0];
+    un.valueBuffer[1] = buffer[1];
+    return un.value;
+}
+
+/*! \fn signed short UnpackSignedShort(char* buffer)
+    \brief reads a signed short integer value from byte buffer
+
+    This is an overloaded function.
+
+    \param buffer source byte buffer
+    \return the (signed short) value read from the buffer
+*/
+API_EXPORT inline signed short UnpackSignedShort(char* buffer) {
+    return UnpackSignedShort( (const char*)buffer );
+}
+
+/*! \fn unsigned int UnpackUnsignedInt(const char* buffer)
+    \brief reads an unsigned integer value from byte buffer
+
+    \param buffer source byte buffer
+    \return the (unsigned int) value read from the buffer
+*/
+API_EXPORT inline unsigned int UnpackUnsignedInt(const char* buffer) {
+    union { unsigned int value; unsigned char valueBuffer[sizeof(unsigned int)]; } un;
+    un.value = 0;
+    un.valueBuffer[0] = buffer[0];
+    un.valueBuffer[1] = buffer[1];
+    un.valueBuffer[2] = buffer[2];
+    un.valueBuffer[3] = buffer[3];
+    return un.value;
+}
+
+/*! \fn unsigned int UnpackUnsignedInt(char* buffer)
+    \brief reads an unsigned integer value from byte buffer
+
+    This is an overloaded function.
+
+    \param buffer source byte buffer
+    \return the (unsigned int) value read from the buffer
+*/
+API_EXPORT inline unsigned int UnpackUnsignedInt(char* buffer) {
+    return UnpackUnsignedInt( (const char*)buffer );
+}
+
+/*! \fn unsigned short UnpackUnsignedShort(const char* buffer)
+    \brief reads an unsigned short integer value from byte buffer
+
+    \param buffer source byte buffer
+    \return the (unsigned short) value read from the buffer
+*/
+API_EXPORT inline unsigned short UnpackUnsignedShort(const char* buffer) {
+    union { unsigned short value; unsigned char valueBuffer[sizeof(unsigned short)]; } un;
+    un.value = 0;
+    un.valueBuffer[0] = buffer[0];
+    un.valueBuffer[1] = buffer[1];
+    return un.value;
+}
+
+/*! \fn unsigned short UnpackUnsignedShort(char* buffer)
+    \brief reads an unsigned short integer value from byte buffer
+
+    This is an overloaded function.
+
+    \param buffer source byte buffer
+    \return the (unsigned short) value read from the buffer
+*/
+API_EXPORT inline unsigned short UnpackUnsignedShort(char* buffer) {
+    return UnpackUnsignedShort( (const char*)buffer );
 }
 
 } // namespace BamTools

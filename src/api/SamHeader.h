@@ -3,10 +3,10 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 12 January 2011 (DB)
+// Last modified: 4 March 2011 (DB)
 // ---------------------------------------------------------------------------
-// Provides functionality for querying/manipulating SAM header data
-// **************************************************************************
+// Provides direct read/write access to the SAM header data fields.
+// ***************************************************************************
 
 #ifndef SAM_HEADER_H
 #define SAM_HEADER_H
@@ -22,62 +22,47 @@ namespace BamTools {
 struct API_EXPORT SamHeader {
 
     // ctor & dtor
-    public:
-        SamHeader(const std::string& headerText = "");
-        SamHeader(const SamHeader& other);
-        ~SamHeader(void);
+    SamHeader(const std::string& headerText = "");
+    SamHeader(const SamHeader& other);
+    ~SamHeader(void);
 
-    // query/modify entire SamHeader at once
-    public:
+    // query/modify entire SamHeader
+    void Clear(void);                                   // clears all header contents
+    bool IsValid(bool verbose = false) const;           // returns true if SAM header is well-formed
+    void SetHeaderText(const std::string& headerText);  // replaces data fields with contents of SAM-formatted text
+    std::string ToString(void) const;                   // returns the printable, SAM-formatted header text
 
-        // clear all header contents
-        void Clear(void);
-
-        // checks if SAM header is well-formed
-        // @verbose - if true, validation errors & warnings will be printed to stderr
-        // otherwise, output is suppressed and only validation check occurs
-        bool IsValid(bool verbose = false) const;
-
-        // replaces SamHeader contents with headerText
-        void SetHeaderText(const std::string& headerText);
-
-        // retrieves the printable, SAM-formatted header
-        // (with any local modifications since construction)
-        std::string ToString(void) const;
-
-    // query if header contains data elements
-    public:
-        bool HasVersion(void) const;
-        bool HasSortOrder(void) const;
-        bool HasGroupOrder(void) const;
-        bool HasSequences(void) const;
-        bool HasReadGroups(void) const;
-        bool HasProgramName(void) const;
-        bool HasProgramVersion(void) const;
-        bool HasProgramCommandLine(void) const;
-        bool HasComments(void) const;
+    // convenience query methods
+    bool HasVersion(void) const;            // returns true if header contains format version entry
+    bool HasSortOrder(void) const;          // returns true if header contains sort order entry
+    bool HasGroupOrder(void) const;         // returns true if header contains group order entry
+    bool HasSequences(void) const;          // returns true if header contains any sequence entries
+    bool HasReadGroups(void) const;         // returns true if header contains any read group entries
+    bool HasProgramName(void) const;        // returns true if header contains program name
+    bool HasProgramVersion(void) const;     // returns true if header contains program version
+    bool HasProgramCommandLine(void) const; // returns true if header contains program command line
+    bool HasComments(void) const;           // returns true if header contains comments
 
     // data members
-    public:
 
-        // header metadata (@HD line)
-        std::string Version;                // VN:<Version>
-        std::string SortOrder;              // SO:<SortOrder>
-        std::string GroupOrder;             // GO:<GroupOrder>
+    // header metadata (@HD line)
+    std::string Version;                // VN:<Version>
+    std::string SortOrder;              // SO:<SortOrder>
+    std::string GroupOrder;             // GO:<GroupOrder>
 
-        // header sequences (@SQ entries)
-        SamSequenceDictionary Sequences;
+    // header sequences (@SQ entries)
+    SamSequenceDictionary Sequences;
 
-        // header read groups (@RG entries)
-        SamReadGroupDictionary ReadGroups;
+    // header read groups (@RG entries)
+    SamReadGroupDictionary ReadGroups;
 
-        // header program data (@PG entries)
-        std::string ProgramName;            // ID:<ProgramName>
-        std::string ProgramVersion;         // VN:<ProgramVersion>
-        std::string ProgramCommandLine;     // CL:<ProgramCommandLine>
+    // header program data (@PG entries)
+    std::string ProgramName;            // ID:<ProgramName>
+    std::string ProgramVersion;         // VN:<ProgramVersion>
+    std::string ProgramCommandLine;     // CL:<ProgramCommandLine>
 
-        // header comments (@CO entries)
-        std::vector<std::string> Comments;
+    // header comments (@CO entries)
+    std::vector<std::string> Comments;
 };
 
 } // namespace BamTools

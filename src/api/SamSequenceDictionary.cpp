@@ -3,9 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 23 December 2010 (DB)
+// Last modified: 20 March 2011 (DB)
 // ---------------------------------------------------------------------------
-// Provides container operations for collection of sequence entries
+// Provides methods for operating on a collection of SamSequence entries.
 // *************************************************************************
 
 #include <api/SamSequenceDictionary.h>
@@ -14,146 +14,282 @@ using namespace BamTools;
 #include <iostream>
 using namespace std;
 
-// ctor
+/*! \class BamTools::SamSequenceDictionary
+    \brief Container of SamSequence entries.
+
+    Provides methods for operating on a collection of SamSequence entries.
+*/
+
+/*! \fn SamSequenceDictionary::SamSequenceDictionary(void)
+    \brief constructor
+*/
 SamSequenceDictionary::SamSequenceDictionary(void) { }
 
-// copy ctor
+/*! \fn SamSequenceDictionary::SamSequenceDictionary(const SamSequenceDictionary& other)
+    \brief copy constructor
+*/
 SamSequenceDictionary::SamSequenceDictionary(const SamSequenceDictionary& other)
     : m_data(other.m_data)
 { }
 
-// dtor
-SamSequenceDictionary::~SamSequenceDictionary(void) {
-    m_data.clear();
-}
+/*! \fn SamSequenceDictionary::~SamSequenceDictionary(void)
+    \brief destructor
+*/
+SamSequenceDictionary::~SamSequenceDictionary(void) { }
 
-// adds sequence if not already in container
+/*! \fn void SamSequenceDictionary::Add(const SamSequence& sequence)
+    \brief Adds a sequence to the dictionary.
+
+    Duplicate entries are discarded.
+
+    \param sequence entry to be added
+*/
 void SamSequenceDictionary::Add(const SamSequence& sequence) {
     if ( IsEmpty() || !Contains(sequence) )
         m_data.push_back(sequence);
 }
 
-// overload to support std::string
-void SamSequenceDictionary::Add(const string& sequenceName) {
-    Add( SamSequence(sequenceName) );
+/*! \fn void SamSequenceDictionary::Add(const std::string& name, const int& length)
+    \brief Adds a sequence to the dictionary.
+
+    This is an overloaded function.
+
+    \param name name of sequence entry to be added
+    \param length length of sequence entry to be added
+    \sa Add()
+*/
+void SamSequenceDictionary::Add(const std::string& name, const int& length) {
+    Add( SamSequence(name, length) );
 }
 
-// add multiple sequences
-void SamSequenceDictionary::Add(const vector<SamSequence>& sequences) {
-    vector<SamSequence>::const_iterator rgIter = sequences.begin();
-    vector<SamSequence>::const_iterator rgEnd  = sequences.end();
-    for ( ; rgIter!= rgEnd; ++rgIter )
-        Add(*rgIter);
+/*! \fn void SamSequenceDictionary::Add(const std::vector<SamSequence>& sequences)
+    \brief Adds multiple sequences to the dictionary.
+
+    This is an overloaded function.
+
+    \param sequences entries to be added
+    \sa Add()
+*/
+void SamSequenceDictionary::Add(const std::vector<SamSequence>& sequences) {
+    vector<SamSequence>::const_iterator seqIter = sequences.begin();
+    vector<SamSequence>::const_iterator seqEnd  = sequences.end();
+    for ( ; seqIter!= seqEnd; ++seqIter )
+        Add(*seqIter);
 }
 
-// overload to support std::string
-void SamSequenceDictionary::Add(const vector<string>& sequenceNames) {
-    vector<string>::const_iterator rgIter = sequenceNames.begin();
-    vector<string>::const_iterator rgEnd  = sequenceNames.end();
-    for ( ; rgIter!= rgEnd; ++rgIter )
-        Add(*rgIter);
+/*! \fn void SamSequenceDictionary::Add(const std::map<std::string, int>& sequenceMap)
+    \brief Adds multiple sequences to the dictionary.
+
+    This is an overloaded function.
+
+    \param sequenceMap map of sequence entries (name => length) to be added
+    \sa Add()
+*/
+void SamSequenceDictionary::Add(const std::map<std::string, int>& sequenceMap) {
+    map<string, int>::const_iterator seqIter = sequenceMap.begin();
+    map<string, int>::const_iterator seqEnd  = sequenceMap.end();
+    for ( ; seqIter != seqEnd; ++seqIter ) {
+        const string& name = (*seqIter).first;
+        const int& length = (*seqIter).second;
+        Add( SamSequence(name, length) );
+    }
 }
 
-// returns iterator to container begin
+/*! \fn SamSequenceIterator SamSequenceDictionary::Begin(void)
+    \return an STL iterator pointing to the first sequence
+    \sa ConstBegin(), End()
+*/
 SamSequenceIterator SamSequenceDictionary::Begin(void) {
     return m_data.begin();
 }
 
-// returns const_iterator to container begin
+/*! \fn SamSequenceConstIterator SamSequenceDictionary::Begin(void) const
+
+    This is an overloaded function.
+
+    \return a const STL iterator pointing to the first sequence
+    \sa ConstBegin(), End()
+*/
 SamSequenceConstIterator SamSequenceDictionary::Begin(void) const {
     return m_data.begin();
 }
 
-// clear sequence container
+/*! \fn void SamSequenceDictionary::Clear(void)
+    \brief Clears all sequence entries.
+*/
 void SamSequenceDictionary::Clear(void) {
     m_data.clear();
 }
 
-// explicit request for const_iterator to container begin
+/*! \fn SamSequenceConstIterator SamSequenceDictionary::ConstBegin(void) const
+    \return a const STL iterator pointing to the first sequence
+    \sa Begin(), ConstEnd()
+*/
 SamSequenceConstIterator SamSequenceDictionary::ConstBegin(void) const {
     return m_data.begin();
 }
 
-// explicit request for const_iterator to container end
+/*! \fn SamSequenceConstIterator SamSequenceDictionary::ConstEnd(void) const
+    \return a const STL iterator pointing to the imaginary entry after the last sequence
+    \sa End(), ConstBegin()
+*/
 SamSequenceConstIterator SamSequenceDictionary::ConstEnd(void) const {
     return m_data.end();
 }
 
-// returns true if container contains a sequence with this ID tag
-bool SamSequenceDictionary::Contains(const string& sequenceName) const {
+/*! \fn bool SamSequenceDictionary::Contains(const std::string& sequenceName) const
+    \brief Returns true if dictionary contains sequence.
+    \param sequenceName search for sequence matching this name
+    \return \c true if dictionary contains a sequence with this name
+*/
+bool SamSequenceDictionary::Contains(const std::string& sequenceName) const {
     return ( IndexOf(sequenceName) != (int)m_data.size() );
 }
 
-bool SamSequenceDictionary::Contains(const SamSequence& seq) const {
-    return ( IndexOf(seq) != (int)m_data.size() );
+/*! \fn bool SamSequenceDictionary::Contains(const SamSequence& sequence) const
+    \brief Returns true if dictionary contains sequence.
+    \param sequence search for this sequence
+    \return \c true if dictionary contains sequence
+*/
+bool SamSequenceDictionary::Contains(const SamSequence& sequence) const {
+    return ( IndexOf(sequence) != (int)m_data.size() );
 }
 
-// returns iterator to container end
+/*! \fn SamSequenceIterator SamSequenceDictionary::End(void)
+    \return an STL iterator pointing to the imaginary entry after the last sequence
+    \sa Begin(), ConstEnd()
+*/
 SamSequenceIterator SamSequenceDictionary::End(void) {
     return m_data.end();
 }
 
-// returns const_iterator to container begin
+/*! \fn SamSequenceConstIterator SamSequenceDictionary::End(void) const
+
+    This is an overloaded function.
+
+    \return a const STL iterator pointing to the imaginary entry after the last sequence
+    \sa Begin(), ConstEnd()
+*/
 SamSequenceConstIterator SamSequenceDictionary::End(void) const {
     return m_data.end();
 }
 
-// returns vector index of sequence if found
-// returns vector::size() (invalid index) if not found
+/*! \fn int SamSequenceDictionary::IndexOf(const SamSequence& sequence) const
+    \internal
+
+    Uses operator==(SamSequence, SamSequence)
+
+    \return index of sequence if found.  Otherwise, returns vector::size() (invalid index).
+*/
 int SamSequenceDictionary::IndexOf(const SamSequence& sequence) const {
     SamSequenceConstIterator begin = ConstBegin();
     SamSequenceConstIterator iter  = begin;
     SamSequenceConstIterator end   = ConstEnd();
-    for ( ; iter != end; ++iter )
-        if ( *iter == sequence ) break;
+    for ( ; iter != end; ++iter ) {
+        const SamSequence& currentSeq = (*iter);
+        if ( currentSeq == sequence )
+            break;
+    }
     return distance( begin, iter );
 }
 
-// overload to support std::string
-int SamSequenceDictionary::IndexOf(const string& sequenceName) const {
-    return IndexOf( SamSequence(sequenceName) );
+/*! \fn int SamSequenceDictionary::IndexOf(const std::string& name) const
+    \internal
+
+    Use comparison of SamSequence::Name to \a name
+
+    \return index of sequence if found.  Otherwise, returns vector::size() (invalid index).
+*/
+int SamSequenceDictionary::IndexOf(const std::string& name) const {
+    SamSequenceConstIterator begin = ConstBegin();
+    SamSequenceConstIterator iter  = begin;
+    SamSequenceConstIterator end   = ConstEnd();
+    for ( ; iter != end; ++iter ) {
+        const SamSequence& currentSeq = (*iter);
+        if ( currentSeq.Name == name )
+            break;
+    }
+    return distance( begin, iter );
 }
 
-// returns true if container is empty
+/*! \fn bool SamSequenceDictionary::IsEmpty(void) const
+    \brief Returns \c true if dictionary contains no sequences
+    \sa Size()
+*/
 bool SamSequenceDictionary::IsEmpty(void) const {
     return m_data.empty();
 }
 
-// removes sequence (if it exists)
+/*! \fn void SamSequenceDictionary::Remove(const SamSequence& sequence)
+    \brief Removes sequence from dictionary, if found.
+    \param sequence sequence to remove
+*/
 void SamSequenceDictionary::Remove(const SamSequence& sequence) {
     if ( Contains(sequence) )
         m_data.erase( m_data.begin() + IndexOf(sequence) );
 }
 
-// overlaod to support std::string
-void SamSequenceDictionary::Remove(const string& sequenceName) {
-    Remove( SamSequence(sequenceName) );
+/*! \fn void SamSequenceDictionary::Remove(const std::string& sequenceName)
+    \brief Removes sequence from dictionary, if found.
+
+    \param sequenceName name of sequence to remove
+    \sa Remove()
+*/
+void SamSequenceDictionary::Remove(const std::string& sequenceName) {
+    if ( Contains(sequenceName) )
+        m_data.erase( m_data.begin() + IndexOf(sequenceName) );
 }
 
-// remove multiple sequences
-void SamSequenceDictionary::Remove(const vector<SamSequence>& sequences) {
+/*! \fn void SamSequenceDictionary::Remove(const std::vector<SamSequence>& sequences)
+    \brief Removes multiple sequences from dictionary.
+
+    This is an overloaded function.
+
+    \param sequences sequences to remove
+    \sa Remove()
+*/
+void SamSequenceDictionary::Remove(const std::vector<SamSequence>& sequences) {
     vector<SamSequence>::const_iterator rgIter = sequences.begin();
     vector<SamSequence>::const_iterator rgEnd  = sequences.end();
     for ( ; rgIter!= rgEnd; ++rgIter )
         Remove(*rgIter);
 }
 
-// overload to support std::string
-void SamSequenceDictionary::Remove(const vector<string>& sequenceNames) {
+/*! \fn void SamSequenceDictionary::Remove(const std::vector<std::string>& sequenceNames)
+    \brief Removes multiple sequences from dictionary.
+
+    This is an overloaded function.
+
+    \param sequenceNames names of the sequences to remove
+    \sa Remove()
+*/
+void SamSequenceDictionary::Remove(const std::vector<std::string>& sequenceNames) {
     vector<string>::const_iterator rgIter = sequenceNames.begin();
     vector<string>::const_iterator rgEnd  = sequenceNames.end();
     for ( ; rgIter!= rgEnd; ++rgIter )
         Remove(*rgIter);
 }
 
-// returns size of container (number of current sequences)
+/*! \fn int SamSequenceDictionary::Size(void) const
+    \brief Returns number of sequences in dictionary.
+    \sa IsEmpty()
+*/
 int SamSequenceDictionary::Size(void) const {
     return m_data.size();
 }
 
-// retrieves the SamSequence object associated with this name
-// if sequenceName is unknown, a new SamSequence is created with this name (and invalid length 0)
-// and a reference to this new sequence entry is returned (like std::map)
+/*! \fn SamSequence& SamSequenceDictionary::operator[](const std::string& sequenceName)
+    \brief Retrieves the modifiable SamSequence that matches \a sequenceName.
+
+    NOTE - If the dictionary contains no sequence matching this name, this function inserts
+    a new one with this name, and returns a reference to it.
+
+    If you want to avoid this insertion behavior, check the result of Contains() before
+    using this operator.
+
+    \param sequenceName name of sequence to retrieve
+    \return a modifiable reference to the SamSequence associated with the name
+*/
 SamSequence& SamSequenceDictionary::operator[](const std::string& sequenceName) {
 
     // look up sequence ID
@@ -165,10 +301,7 @@ SamSequence& SamSequenceDictionary::operator[](const std::string& sequenceName) 
 
     // otherwise, append new sequence and return reference
     else {
-        SamSequence seq(sequenceName);
-        seq.Length = "0";
-        m_data.push_back(seq);
+        m_data.push_back( SamSequence(sequenceName, 0) );
         return m_data.back();
     }
 }
-

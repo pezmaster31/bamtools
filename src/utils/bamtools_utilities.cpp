@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010
+// Last modified: 26 January 2011
 // ---------------------------------------------------------------------------
 // Provides general utilities used by BamTools sub-tools.
 // ***************************************************************************
@@ -21,20 +21,28 @@ using namespace std;
 
 namespace BamTools {
   
-const char REVCOMP_LOOKUP[] = {'T', 0, 'G', 'H', 0, 0, 'C', 'D', 0, 0, 0, 0, 'K', 'N', 0, 0, 0, 'Y', 'W', 'A', 'A', 'B', 'S', 'X', 'R', 0 };
+const char REVCOMP_LOOKUP[] = {'T',  0,  'G', 'H',
+                                0,   0,  'C', 'D',
+                                0,   0,   0,   0,
+                               'K', 'N',  0,   0,
+                                0,  'Y', 'W', 'A',
+                               'A', 'B', 'S', 'X',
+                               'R',  0 };
   
 } // namespace BamTools 
   
 // check if a file exists
-bool Utilities::FileExists(const std::string& filename) { 
+bool Utilities::FileExists(const string& filename) {
     ifstream f(filename.c_str(), ifstream::in);
     return !f.fail();
 }
 
 // Parses a region string, does validation (valid ID's, positions), stores in Region struct
 // Returns success (true/false)
-bool Utilities::ParseRegionString(const std::string& regionString, const BamReader& reader, BamRegion& region) {
-  
+bool Utilities::ParseRegionString(const string& regionString,
+                                  const BamReader& reader,
+                                  BamRegion& region)
+{
     // -------------------------------
     // parse region string
   
@@ -140,8 +148,10 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamRead
 }
 
 // Same as ParseRegionString() above, but accepts a BamMultiReader
-bool Utilities::ParseRegionString(const std::string& regionString, const BamMultiReader& reader, BamRegion& region) {
-  
+bool Utilities::ParseRegionString(const string& regionString,
+                                  const BamMultiReader& reader,
+                                  BamRegion& region)
+{
     // -------------------------------
     // parse region string
   
@@ -243,7 +253,6 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamMult
     region.LeftPosition = startPos;
     region.RightRefID = stopRefID;;
     region.RightPosition = stopPos;
-
     return true;
 }
 
@@ -251,9 +260,9 @@ void Utilities::Reverse(string& sequence) {
     reverse(sequence.begin(), sequence.end());
 }
 
-void Utilities::ReverseComplement(std::string& sequence) {
+void Utilities::ReverseComplement(string& sequence) {
     
-    // do complement
+    // do complement, in-place
     size_t seqLength = sequence.length();
     for ( size_t i = 0; i < seqLength; ++i )
         sequence.replace(i, 1, 1, REVCOMP_LOOKUP[(int)sequence.at(i) - 65]);

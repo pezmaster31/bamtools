@@ -36,7 +36,7 @@ void SamFormatParser::Parse(const string& headerText) {
 
     // other wise parse SAM lines
     istringstream headerStream(headerText);
-    string headerLine = "";
+    string headerLine("");
     while ( getline(headerStream, headerLine) )
          ParseSamLine(headerLine);
     return;
@@ -55,7 +55,9 @@ void SamFormatParser::ParseSamLine(const string& line) {
     else if ( firstToken == Constants::SAM_RG_BEGIN_TOKEN) ParseRGLine(restOfLine);
     else if ( firstToken == Constants::SAM_PG_BEGIN_TOKEN) ParsePGLine(restOfLine);
     else if ( firstToken == Constants::SAM_CO_BEGIN_TOKEN) ParseCOLine(restOfLine);
-    else cerr << "SAM Format Error - unknown token: " << firstToken << endl;
+    else
+        cerr << "SamFormatParser ERROR: unknown token: " << firstToken << endl;
+
     return;
 }
 
@@ -78,12 +80,12 @@ void SamFormatParser::ParseHDLine(const string& line) {
         else if ( tokenTag == Constants::SAM_HD_GROUPORDER_TAG ) m_header.GroupOrder = tokenValue;
         else if ( tokenTag == Constants::SAM_HD_SORTORDER_TAG  ) m_header.SortOrder  = tokenValue;
         else
-            cerr << "SAM Format Error - unknown HD tag: " << tokenTag << endl;
+            cerr << "SamFormatParser ERROR: unknown HD tag: " << tokenTag << endl;
     }
 
     // if @HD line exists, VN must be provided
     if ( !m_header.HasVersion() ) {
-        cerr << "SAM Format Error - @HD line is missing VN tag!" << endl;
+        cerr << "SamFormatParser ERROR: @HD line is missing VN tag" << endl;
         return;
     }
 }
@@ -112,18 +114,18 @@ void SamFormatParser::ParseSQLine(const string& line) {
         else if ( tokenTag == Constants::SAM_SQ_CHECKSUM_TAG   ) seq.Checksum = tokenValue;
         else if ( tokenTag == Constants::SAM_SQ_SPECIES_TAG    ) seq.Species = tokenValue;
         else
-            cerr << "SAM Format Error - unknown SQ tag: " << tokenTag << endl;
+            cerr << "SamFormatParser ERROR: unknown SQ tag: " << tokenTag << endl;
     }
 
     // if @SQ line exists, SN must be provided
     if ( !seq.HasName() ) {
-        cerr << "SAM Format Error - @SQ line is missing SN tag!" << endl;
+        cerr << "SamFormatParser ERROR: @SQ line is missing SN tag" << endl;
         return;
     }
 
     // if @SQ line exists, LN must be provided
     if ( !seq.HasLength() ) {
-        cerr << "SAM Format Error - @SQ line is missing LN tag!" << endl;
+        cerr << "SamFormatParser ERROR: @SQ line is missing LN tag" << endl;
         return;
     }
 
@@ -158,18 +160,18 @@ void SamFormatParser::ParseRGLine(const string& line) {
         else if ( tokenTag == Constants::SAM_RG_PRODUCTIONDATE_TAG      ) rg.ProductionDate = tokenValue;
         else if ( tokenTag == Constants::SAM_RG_SEQTECHNOLOGY_TAG       ) rg.SequencingTechnology = tokenValue;
         else
-            cerr << "SAM Format Error - unknown RG tag: " << tokenTag << endl;
+            cerr << "SamFormatParser ERROR: unknown RG tag: " << tokenTag << endl;
     }
 
     // if @RG line exists, ID must be provided
     if ( !rg.HasID() ) {
-        cerr << "SAM Format Error - @RG line is missing ID tag!" << endl;
+        cerr << "SamFormatParser ERROR: @RG line is missing ID tag" << endl;
         return;
     }
 
     // if @RG line exists, SM must be provided
     if ( !rg.HasSample() ) {
-        cerr << "SAM Format Error - @RG line is missing SM tag!" << endl;
+        cerr << "SamFormatParser ERROR: @RG line is missing SM tag" << endl;
         return;
     }
 
@@ -196,12 +198,12 @@ void SamFormatParser::ParsePGLine(const string& line) {
         else if ( tokenTag == Constants::SAM_PG_VERSION_TAG     ) m_header.ProgramVersion = tokenValue;
         else if ( tokenTag == Constants::SAM_PG_COMMANDLINE_TAG ) m_header.ProgramCommandLine = tokenValue;
         else
-            cerr << "SAM Format Error - unknown PG tag: " << tokenTag << endl;
+            cerr << "SamFormatParser ERROR: unknown PG tag: " << tokenTag << endl;
     }
 
     // if @PG line exists, ID must be provided
     if ( !m_header.HasProgramName() ) {
-        cerr << "SAM Format Error - @PG line is missing ID tag!" << endl;
+        cerr << "SamFormatParser ERROR:- @PG line is missing ID tag" << endl;
         return;
     }
 }

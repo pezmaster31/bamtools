@@ -3,12 +3,11 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 13 December 2010
+// Last modified: 21 March 2011 (DB)
 // ---------------------------------------------------------------------------
 // Integrates a number of BamTools functionalities into a single executable.
 // ***************************************************************************
 
-// includes
 #include "bamtools_convert.h"
 #include "bamtools_count.h"
 #include "bamtools_coverage.h"
@@ -22,12 +21,11 @@
 #include "bamtools_split.h"
 #include "bamtools_stats.h"
 #include "bamtools_version.h"
-
 #include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <string>
-
 using namespace BamTools;
 using namespace std;
 
@@ -121,7 +119,7 @@ int Help(int argc, char* argv[]) {
     cerr << endl;
     cerr << "See 'bamtools help COMMAND' for more information on a specific command." << endl;
     cerr << endl;
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 // print version info
@@ -136,9 +134,9 @@ int Version(void) {
     cout << "bamtools " << versionStream.str() << endl;
     cout << "Part of BamTools API and toolkit" << endl;
     cout << "Primary authors: Derek Barnett, Erik Garrison, Michael Stromberg" << endl;
-    cout << "(c) 2009-2010 Marth Lab, Biology Dept., Boston College" << endl;
+    cout << "(c) 2009-2011 Marth Lab, Biology Dept., Boston College" << endl;
     cout << endl;
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 // toolkit entry point
@@ -153,10 +151,10 @@ int main(int argc, char* argv[]) {
     // 'bamtools version', 'bamtools --version', or 'bamtools -v'
     if ( IsVersion(argv[1]) ) return Version(); 
         
-    // determine desired sub-tool
+    // determine desired sub-tool, run if found
     AbstractTool* tool = CreateTool( argv[1] );
-    
-    // if found, run tool... otherwise show help
     if ( tool ) return tool->Run(argc, argv);
-    else return Help(argc, argv); 
+
+    // no tool matched, show help
+    return Help(argc, argv);
 }

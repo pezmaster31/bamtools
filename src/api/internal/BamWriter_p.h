@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010 (DB)
+// Last modified: 24 February 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -22,42 +22,43 @@
 // We mean it.
 
 #include <api/BamAux.h>
-#include <api/BGZF.h>
+#include <api/internal/BgzfStream_p.h>
 #include <string>
 #include <vector>
 
 namespace BamTools {
-
-class SamHeader;
-
 namespace Internal {
 
 class BamWriterPrivate {
 
     // ctor & dtor
     public:
-	BamWriterPrivate(void);
-	~BamWriterPrivate(void);
+        BamWriterPrivate(void);
+        ~BamWriterPrivate(void);
 
-    // "public" interface to BamWriter
+    // interface methods
     public:
-	void Close(void);
-	bool Open(const std::string& filename,
-		  const std::string& samHeader,
-		  const BamTools::RefVector& referenceSequences,
-		  bool isWriteUncompressed);
-	void SaveAlignment(const BamAlignment& al);
+        void Close(void);
+        bool IsOpen(void) const;
+        bool Open(const std::string& filename,
+                  const std::string& samHeaderText,
+                  const BamTools::RefVector& referenceSequences);
+        void SaveAlignment(const BamAlignment& al);
+        void SetWriteCompressed(bool ok);
 
-    // internal methods
+    // 'internal' methods
     public:
-	const unsigned int CalculateMinimumBin(const int begin, int end) const;
-	void CreatePackedCigar(const std::vector<BamTools::CigarOp>& cigarOperations, std::string& packedCigar);
-	void EncodeQuerySequence(const std::string& query, std::string& encodedQuery);
+        unsigned int CalculateMinimumBin(const int begin, int end) const;
+        void CreatePackedCigar(const std::vector<BamTools::CigarOp>& cigarOperations, std::string& packedCigar);
+        void EncodeQuerySequence(const std::string& query, std::string& encodedQuery);
+        void WriteMagicNumber(void);
+        void WriteReferences(const BamTools::RefVector& referenceSequences);
+        void WriteSamHeaderText(const std::string& samHeaderText);
 
     // data members
-    public:
-	BgzfData mBGZF;
-	bool IsBigEndian;
+    private:
+        BgzfStream m_stream;
+        bool m_isBigEndian;
 };
 
 } // namespace Internal

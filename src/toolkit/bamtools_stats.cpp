@@ -3,10 +3,16 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 12 October 2010
+// Last modified: 21 March 2011
 // ---------------------------------------------------------------------------
 // Prints general alignment statistics for BAM file(s).
 // ***************************************************************************
+
+#include "bamtools_stats.h"
+
+#include <api/BamMultiReader.h>
+#include <utils/bamtools_options.h>
+using namespace BamTools;
 
 #include <cmath>
 #include <algorithm>
@@ -15,11 +21,7 @@
 #include <numeric>
 #include <string>
 #include <vector>
-#include "bamtools_stats.h"
-#include "bamtools_options.h"
-#include "BamMultiReader.h"
 using namespace std;
-using namespace BamTools;
 
 // ---------------------------------------------
 // StatsSettings implementation
@@ -98,10 +100,11 @@ StatsTool::StatsToolPrivate::StatsToolPrivate(StatsTool::StatsSettings* _setting
 
 StatsTool::StatsToolPrivate::~StatsToolPrivate(void) { }
 
-// median is of type double because in the case of even number of data elements, we need to return the average of middle 2 elements
+// median is of type double because in the case of even number of data elements,
+// we need to return the average of middle 2 elements
 bool StatsTool::StatsToolPrivate::CalculateMedian(vector<int>& data, double& median) { 
   
-    // check that data exists
+    // skip if data empty
     if ( data.empty() ) return false;
 
     // find middle element
@@ -214,24 +217,22 @@ void StatsTool::StatsToolPrivate::ProcessAlignment(const BamAlignment& al) {
 
 bool StatsTool::StatsToolPrivate::Run() {
   
-    // opens the BAM files without checking for indexes 
+    // open the BAM files
     BamMultiReader reader;
-    if ( !reader.Open(settings->InputFiles, false, true) ) {
-        cerr << "Could not open input BAM file(s)... quitting." << endl;
+    if ( !reader.Open(settings->InputFiles) ) {
+        cerr << "bamtools stats ERROR: could not open input BAM file(s)... Aborting." << endl;
         reader.Close();
         return false;
     }
     
-    // plow through file, keeping track of stats
+    // plow through alignments, keeping track of stats
     BamAlignment al;
     while ( reader.GetNextAlignmentCore(al) )
         ProcessAlignment(al);
-    
-    // print stats
-    PrintStats();
-    
-    // clean and exit
     reader.Close();
+    
+    // print stats & exit
+    PrintStats();
     return true; 
 }
 
@@ -271,7 +272,7 @@ int StatsTool::Run(int argc, char* argv[]) {
   
     // parse command line arguments
     Options::Parse(argc, argv, 1);
-    
+
     // set to default input if none provided
     if ( !m_settings->HasInput ) 
         m_settings->InputFiles.push_back(Options::StandardIn());

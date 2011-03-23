@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 11 January 2011 (DB)
+// Last modified: 4 March 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -12,11 +12,13 @@
 #define BAMWRITER_H
 
 #include <api/api_global.h>
-#include <api/BamAlignment.h>
-#include <api/SamHeader.h>
+#include <api/BamAux.h>
 #include <string>
 
 namespace BamTools {
+
+class BamAlignment;
+class SamHeader;
 
 namespace Internal {
     class BamWriterPrivate;
@@ -24,27 +26,33 @@ namespace Internal {
 
 class API_EXPORT BamWriter {
 
-    // constructor/destructor
+    public: enum CompressionMode { Compressed = 0
+                                 , Uncompressed
+                                 };
+
+    // ctor & dtor
     public:
         BamWriter(void);
         ~BamWriter(void);
 
     // public interface
     public:
-        // closes the alignment archive
+        //  closes the current BAM file
         void Close(void);
-        // opens the alignment archive (using std::string SAM header)
+        // returns true if BAM file is open for writing
+        bool IsOpen(void) const;
+        // opens a BAM file for writing
         bool Open(const std::string& filename, 
-                  const std::string& samHeader, 
-                  const BamTools::RefVector& referenceSequences, 
-                  bool writeUncompressed = false);
-        // opens the alignment archive (using SamHeader object)
+                  const std::string& samHeaderText,
+                  const RefVector& referenceSequences);
+        // opens a BAM file for writing
         bool Open(const std::string& filename,
                   const SamHeader& samHeader,
-                  const BamTools::RefVector& referenceSequences,
-                  bool writeUncompressed = false);
+                  const RefVector& referenceSequences);
         // saves the alignment to the alignment archive
-        void SaveAlignment(const BamTools::BamAlignment& al);
+        void SaveAlignment(const BamAlignment& alignment);
+        // sets the output compression mode
+        void SetCompressionMode(const CompressionMode& compressionMode);
 
     // private implementation
     private:

@@ -3,21 +3,22 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 1 June 2010
+// Last modified: 21 March 2011
 // ---------------------------------------------------------------------------
 // Prints the SAM-style header from a single BAM file ( or merged header from
 // multiple BAM files) to stdout
 // ***************************************************************************
 
+#include "bamtools_header.h"
+
+#include <api/BamMultiReader.h>
+#include <utils/bamtools_options.h>
+using namespace BamTools;
+
 #include <iostream>
 #include <string>
 #include <vector>
-#include "bamtools_header.h"
-#include "bamtools_options.h"
-#include "BamReader.h"
-#include "BamMultiReader.h"
 using namespace std;
-using namespace BamTools; 
   
 // ---------------------------------------------
 // HeaderSettings implementation
@@ -70,11 +71,16 @@ int HeaderTool::Run(int argc, char* argv[]) {
     if ( !m_settings->HasInputBamFilename ) 
         m_settings->InputFiles.push_back(Options::StandardIn());
     
-    // if able to open files, dump (merged) header contents to stdout
+    // attemp to open BAM files
     BamMultiReader reader;
-    if ( reader.Open(m_settings->InputFiles, false) )    
-        cout << reader.GetHeaderText() << endl;
-        
+    if ( !reader.Open(m_settings->InputFiles) ) {
+        cerr << "bamtools header ERROR: could not open BAM file(s) for reading... Aborting." << endl;
+        return 1;
+    }
+
+    // dump (merged) header contents to stdout
+    cout << reader.GetHeaderText() << endl;
+
     // clean up & exit
     reader.Close();
     return 0;

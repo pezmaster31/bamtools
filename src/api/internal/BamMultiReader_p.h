@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 17 January 2011 (DB)
+// Last modified: 13 March 2011 (DB)
 // ---------------------------------------------------------------------------
 // Functionality for simultaneously reading multiple BAM files
 // *************************************************************************
@@ -21,6 +21,7 @@
 //
 // We mean it.
 
+#include <api/SamHeader.h>
 #include <api/BamMultiReader.h>
 #include <string>
 #include <vector>
@@ -42,15 +43,15 @@ class BamMultiReaderPrivate {
 
         // file operations
         void Close(void);
-        bool Open(const std::vector<std::string>& filenames,
-                  bool openIndexes = true,
-                  bool coreMode = false,
-                  bool preferStandardIndex = false);
-        bool IsIndexLoaded(void) const;
+        void CloseFile(const std::string& filename);
+        void CloseFiles(const std::vector<std::string>& filenames);
+        const std::vector<std::string> Filenames(void) const;
         bool Jump(int refID, int position = 0);
+        bool Open(const std::vector<std::string>& filenames);
+        bool OpenFile(const std::string& filename);
         void PrintFilenames(void) const;
-        bool SetRegion(const BamRegion& region);
         bool Rewind(void);
+        bool SetRegion(const BamRegion& region);
 
         // access alignment data
         bool GetNextAlignment(BamAlignment& al);
@@ -59,25 +60,30 @@ class BamMultiReaderPrivate {
         void SetSortOrder(const BamMultiReader::SortOrder& order);
 
         // access auxiliary data
-        const std::string GetHeaderText(void) const;
-        const int GetReferenceCount(void) const;
+        SamHeader GetHeader(void) const;
+        std::string GetHeaderText(void) const;
+        int GetReferenceCount(void) const;
         const BamTools::RefVector GetReferenceData(void) const;
-        const int GetReferenceID(const std::string& refName) const;
+        int GetReferenceID(const std::string& refName) const;
 
         // BAM index operations
-        bool CreateIndexes(bool useStandardIndex = true);
-        void SetIndexCacheMode(const BamIndex::BamIndexCacheMode mode);
+        bool CreateIndexes(const BamIndex::IndexType& type = BamIndex::STANDARD);
+        bool HasIndexes(void) const;
+        bool LocateIndexes(const BamIndex::IndexType& preferredType = BamIndex::STANDARD);
+        bool OpenIndexes(const std::vector<std::string>& indexFilenames);
+        void SetIndexCacheMode(const BamIndex::IndexCacheMode mode);
 
-    // internal methods
-    private:
+    // 'internal' methods
+    public:
         IBamMultiMerger* CreateMergerForCurrentSortOrder(void) const;
         const std::string ExtractReadGroup(const std::string& headerLine) const;
-        bool LoadNextAlignment(BamAlignment& al, bool coreMode);
+        bool HasAlignmentData(void) const;
+        bool LoadNextAlignment(BamAlignment& al);
+        BamTools::BamReader* OpenReader(const std::string& filename);
+        bool RewindReaders(void);
         void SaveNextAlignment(BamTools::BamReader* reader, BamTools::BamAlignment* alignment);
         const std::vector<std::string> SplitHeaderText(const std::string& headerText) const;
-        // updates our alignment cache
-        void UpdateAlignments(void);
-        // validates that we have a congruent set of BAM files that are aligned against the same reference sequences
+        void UpdateAlignmentCache(void);
         void ValidateReaders(void) const;
 
     // data members

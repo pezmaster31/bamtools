@@ -3,21 +3,23 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 16 September 2010
+// Last modified: 21 March 2011
 // ---------------------------------------------------------------------------
 // Prints coverage data for a single BAM file 
 // ***************************************************************************
+
+#include "bamtools_coverage.h"
+
+#include <api/BamReader.h>
+#include <utils/bamtools_options.h>
+#include <utils/bamtools_pileup_engine.h>
+using namespace BamTools;
 
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
-#include "bamtools_coverage.h"
-#include "bamtools_options.h"
-#include "bamtools_pileup_engine.h"
-#include "BamReader.h"
 using namespace std;
-using namespace BamTools; 
   
 namespace BamTools {
  
@@ -109,7 +111,8 @@ bool CoverageTool::CoverageToolPrivate::Run(void) {
         // open output file stream
         outFile.open(m_settings->OutputFilename.c_str());
         if ( !outFile ) {
-            cerr << "Could not open " << m_settings->OutputFilename << " for output." << endl; 
+            cerr << "bamtools coverage ERROR: could not open " << m_settings->OutputFilename
+                 << " for output" << endl;
             return false; 
         }
         
@@ -119,10 +122,12 @@ bool CoverageTool::CoverageToolPrivate::Run(void) {
     
     //open our BAM reader
     BamReader reader;
-    if (!reader.Open(m_settings->InputBamFilename)) {
-        cerr << "Could not open " << m_settings->InputBamFilename << " for reading." << endl;
+    if ( !reader.Open(m_settings->InputBamFilename) ) {
+        cerr << "bamtools coverage ERROR: could not open input BAM file: " << m_settings->InputBamFilename << endl;
         return false;
     }
+
+    // retrieve references
     m_references = reader.GetReferenceData();
     
     // set up our output 'visitor'
@@ -139,7 +144,8 @@ bool CoverageTool::CoverageToolPrivate::Run(void) {
     
     // clean up 
     reader.Close();
-    if ( m_settings->HasOutputFile ) outFile.close();
+    if ( m_settings->HasOutputFile )
+        outFile.close();
     delete cv;
     cv = 0;
     

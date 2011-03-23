@@ -24,6 +24,6 @@ target_link_libraries ( BamTools-utils BamTools )
 
 # set BamTools library properties
 set_target_properties( BamTools-utils PROPERTIES
-                       SOVERSION   0.9.0
+                       SOVERSION   1.0.0
                        OUTPUT_NAME bamtools-utils
                      )

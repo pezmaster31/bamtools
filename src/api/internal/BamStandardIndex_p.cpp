@@ -3,27 +3,29 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 13 January 2011 (DB)
+// Last modified: 21 March 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the standardized BAM index format (".bai")
 // ***************************************************************************
 
 #include <api/BamAlignment.h>
 #include <api/BamReader.h>
-#include <api/BGZF.h>
+#include <api/internal/BamReader_p.h>
 #include <api/internal/BamStandardIndex_p.h>
+#include <api/internal/BgzfStream_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
 
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <algorithm>
 #include <iostream>
 #include <map>
 using namespace std;
 
-BamStandardIndex::BamStandardIndex(BgzfData* bgzf, BamReader* reader)
-    : BamIndex(bgzf, reader)
+BamStandardIndex::BamStandardIndex(void)
+    : BamIndex()
     , m_dataBeginOffset(0)
     , m_hasFullDataCache(false)
 {
@@ -36,8 +38,9 @@ BamStandardIndex::~BamStandardIndex(void) {
 
 // calculate bins that overlap region
 int BamStandardIndex::BinsFromRegion(const BamRegion& region,
-				     const bool isRightBoundSpecified,
-				     uint16_t bins[MAX_BIN])
+                                     const RefVector& references,
+                                     const bool isRightBoundSpecified,
+                                     uint16_t bins[MAX_BIN])
 {
     // get region boundaries
     uint32_t begin = (unsigned int)region.LeftPosition;
@@ -50,7 +53,7 @@ int BamStandardIndex::BinsFromRegion(const BamRegion& region,
 
     // otherwise, use end of left bound reference as cutoff
     else
-        end = (unsigned int)m_references.at(region.LeftRefID).RefLength - 1;
+        end = (unsigned int)references.at(region.LeftRefID).RefLength - 1;
 
     // initialize list, bin '0' always a valid bin
     int i = 0;
@@ -68,18 +71,23 @@ int BamStandardIndex::BinsFromRegion(const BamRegion& region,
     return i;
 }
 
-// creates index data (in-memory) from current reader data
-bool BamStandardIndex::Build(void) {
+// creates index data (in-memory) from @reader data
+bool BamStandardIndex::Build(Internal::BamReaderPrivate* reader) {
 
-    // be sure reader & BGZF file are valid & open for reading
-    if ( m_reader == 0 || m_BGZF == 0 || !m_BGZF->IsOpen )
+    // skip if invalid reader
+    if ( reader == 0 )
         return false;
 
-    // move file pointer to beginning of alignments
-    m_reader->Rewind();
+    // skip if reader BgzfStream is invalid or not open
+    BgzfStream* bgzfStream = reader->Stream();
+    if ( bgzfStream == 0 || !bgzfStream->IsOpen )
+        return false;
+
+    // move reader's file pointer to beginning of alignments
+    reader->Rewind();
 
     // get reference count, reserve index space
-    const int numReferences = (int)m_references.size();
+    const int numReferences = reader->GetReferenceCount();
     m_indexData.clear();
     m_hasFullDataCache = false;
     SetReferenceCount(numReferences);
@@ -96,14 +104,14 @@ bool BamStandardIndex::Build(void) {
     int32_t lastRefID(defaultValue);
 
     // offset data
-    uint64_t saveOffset = m_BGZF->Tell();
+    uint64_t saveOffset = bgzfStream->Tell();
     uint64_t lastOffset = saveOffset;
 
     // coordinate data
     int32_t lastCoordinate = defaultValue;
 
     BamAlignment bAlignment;
-    while ( m_reader->GetNextAlignmentCore(bAlignment) ) {
+    while ( reader->LoadNextAlignment(bAlignment) ) {
 
         // change of chromosome, save ID, reset bin
         if ( lastRefID != bAlignment.RefID ) {
@@ -113,9 +121,9 @@ bool BamStandardIndex::Build(void) {
 
         // if lastCoordinate greater than BAM position - file not sorted properly
         else if ( lastCoordinate > bAlignment.Position ) {
-            fprintf(stderr, "BAM file not properly sorted:\n");
-            fprintf(stderr, "Alignment %s : %d > %d on reference (id = %d)", bAlignment.Name.c_str(),
-                lastCoordinate, bAlignment.Position, bAlignment.RefID);
+            fprintf(stderr, "BamStandardIndex ERROR: file not properly sorted:\n");
+            fprintf(stderr, "Alignment %s : %d > %d on reference (id = %d)",
+                    bAlignment.Name.c_str(), lastCoordinate, bAlignment.Position, bAlignment.RefID);
             exit(1);
         }
 
@@ -159,13 +167,13 @@ bool BamStandardIndex::Build(void) {
         }
 
         // make sure that current file pointer is beyond lastOffset
-        if ( m_BGZF->Tell() <= (int64_t)lastOffset ) {
-            fprintf(stderr, "Error in BGZF offsets.\n");
+        if ( bgzfStream->Tell() <= (int64_t)lastOffset ) {
+            fprintf(stderr, "BamStandardIndex ERROR: could not build index - calculating offsets failed.\n");
             exit(1);
         }
 
         // update lastOffset
-        lastOffset = m_BGZF->Tell();
+        lastOffset = bgzfStream->Tell();
 
         // update lastCoordinate
         lastCoordinate = bAlignment.Position;
@@ -198,8 +206,8 @@ bool BamStandardIndex::Build(void) {
         sort(offsets.begin(), offsets.end());
     }
 
-    // rewind file pointer to beginning of alignments, return success/fail
-    return m_reader->Rewind();
+    // rewind reader's file pointer to beginning of alignments, return success/fail
+    return reader->Rewind();
 }
 
 // check index file magic number, return true if OK
@@ -211,7 +219,7 @@ bool BamStandardIndex::CheckMagicNumber(void) {
 
     // compare to expected value
     if ( strncmp(magic, "BAI\1", 4) != 0 ) {
-        fprintf(stderr, "Problem with index file - invalid format.\n");
+        fprintf(stderr, "BamStandardIndex ERROR: could not load index file - invalid magic number.\n");
         fclose(m_indexStream);
         return false;
     }
@@ -247,15 +255,16 @@ void BamStandardIndex::ClearReferenceOffsets(const int& refId) {
 }
 
 // return file position after header metadata
-const off_t BamStandardIndex::DataBeginOffset(void) const {
+off_t BamStandardIndex::DataBeginOffset(void) const {
     return m_dataBeginOffset;
 }
 
 // calculates offset(s) for a given region
 bool BamStandardIndex::GetOffsets(const BamRegion& region,
-				  const bool isRightBoundSpecified,
-				  vector<int64_t>& offsets,
-				  bool* hasAlignmentsInRegion)
+                                  const RefVector& references,
+                                  const bool isRightBoundSpecified,
+                                  vector<int64_t>& offsets,
+                                  bool* hasAlignmentsInRegion)
 {
     // return false if leftBound refID is not found in index data
     if ( m_indexData.find(region.LeftRefID) == m_indexData.end() )
@@ -271,7 +280,7 @@ bool BamStandardIndex::GetOffsets(const BamRegion& region,
 
     // calculate which bins overlap this region
     uint16_t* bins = (uint16_t*)calloc(MAX_BIN, 2);
-    int numBins = BinsFromRegion(region, isRightBoundSpecified, bins);
+    int numBins = BinsFromRegion(region, references, isRightBoundSpecified, bins);
 
     // get bins for this reference
     BamStandardIndexData::const_iterator indexIter = m_indexData.find(region.LeftRefID);
@@ -315,8 +324,8 @@ bool BamStandardIndex::GetOffsets(const BamRegion& region,
     *hasAlignmentsInRegion = (offsets.size() != 0 );
 
     // if cache mode set to none, dump the data we just loaded
-    if (m_cacheMode == BamIndex::NoIndexCaching )
-	ClearReferenceOffsets(region.LeftRefID);
+    if ( m_cacheMode == BamIndex::NoIndexCaching )
+        ClearReferenceOffsets(region.LeftRefID);
 
     // return succes
     return true;
@@ -352,49 +361,59 @@ bool BamStandardIndex::IsDataLoaded(const int& refId) const {
 }
 
 // attempts to use index to jump to region; returns success/fail
-bool BamStandardIndex::Jump(const BamRegion& region, bool* hasAlignmentsInRegion) {
-
-    // be sure reader & BGZF file are valid & open for reading
-    if ( m_reader == 0 || m_BGZF == 0 || !m_BGZF->IsOpen )
+bool BamStandardIndex::Jump(Internal::BamReaderPrivate* reader,
+                            const BamTools::BamRegion& region,
+                            bool *hasAlignmentsInRegion)
+{
+    // skip if invalid reader
+    if ( reader == 0 )
         return false;
 
+    // skip if reader BgzfStream is invalid or not open
+    BgzfStream* bgzfStream = reader->Stream();
+    if ( bgzfStream == 0 || !bgzfStream->IsOpen )
+        return false;
+
+    // retrieve references from reader
+    const RefVector references = reader->GetReferenceData();
+
     // make sure left-bound position is valid
-    if ( region.LeftPosition > m_references.at(region.LeftRefID).RefLength )
+    if ( region.LeftPosition > references.at(region.LeftRefID).RefLength )
         return false;
 
     // calculate offsets for this region
     // if failed, print message, set flag, and return failure
     vector<int64_t> offsets;
-    if ( !GetOffsets(region, region.isRightBoundSpecified(), offsets, hasAlignmentsInRegion) ) {
-        fprintf(stderr, "ERROR: Could not jump: unable to calculate offset(s) for specified region.\n");
+    if ( !GetOffsets(region, references, region.isRightBoundSpecified(), offsets, hasAlignmentsInRegion) ) {
+        fprintf(stderr, "BamStandardIndex ERROR: could not jump - unable to calculate offset candidates for specified region.\n");
         *hasAlignmentsInRegion = false;
         return false;
     }
 
     // iterate through offsets
-    BamAlignment bAlignment;
+    BamAlignment alignment;
     bool result = true;
     for ( vector<int64_t>::const_iterator o = offsets.begin(); o != offsets.end(); ++o) {
 
         // attempt seek & load first available alignment
         // set flag to true if data exists
-        result &= m_BGZF->Seek(*o);
-        *hasAlignmentsInRegion = m_reader->GetNextAlignmentCore(bAlignment);
+        result &= bgzfStream->Seek(*o);
+        *hasAlignmentsInRegion = reader->GetNextAlignmentCore(alignment);
 
         // if this alignment corresponds to desired position
         // return success of seeking back to the offset before the 'current offset' (to cover overlaps)
-        if ( ((bAlignment.RefID == region.LeftRefID) &&
-             ((bAlignment.Position + bAlignment.Length) > region.LeftPosition)) ||
-             (bAlignment.RefID > region.LeftRefID) )
+        if ( ((alignment.RefID == region.LeftRefID) &&
+             ((alignment.Position + alignment.Length) > region.LeftPosition)) ||
+             (alignment.RefID > region.LeftRefID) )
         {
             if ( o != offsets.begin() ) --o;
-                return m_BGZF->Seek(*o);
+                return bgzfStream->Seek(*o);
         }
     }
 
     // if error in jumping, print message & set flag
     if ( !result ) {
-        fprintf(stderr, "ERROR: Could not jump: unable to determine correct offset for specified region.\n");
+        fprintf(stderr, "BamStandardIndex ERROR: could not jump - unable to determine correct offset for specified region.\n");
         *hasAlignmentsInRegion = false;
     }
 

@@ -3,17 +3,19 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 11 January 2011 (DB)
+// Last modified: 21 March 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
 
+#include <api/BamConstants.h>
 #include <api/BamReader.h>
-#include <api/BGZF.h>
 #include <api/internal/BamHeader_p.h>
+#include <api/internal/BamRandomAccessController_p.h>
 #include <api/internal/BamReader_p.h>
 #include <api/internal/BamStandardIndex_p.h>
 #include <api/internal/BamToolsIndex_p.h>
+#include <api/internal/BgzfStream_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
 
@@ -25,172 +27,121 @@ using namespace std;
 
 // constructor
 BamReaderPrivate::BamReaderPrivate(BamReader* parent)
-    : Index(0)
-    , HasIndex(false)
-    , AlignmentsBeginOffset(0)
-    , IndexCacheMode(BamIndex::LimitedIndexCaching)
-    , HasAlignmentsInRegion(true)
-    , Parent(parent)
-    , m_header(new BamHeader)
-    , DNA_LOOKUP("=ACMGRSVTWYHKDBN")
-    , CIGAR_LOOKUP("MIDNSHP")
+    : m_alignmentsBeginOffset(0)
+    , m_parent(parent)
 {
-    IsBigEndian = SystemIsBigEndian();
+    m_isBigEndian = BamTools::SystemIsBigEndian();
 }
 
 // destructor
 BamReaderPrivate::~BamReaderPrivate(void) {
-
     Close();
-
-    delete m_header;
-    m_header = 0;
-}
-
-// adjusts requested region if necessary (depending on where data actually begins)
-void BamReaderPrivate::AdjustRegion(BamRegion& region) {
-
-    // check for valid index first
-    if ( Index == 0 ) return;
-
-    // see if any references in region have alignments
-    HasAlignmentsInRegion = false;
-    int currentId = region.LeftRefID;
-
-    const int rightBoundRefId = ( region.isRightBoundSpecified() ? region.RightRefID : References.size() - 1 );
-    while ( currentId <= rightBoundRefId ) {
-        HasAlignmentsInRegion = Index->HasAlignments(currentId);
-        if ( HasAlignmentsInRegion ) break;
-        ++currentId;
-    }
-
-    // if no data found on any reference in region
-    if ( !HasAlignmentsInRegion ) return;
-
-    // if left bound of desired region had no data, use first reference that had data
-    // otherwise, leave requested region as-is
-    if ( currentId != region.LeftRefID ) {
-        region.LeftRefID = currentId;
-        region.LeftPosition = 0;
-    }
-}
-
-// clear index data structure
-void BamReaderPrivate::ClearIndex(void) {
-    delete Index;
-    Index = 0;
-    HasIndex = false;
 }
 
 // closes the BAM file
 void BamReaderPrivate::Close(void) {
 
-    // close BGZF file stream
-    mBGZF.Close();
+    // clear header & reference data
+    m_references.clear();
+    m_header.Clear();
 
-    // clear out index data
-    ClearIndex();
+    // close internal
+    m_randomAccessController.Close();
+    m_stream.Close();
 
-    // clear out header data
-    m_header->Clear();
-
-    // clear out region flags
-    Region.clear();
+    // clear filename
+    m_filename.clear();
 }
 
-// creates index for BAM file, saves to file
-// default behavior is to create the BAM standard index (".bai")
-// set flag to false to create the BamTools-specific index (".bti")
-bool BamReaderPrivate::CreateIndex(bool useStandardIndex) {
-
-    // clear out prior index data
-    ClearIndex();
-
-    // create index based on type requested
-    if ( useStandardIndex )
-        Index = new BamStandardIndex(&mBGZF, Parent);
-    else
-        Index = new BamToolsIndex(&mBGZF, Parent);
-
-    // set index cache mode to full for writing
-    Index->SetCacheMode(BamIndex::FullIndexCaching);
-
-    // build new index
-    bool ok = true;
-    ok &= Index->Build();
-    HasIndex = ok;
-
-    // mark empty references
-    MarkReferences();
-
-    // attempt to save index data to file
-    ok &= Index->Write(Filename);
-
-    // set client's desired index cache mode
-    Index->SetCacheMode(IndexCacheMode);
-
-    // return success/fail of both building & writing index
-    return ok;
+// creates an index file of requested type on current BAM file
+bool BamReaderPrivate::CreateIndex(const BamIndex::IndexType& type) {
+    if ( !IsOpen() ) return false;
+    return m_randomAccessController.CreateIndex(this, type);
 }
 
-const string BamReaderPrivate::GetHeaderText(void) const {
-    return m_header->ToString();
+// return path & filename of current BAM file
+const string BamReaderPrivate::Filename(void) const {
+    return m_filename;
 }
 
-const SamHeader BamReaderPrivate::GetSamHeader(void) const {
-    return m_header->ToSamHeader();
+// return header data as std::string
+string BamReaderPrivate::GetHeaderText(void) const {
+    return m_header.ToString();
 }
 
-// get next alignment (from specified region, if given)
-bool BamReaderPrivate::GetNextAlignment(BamAlignment& bAlignment) {
+// return header data as SamHeader object
+SamHeader BamReaderPrivate::GetSamHeader(void) const {
+    return m_header.ToSamHeader();
+}
 
-    // if valid alignment found, attempt to parse char data, and return success/failure
-    if ( GetNextAlignmentCore(bAlignment) )
-        return bAlignment.BuildCharData();
+// get next alignment (with character data fully parsed)
+bool BamReaderPrivate::GetNextAlignment(BamAlignment& alignment) {
+
+    // if valid alignment found
+    if ( GetNextAlignmentCore(alignment) ) {
+
+        // store alignment's "source" filename
+        alignment.Filename = m_filename;
+
+        // return success/failure of parsing char data
+        return alignment.BuildCharData();
+    }
 
     // no valid alignment found
-    else return false;
+    return false;
 }
 
 // retrieves next available alignment core data (returns success/fail)
-// ** DOES NOT parse any character data (read name, bases, qualities, tag data)
+// ** DOES NOT populate any character data fields (read name, bases, qualities, tag data, filename)
 //    these can be accessed, if necessary, from the supportData
 // useful for operations requiring ONLY positional or other alignment-related information
-bool BamReaderPrivate::GetNextAlignmentCore(BamAlignment& bAlignment) {
+bool BamReaderPrivate::GetNextAlignmentCore(BamAlignment& alignment) {
 
-    // if region is set but has no alignments
-    if ( !Region.isNull() && !HasAlignmentsInRegion )
+    // skip if region is set but has no alignments
+    if ( m_randomAccessController.HasRegion() &&
+         !m_randomAccessController.RegionHasAlignments() )
+    {
         return false;
-
-    // if valid alignment available
-    if ( LoadNextAlignment(bAlignment) ) {
-
-        // set core-only flag
-        bAlignment.SupportData.HasCoreOnly = true;
-
-        // if region not specified with at least a left boundary, return success
-        if ( !Region.isLeftBoundSpecified() ) return true;
-
-        // determine region state (before, within, after)
-        BamReaderPrivate::RegionState state = IsOverlap(bAlignment);
-
-        // if alignment lies after region, return false
-        if ( state == AFTER_REGION ) return false;
-
-        while ( state != WITHIN_REGION ) {
-            // if no valid alignment available (likely EOF) return failure
-            if ( !LoadNextAlignment(bAlignment) ) return false;
-            // if alignment lies after region, return false (no available read within region)
-            state = IsOverlap(bAlignment);
-            if ( state == AFTER_REGION ) return false;
-        }
-
-        // return success (alignment found that overlaps region)
-        return true;
     }
 
-    // no valid alignment
-    else return false;
+    // if can't read next alignment
+    if ( !LoadNextAlignment(alignment) )
+        return false;
+
+    // check alignment's region-overlap state
+    BamRandomAccessController::RegionState state = m_randomAccessController.AlignmentState(alignment);
+
+    // if alignment starts after region, no need to keep reading
+    if ( state == BamRandomAccessController::AfterRegion )
+        return false;
+
+    // read until overlap is found
+    while ( state != BamRandomAccessController::OverlapsRegion ) {
+
+        // if can't read next alignment
+        if ( !LoadNextAlignment(alignment) )
+            return false;
+
+        // check alignment's region-overlap state
+        state = m_randomAccessController.AlignmentState(alignment);
+
+        // if alignment starts after region, no need to keep reading
+        if ( state == BamRandomAccessController::AfterRegion )
+            return false;
+    }
+
+    // if we get here, we found the next 'valid' alignment
+    // (e.g. overlaps current region if one was set, simply the next alignment if not)
+    alignment.SupportData.HasCoreOnly = true;
+    return true;
+}
+
+int BamReaderPrivate::GetReferenceCount(void) const {
+    return m_references.size();
+}
+
+const RefVector& BamReaderPrivate::GetReferenceData(void) const {
+    return m_references;
 }
 
 // returns RefID for given RefName (returns References.size() if not found)
@@ -198,178 +149,81 @@ int BamReaderPrivate::GetReferenceID(const string& refName) const {
 
     // retrieve names from reference data
     vector<string> refNames;
-    RefVector::const_iterator refIter = References.begin();
-    RefVector::const_iterator refEnd  = References.end();
+    RefVector::const_iterator refIter = m_references.begin();
+    RefVector::const_iterator refEnd  = m_references.end();
     for ( ; refIter != refEnd; ++refIter)
         refNames.push_back( (*refIter).RefName );
 
-    // return 'index-of' refName ( if not found, returns refNames.size() )
-    return distance(refNames.begin(), find(refNames.begin(), refNames.end(), refName));
+    // return 'index-of' refName (or -1 if not found)
+    int index = distance(refNames.begin(), find(refNames.begin(), refNames.end(), refName));
+    if ( index == (int)m_references.size() ) return -1;
+    else return index;
 }
 
-// returns region state - whether alignment ends before, overlaps, or starts after currently specified region
-// this *internal* method should ONLY called when (at least) IsLeftBoundSpecified == true
-BamReaderPrivate::RegionState BamReaderPrivate::IsOverlap(BamAlignment& bAlignment) {
+bool BamReaderPrivate::HasIndex(void) const {
+    return m_randomAccessController.HasIndex();
+}
 
-    // if alignment is on any reference sequence before left bound
-    if ( bAlignment.RefID < Region.LeftRefID )
-        return BEFORE_REGION;
-
-    // if alignment starts on left bound reference
-    else if ( bAlignment.RefID == Region.LeftRefID ) {
-
-        // if alignment starts at or after left boundary
-        if ( bAlignment.Position >= Region.LeftPosition) {
-
-            // if right boundary is specified AND
-            // left/right boundaries are on same reference AND
-            // alignment starts past right boundary
-            if ( Region.isRightBoundSpecified() &&
-                 Region.LeftRefID == Region.RightRefID &&
-                 bAlignment.Position > Region.RightPosition )
-                return AFTER_REGION;
-
-            // otherwise, alignment is within region
-            else
-                return WITHIN_REGION;
-        }
-
-        // alignment starts before left boundary
-        else {
-            // check if alignment overlaps left boundary
-            if ( bAlignment.GetEndPosition() >= Region.LeftPosition )
-                return WITHIN_REGION;
-            else
-                return BEFORE_REGION;
-        }
-    }
-
-    // alignment starts on a reference after the left bound
-    else {
-
-        // if region has a right boundary
-        if ( Region.isRightBoundSpecified() ) {
-
-            // alignment is on reference between boundaries
-            if ( bAlignment.RefID < Region.RightRefID )
-                return WITHIN_REGION;
-
-            // alignment is on reference after right boundary
-            else if ( bAlignment.RefID > Region.RightRefID )
-             return AFTER_REGION;
-
-            // alignment is on right bound reference
-            else {
-                // check if alignment starts before or at right boundary
-                if ( bAlignment.Position <= Region.RightPosition )
-                    return WITHIN_REGION;
-                else
-                    return AFTER_REGION;
-            }
-        }
-
-        // otherwise, alignment is after left bound reference, but there is no right boundary
-        else return WITHIN_REGION;
-    }
+bool BamReaderPrivate::IsOpen(void) const {
+    return m_stream.IsOpen;
 }
 
 // load BAM header data
-void BamReaderPrivate::LoadHeaderData(void) {
-     m_header->Load(&mBGZF);
-}
-
-// load existing index data from BAM index file (".bti" OR ".bai"), return success/fail
-bool BamReaderPrivate::LoadIndex(const bool lookForIndex, const bool preferStandardIndex) {
-
-    // clear out any existing index data
-    ClearIndex();
-
-    // if no index filename provided, so we need to look for available index files
-    if ( IndexFilename.empty() ) {
-
-        // attempt to load BamIndex based on current Filename provided & preferStandardIndex flag
-        const BamIndex::PreferredIndexType type = (preferStandardIndex ? BamIndex::STANDARD : BamIndex::BAMTOOLS);
-        Index = BamIndex::FromBamFilename(Filename, &mBGZF, Parent, type);
-
-        // if null, return failure
-        if ( Index == 0 ) return false;
-
-        // generate proper IndexFilename based on type of index created
-        IndexFilename = Filename + Index->Extension();
-    }
-
-    else {
-
-        // attempt to load BamIndex based on IndexFilename provided by client
-        Index = BamIndex::FromIndexFilename(IndexFilename, &mBGZF, Parent);
-
-        // if null, return failure
-        if ( Index == 0 ) return false;
-    }
-
-    // set cache mode for BamIndex
-    Index->SetCacheMode(IndexCacheMode);
-
-    // loading the index data from file
-    HasIndex = Index->Load(IndexFilename);
-
-    // mark empty references
-    MarkReferences();
-
-    // return index status
-    return HasIndex;
+bool BamReaderPrivate::LoadHeaderData(void) {
+     return m_header.Load(&m_stream);
 }
 
 // populates BamAlignment with alignment data under file pointer, returns success/fail
-bool BamReaderPrivate::LoadNextAlignment(BamAlignment& bAlignment) {
+bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment) {
 
     // read in the 'block length' value, make sure it's not zero
-    char buffer[4];
-    mBGZF.Read(buffer, 4);
-    bAlignment.SupportData.BlockLength = BgzfData::UnpackUnsignedInt(buffer);
-    if ( IsBigEndian ) { SwapEndian_32(bAlignment.SupportData.BlockLength); }
-    if ( bAlignment.SupportData.BlockLength == 0 ) return false;
+    char buffer[sizeof(uint32_t)];
+    m_stream.Read(buffer, sizeof(uint32_t));
+    alignment.SupportData.BlockLength = BamTools::UnpackUnsignedInt(buffer);
+    if ( m_isBigEndian ) BamTools::SwapEndian_32(alignment.SupportData.BlockLength);
+    if ( alignment.SupportData.BlockLength == 0 ) return false;
 
     // read in core alignment data, make sure the right size of data was read
-    char x[BAM_CORE_SIZE];
-    if ( mBGZF.Read(x, BAM_CORE_SIZE) != BAM_CORE_SIZE )
+    char x[Constants::BAM_CORE_SIZE];
+    if ( m_stream.Read(x, Constants::BAM_CORE_SIZE) != Constants::BAM_CORE_SIZE )
         return false;
 
-    if ( IsBigEndian ) {
-    for ( int i = 0; i < BAM_CORE_SIZE; i+=sizeof(uint32_t) )
-        SwapEndian_32p(&x[i]);
+    // swap core endian-ness if necessary
+    if ( m_isBigEndian ) {
+        for ( int i = 0; i < Constants::BAM_CORE_SIZE; i+=sizeof(uint32_t) )
+            BamTools::SwapEndian_32p(&x[i]);
     }
 
     // set BamAlignment 'core' and 'support' data
-    bAlignment.RefID    = BgzfData::UnpackSignedInt(&x[0]);
-    bAlignment.Position = BgzfData::UnpackSignedInt(&x[4]);
+    alignment.RefID    = BamTools::UnpackSignedInt(&x[0]);
+    alignment.Position = BamTools::UnpackSignedInt(&x[4]);
 
-    unsigned int tempValue = BgzfData::UnpackUnsignedInt(&x[8]);
-    bAlignment.Bin        = tempValue >> 16;
-    bAlignment.MapQuality = tempValue >> 8 & 0xff;
-    bAlignment.SupportData.QueryNameLength = tempValue & 0xff;
+    unsigned int tempValue = BamTools::UnpackUnsignedInt(&x[8]);
+    alignment.Bin        = tempValue >> 16;
+    alignment.MapQuality = tempValue >> 8 & 0xff;
+    alignment.SupportData.QueryNameLength = tempValue & 0xff;
 
-    tempValue = BgzfData::UnpackUnsignedInt(&x[12]);
-    bAlignment.AlignmentFlag = tempValue >> 16;
-    bAlignment.SupportData.NumCigarOperations = tempValue & 0xffff;
+    tempValue = BamTools::UnpackUnsignedInt(&x[12]);
+    alignment.AlignmentFlag = tempValue >> 16;
+    alignment.SupportData.NumCigarOperations = tempValue & 0xffff;
 
-    bAlignment.SupportData.QuerySequenceLength = BgzfData::UnpackUnsignedInt(&x[16]);
-    bAlignment.MateRefID    = BgzfData::UnpackSignedInt(&x[20]);
-    bAlignment.MatePosition = BgzfData::UnpackSignedInt(&x[24]);
-    bAlignment.InsertSize   = BgzfData::UnpackSignedInt(&x[28]);
+    alignment.SupportData.QuerySequenceLength = BamTools::UnpackUnsignedInt(&x[16]);
+    alignment.MateRefID    = BamTools::UnpackSignedInt(&x[20]);
+    alignment.MatePosition = BamTools::UnpackSignedInt(&x[24]);
+    alignment.InsertSize   = BamTools::UnpackSignedInt(&x[28]);
 
     // set BamAlignment length
-    bAlignment.Length = bAlignment.SupportData.QuerySequenceLength;
+    alignment.Length = alignment.SupportData.QuerySequenceLength;
 
     // read in character data - make sure proper data size was read
     bool readCharDataOK = false;
-    const unsigned int dataLength = bAlignment.SupportData.BlockLength - BAM_CORE_SIZE;
+    const unsigned int dataLength = alignment.SupportData.BlockLength - Constants::BAM_CORE_SIZE;
     char* allCharData = (char*)calloc(sizeof(char), dataLength);
 
-    if ( mBGZF.Read(allCharData, dataLength) == (signed int)dataLength) {
+    if ( m_stream.Read(allCharData, dataLength) == (signed int)dataLength ) {
 
         // store 'allCharData' in supportData structure
-        bAlignment.SupportData.AllCharData.assign((const char*)allCharData, dataLength);
+        alignment.SupportData.AllCharData.assign((const char*)allCharData, dataLength);
 
         // set success flag
         readCharDataOK = true;
@@ -377,180 +231,140 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& bAlignment) {
         // save CIGAR ops
         // need to calculate this here so that  BamAlignment::GetEndPosition() performs correctly,
         // even when GetNextAlignmentCore() is called
-        const unsigned int cigarDataOffset = bAlignment.SupportData.QueryNameLength;
+        const unsigned int cigarDataOffset = alignment.SupportData.QueryNameLength;
         uint32_t* cigarData = (uint32_t*)(allCharData + cigarDataOffset);
         CigarOp op;
-        bAlignment.CigarData.clear();
-        bAlignment.CigarData.reserve(bAlignment.SupportData.NumCigarOperations);
-        for (unsigned int i = 0; i < bAlignment.SupportData.NumCigarOperations; ++i) {
+        alignment.CigarData.clear();
+        alignment.CigarData.reserve(alignment.SupportData.NumCigarOperations);
+        for ( unsigned int i = 0; i < alignment.SupportData.NumCigarOperations; ++i ) {
 
-            // swap if necessary
-            if ( IsBigEndian ) SwapEndian_32(cigarData[i]);
+            // swap endian-ness if necessary
+            if ( m_isBigEndian ) BamTools::SwapEndian_32(cigarData[i]);
 
             // build CigarOp structure
-            op.Length = (cigarData[i] >> BAM_CIGAR_SHIFT);
-            op.Type   = CIGAR_LOOKUP[ (cigarData[i] & BAM_CIGAR_MASK) ];
+            op.Length = (cigarData[i] >> Constants::BAM_CIGAR_SHIFT);
+            op.Type   = Constants::BAM_CIGAR_LOOKUP[ (cigarData[i] & Constants::BAM_CIGAR_MASK) ];
 
             // save CigarOp
-            bAlignment.CigarData.push_back(op);
+            alignment.CigarData.push_back(op);
         }
     }
 
+    // clean up & return parsing success/failure
     free(allCharData);
     return readCharDataOK;
 }
 
 // loads reference data from BAM file
-void BamReaderPrivate::LoadReferenceData(void) {
+bool BamReaderPrivate::LoadReferenceData(void) {
 
     // get number of reference sequences
-    char buffer[4];
-    mBGZF.Read(buffer, 4);
-    unsigned int numberRefSeqs = BgzfData::UnpackUnsignedInt(buffer);
-    if ( IsBigEndian ) SwapEndian_32(numberRefSeqs);
-    if ( numberRefSeqs == 0 ) return;
-    References.reserve((int)numberRefSeqs);
+    char buffer[sizeof(uint32_t)];
+    m_stream.Read(buffer, sizeof(uint32_t));
+    uint32_t numberRefSeqs = BamTools::UnpackUnsignedInt(buffer);
+    if ( m_isBigEndian ) BamTools::SwapEndian_32(numberRefSeqs);
+    m_references.reserve((int)numberRefSeqs);
 
     // iterate over all references in header
-    for (unsigned int i = 0; i != numberRefSeqs; ++i) {
+    for ( unsigned int i = 0; i != numberRefSeqs; ++i ) {
 
         // get length of reference name
-        mBGZF.Read(buffer, 4);
-        unsigned int refNameLength = BgzfData::UnpackUnsignedInt(buffer);
-        if ( IsBigEndian ) SwapEndian_32(refNameLength);
+        m_stream.Read(buffer, sizeof(uint32_t));
+        uint32_t refNameLength = BamTools::UnpackUnsignedInt(buffer);
+        if ( m_isBigEndian ) BamTools::SwapEndian_32(refNameLength);
         char* refName = (char*)calloc(refNameLength, 1);
 
         // get reference name and reference sequence length
-        mBGZF.Read(refName, refNameLength);
-        mBGZF.Read(buffer, 4);
-        int refLength = BgzfData::UnpackSignedInt(buffer);
-        if ( IsBigEndian ) SwapEndian_32(refLength);
+        m_stream.Read(refName, refNameLength);
+        m_stream.Read(buffer, sizeof(int32_t));
+        int32_t refLength = BamTools::UnpackSignedInt(buffer);
+        if ( m_isBigEndian ) BamTools::SwapEndian_32(refLength);
 
         // store data for reference
         RefData aReference;
         aReference.RefName   = (string)((const char*)refName);
         aReference.RefLength = refLength;
-        References.push_back(aReference);
+        m_references.push_back(aReference);
 
         // clean up calloc-ed temp variable
         free(refName);
     }
+
+    // return success
+    return true;
 }
 
-// mark references with no alignment data
-void BamReaderPrivate::MarkReferences(void) {
-
-    // ensure index is available
-    if ( !HasIndex ) return;
-
-    // mark empty references
-    for ( int i = 0; i < (int)References.size(); ++i )
-        References.at(i).RefHasAlignments = Index->HasAlignments(i);
+bool BamReaderPrivate::LocateIndex(const BamIndex::IndexType& preferredType) {
+    return m_randomAccessController.LocateIndex(m_filename, preferredType);
 }
 
 // opens BAM file (and index)
-bool BamReaderPrivate::Open(const string& filename,
-                            const string& indexFilename,
-                            const bool lookForIndex,
-                            const bool preferStandardIndex)
-{
-    // store filenames
-    Filename = filename;
-    IndexFilename = indexFilename;
+bool BamReaderPrivate::Open(const string& filename) {
 
-    // open the BGZF file for reading, return false on failure
-    if ( !mBGZF.Open(filename, "rb") ) return false;
+    // close current BAM file if open
+    if ( m_stream.IsOpen )
+        Close();
 
-    // retrieve header text & reference data
-    LoadHeaderData();
-    LoadReferenceData();
+    // attempt to open BgzfStream for reading
+    if ( !m_stream.Open(filename, "rb") )
+        return false;
 
-    // store file offset of first alignment
-    AlignmentsBeginOffset = mBGZF.Tell();
+    // attempt to load header data
+    if ( !LoadHeaderData() )
+        return false;
 
-    // if no index filename provided
-    if ( IndexFilename.empty() ) {
+    // attempt to load reference data
+    if ( !LoadReferenceData() )
+        return false;
 
-        // client did not specify that index SHOULD be found
-        // useful for cases where sequential access is all that is required
-        if ( !lookForIndex ) return true;
+    // if all OK, store filename & offset of first alignment
+    m_filename = filename;
+    m_alignmentsBeginOffset = m_stream.Tell();
 
-        // otherwise, look for index file, return success/fail
-        else return LoadIndex(lookForIndex, preferStandardIndex) ;
-    }
+    // return success
+    return true;
+}
 
-    // client supplied an index filename
-    // attempt to load index data, return success/fail
-    return LoadIndex(lookForIndex, preferStandardIndex);
+bool BamReaderPrivate::OpenIndex(const std::string& indexFilename) {
+    return m_randomAccessController.OpenIndex(indexFilename);
 }
 
 // returns BAM file pointer to beginning of alignment data
 bool BamReaderPrivate::Rewind(void) {
 
-    // rewind to first alignment, return false if unable to seek
-    if ( !mBGZF.Seek(AlignmentsBeginOffset) ) return false;
+    // attempt rewind to first alignment
+    if ( !m_stream.Seek(m_alignmentsBeginOffset) )
+        return false;
 
-    // retrieve first alignment data, return false if unable to read
+    // verify that we can read first alignment
     BamAlignment al;
-    if ( !LoadNextAlignment(al) ) return false;
+    if ( !LoadNextAlignment(al) )
+        return false;
 
-    // reset default region info using first alignment in file
-    Region.clear();
-    HasAlignmentsInRegion = true;
+    // reset region
+    m_randomAccessController.ClearRegion();
 
     // rewind back to beginning of first alignment
     // return success/fail of seek
-    return mBGZF.Seek(AlignmentsBeginOffset);
+    return m_stream.Seek(m_alignmentsBeginOffset);
+}
+
+void BamReaderPrivate::SetIndex(BamIndex* index) {
+    m_randomAccessController.SetIndex(index);
 }
 
 // change the index caching behavior
-void BamReaderPrivate::SetIndexCacheMode(const BamIndex::BamIndexCacheMode mode) {
-    IndexCacheMode = mode;
-    if ( Index == 0 ) return;
-    Index->SetCacheMode(mode);
+void BamReaderPrivate::SetIndexCacheMode(const BamIndex::IndexCacheMode& mode) {
+    m_randomAccessController.SetIndexCacheMode(mode);
 }
 
-// asks Index to attempt a Jump() to specified region
+// sets current region & attempts to jump to it
 // returns success/failure
 bool BamReaderPrivate::SetRegion(const BamRegion& region) {
+    return m_randomAccessController.SetRegion(this, region, m_references.size());
+}
 
-    // clear out any prior BamReader region data
-    //
-    // N.B. - this is cleared so that BamIndex now has free reign to call
-    // GetNextAlignmentCore() and do overlap checking without worrying about BamReader
-    // performing any overlap checking of its own and moving on to the next read... Calls
-    // to GetNextAlignmentCore() with no Region set, simply return the next alignment.
-    // This ensures that the Index is able to do just that. (All without exposing
-    // LoadNextAlignment() to the public API, and potentially confusing clients with the nomenclature)
-    Region.clear();
-
-    // check for existing index
-    if ( !HasIndex ) return false;
-
-    // adjust region if necessary to reflect where data actually begins
-    BamRegion adjustedRegion(region);
-    AdjustRegion(adjustedRegion);
-
-    // if no data present, return true
-    // not an error, but BamReader knows that no data is there for future alignment access
-    // (this is useful in a MultiBamReader setting where some BAM files may lack data in regions
-    // that other BAMs have data)
-    if ( !HasAlignmentsInRegion ) {
-        Region = adjustedRegion;
-        return true;
-    }
-
-    // attempt jump to user-specified region return false if jump could not be performed at all
-    // (invalid index, unknown reference, etc)
-    //
-    // Index::Jump() is allowed to modify the HasAlignmentsInRegion flag
-    //  * This covers case where a region is requested that lies beyond the last alignment on a reference
-    //    If this occurs, any subsequent calls to GetNexAlignment[Core] simply return false
-    //    BamMultiReader is then able to successfully pull alignments from a region from multiple files
-    //    even if one or more have no data.
-    if ( !Index->Jump(adjustedRegion, &HasAlignmentsInRegion) ) return false;
-
-    // save region and return success
-    Region = adjustedRegion;
-    return true;
+// returns handle to internal BgzfStream
+BgzfStream* BamReaderPrivate::Stream(void) {
+    return &m_stream;
 }

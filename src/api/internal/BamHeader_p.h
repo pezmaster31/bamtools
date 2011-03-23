@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 25 December 2010 (DB)
+// Last modified: 26 January 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for handling BAM headers.
 // ***************************************************************************
@@ -25,29 +25,45 @@
 #include <string>
 
 namespace BamTools {
-
-class BgzfData;
-
 namespace Internal {
+
+class BgzfStream;
 
 class BamHeader {
 
+    // ctor & dtor
     public:
         BamHeader(void);
         ~BamHeader(void);
 
+    // BamHeader interface
     public:
+        // clear SamHeader data
         void Clear(void);
+        // return true if SamHeader data is valid
         bool IsValid(void) const;
-        bool Load(BgzfData* stream);
-
-    public:
+        // load BAM header ('magic number' and SAM header text) from BGZF stream
+        // returns true if all OK
+        bool Load(BgzfStream* stream);
+        // returns (editable) copy of SamHeader data object
         SamHeader ToSamHeader(void) const;
+        // returns SAM-formatted string of header data
         std::string ToString(void) const;
 
+    // internal methods
     private:
-        struct BamHeaderPrivate;
-        BamHeaderPrivate* d;
+        // reads magic number from BGZF stream, returns true if valid
+        bool CheckMagicNumber(BgzfStream* stream);
+        // reads SAM header length from BGZF stream, stores it in @length
+        // returns read success/fail status
+        bool ReadHeaderLength(BgzfStream* stream, uint32_t& length);
+        // reads SAM header text from BGZF stream, stores in SamHeader object
+        // returns read success/fail status
+        bool ReadHeaderText(BgzfStream* stream, const uint32_t& length);
+
+    // data members
+    private:
+        SamHeader m_header;
 };
 
 } // namespace Internal

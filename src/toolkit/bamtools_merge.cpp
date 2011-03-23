@@ -3,21 +3,23 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 13 October 2010
+// Last modified: 21 March 2011
 // ---------------------------------------------------------------------------
 // Merges multiple BAM files into one.
 // ***************************************************************************
 
+#include "bamtools_merge.h"
+
+#include <api/BamMultiReader.h>
+#include <api/BamWriter.h>
+#include <utils/bamtools_options.h>
+#include <utils/bamtools_utilities.h>
+using namespace BamTools;
+
 #include <iostream>
 #include <string>
 #include <vector>
-#include "bamtools_merge.h"
-#include "bamtools_options.h"
-#include "bamtools_utilities.h"
-#include "BamMultiReader.h"
-#include "BamWriter.h"
 using namespace std;
-using namespace BamTools;
 
 // ---------------------------------------------
 // MergeSettings implementation
@@ -72,7 +74,7 @@ MergeTool::~MergeTool(void) {
 
 int MergeTool::Help(void) {
     Options::DisplayHelp();
-    return 0;
+    return 0; 
 }
 
 int MergeTool::Run(int argc, char* argv[]) {
@@ -86,8 +88,8 @@ int MergeTool::Run(int argc, char* argv[]) {
     
     // opens the BAM files (by default without checking for indexes)
     BamMultiReader reader;
-    if ( !reader.Open(m_settings->InputFiles, false, true) ) { 
-        cerr << "ERROR: Could not open input BAM file(s)... Aborting." << endl;
+    if ( !reader.Open(m_settings->InputFiles) ) {
+        cerr << "bamtools merge ERROR: could not open input BAM file(s)... Aborting." << endl;
         return 1;
     }
     
@@ -95,15 +97,21 @@ int MergeTool::Run(int argc, char* argv[]) {
     std::string mergedHeader = reader.GetHeaderText();
     RefVector references = reader.GetReferenceData();
 
-    // open writer
+    // determine compression mode for BamWriter
+    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() &&
+                              !m_settings->IsForceCompression );
+    BamWriter::CompressionMode compressionMode = BamWriter::Compressed;
+    if ( writeUncompressed ) compressionMode = BamWriter::Uncompressed;
+
+    // open BamWriter
     BamWriter writer;
-    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() && !m_settings->IsForceCompression );
-    if ( !writer.Open(m_settings->OutputFilename, mergedHeader, references, writeUncompressed) ) {
-        cerr << "ERROR: Could not open BAM file " << m_settings->OutputFilename << " for writing... Aborting." << endl;
+    writer.SetCompressionMode(compressionMode);
+    if ( !writer.Open(m_settings->OutputFilename, mergedHeader, references) ) {
+        cerr << "bamtools merge ERROR: could not open " << m_settings->OutputFilename << " for writing." << endl;
         reader.Close();
-        return 1;
+        return false;
     }
-    
+
     // if no region specified, store entire contents of file(s)
     if ( !m_settings->HasRegion ) {
         BamAlignment al;
@@ -118,22 +126,15 @@ int MergeTool::Run(int argc, char* argv[]) {
         BamRegion region;
         if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
 
-            // attempt to re-open reader with index files
-            reader.Close();
-            bool openedOK = reader.Open(m_settings->InputFiles, true, true );
-            
-            // if error
-            if ( !openedOK ) {
-                cerr << "ERROR: Could not open input BAM file(s)... Aborting." << endl;
-                return 1;
-            }
-            
-            // if index data available, we can use SetRegion
-            if ( reader.IsIndexLoaded() ) {
-              
+            // attempt to find index files
+            reader.LocateIndexes();
+
+            // if index data available for all BAM files, we can use SetRegion
+            if ( reader.HasIndexes() ) {
+
                 // attempt to use SetRegion(), if failed report error
                 if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {
-                    cerr << "ERROR: Region requested, but could not set BamReader region to REGION: " << m_settings->Region << " Aborting." << endl;
+                    cerr << "bamtools merge ERROR: set region failed. Check that REGION describes a valid range" << endl;
                     reader.Close();
                     return 1;
                 } 
@@ -160,8 +161,9 @@ int MergeTool::Run(int argc, char* argv[]) {
         
         // error parsing REGION string
         else {
-            cerr << "ERROR: Could not parse REGION - " << m_settings->Region << endl;
-            cerr << "Be sure REGION is in valid format (see README) and that coordinates are valid for selected references" << endl;
+            cerr << "bamtools merge ERROR: could not parse REGION - " << m_settings->Region << endl;
+            cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
+                 << endl;
             reader.Close();
             writer.Close();
             return 1;

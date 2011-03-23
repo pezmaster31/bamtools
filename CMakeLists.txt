@@ -30,8 +30,8 @@ ensure_out_of_source_build ("
 (or the Windows equivalent)\n")
 
 # set BamTools version information
-set (BamTools_VERSION_MAJOR 0)
-set (BamTools_VERSION_MINOR 9)
+set (BamTools_VERSION_MAJOR 1)
+set (BamTools_VERSION_MINOR 0)
 set (BamTools_VERSION_BUILD 0)
 
 # set our library and executable destination dirs
@@ -39,7 +39,7 @@ set (EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin")
 set (LIBRARY_OUTPUT_PATH    "${CMAKE_SOURCE_DIR}/lib")
 
 # define compiler flags for all code
-add_definitions (-Wall -O3 -D_FILE_OFFSET_BITS=64)
+add_definitions (-Wall -O2 -D_FILE_OFFSET_BITS=64)
 
 # add our includes root path
 include_directories (src)

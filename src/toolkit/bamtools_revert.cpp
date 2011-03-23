@@ -3,20 +3,22 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 13 December 2010
+// Last modified: 21 March 2011
 // ---------------------------------------------------------------------------
 // Prints general alignment statistics for BAM file(s).
 // ***************************************************************************
 
+#include "bamtools_revert.h"
+
+#include <api/BamReader.h>
+#include <api/BamWriter.h>
+#include <utils/bamtools_options.h>
+#include <utils/bamtools_utilities.h>
+using namespace BamTools;
+
 #include <iostream>
 #include <string>
-#include "bamtools_revert.h"
-#include "bamtools_options.h"
-#include "bamtools_utilities.h"
-#include "BamReader.h"
-#include "BamWriter.h"
 using namespace std;
-using namespace BamTools;
 
 // ---------------------------------------------
 // RevertSettings implementation
@@ -101,7 +103,8 @@ bool RevertTool::RevertToolPrivate::Run(void) {
     // opens the BAM file without checking for indexes
     BamReader reader;
     if ( !reader.Open(m_settings->InputFilename) ) {
-        cerr << "Could not open input BAM file... quitting." << endl;
+        cerr << "bamtools revert ERROR: could not open " << m_settings->InputFilename
+             << " for reading... Aborting." << endl;
         return false;
     }
 
@@ -109,11 +112,19 @@ bool RevertTool::RevertToolPrivate::Run(void) {
     const string& headerText = reader.GetHeaderText();
     const RefVector& references = reader.GetReferenceData();
     
-    // open writer
+    // determine compression mode for BamWriter
+    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() &&
+                              !m_settings->IsForceCompression );
+    BamWriter::CompressionMode compressionMode = BamWriter::Compressed;
+    if ( writeUncompressed ) compressionMode = BamWriter::Uncompressed;
+
+    // open BamWriter
     BamWriter writer;
-    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() && !m_settings->IsForceCompression );
-    if ( !writer.Open(m_settings->OutputFilename, headerText, references, writeUncompressed) ) {
-        cerr << "Could not open " << m_settings->OutputFilename << " for writing." << endl;
+    writer.SetCompressionMode(compressionMode);
+    if ( !writer.Open(m_settings->OutputFilename, headerText, references) ) {
+        cerr << "bamtools revert ERROR: could not open " << m_settings->OutputFilename
+             << " for writing... Aborting." << endl;
+        reader.Close();
         return false;
     }
 
@@ -139,7 +150,7 @@ RevertTool::RevertTool(void)
     , m_impl(0)
 {
     // set program details
-    Options::SetProgramInfo("bamtools revert", "removes duplicate marks and restores original (non-recalibrated) base qualities", "[-in <filename> ... ]");
+    Options::SetProgramInfo("bamtools revert", "removes duplicate marks and restores original (non-recalibrated) base qualities", "[-in <filename> -in <filename> ...] [-out <filename> | [-forceCompression]] [revertOptions]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");

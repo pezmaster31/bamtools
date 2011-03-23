@@ -3,20 +3,20 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 2 September 2010
+// Last modified: 21 March 2011
 // ---------------------------------------------------------------------------
-// Creates a BAM index (".bai") file for the provided BAM file.
+// Creates a BAM index file.
 // ***************************************************************************
+
+#include "bamtools_index.h"
+
+#include <api/BamReader.h>
+#include <utils/bamtools_options.h>
+using namespace BamTools;
 
 #include <iostream>
 #include <string>
-
-#include "bamtools_index.h"
-#include "bamtools_options.h"
-#include "BamReader.h"
-
 using namespace std;
-using namespace BamTools;
 
 // ---------------------------------------------
 // IndexSettings implementation
@@ -71,11 +71,15 @@ int IndexTool::Run(int argc, char* argv[]) {
     
     // open our BAM reader
     BamReader reader;
-    reader.Open(m_settings->InputBamFilename);
+    if ( !reader.Open(m_settings->InputBamFilename) ) {
+        cerr << "bamtools index ERROR: could not open BAM file: " << m_settings->InputBamFilename << endl;
+        return 1;
+    }
     
     // create index for BAM file
-    bool useDefaultIndex = !m_settings->IsUsingBamtoolsIndex;
-    reader.CreateIndex(useDefaultIndex);
+    const BamIndex::IndexType type = ( m_settings->IsUsingBamtoolsIndex ? BamIndex::BAMTOOLS
+                                                                        : BamIndex::STANDARD );
+    reader.CreateIndex(type);
     
     // clean & exit
     reader.Close();

@@ -3,24 +3,23 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 3 September 2010
+// Last modified: 23 March 2011
 // ---------------------------------------------------------------------------
 // Prints alignment count for BAM file(s)
 // ***************************************************************************
 
+#include "bamtools_count.h"
+
+#include <api/BamMultiReader.h>
+#include <utils/bamtools_options.h>
+#include <utils/bamtools_utilities.h>
+using namespace BamTools;
+
 #include <iostream>
 #include <string>
 #include <vector>
-
-#include "bamtools_count.h"
-#include "bamtools_options.h"
-#include "bamtools_utilities.h"
-#include "BamReader.h"
-#include "BamMultiReader.h"
-
 using namespace std;
-using namespace BamTools;
-  
+
 // ---------------------------------------------  
 // CountSettings implementation
 
@@ -78,8 +77,8 @@ int CountTool::Run(int argc, char* argv[]) {
     
     // open reader without index
     BamMultiReader reader;
-    if (!reader.Open(m_settings->InputFiles, false, true)) {
-        cerr << "ERROR: Could not open input BAM file(s)... Aborting." << endl;
+    if ( !reader.Open(m_settings->InputFiles) ) {
+        cerr << "bamtools count ERROR: could not open input BAM file(s)... Aborting." << endl;
         return 1;
     }
 
@@ -100,22 +99,15 @@ int CountTool::Run(int argc, char* argv[]) {
         BamRegion region;
         if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
 
-            // attempt to re-open reader with index files
-            reader.Close();
-            bool openedOK = reader.Open(m_settings->InputFiles, true, true );
-            
-            // if error
-            if ( !openedOK ) {
-                cerr << "ERROR: Could not open input BAM file(s)... Aborting." << endl;
-                return 1;
-            }
-            
-            // if index data available, we can use SetRegion
+            // attempt to find index files
+            reader.LocateIndexes();
+
+            // if index data available for all BAM files, we can use SetRegion
             if ( reader.IsIndexLoaded() ) {
               
-                // attempt to use SetRegion(), if failed report error
+                // attempt to set region on reader
                 if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {
-                    cerr << "ERROR: Region requested, but could not set BamReader region to REGION: " << m_settings->Region << " Aborting." << endl;
+                    cerr << "bamtools count ERROR: set region failed. Check that REGION describes a valid range" << endl;
                     reader.Close();
                     return 1;
                 } 
@@ -128,7 +120,7 @@ int CountTool::Run(int argc, char* argv[]) {
             // no index data available, we have to iterate through until we
             // find overlapping alignments
             else {
-                while( reader.GetNextAlignmentCore(al) ) {
+                while ( reader.GetNextAlignmentCore(al) ) {
                     if ( (al.RefID >= region.LeftRefID)  && ( (al.Position + al.Length) >= region.LeftPosition ) &&
                           (al.RefID <= region.RightRefID) && ( al.Position <= region.RightPosition) ) 
                     {
@@ -140,8 +132,9 @@ int CountTool::Run(int argc, char* argv[]) {
         
         // error parsing REGION string
         else {
-            cerr << "ERROR: Could not parse REGION - " << m_settings->Region << endl;
-            cerr << "Be sure REGION is in valid format (see README) and that coordinates are valid for selected references" << endl;
+            cerr << "bamtools count ERROR: could not parse REGION - " << m_settings->Region << endl;
+            cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
+                 << endl;
             reader.Close();
             return 1;
         }
@@ -150,7 +143,7 @@ int CountTool::Run(int argc, char* argv[]) {
     // print results 
     cout << alignmentCount << endl;
     
-    // clean & exit
+    // clean up & exit
     reader.Close();
     return 0;
 }

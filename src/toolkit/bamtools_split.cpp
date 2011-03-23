@@ -3,10 +3,20 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 20 September 2010 (DB)
+// Last modified: 21 March 2011 (DB)
 // ---------------------------------------------------------------------------
-// 
+// Splits a BAM file on user-specified property, creating a new BAM output
+// file for each value found.
 // ***************************************************************************
+
+#include "bamtools_split.h"
+
+#include <api/BamConstants.h>
+#include <api/BamReader.h>
+#include <api/BamWriter.h>
+#include <utils/bamtools_options.h>
+#include <utils/bamtools_variant.h>
+using namespace BamTools;
 
 #include <ctime>
 #include <iostream>
@@ -14,13 +24,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "bamtools_split.h"
-#include "bamtools_options.h"
-#include "bamtools_variant.h"
-#include "BamReader.h"
-#include "BamWriter.h"
 using namespace std;
-using namespace BamTools;
 
 namespace BamTools {
   
@@ -162,10 +166,14 @@ void SplitTool::SplitToolPrivate::DetermineOutputFilenameStub(void) {
 }
 
 bool SplitTool::SplitToolPrivate::OpenReader(void) {
+
+    // attempt to open BAM file
     if ( !m_reader.Open(m_settings->InputFilename) ) {
-        cerr << "ERROR: SplitTool could not open BAM file: " << m_settings->InputFilename << endl;
+        cerr << "bamtools split ERROR: could not open BAM file: " << m_settings->InputFilename << endl;
         return false;
     }
+
+    // save file 'metadata' & return success
     m_header     = m_reader.GetHeaderText();
     m_references = m_reader.GetReferenceData();
     return true;
@@ -177,7 +185,8 @@ bool SplitTool::SplitToolPrivate::Run(void) {
     DetermineOutputFilenameStub();
 
     // open up BamReader
-    if ( !OpenReader() ) return false;
+    if ( !OpenReader() )
+        return false;
     
     // determine split type from settings
     if ( m_settings->IsSplittingMapped )    return SplitMapped();
@@ -186,7 +195,8 @@ bool SplitTool::SplitToolPrivate::Run(void) {
     if ( m_settings->IsSplittingTag )       return SplitTag();
 
     // if we get here, no property was specified 
-    cerr << "No property given to split on... Please use -mapped, -paired, -reference, or -tag TAG to specifiy split behavior." << endl;
+    cerr << "bamtools split ERROR: no property given to split on... " << endl
+         << "Please use -mapped, -paired, -reference, or -tag TAG to specifiy desired split behavior." << endl;
     return false;
 }    
 
@@ -210,9 +220,15 @@ bool SplitTool::SplitToolPrivate::SplitMapped(void) {
         if ( writerIter == outputFiles.end() ) {
         
             // open new BamWriter
+            const string outputFilename = m_outputFilenameStub + ( isCurrentAlignmentMapped
+                                                                  ? SPLIT_MAPPED_TOKEN
+                                                                  : SPLIT_UNMAPPED_TOKEN ) + ".bam";
             writer = new BamWriter;
-            const string outputFilename = m_outputFilenameStub + ( isCurrentAlignmentMapped ? SPLIT_MAPPED_TOKEN : SPLIT_UNMAPPED_TOKEN ) + ".bam";
-            writer->Open(outputFilename, m_header, m_references);
+            if ( !writer->Open(outputFilename, m_header, m_references) ) {
+                cerr << "bamtools split ERROR: could not open " << outputFilename
+                     << " for writing." << endl;
+                return false;
+            }
           
             // store in map
             outputFiles.insert( make_pair(isCurrentAlignmentMapped, writer) );
@@ -222,7 +238,7 @@ bool SplitTool::SplitToolPrivate::SplitMapped(void) {
         else writer = (*writerIter).second;
         
         // store alignment in proper BAM output file 
-        if ( writer ) 
+        if ( writer )
             writer->SaveAlignment(al);
     }
     
@@ -253,9 +269,15 @@ bool SplitTool::SplitToolPrivate::SplitPaired(void) {
         if ( writerIter == outputFiles.end() ) {
         
             // open new BamWriter
+            const string outputFilename = m_outputFilenameStub + ( isCurrentAlignmentPaired
+                                                                  ? SPLIT_PAIRED_TOKEN
+                                                                  : SPLIT_SINGLE_TOKEN ) + ".bam";
             writer = new BamWriter;
-            const string outputFilename = m_outputFilenameStub + ( isCurrentAlignmentPaired ? SPLIT_PAIRED_TOKEN : SPLIT_SINGLE_TOKEN ) + ".bam";
-            writer->Open(outputFilename, m_header, m_references);
+            if ( !writer->Open(outputFilename, m_header, m_references) ) {
+                cerr << "bamtool split ERROR: could not open " << outputFilename
+                     << " for writing." << endl;
+                return false;
+            }
           
             // store in map
             outputFiles.insert( make_pair(isCurrentAlignmentPaired, writer) );
@@ -296,11 +318,15 @@ bool SplitTool::SplitToolPrivate::SplitReference(void) {
         if ( writerIter == outputFiles.end() ) {
         
             // open new BamWriter
-            writer = new BamWriter;
             const string refName = m_references.at(currentRefId).RefName;
             const string outputFilename = m_outputFilenameStub + SPLIT_REFERENCE_TOKEN + refName + ".bam";
-            writer->Open(outputFilename, m_header, m_references);
-          
+            writer = new BamWriter;
+            if ( !writer->Open(outputFilename, m_header, m_references) ) {
+                cerr << "bamtools split ERROR: could not open " << outputFilename
+                     << " for writing." << endl;
+                return false;
+            }
+
             // store in map
             outputFiles.insert( make_pair(currentRefId, writer) );
         } 
@@ -329,32 +355,33 @@ bool SplitTool::SplitToolPrivate::SplitTag(void) {
       
         // look for tag in this alignment and get tag type
         char tagType(0);
-        if ( !al.GetTagType(m_settings->TagToSplit, tagType) ) continue;
+        if ( !al.GetTagType(m_settings->TagToSplit, tagType) )
+            continue;
         
         // request split method based on tag type
         // pass it the current alignment found
-        switch (tagType) {
+        switch ( tagType ) {
           
-            case 'c' :
-            case 's' : 
-            case 'i' :
+            case (Constants::BAM_TAG_TYPE_INT8)  :
+            case (Constants::BAM_TAG_TYPE_INT16) :
+            case (Constants::BAM_TAG_TYPE_INT32) :
                 return SplitTagImpl<int32_t>(al);
                 
-            case 'C' :
-            case 'S' :
-            case 'I' : 
+            case (Constants::BAM_TAG_TYPE_UINT8)  :
+            case (Constants::BAM_TAG_TYPE_UINT16) :
+            case (Constants::BAM_TAG_TYPE_UINT32) :
                 return SplitTagImpl<uint32_t>(al);
               
-            case 'f' :
+            case (Constants::BAM_TAG_TYPE_FLOAT)  :
                 return SplitTagImpl<float>(al);
             
-            case 'A':
-            case 'Z':
-            case 'H':
+            case (Constants::BAM_TAG_TYPE_ASCII)  :
+            case (Constants::BAM_TAG_TYPE_STRING) :
+            case (Constants::BAM_TAG_TYPE_HEX)    :
                 return SplitTagImpl<string>(al);
           
             default:
-                fprintf(stderr, "ERROR: Unknown tag storage class encountered: [%c]\n", tagType);
+                fprintf(stderr, "bamtools split ERROR: unknown tag type encountered: [%c]\n", tagType);
                 return false;
         }
     }
@@ -375,11 +402,14 @@ void SplitTool::SplitToolPrivate::CloseWriters(map<T, BamWriter*>& writers) {
     typedef map<T, BamWriter*> WriterMap;
     typedef typename WriterMap::iterator WriterMapIterator;
   
+    // iterate over writers
     WriterMapIterator writerIter = writers.begin();
     WriterMapIterator writerEnd  = writers.end();
     for ( ; writerIter != writerEnd; ++writerIter ) {
         BamWriter* writer = (*writerIter).second;
         if (writer == 0 ) continue;
+
+        // close & delete writer
         writer->Close();
         delete writer;
         writer = 0;
@@ -409,9 +439,13 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al) {
     if ( al.GetTag(tag, currentValue) ) {
       
         // open new BamWriter, save first alignment
-        writer = new BamWriter;
         outputFilenameStream << m_outputFilenameStub << ".TAG_" << tag << "_" << currentValue << ".bam";
-        writer->Open(outputFilenameStream.str(), m_header, m_references);
+        writer = new BamWriter;
+        if ( !writer->Open(outputFilenameStream.str(), m_header, m_references) ) {
+            cerr << "bamtools split ERROR: could not open " << outputFilenameStream.str()
+                 << " for writing." << endl;
+            return false;
+        }
         writer->SaveAlignment(al);
         
         // store in map
@@ -434,10 +468,14 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al) {
         if ( writerIter == outputFiles.end() ) {
         
             // open new BamWriter
-            writer = new BamWriter;
             outputFilenameStream << m_outputFilenameStub << ".TAG_" << tag << "_" << currentValue << ".bam";
-            writer->Open(outputFilenameStream.str(), m_header, m_references);
-            
+            writer = new BamWriter;
+            if ( !writer->Open(outputFilenameStream.str(), m_header, m_references) ) {
+                cerr << "bamtool split ERROR: could not open " << outputFilenameStream.str()
+                     << " for writing." << endl;
+                return false;
+            }
+
             // store in map
             outputFiles.insert( make_pair(currentValue, writer) );
             

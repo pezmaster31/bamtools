@@ -3,9 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 11 January 2011 (DB)
+// Last modified: 4 March 2011 (DB)
 // ---------------------------------------------------------------------------
-// Provides the basic functionality for reading BAM files
+// Provides read access to BAM files.
 // ***************************************************************************
 
 #ifndef BAMREADER_H
@@ -37,90 +37,75 @@ class API_EXPORT BamReader {
         // BAM file operations
         // ----------------------
 
-        // close BAM file
+        // closes the current BAM file
         void Close(void);
-        // returns whether reader is open for reading or not
+        // returns filename of current BAM file
+        const std::string GetFilename(void) const;
+        // returns true if a BAM file is open for reading
         bool IsOpen(void) const;
-        // performs random-access jump using (reference, position) as a left-bound
+        // performs random-access jump within BAM file
         bool Jump(int refID, int position = 0);
-        // opens BAM file (and optional BAM index file, if provided)
-        // @lookForIndex - if no indexFilename provided, look in BAM file's directory for an existing index file
-        //   default behavior is to skip index file search if no index filename given
-        // @preferStandardIndex - if true, give priority in index file searching to standard BAM index (*.bai)
-        //   default behavior is to prefer the BamToolsIndex (*.bti) if both are available
-        bool Open(const std::string& filename, 
-                  const std::string& indexFilename = "", 
-                  const bool lookForIndex = false, 
-                  const bool preferStandardIndex = false);
-        // returns file pointer to beginning of alignments
+        // opens a BAM file
+        bool Open(const std::string& filename);
+        // returns internal file pointer to beginning of alignment data
         bool Rewind(void);
-        // sets a region of interest (with left & right bound reference/position)
-        // returns success/failure of seeking to left bound of region
+        // sets the target region of interest
         bool SetRegion(const BamRegion& region);
-        bool SetRegion(const int& leftRefID, const int& leftBound, const int& rightRefID, const int& rightBound);
+        // sets the target region of interest
+        bool SetRegion(const int& leftRefID,
+                       const int& leftPosition,
+                       const int& rightRefID,
+                       const int& rightPosition);
 
         // ----------------------
         // access alignment data
         // ----------------------
 
-        // retrieves next available alignment (returns success/fail)
-        bool GetNextAlignment(BamAlignment& bAlignment);
-        // retrieves next available alignment core data (returns success/fail)
-        // ** DOES NOT parse any character data (read name, bases, qualities, tag data) **
-        // useful for operations requiring ONLY aligner-related information 
-        // (refId/position, alignment flags, CIGAR, mapQuality, etc)
-        bool GetNextAlignmentCore(BamAlignment& bAlignment);
+        // retrieves next available alignment
+        bool GetNextAlignment(BamAlignment& alignment);
+        // retrieves next available alignmnet (without populating the alignment's string data fields)
+        bool GetNextAlignmentCore(BamAlignment& alignment);
 
         // ----------------------
-        // access auxiliary data
+        // access header data
         // ----------------------
 
-        // returns SamHeader object - see SamHeader.h for more info
+        // returns SAM header data
         SamHeader GetHeader(void) const;
-        // returns SAM header text
-        const std::string GetHeaderText(void) const;
-        // returns number of reference sequences
+        // returns SAM header data, as SAM-formatted text
+        std::string GetHeaderText(void) const;
+
+        // ----------------------
+        // access reference data
+        // ----------------------
+
+        // returns the number of reference sequences
         int GetReferenceCount(void) const;
-        // returns vector of reference objects
-        const BamTools::RefVector& GetReferenceData(void) const;
-        // returns reference id (used for BamReader::Jump()) for the given reference name
+        // returns all reference sequence entries
+        const RefVector& GetReferenceData(void) const;
+        // returns the ID of the reference with this name
         int GetReferenceID(const std::string& refName) const;
-        // returns the name of the file associated with this BamReader
-        const std::string GetFilename(void) const;
 
         // ----------------------
         // BAM index operations
         // ----------------------
 
-        // creates index for BAM file, saves to file
-        // default behavior is to create the BAM standard index (".bai")
-        // set flag to false to create the BamTools-specific index (".bti")
-        bool CreateIndex(bool useStandardIndex = true);
-        // returns whether index data is available for reading
-        // (e.g. if true, BamReader should be able to seek to a region)
+        // creates an index file for current BAM file, using the requested index type
+        bool CreateIndex(const BamIndex::IndexType& type = BamIndex::STANDARD);
+        // returns true if index data is available
         bool HasIndex(void) const;
-        // change the index caching behavior
-        // default BamReader/Index mode is LimitedIndexCaching
-        // @mode - can be either FullIndexCaching, LimitedIndexCaching,
-        //   or NoIndexCaching. See BamIndex.h for more details
-        void SetIndexCacheMode(const BamIndex::BamIndexCacheMode mode);
-	
+        // looks in BAM file's directory for a matching index file
+        bool LocateIndex(const BamIndex::IndexType& preferredType = BamIndex::STANDARD);
+        // opens a BAM index file
+        bool OpenIndex(const std::string& indexFilename);
+        // sets a custom BamIndex on this reader
+        void SetIndex(BamIndex* index);
+        // changes the caching behavior of the index data
+        void SetIndexCacheMode(const BamIndex::IndexCacheMode& mode);
+
     // deprecated methods
     public:
-	
-        // deprecated (but still available): prefer HasIndex() instead
-        //
-        // Deprecated purely for API semantic clarity - HasIndex() should be clearer
-        // than IsIndexLoaded() in light of the new caching modes that may clear the
-        // index data from memory, but leave the index file open for later random access
-        // seeks.
-        //
-        // For example, what would (IsIndexLoaded() == true) mean when cacheMode has been
-        // explicitly set to NoIndexCaching? This is confusing at best, misleading about
-        // current memory behavior at worst.
-        //
-        // returns whether index data is available
-        // (e.g. if true, BamReader should be able to seek to a region)
+        // returns true if index data is available
         bool IsIndexLoaded(void) const;
         
     // private implementation

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 13 January 2011 (DB)
+// Last modified: 21 March 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for validating SamHeader data
 // ***************************************************************************
@@ -135,7 +135,9 @@ bool SamHeaderValidator::ValidateSortOrder(void) {
          sortOrder == Constants::SAM_HD_SORTORDER_QUERYNAME  ||
          sortOrder == Constants::SAM_HD_SORTORDER_UNSORTED
        )
-    { return true; }
+    {
+        return true;
+    }
 
     // otherwise
     AddError("Invalid sort order (SO): " + sortOrder);
@@ -147,14 +149,17 @@ bool SamHeaderValidator::ValidateGroupOrder(void) {
     const string& groupOrder = m_header.GroupOrder;
 
     // if no group order, no problem, just return OK
-    if ( groupOrder.empty() ) return true;
+    if ( groupOrder.empty() )
+        return true;
 
     // if group order is valid keyword
     if ( groupOrder == Constants::SAM_HD_GROUPORDER_NONE  ||
          groupOrder == Constants::SAM_HD_GROUPORDER_QUERY ||
          groupOrder == Constants::SAM_HD_GROUPORDER_REFERENCE
        )
-    { return true; }
+    {
+        return true;
+    }
 
     // otherwise
     AddError("Invalid group order (GO): " + groupOrder);
@@ -358,7 +363,8 @@ bool SamHeaderValidator::CheckReadGroupID(const string& id) {
 bool SamHeaderValidator::CheckSequencingTechnology(const string& technology) {
 
     // if no technology provided, no problem, just return OK
-    if ( technology.empty() ) return true;
+    if ( technology.empty() )
+        return true;
 
     // if technology is valid keyword
     if ( Is454(technology)      ||
@@ -367,7 +373,9 @@ bool SamHeaderValidator::CheckSequencingTechnology(const string& technology) {
          IsPacBio(technology)   ||
          IsSolid(technology)
        )
-    { return true; }
+    {
+        return true;
+    }
 
     // otherwise
     AddError("Invalid read group sequencing platform (PL): " + technology);

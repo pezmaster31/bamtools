@@ -1,0 +1,142 @@
+#ifndef BAMSORTCRITERIA_H
+#define BAMSORTCRITERIA_H
+#include <api/BamAlignment.h>
+#include <vector>
+#include <api/internal/BamMultiMerger_p.h>
+
+using namespace std;
+using namespace BamTools;
+using namespace BamTools::Internal;
+
+typedef binary_function<BamAlignment,BamAlignment,bool> BamAlignmentBFunction;
+typedef binary_function<ReaderAlignment,ReaderAlignment,bool> ReadAlignmentBFunction;
+typedef vector< BamAlignment >::iterator BamAlignmentIterator;
+
+class BamSortCriteria{
+private:
+  string sortCriteria;
+  bool descending;
+  template <typename T>
+  IBamMultiMerger* getMergerDesc();
+  static const string allowedTags[];
+  static const string coreTags[];
+  string getAllowedTags();
+public:
+
+  BamSortCriteria():sortCriteria("QNAME"),descending(false){}
+  BamSortCriteria(string sortCriteria, bool descending):sortCriteria(sortCriteria),descending(descending){
+    if(!isTagValid()){
+     cerr << "BamSortCriteria ERROR: Requested sort order ("<<sortCriteria << ") is unknown. Valid tags are: "<<getAllowedTags()<<"\n";
+    }
+  }
+  
+  string getSortCriteria(){return sortCriteria;};
+  bool isDescending(){return descending;};
+  void sortBuffer(BamAlignmentIterator begin,BamAlignmentIterator end);
+  IBamMultiMerger* getMerger(void);
+  string getSamHeaderSort();
+  bool isTagCoreAttribute();
+  bool isTagValid();
+  
+};
+
+
+
+
+/**
+ * Classes that extend the binary_function and have a operator() function to compare two
+ * BamAlignment for sorting. This class has to be created if bammtools should sort for other 
+ * criterias
+ **/
+
+// QV_Mean
+class SortLessThanMeanQV : public binary_function<BamAlignment, BamAlignment, bool >{
+ public:
+    
+    bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
+      return false;
+    }
+    
+  private:
+    double computeMean(const string& s){
+      double mean =0.0;
+      int size = s.size();
+      
+      for(int i=0;i<size;i++){
+        std::cout<<s[i]<<"\n";
+      }
+      return mean/size;
+    }
+};
+
+// POS
+class SortLessThanPosition : public binary_function<BamAlignment, BamAlignment, bool >{
+  public:
+        bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
+          
+            if ( lhs.RefID != rhs.RefID )
+                return lhs.RefID < rhs.RefID;
+            else 
+                return lhs.Position < rhs.Position;
+        }
+    };
+ 
+ // QNAME
+ class SortLessThanName : public binary_function<BamAlignment, BamAlignment, bool> {
+  public:
+      bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
+            return lhs.Name < rhs.Name;
+        }
+    };
+     
+    // AS Alignment Score from BFAST
+    class SortLessThanAlignmentScore : public BamAlignmentBFunction{//binary_function<BamAlignment, BamAlignment, bool>{
+        public:
+        bool operator() ( const  BamAlignment& lhs, const BamAlignment&  rhs) const {
+        uint32_t lh, rh;
+        lhs.GetTag("AS",lh);
+        rhs.GetTag("AS",rh);
+            return lh<rh;
+        }
+    };
+    
+    
+    //--------------------------------------------------------
+    /**
+     * The two classes are used for a descending search as they flip the conditions of the defined
+     * SortLessThan* classes. One is used for the Reader and th other for the BamAlignment
+     **/
+    template<typename F>
+    class SortGreaterThanReaderAlignment : public binary_function<ReaderAlignment, ReaderAlignment, bool>{
+        public:
+        bool operator() (const ReaderAlignment& lhs, const ReaderAlignment& rhs) {
+          F f;
+          return !f(lhs,rhs);
+        }
+    };
+    
+
+    
+    template<typename T>
+    class SortLessReaderAlignment: public binary_function<ReaderAlignment, ReaderAlignment, bool>{
+    public:
+      bool operator() (const ReaderAlignment& lhs, const ReaderAlignment& rhs){
+        T t;
+        const BamAlignment l= *lhs.second;
+        const BamAlignment r= *rhs.second;
+        return t(l,r);
+      }
+    };
+    
+    template<typename F>
+    class SortGreaterThanBamAlignment{
+      private:
+        F func;
+      public:
+        SortGreaterThanBamAlignment(F f):func(f){}
+        bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
+          return !func(lhs,rhs);
+        }
+    };
+
+#endif // BAMSORTCRITERIA_H

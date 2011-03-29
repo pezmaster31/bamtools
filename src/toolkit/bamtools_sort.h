@@ -12,7 +12,7 @@
 #define BAMTOOLS_SORT_H
 
 #include "bamtools_tool.h"
-
+#include "api/BamSortCriteria.h"
 namespace BamTools {
   
 class SortTool : public AbstractTool {
@@ -28,7 +28,7 @@ class SortTool : public AbstractTool {
     private:
         struct SortSettings;
         SortSettings* m_settings;
-        
+        BamSortCriteria m_sort;
         struct SortToolPrivate;
         SortToolPrivate* m_impl;
 };

@@ -18,6 +18,7 @@ set( BamToolsAPISources
         BamMultiReader.cpp
         BamReader.cpp
         BamWriter.cpp
+        BamSortCriteria.cpp
         SamHeader.cpp
         SamReadGroup.cpp
         SamReadGroupDictionary.cpp
@@ -66,6 +67,7 @@ ExportHeader(APIHeaders BamIndex.h               ${ApiIncludeDir})
 ExportHeader(APIHeaders BamMultiReader.h         ${ApiIncludeDir})
 ExportHeader(APIHeaders BamReader.h              ${ApiIncludeDir})
 ExportHeader(APIHeaders BamWriter.h              ${ApiIncludeDir})
+ExportHeader(APIHeaders BamSortCriteria.h        ${ApiIncludeDir})
 ExportHeader(APIHeaders SamConstants.h           ${ApiIncludeDir})
 ExportHeader(APIHeaders SamHeader.h              ${ApiIncludeDir})
 ExportHeader(APIHeaders SamReadGroup.h           ${ApiIncludeDir})

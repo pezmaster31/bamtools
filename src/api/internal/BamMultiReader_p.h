@@ -23,6 +23,7 @@
 
 #include <api/SamHeader.h>
 #include <api/BamMultiReader.h>
+#include <api/BamSortCriteria.h>
 #include <string>
 #include <vector>
 
@@ -57,7 +58,7 @@ class BamMultiReaderPrivate {
         bool GetNextAlignment(BamAlignment& al);
         bool GetNextAlignmentCore(BamAlignment& al);
         bool HasOpenReaders(void);
-        void SetSortOrder(const BamMultiReader::SortOrder& order);
+        void SetSortOrder(const BamSortCriteria& sort);
 
         // access auxiliary data
         SamHeader GetHeader(void) const;
@@ -75,7 +76,9 @@ class BamMultiReaderPrivate {
 
     // 'internal' methods
     public:
-        IBamMultiMerger* CreateMergerForCurrentSortOrder(void) const;
+      template <typename T>
+        IBamMultiMerger* CreateMergerForCurrentSortOrderDesc(bool desc) const;
+        //IBamMultiMerger* CreateMergerForCurrentSortOrder(void) const;
         const std::string ExtractReadGroup(const std::string& headerLine) const;
         bool HasAlignmentData(void) const;
         bool LoadNextAlignment(BamAlignment& al);
@@ -93,7 +96,7 @@ class BamMultiReaderPrivate {
 
         IBamMultiMerger* m_alignments;
         bool m_isCoreMode;
-        BamMultiReader::SortOrder m_sortOrder;
+        BamSortCriteria m_sort;
 };
 
 } // namespace Internal

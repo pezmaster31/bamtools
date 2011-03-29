@@ -13,6 +13,7 @@
 
 #include <api/api_global.h>
 #include <api/BamReader.h>
+#include <api/BamSortCriteria.h>
 #include <map>
 #include <sstream>
 #include <string>
@@ -27,10 +28,11 @@ namespace Internal {
 class API_EXPORT BamMultiReader {
 
     public:
-        enum SortOrder { SortedByPosition = 0
-                       , SortedByReadName
+        /*enum SortOrder { SortedByPosition = 0
+                       , SortedByReadName =1
+                       , SortedByAlignmentScore=2
                        , Unsorted
-                       };
+                       };*/
 
     // constructor / destructor
     public:
@@ -78,7 +80,7 @@ class API_EXPORT BamMultiReader {
         bool GetNextAlignmentCore(BamAlignment& alignment);
 
         // sets the expected sorting order for reading across multiple BAM files
-        void SetSortOrder(const SortOrder& order);
+        void SetSortOrder(const BamSortCriteria& sort);
 
         // ----------------------
         // access auxiliary data

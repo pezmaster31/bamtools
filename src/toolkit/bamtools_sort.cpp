@@ -14,6 +14,7 @@
 #include <api/BamMultiReader.h>
 #include <api/BamWriter.h>
 #include <utils/bamtools_options.h>
+#include <api/BamSortCriteria.h>
 using namespace BamTools;
 
 #include <cstdio>
@@ -39,21 +40,6 @@ namespace BamTools {
     // -----------------------------------
     // comparison objects (for sorting) 
 
-    struct SortLessThanPosition {
-        bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
-            if ( lhs.RefID != rhs.RefID )
-                return lhs.RefID < rhs.RefID;
-            else 
-                return lhs.Position < rhs.Position;
-        }
-    };
-    
-    struct SortLessThanName {
-        bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
-            return lhs.Name < rhs.Name;
-        }
-    };
-    
 } // namespace BamTools
 
 // ---------------------------------------------
@@ -77,10 +63,13 @@ class SortTool::SortToolPrivate {
         bool MergeSortedRuns(void);
         bool WriteTempFile(const vector<BamAlignment>& buffer, const string& tempFilename);
         void SortBuffer(vector<BamAlignment>& buffer);
+        template<typename T>
+        BamAlignmentBFunction& getSortingFunction();
         
     // data members
     private:
         SortTool::SortSettings* m_settings;
+        BamSortCriteria m_sort;
         string m_tempFilenameStub;
         int m_numberOfRuns;
         string m_headerText;
@@ -98,7 +87,9 @@ struct SortTool::SortSettings {
     bool HasMaxBufferCount;
     bool HasMaxBufferMemory;
     bool HasOutputBamFilename;
-    bool IsSortingByName;
+    bool IsSortDescending;
+    string SortCriteria;
+    bool HasSortCriteria;
 
     // filenames
     string InputBamFilename;
@@ -114,7 +105,9 @@ struct SortTool::SortSettings {
         , HasMaxBufferCount(false)
         , HasMaxBufferMemory(false)
         , HasOutputBamFilename(false)
-        , IsSortingByName(false)
+        , IsSortDescending(false)
+        , SortCriteria("QNAME")
+        , HasSortCriteria(false)
         , InputBamFilename(Options::StandardIn())
         , OutputBamFilename(Options::StandardOut())
         , MaxBufferCount(SORT_DEFAULT_MAX_BUFFER_COUNT)
@@ -139,7 +132,9 @@ SortTool::SortTool(void)
     Options::AddValueOption("-out", "BAM filename", "the output BAM file", "", m_settings->HasOutputBamFilename, m_settings->OutputBamFilename, IO_Opts, Options::StandardOut());
     
     OptionGroup* SortOpts = Options::CreateOptionGroup("Sorting Methods");
-    Options::AddOption("-byname", "sort by alignment name", m_settings->IsSortingByName, SortOpts);
+    Options::AddValueOption("-tagname", "sort by tag name", "(QNAME, AS, QPOS)", "", m_settings->HasSortCriteria, m_settings->SortCriteria, SortOpts, Options::StandardOut());
+    Options::AddOption("-desc", "sort values descending", m_settings->IsSortDescending, SortOpts);
+//    Options::AddOption("-byname", "sort by alignment name", m_settings->SortCriteria, SortOpts);
     
     OptionGroup* MemOpts = Options::CreateOptionGroup("Memory Settings");
     Options::AddValueOption("-n",   "count", "max number of alignments per tempfile", "", m_settings->HasMaxBufferCount,  m_settings->MaxBufferCount,  MemOpts, SORT_DEFAULT_MAX_BUFFER_COUNT);
@@ -178,6 +173,7 @@ int SortTool::Run(int argc, char* argv[]) {
 // constructor
 SortTool::SortToolPrivate::SortToolPrivate(SortTool::SortSettings* settings) 
     : m_settings(settings)
+    , m_sort(settings->SortCriteria,settings->IsSortDescending)
     , m_numberOfRuns(0) 
 { 
     // set filename stub depending on inputfile path
@@ -206,9 +202,7 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
     
     // get basic data that will be shared by all temp/output files 
     SamHeader header = inputReader.GetHeader();
-    header.SortOrder = ( m_settings->IsSortingByName
-                       ? Constants::SAM_HD_SORTORDER_QUERYNAME
-                       : Constants::SAM_HD_SORTORDER_COORDINATE );
+    header.SortOrder = m_sort.getSamHeaderSort();
     m_headerText = header.ToString();
     m_references = inputReader.GetReferenceData();
     
@@ -219,7 +213,7 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
     
     // if sorting by name, we need to generate full char data
     // so can't use GetNextAlignmentCore()
-    if ( m_settings->IsSortingByName ) {
+    if (!m_sort.isTagCoreAttribute() ) {
 
         // iterate through file
         while ( inputReader.GetNextAlignment(al)) {
@@ -292,10 +286,7 @@ bool SortTool::SortToolPrivate::MergeSortedRuns(void) {
     }
 
     // set sort order for merge
-    if ( m_settings->IsSortingByName )
-        multiReader.SetSortOrder(BamMultiReader::SortedByReadName);
-    else
-        multiReader.SetSortOrder(BamMultiReader::SortedByPosition);
+    multiReader.SetSortOrder(m_sort);
     
     // open writer for our completely sorted output BAM file
     BamWriter mergedWriter;
@@ -336,16 +327,12 @@ bool SortTool::SortToolPrivate::Run(void) {
     else 
         return false;
 } 
-    
+
+
+
 void SortTool::SortToolPrivate::SortBuffer(vector<BamAlignment>& buffer) {
- 
-    // ** add further custom sort options later ?? **
-    
     // sort buffer by desired method
-    if ( m_settings->IsSortingByName )
-        sort ( buffer.begin(), buffer.end(), SortLessThanName() );
-    else 
-        sort ( buffer.begin(), buffer.end(), SortLessThanPosition() );
+    m_sort.sortBuffer(buffer.begin(),buffer.end());
 }
     
     

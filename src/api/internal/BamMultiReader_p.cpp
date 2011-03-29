@@ -12,6 +12,7 @@
 #include <api/BamMultiReader.h>
 #include <api/internal/BamMultiMerger_p.h>
 #include <api/internal/BamMultiReader_p.h>
+#include <api/BamSortCriteria.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
 
@@ -26,7 +27,6 @@ using namespace std;
 BamMultiReaderPrivate::BamMultiReaderPrivate(void)
     : m_alignments(0)
     , m_isCoreMode(false)
-    , m_sortOrder(BamMultiReader::SortedByPosition)
 { }
 
 // dtor
@@ -97,7 +97,7 @@ void BamMultiReaderPrivate::CloseFiles(const vector<string>& filenames) {
     // make sure alignment cache is cleared if all readers are now closed
     if ( m_readers.empty() && m_alignments != 0 )
         m_alignments->Clear();
-}
+}//
 
 // creates index files for BAM files that don't have them
 bool BamMultiReaderPrivate::CreateIndexes(const BamIndex::IndexType& type) {
@@ -119,16 +119,6 @@ bool BamMultiReaderPrivate::CreateIndexes(const BamIndex::IndexType& type) {
     return result;
 }
 
-IBamMultiMerger* BamMultiReaderPrivate::CreateMergerForCurrentSortOrder(void) const {
-    switch ( m_sortOrder ) {
-        case ( BamMultiReader::SortedByPosition ) : return new PositionMultiMerger;
-        case ( BamMultiReader::SortedByReadName ) : return new ReadNameMultiMerger;
-        case ( BamMultiReader::Unsorted )         : return new UnsortedMultiMerger;
-        default :
-            cerr << "BamMultiReader ERROR: requested sort order is unknown" << endl;
-            return 0;
-    }
-}
 
 const string BamMultiReaderPrivate::ExtractReadGroup(const string& headerLine) const {
 
@@ -450,7 +440,7 @@ bool BamMultiReaderPrivate::Open(const vector<string>& filenames) {
 
     // create alignment cache if neccessary
     if ( m_alignments == 0 ) {
-        m_alignments = CreateMergerForCurrentSortOrder();
+        m_alignments = m_sort.getMerger();//CreateMergerForCurrentSortOrder();
         if ( m_alignments == 0 ) return false;
     }
 
@@ -603,7 +593,7 @@ bool BamMultiReaderPrivate::RewindReaders(void) {
 void BamMultiReaderPrivate::SaveNextAlignment(BamReader* reader, BamAlignment* alignment) {
 
     // must be in core mode && NOT sorting by read name to call GNACore()
-    if ( m_isCoreMode && m_sortOrder != BamMultiReader::SortedByReadName ) {
+    if ( m_isCoreMode && m_sort.isTagCoreAttribute()) {
         if ( reader->GetNextAlignmentCore(*alignment) )
             m_alignments->Add( make_pair(reader, alignment) );
     }
@@ -657,16 +647,18 @@ bool BamMultiReaderPrivate::SetRegion(const BamRegion& region) {
     return true;
 }
 
-void BamMultiReaderPrivate::SetSortOrder(const BamMultiReader::SortOrder& order) {
+void BamMultiReaderPrivate::SetSortOrder(const BamSortCriteria& sort) {
 
     // skip if no change needed
-    if ( m_sortOrder == order ) return;
-
+    //if ( (m_sort.getSortCriteria() == sort.getSortCriteria) && 
+    //     (m_sort.isDescending() == sort.isDescending())) return;
+    
+    //m_sort = sort;
     // set new sort order
-    m_sortOrder = order;
+    m_sort = sort;
 
     // create new alignment cache based on sort order
-    IBamMultiMerger* newAlignmentCache = CreateMergerForCurrentSortOrder();
+    IBamMultiMerger* newAlignmentCache = m_sort.getMerger();//CreateMergerForCurrentSortOrder();
     if ( newAlignmentCache == 0 ) return; // print error?
 
     // copy old cache contents to new cache

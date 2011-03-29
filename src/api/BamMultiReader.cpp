@@ -391,6 +391,6 @@ bool BamMultiReader::SetRegion(const int& leftRefID,
 
     \param order expected sort order
 */
-void BamMultiReader::SetSortOrder(const SortOrder& order) {
-    d->SetSortOrder(order);
+void BamMultiReader::SetSortOrder(const BamSortCriteria& sort) {
+    d->SetSortOrder(sort);
 }

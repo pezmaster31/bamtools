@@ -98,7 +98,7 @@ string BamSortCriteria::getSamHeaderSort(){
     }else if(sortCriteria =="POS"){
       return Constants::SAM_HD_SORTORDER_COORDINATE;
     }else if(sortCriteria =="AS"){
-      return  Constants::SAM_HD_SORTORDER_ALIGNMENTPOSTION;
+      return  Constants::SAM_HD_SORTORDER_ALIGNMENTSCORE;
     }
     cerr<<"bamtools sort ERROR: Sort criteria " << sortCriteria <<" could not be found"<<endl;
     return "";

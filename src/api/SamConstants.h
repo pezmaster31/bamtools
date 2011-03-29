@@ -63,7 +63,7 @@ const std::string SAM_CO_BEGIN_TOKEN = "@CO";
 // HD:SO values
 const std::string SAM_HD_SORTORDER_COORDINATE = "coordinate";
 const std::string SAM_HD_SORTORDER_QUERYNAME  = "queryname";
-const std::string SAM_HD_SORTORDER_ALIGNMENTPOSTION = "alignmentposition";
+const std::string SAM_HD_SORTORDER_ALIGNMENTSCORE = "alignmentscore";
 const std::string SAM_HD_SORTORDER_UNSORTED   = "unsorted";
 
 // HD:GO values

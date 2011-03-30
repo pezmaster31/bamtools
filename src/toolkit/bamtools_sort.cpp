@@ -330,12 +330,7 @@ bool SortTool::SortToolPrivate::Run(void) {
 } 
 
 
-/*
-void SortTool::SortToolPrivate::SortBuffer(vector<BamAlignment>& buffer) {
-    // sort buffer by desired method
-    m_sort.sortBuffer(buffer.begin(),buffer.end());
-}*/
-    
+
     
 bool SortTool::SortToolPrivate::WriteTempFile(const vector<BamAlignment>& buffer, const string& tempFilename) {
 

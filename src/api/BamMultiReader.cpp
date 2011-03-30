@@ -381,16 +381,41 @@ bool BamMultiReader::SetRegion(const int& leftRefID,
     return d->SetRegion(region);
 }
 
-/*! \fn void BamMultiReader::SetSortOrder(const SortOrder& order)
+/*! \fn void BamMultiReader::SetSortOrder(const BamSortCriteria& sort)
     \brief Sets the expected sorting order for reading across multiple BAM files.
 
-    Default is BamMultiReader::SortedByPosition.
+    Default is BamMultiReader::SortedByPosition and sorting ascending.
+
+    The SortOrder determines how the reader determines which alignment is "next"
+    from among its open readers.
+
+    \param sort Sorting object that specifies the expected sort order and direction
+*/
+void BamMultiReader::SetSortOrder(const BamSortCriteria& sort) {
+    d->SetSortOrder(sort);
+}
+
+/*! \fn void BamMultiReader::SetSortOrder(const SortOrder& order, const bool& ascending)
+    \brief Sets the expected sorting order for reading across multiple BAM files.
+
+    Default is BamMultiReader::SortedByPosition and sorting ascending.
 
     The SortOrder determines how the reader determines which alignment is "next"
     from among its open readers.
 
     \param order expected sort order
+    \param ascending sorting direction
 */
-void BamMultiReader::SetSortOrder(const BamSortCriteria& sort) {
-    d->SetSortOrder(sort);
+void BamTools::BamMultiReader::SetSortOrder(const SortOrder& order, const bool& ascending)
+{   
+  string sortCol="";
+  switch(order){
+    case BamMultiReader::SortedByAlignmentScore:sortCol="AS";break;
+    case BamMultiReader::SortedByPosition:sortCol="POS";break;
+    case BamMultiReader::SortedByReadName: sortCol="QNAME";break;
+    case BamMultiReader::Unsorted:sortCol="";break;
+    default:cerr<<"BamMultiReader.cpp ERROR: The selected sort order is not known\n";
+  }
+  BamSortCriteria sort(sortCol, !ascending);
+  d->SetSortOrder(sort);
 }

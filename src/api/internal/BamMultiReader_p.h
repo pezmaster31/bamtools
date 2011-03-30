@@ -32,6 +32,7 @@ namespace Internal {
 
 class IBamMultiMerger;
 
+
 class BamMultiReaderPrivate {
 
     // constructor / destructor

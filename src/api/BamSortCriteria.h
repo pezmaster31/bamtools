@@ -1,29 +1,33 @@
 #ifndef BAMSORTCRITERIA_H
 #define BAMSORTCRITERIA_H
+
 #include <api/BamAlignment.h>
 #include <vector>
 #include <api/internal/BamMultiMerger_p.h>
 
 using namespace std;
-using namespace BamTools;
+
+
 using namespace BamTools::Internal;
+namespace BamTools {
 
 typedef binary_function<BamAlignment,BamAlignment,bool> BamAlignmentBFunction;
 typedef binary_function<ReaderAlignment,ReaderAlignment,bool> ReadAlignmentBFunction;
 typedef vector< BamAlignment >::iterator BamAlignmentIterator;
 
+
 class BamSortCriteria{
 private:
   string sortCriteria;
   bool descending;
-  template <typename T>
-  IBamMultiMerger* getMergerDesc();
   static const string allowedTags[];
   static const string coreTags[];
   
 public:
   static string getAllowedTags();
   BamSortCriteria():sortCriteria("QNAME"),descending(false){}
+  
+  
   BamSortCriteria(string sortCriteria, bool descending):sortCriteria(sortCriteria),descending(descending){
     if(!isTagValid()){
      cerr << "BamSortCriteria ERROR: Requested sort order ("<<sortCriteria << ") is unknown. Valid tags are: "<<getAllowedTags()<<"\n";
@@ -125,34 +129,7 @@ class SortLessThanPosition : public binary_function<BamAlignment, BamAlignment, 
         return t(l,r);
       }
     };
-    /*template<typename F>
-    class SortGreaterThanReaderAlignment : public binary_function<ReaderAlignment, ReaderAlignment, bool>{
-        public:
-        bool operator() (const ReaderAlignment& lhs, const ReaderAlignment& rhs) {
-          F f;
-          return !f(lhs,rhs);
-        }
-    };*/
     
-    /*template<typename T>
-    class SortLessReaderAlignment: public binary_function<ReaderAlignment, ReaderAlignment, bool>{
-    public:
-      bool operator() (const ReaderAlignment& lhs, const ReaderAlignment& rhs){
-        T t;
-        const BamAlignment l= *lhs.second;
-        const BamAlignment r= *rhs.second;
-        return t(l,r);
-      }
-    };*/
-    /*
-    template<typename F>
-    class SortGreaterThanBamAlignment{
-      public:
-        SortGreaterThanBamAlignment(){}
-        bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
-          F func;
-          return !func(lhs,rhs);
-        }
-    };*/
+}
 
 #endif // BAMSORTCRITERIA_H

@@ -3,6 +3,7 @@
 #include <api/internal/BamMultiReader_p.h>
 #include <api/SamConstants.h>
 
+using namespace BamTools;
 const string BamSortCriteria::allowedTags[3]={"QNAME","POS","AS"};
 const string BamSortCriteria::coreTags[1]={"POS"};
 
@@ -38,14 +39,7 @@ bool BamSortCriteria::isTagValid() {
     return false;
 }
 
-/*
-template <typename T>
-IBamMultiMerger* BamSortCriteria::getMergerDesc() {
-    if (descending) {
-        return new CommonMultiMerger<SortGreaterThanReaderAlignment<T> >;
-    }
-    return new CommonMultiMerger<T>;
-}*/
+
 
 IBamMultiMerger* BamSortCriteria::getMerger(void ) {
     

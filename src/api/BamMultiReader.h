@@ -20,7 +20,7 @@
 #include <utility>
 
 namespace BamTools {
-
+    class BamSortCriteria;
 namespace Internal {
     class BamMultiReaderPrivate;
 } // namespace Internal
@@ -28,11 +28,11 @@ namespace Internal {
 class API_EXPORT BamMultiReader {
 
     public:
-        /*enum SortOrder { SortedByPosition = 0
-                       , SortedByReadName =1
-                       , SortedByAlignmentScore=2
+        enum SortOrder { SortedByPosition =0
+                       , SortedByReadName 
+                       , SortedByAlignmentScore
                        , Unsorted
-                       };*/
+                       };
 
     // constructor / destructor
     public:
@@ -81,7 +81,8 @@ class API_EXPORT BamMultiReader {
 
         // sets the expected sorting order for reading across multiple BAM files
         void SetSortOrder(const BamSortCriteria& sort);
-
+        
+        void SetSortOrder(const SortOrder& order, const bool& ascending =true);
         // ----------------------
         // access auxiliary data
         // ----------------------

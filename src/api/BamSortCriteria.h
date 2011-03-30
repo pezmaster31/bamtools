@@ -20,9 +20,9 @@ private:
   IBamMultiMerger* getMergerDesc();
   static const string allowedTags[];
   static const string coreTags[];
-  string getAllowedTags();
+  
 public:
-
+  static string getAllowedTags();
   BamSortCriteria():sortCriteria("QNAME"),descending(false){}
   BamSortCriteria(string sortCriteria, bool descending):sortCriteria(sortCriteria),descending(descending){
     if(!isTagValid()){
@@ -61,7 +61,18 @@ class SortLessThanPosition : public binary_function<BamAlignment, BamAlignment, 
                 return lhs.Position < rhs.Position;
         }
     };
- 
+
+  class SortGreaterThanPosition : public binary_function<BamAlignment, BamAlignment, bool >{
+  public:
+        bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
+          
+            if ( lhs.RefID != rhs.RefID )
+                return lhs.RefID > rhs.RefID;
+            else 
+                return lhs.Position > rhs.Position;
+        }
+    };
+    
  // QNAME
  class SortLessThanName : public binary_function<BamAlignment, BamAlignment, bool> {
   public:
@@ -69,15 +80,32 @@ class SortLessThanPosition : public binary_function<BamAlignment, BamAlignment, 
             return lhs.Name < rhs.Name;
         }
     };
+    
+  class SortGreaterThanName : public binary_function<BamAlignment, BamAlignment, bool> {
+  public:
+      bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
+            return lhs.Name > rhs.Name;
+        }
+    };
      
     // AS Alignment Score from BFAST
     class SortLessThanAlignmentScore : public BamAlignmentBFunction{//binary_function<BamAlignment, BamAlignment, bool>{
         public:
         bool operator() ( const  BamAlignment& lhs, const BamAlignment&  rhs) const {
-        uint32_t lh, rh;
-        lhs.GetTag("AS",lh);
-        rhs.GetTag("AS",rh);
-            return lh<rh;
+          uint32_t lh, rh;
+          lhs.GetTag("AS",lh);
+          rhs.GetTag("AS",rh);
+          return lh < rh;
+        }
+    };
+    
+    class SortGreaterThanAlignmentScore : public BamAlignmentBFunction{//binary_function<BamAlignment, BamAlignment, bool>{
+        public:
+        bool operator() ( const  BamAlignment& lhs, const BamAlignment&  rhs) const {
+          uint32_t lh, rh;
+          lhs.GetTag("AS",lh);
+          rhs.GetTag("AS",rh);
+          return lh > rh;
         }
     };
     
@@ -87,19 +115,8 @@ class SortLessThanPosition : public binary_function<BamAlignment, BamAlignment, 
      * The two classes are used for a descending search as they flip the conditions of the defined
      * SortLessThan* classes. One is used for the Reader and th other for the BamAlignment
      **/
-    template<typename F>
-    class SortGreaterThanReaderAlignment : public binary_function<ReaderAlignment, ReaderAlignment, bool>{
-        public:
-        bool operator() (const ReaderAlignment& lhs, const ReaderAlignment& rhs) {
-          F f;
-          return !f(lhs,rhs);
-        }
-    };
-    
-
-    
     template<typename T>
-    class SortLessReaderAlignment: public binary_function<ReaderAlignment, ReaderAlignment, bool>{
+    class SortReaderAlignment: public binary_function<ReaderAlignment, ReaderAlignment, bool>{
     public:
       bool operator() (const ReaderAlignment& lhs, const ReaderAlignment& rhs){
         T t;
@@ -108,16 +125,34 @@ class SortLessThanPosition : public binary_function<BamAlignment, BamAlignment, 
         return t(l,r);
       }
     };
+    /*template<typename F>
+    class SortGreaterThanReaderAlignment : public binary_function<ReaderAlignment, ReaderAlignment, bool>{
+        public:
+        bool operator() (const ReaderAlignment& lhs, const ReaderAlignment& rhs) {
+          F f;
+          return !f(lhs,rhs);
+        }
+    };*/
     
+    /*template<typename T>
+    class SortLessReaderAlignment: public binary_function<ReaderAlignment, ReaderAlignment, bool>{
+    public:
+      bool operator() (const ReaderAlignment& lhs, const ReaderAlignment& rhs){
+        T t;
+        const BamAlignment l= *lhs.second;
+        const BamAlignment r= *rhs.second;
+        return t(l,r);
+      }
+    };*/
+    /*
     template<typename F>
     class SortGreaterThanBamAlignment{
-      private:
-        F func;
       public:
-        SortGreaterThanBamAlignment(F f):func(f){}
+        SortGreaterThanBamAlignment(){}
         bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
+          F func;
           return !func(lhs,rhs);
         }
-    };
+    };*/
 
 #endif // BAMSORTCRITERIA_H

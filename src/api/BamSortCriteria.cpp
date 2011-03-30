@@ -3,7 +3,7 @@
 #include <api/internal/BamMultiReader_p.h>
 #include <api/SamConstants.h>
 
-const string BamSortCriteria::allowedTags[4]={"QNAME","POS","AS"};
+const string BamSortCriteria::allowedTags[3]={"QNAME","POS","AS"};
 const string BamSortCriteria::coreTags[1]={"POS"};
 
 
@@ -38,24 +38,37 @@ bool BamSortCriteria::isTagValid() {
     return false;
 }
 
-
+/*
 template <typename T>
 IBamMultiMerger* BamSortCriteria::getMergerDesc() {
     if (descending) {
         return new CommonMultiMerger<SortGreaterThanReaderAlignment<T> >;
     }
     return new CommonMultiMerger<T>;
-}
+}*/
 
 IBamMultiMerger* BamSortCriteria::getMerger(void ) {
-    if (sortCriteria=="QNAME") {
-        return getMergerDesc<SortLessReaderAlignment<SortLessThanName> >();
-    } else if (sortCriteria=="POS") {
-        return getMergerDesc<SortLessReaderAlignment<SortLessThanPosition> >();
-    } else if (sortCriteria=="AS") {
-        return getMergerDesc<SortLessReaderAlignment<SortLessThanAlignmentScore> >();
-    } else if (sortCriteria == "") {
-        return new UnsortedMultiMerger;
+    
+    if(descending){
+      if (sortCriteria=="QNAME") {
+          return new CommonMultiMerger<SortReaderAlignment<SortGreaterThanName> >();
+      } else if (sortCriteria=="POS") {
+          return new CommonMultiMerger<SortReaderAlignment<SortGreaterThanPosition> >();
+      } else if (sortCriteria=="AS") {
+          return new CommonMultiMerger<SortReaderAlignment<SortGreaterThanAlignmentScore> >();
+      } else if (sortCriteria == "") {
+          return new UnsortedMultiMerger;
+      }
+    }else{
+      if (sortCriteria=="QNAME") {
+          return new CommonMultiMerger<SortReaderAlignment<SortLessThanName> >();
+      } else if (sortCriteria=="POS") {
+          return new CommonMultiMerger<SortReaderAlignment<SortLessThanPosition> >();
+      } else if (sortCriteria=="AS") {
+          return new CommonMultiMerger<SortReaderAlignment<SortLessThanAlignmentScore> >();
+      } else if (sortCriteria == "") {
+          return new UnsortedMultiMerger;
+      }
     }
     cerr << "BamMultiReader ERROR: requested sort order is unknown" << endl;
     return 0;
@@ -67,7 +80,7 @@ void BamSortCriteria::sortBuffer(BamAlignmentIterator begin, BamAlignmentIterato
      * It seems like this step could not be simplified for the
      * ascending and descending case
      */
-    if (!descending) {
+   if (!descending ) {
         if (sortCriteria=="QNAME") {
             sort(begin,end,SortLessThanName());
         } else if (sortCriteria=="POS") {
@@ -77,13 +90,14 @@ void BamSortCriteria::sortBuffer(BamAlignmentIterator begin, BamAlignmentIterato
         } else {
             cerr << "BamMultiReader ERROR: requested sort order ("<<sortCriteria<<")is unknown" << endl;
         }
+    
     } else {
         if (sortCriteria=="QNAME") {//SortSortLessThanName()
-            sort(begin,end,SortGreaterThanBamAlignment<SortLessThanName>(SortLessThanName()));
+            sort(begin,end,SortGreaterThanName());
         } else if (sortCriteria=="POS") {
-            sort(begin,end,SortGreaterThanBamAlignment<SortLessThanPosition>(SortLessThanPosition()));
+            sort(begin,end,SortGreaterThanPosition());
         } else if (sortCriteria=="AS") {
-            sort(begin,end,SortGreaterThanBamAlignment<SortLessThanAlignmentScore>(SortLessThanAlignmentScore()));
+            sort(begin,end,SortGreaterThanAlignmentScore());
         } else {
             cerr << "BamMultiReader ERROR: requested sort order ("<<sortCriteria<<")is unknown" << endl;
         }

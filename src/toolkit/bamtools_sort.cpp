@@ -62,7 +62,7 @@ class SortTool::SortToolPrivate {
         bool HandleBufferContents(vector<BamAlignment>& buffer);
         bool MergeSortedRuns(void);
         bool WriteTempFile(const vector<BamAlignment>& buffer, const string& tempFilename);
-        void SortBuffer(vector<BamAlignment>& buffer);
+        //void SortBuffer(vector<BamAlignment>& buffer);
         template<typename T>
         BamAlignmentBFunction& getSortingFunction();
         
@@ -132,7 +132,7 @@ SortTool::SortTool(void)
     Options::AddValueOption("-out", "BAM filename", "the output BAM file", "", m_settings->HasOutputBamFilename, m_settings->OutputBamFilename, IO_Opts, Options::StandardOut());
     
     OptionGroup* SortOpts = Options::CreateOptionGroup("Sorting Methods");
-    Options::AddValueOption("-tagname", "sort by tag name", "(QNAME, AS, QPOS)", "", m_settings->HasSortCriteria, m_settings->SortCriteria, SortOpts, Options::StandardOut());
+    Options::AddValueOption("-tagname", "sort by tag name", "("+BamSortCriteria::getAllowedTags()+")", "", m_settings->HasSortCriteria, m_settings->SortCriteria, SortOpts, Options::StandardOut());
     Options::AddOption("-desc", "sort values descending", m_settings->IsSortDescending, SortOpts);
 //    Options::AddOption("-byname", "sort by alignment name", m_settings->SortCriteria, SortOpts);
     
@@ -238,8 +238,9 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
             buffer.push_back(al);
 
             // if buffer is full, handle contents (sort & write to temp file)
-            if ( buffer.size() == m_settings->MaxBufferCount )
+            if ( buffer.size() == m_settings->MaxBufferCount ){
                 HandleBufferContents(buffer);
+            }
         }
     }
 
@@ -255,7 +256,8 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
 bool SortTool::SortToolPrivate::HandleBufferContents(vector<BamAlignment>& buffer ) {
  
     // do sorting
-    SortBuffer(buffer);
+    m_sort.sortBuffer(buffer.begin(),buffer.end());
+    //SortBuffer(buffer);
   
     // write sorted contents to temp file, store success/fail
     stringstream tempStr;
@@ -268,7 +270,6 @@ bool SortTool::SortToolPrivate::HandleBufferContents(vector<BamAlignment>& buffe
     // clear buffer contents & update run counter
     buffer.clear();
     ++m_numberOfRuns;
-    
     // return success/fail of writing to temp file
     // TODO: a failure returned here is not actually caught and handled anywhere
     return success;
@@ -329,11 +330,11 @@ bool SortTool::SortToolPrivate::Run(void) {
 } 
 
 
-
+/*
 void SortTool::SortToolPrivate::SortBuffer(vector<BamAlignment>& buffer) {
     // sort buffer by desired method
     m_sort.sortBuffer(buffer.begin(),buffer.end());
-}
+}*/
     
     
 bool SortTool::SortToolPrivate::WriteTempFile(const vector<BamAlignment>& buffer, const string& tempFilename) {

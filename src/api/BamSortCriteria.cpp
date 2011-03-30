@@ -28,15 +28,18 @@ string BamSortCriteria::getAllowedTags(){
   return s;
 }
 
-
-bool BamSortCriteria::isTagValid() {
-    int length = sizeof(allowedTags)/sizeof(allowedTags[0]);
+bool BamSortCriteria::isTagValid(const string& tag) {
+  int length = sizeof(allowedTags)/sizeof(allowedTags[0]);
     for(int i=0;i<length;i++){
-        if(sortCriteria == allowedTags[i]){
+        if(tag.compare(allowedTags[i])==0){
           return true;
       }
     }
     return false;
+}
+
+bool BamSortCriteria::isTagValid() {
+    return isTagValid(sortCriteria);
 }
 
 

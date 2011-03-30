@@ -159,10 +159,14 @@ int SortTool::Run(int argc, char* argv[]) {
   
     // parse command line arguments
     Options::Parse(argc, argv, 1);
+     if(!BamSortCriteria::isTagValid(m_settings->SortCriteria)){
+      cerr << "bamtools sort ERROR: The tag "<<m_settings->SortCriteria<<" is not valid...aborting\n    ";
+      return 1; 
+    }
     
     // run internal SortTool implementation, return success/fail
     m_impl = new SortToolPrivate(m_settings);
-    
+   
     if ( m_impl->Run() ) return 0;
     else return 1;
 }

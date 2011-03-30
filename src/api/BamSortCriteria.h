@@ -41,6 +41,7 @@ public:
   string getSamHeaderSort();
   bool isTagCoreAttribute();
   bool isTagValid();
+  static bool isTagValid(const string& crit);
   
 };
 

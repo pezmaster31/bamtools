@@ -8,6 +8,8 @@ const string BamSortCriteria::allowedTags[3]={"QNAME","POS","AS"};
 const string BamSortCriteria::coreTags[1]={"POS"};
 
 
+
+
 bool BamSortCriteria::isTagCoreAttribute() {
     int length = sizeof(coreTags)/sizeof(coreTags[0]);
     for(int i=0;i<length;i++){
@@ -48,21 +50,21 @@ IBamMultiMerger* BamSortCriteria::getMerger(void ) {
     
     if(descending){
       if (sortCriteria=="QNAME") {
-          return new CommonMultiMerger<SortReaderAlignment<SortGreaterThanName> >();
+          return new CommonMultiMerger<SortReaderAlignment<SortName<greater<string> > > >();
       } else if (sortCriteria=="POS") {
-          return new CommonMultiMerger<SortReaderAlignment<SortGreaterThanPosition> >();
+          return new CommonMultiMerger<SortReaderAlignment<SortPosition<greater<int32_t> > > >();
       } else if (sortCriteria=="AS") {
-          return new CommonMultiMerger<SortReaderAlignment<SortGreaterThanAlignmentScore> >();
+          return new CommonMultiMerger<SortReaderAlignment<SortAlignmentScore<greater<int32_t> > > >();
       } else if (sortCriteria == "") {
           return new UnsortedMultiMerger;
       }
     }else{
       if (sortCriteria=="QNAME") {
-          return new CommonMultiMerger<SortReaderAlignment<SortLessThanName> >();
+          return new CommonMultiMerger<SortReaderAlignment<SortName<less<string> > > >();
       } else if (sortCriteria=="POS") {
-          return new CommonMultiMerger<SortReaderAlignment<SortLessThanPosition> >();
+          return new CommonMultiMerger<SortReaderAlignment<SortPosition<less<int32_t> > > >();
       } else if (sortCriteria=="AS") {
-          return new CommonMultiMerger<SortReaderAlignment<SortLessThanAlignmentScore> >();
+          return new CommonMultiMerger<SortReaderAlignment<SortAlignmentScore<less<int32_t> > > >();
       } else if (sortCriteria == "") {
           return new UnsortedMultiMerger;
       }
@@ -79,22 +81,26 @@ void BamSortCriteria::sortBuffer(BamAlignmentIterator begin, BamAlignmentIterato
      */
    if (!descending ) {
         if (sortCriteria=="QNAME") {
-            sort(begin,end,SortLessThanName());
+            //sort(begin,end,SortLessThanName());
+            sort(begin,end,SortName<less<string> >());
         } else if (sortCriteria=="POS") {
-            sort(begin,end,SortLessThanPosition());
+            //sort(begin,end,SortLessThanPosition());
+            sort(begin,end,SortPosition<less<int32_t> >());
         } else if (sortCriteria=="AS") {
-            sort(begin,end,SortLessThanAlignmentScore());
+            sort(begin,end,SortAlignmentScore<less<int32_t> >());
         } else {
             cerr << "BamMultiReader ERROR: requested sort order ("<<sortCriteria<<")is unknown" << endl;
         }
     
     } else {
-        if (sortCriteria=="QNAME") {//SortSortLessThanName()
-            sort(begin,end,SortGreaterThanName());
+        if (sortCriteria=="QNAME") {
+            //sort(begin,end,SortGreaterThanName());
+            sort(begin,end,SortName<greater<string> >());
         } else if (sortCriteria=="POS") {
-            sort(begin,end,SortGreaterThanPosition());
+            //sort(begin,end,SortGreaterThanPosition());
+            sort(begin,end,SortPosition<greater<int32_t> >());
         } else if (sortCriteria=="AS") {
-            sort(begin,end,SortGreaterThanAlignmentScore());
+            sort(begin,end,SortAlignmentScore<greater<int32_t> >());
         } else {
             cerr << "BamMultiReader ERROR: requested sort order ("<<sortCriteria<<")is unknown" << endl;
         }

@@ -22,7 +22,6 @@ private:
   bool descending;
   static const string allowedTags[];
   static const string coreTags[];
-  
 public:
   static string getAllowedTags();
   BamSortCriteria():sortCriteria("QNAME"),descending(false){}
@@ -54,65 +53,51 @@ public:
  * criterias
  **/
 
-
 // POS
-class SortLessThanPosition : public binary_function<BamAlignment, BamAlignment, bool >{
+template<typename COMP>
+class SortPosition : public binary_function<BamAlignment, BamAlignment, bool >{
   public:
         bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
-          
-            if ( lhs.RefID != rhs.RefID )
-                return lhs.RefID < rhs.RefID;
-            else 
-                return lhs.Position < rhs.Position;
+            COMP c;
+            if ( lhs.RefID != rhs.RefID ){
+                return c(lhs.RefID, rhs.RefID);
+            }else {
+                int32_t lh,rh;
+                lh = lhs.Position;
+                rh = rhs.Position;
+               // printf("%d %d %d %d\n",lh,rh,lhs.Position,rhs.Position);
+               // return c(lhs.Position, rhs.Position);
+                 return c(lh,rh);
+            }
         }
     };
 
-  class SortGreaterThanPosition : public binary_function<BamAlignment, BamAlignment, bool >{
-  public:
-        bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
-          
-            if ( lhs.RefID != rhs.RefID )
-                return lhs.RefID > rhs.RefID;
-            else 
-                return lhs.Position > rhs.Position;
-        }
-    };
     
  // QNAME
- class SortLessThanName : public binary_function<BamAlignment, BamAlignment, bool> {
+  template<typename COMP>
+  class SortName : public binary_function<BamAlignment, BamAlignment, bool> {
   public:
       bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
-            return lhs.Name < rhs.Name;
+          COMP c;
+          return c(lhs.Name, rhs.Name);
         }
     };
-    
-  class SortGreaterThanName : public binary_function<BamAlignment, BamAlignment, bool> {
-  public:
-      bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
-            return lhs.Name > rhs.Name;
-        }
-    };
-     
+      
     // AS Alignment Score from BFAST
-    class SortLessThanAlignmentScore : public BamAlignmentBFunction{//binary_function<BamAlignment, BamAlignment, bool>{
+       
+    template<typename COMP>
+    class SortAlignmentScore : public BamAlignmentBFunction{
         public:
         bool operator() ( const  BamAlignment& lhs, const BamAlignment&  rhs) const {
-          uint32_t lh, rh;
+          int32_t lh, rh;
           lhs.GetTag("AS",lh);
           rhs.GetTag("AS",rh);
-          return lh < rh;
+          
+          COMP c;
+          return c(lh,rh);
         }
     };
     
-    class SortGreaterThanAlignmentScore : public BamAlignmentBFunction{//binary_function<BamAlignment, BamAlignment, bool>{
-        public:
-        bool operator() ( const  BamAlignment& lhs, const BamAlignment&  rhs) const {
-          uint32_t lh, rh;
-          lhs.GetTag("AS",lh);
-          rhs.GetTag("AS",rh);
-          return lh > rh;
-        }
-    };
     
     
     //--------------------------------------------------------

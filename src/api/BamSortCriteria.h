@@ -65,8 +65,6 @@ class SortPosition : public binary_function<BamAlignment, BamAlignment, bool >{
                 int32_t lh,rh;
                 lh = lhs.Position;
                 rh = rhs.Position;
-               // printf("%d %d %d %d\n",lh,rh,lhs.Position,rhs.Position);
-               // return c(lhs.Position, rhs.Position);
                  return c(lh,rh);
             }
         }
@@ -97,7 +95,9 @@ class SortPosition : public binary_function<BamAlignment, BamAlignment, bool >{
           return c(lh,rh);
         }
     };
-    
+                   // printf("%d %d %d %d\n",lh,rh,lhs.Position,rhs.Position);
+               // return c(lhs.Position, rhs.Position);
+
     
     
     //--------------------------------------------------------

@@ -81,10 +81,8 @@ void BamSortCriteria::sortBuffer(BamAlignmentIterator begin, BamAlignmentIterato
      */
    if (!descending ) {
         if (sortCriteria=="QNAME") {
-            //sort(begin,end,SortLessThanName());
             sort(begin,end,SortName<less<string> >());
         } else if (sortCriteria=="POS") {
-            //sort(begin,end,SortLessThanPosition());
             sort(begin,end,SortPosition<less<int32_t> >());
         } else if (sortCriteria=="AS") {
             sort(begin,end,SortAlignmentScore<less<int32_t> >());
@@ -94,10 +92,8 @@ void BamSortCriteria::sortBuffer(BamAlignmentIterator begin, BamAlignmentIterato
     
     } else {
         if (sortCriteria=="QNAME") {
-            //sort(begin,end,SortGreaterThanName());
             sort(begin,end,SortName<greater<string> >());
         } else if (sortCriteria=="POS") {
-            //sort(begin,end,SortGreaterThanPosition());
             sort(begin,end,SortPosition<greater<int32_t> >());
         } else if (sortCriteria=="AS") {
             sort(begin,end,SortAlignmentScore<greater<int32_t> >());

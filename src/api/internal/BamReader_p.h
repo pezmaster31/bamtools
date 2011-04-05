@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 24 February 2011 (DB)
+// Last modified: 5 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
@@ -70,11 +70,10 @@ class BamReaderPrivate {
         void SetIndex(BamIndex* index);
         void SetIndexCacheMode(const BamIndex::IndexCacheMode& mode);
 
-    // BamReaderPrivate interface
-    public:
-        BgzfStream* Stream(void);
-
-    // 'internal' methods
+    // internal methods, but available as a BamReaderPrivate 'interface'
+    //
+    // these methods should only be used by BamTools::Internal classes
+    // (currently only used by the BamIndex subclasses)
     public:
         // retrieves header text from BAM file
         bool LoadHeaderData(void);
@@ -83,6 +82,10 @@ class BamReaderPrivate {
         bool LoadNextAlignment(BamAlignment& alignment);
         // builds reference data structure from BAM file
         bool LoadReferenceData(void);
+        // seek reader to file position
+        bool Seek(const int64_t& position);
+        // return reader's file position
+        int64_t Tell(void) const;
 
     // data members
     public:

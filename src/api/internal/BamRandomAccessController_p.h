@@ -56,8 +56,8 @@ class BamRandomAccessController {
         bool CreateIndex(BamReaderPrivate* reader, const BamIndex::IndexType& type);
         bool HasIndex(void) const;
         bool IndexHasAlignmentsForReference(const int& refId);
-        bool LocateIndex(const std::string& bamFilename, const BamIndex::IndexType& preferredType);
-        bool OpenIndex(const std::string& indexFilename);
+        bool LocateIndex(BamReaderPrivate* reader, const BamIndex::IndexType& preferredType);
+        bool OpenIndex(const std::string& indexFilename, BamReaderPrivate* reader);
         void SetIndex(BamIndex* index);
         void SetIndexCacheMode(const BamIndex::IndexCacheMode& mode);
 

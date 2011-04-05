@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011(DB)
+// Last modified: 5 April 2011(DB)
 // ---------------------------------------------------------------------------
 // Based on BGZF routines developed at the Broad Institute.
 // Provides the basic functionality for reading & writing BGZF files
@@ -375,7 +375,7 @@ bool BgzfStream::ReadBlock(void) {
 }
 
 // seek to position in BGZF file
-bool BgzfStream::Seek(int64_t position) {
+bool BgzfStream::Seek(const int64_t& position) {
 
     // skip if not open
     if ( !IsOpen ) return false;
@@ -390,12 +390,10 @@ bool BgzfStream::Seek(int64_t position) {
         return false;
     }
 
-    // update block data
+    // update block data & return success
     BlockLength  = 0;
     BlockAddress = blockAddress;
     BlockOffset  = blockOffset;
-
-    // return success
     return true;
 }
 
@@ -404,12 +402,9 @@ void BgzfStream::SetWriteCompressed(bool ok) {
 }
 
 // get file position in BGZF file
-int64_t BgzfStream::Tell(void) {
-
-    // skip if file not open
-    if ( !IsOpen ) return false;
-
-    // otherwise return file pointer position
+int64_t BgzfStream::Tell(void) const {
+    if ( !IsOpen )
+        return 0;
     return ( (BlockAddress << 16) | (BlockOffset & 0xFFFF) );
 }
 

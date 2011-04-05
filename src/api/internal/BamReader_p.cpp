@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011 (DB)
+// Last modified: 5 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
@@ -295,7 +295,7 @@ bool BamReaderPrivate::LoadReferenceData(void) {
 }
 
 bool BamReaderPrivate::LocateIndex(const BamIndex::IndexType& preferredType) {
-    return m_randomAccessController.LocateIndex(m_filename, preferredType);
+    return m_randomAccessController.LocateIndex(this, preferredType);
 }
 
 // opens BAM file (and index)
@@ -326,7 +326,7 @@ bool BamReaderPrivate::Open(const string& filename) {
 }
 
 bool BamReaderPrivate::OpenIndex(const std::string& indexFilename) {
-    return m_randomAccessController.OpenIndex(indexFilename);
+    return m_randomAccessController.OpenIndex(indexFilename, this);
 }
 
 // returns BAM file pointer to beginning of alignment data
@@ -349,6 +349,10 @@ bool BamReaderPrivate::Rewind(void) {
     return m_stream.Seek(m_alignmentsBeginOffset);
 }
 
+bool BamReaderPrivate::Seek(const int64_t& position) {
+    return m_stream.Seek(position);
+}
+
 void BamReaderPrivate::SetIndex(BamIndex* index) {
     m_randomAccessController.SetIndex(index);
 }
@@ -364,7 +368,6 @@ bool BamReaderPrivate::SetRegion(const BamRegion& region) {
     return m_randomAccessController.SetRegion(this, region, m_references.size());
 }
 
-// returns handle to internal BgzfStream
-BgzfStream* BamReaderPrivate::Stream(void) {
-    return &m_stream;
+int64_t BamReaderPrivate::Tell(void) const {
+    return m_stream.Tell();
 }

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011 (DB)
+// Last modified: 5 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides interface for generating BamIndex implementations
 // ***************************************************************************
@@ -24,16 +24,16 @@ const string BamIndexFactory::CreateIndexFilename(const string& bamFilename,
                                                   const BamIndex::IndexType& type)
 {
     switch ( type ) {
-        case ( BamIndex::STANDARD ) : return ( bamFilename + BAI_EXTENSION );
-        case ( BamIndex::BAMTOOLS ) : return ( bamFilename + BTI_EXTENSION );
+        case ( BamIndex::STANDARD ) : return ( bamFilename + BamStandardIndex::Extension() );
+        case ( BamIndex::BAMTOOLS ) : return ( bamFilename + BamToolsIndex::Extension() );
         default :
-            fprintf(stderr, "BamIndexFactory ERROR: unknown index type %u\n", type);
+            cerr << "BamIndexFactory ERROR: unknown index type" << type << endl;
             return string();
     }
 }
 
 // creates a new BamIndex object, depending on extension of @indexFilename
-BamIndex* BamIndexFactory::CreateIndexFromFilename(const string& indexFilename) {
+BamIndex* BamIndexFactory::CreateIndexFromFilename(const string& indexFilename, BamReaderPrivate* reader) {
 
     // if file doesn't exist, return null index
     if ( !BamTools::FileExists(indexFilename) )
@@ -46,18 +46,21 @@ BamIndex* BamIndexFactory::CreateIndexFromFilename(const string& indexFilename) 
         return 0;
 
     // create index based on extension
-    if      ( extension == BAI_EXTENSION ) return new BamStandardIndex;
-    else if ( extension == BTI_EXTENSION ) return new BamToolsIndex;
-    else                                   return 0;
+    if      ( extension == BamStandardIndex::Extension() ) return new BamStandardIndex(reader);
+    else if ( extension == BamToolsIndex::Extension()    ) return new BamToolsIndex(reader);
+    else
+        return 0;
 }
 
 // creates a new BamIndex, object of requested @type
-BamIndex* BamIndexFactory::CreateIndexOfType(const BamIndex::IndexType& type) {
+BamIndex* BamIndexFactory::CreateIndexOfType(const BamIndex::IndexType& type,
+                                             BamReaderPrivate* reader)
+{
     switch ( type ) {
-        case ( BamIndex::STANDARD ) : return new BamStandardIndex;
-        case ( BamIndex::BAMTOOLS ) : return new BamToolsIndex;
+        case ( BamIndex::STANDARD ) : return new BamStandardIndex(reader);
+        case ( BamIndex::BAMTOOLS ) : return new BamToolsIndex(reader);
         default :
-            fprintf(stderr, "BamIndexFactory ERROR: unknown index type %u\n", type);
+            cerr << "BamIndexFactory ERROR: unknown index type " << type << endl;
             return 0;
     }
 }

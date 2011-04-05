@@ -3,13 +3,12 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 January 2011 (DB)
+// Last modified: 5 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the BamTools index format (".bti")
 // ***************************************************************************
 
 #include <api/BamAlignment.h>
-#include <api/BamReader.h>
 #include <api/internal/BamReader_p.h>
 #include <api/internal/BamToolsIndex_p.h>
 #include <api/internal/BgzfStream_p.h>
@@ -24,11 +23,18 @@ using namespace BamTools::Internal;
 #include <map>
 using namespace std;
 
-BamToolsIndex::BamToolsIndex(void)
-    : BamIndex()
-    , m_blockSize(1000)
-    , m_dataBeginOffset(0)
-    , m_hasFullDataCache(false)
+// static BamToolsIndex constants
+const int BamToolsIndex::DEFAULT_BLOCK_LENGTH = 1000;
+const string BamToolsIndex::BTI_EXTENSION     = ".bti";
+const char* const BamToolsIndex::BTI_MAGIC    = "BTI\1";
+const int BamToolsIndex::SIZEOF_BLOCK         = sizeof(int32_t)*2 + sizeof(int64_t);
+
+// ctor
+BamToolsIndex::BamToolsIndex(Internal::BamReaderPrivate* reader)
+    : BamIndex(reader)
+    , m_indexStream(0)
+    , m_cacheMode(BamIndex::LimitedIndexCaching)
+    , m_blockSize(BamToolsIndex::DEFAULT_BLOCK_LENGTH)
     , m_inputVersion(0)
     , m_outputVersion(BTI_1_2) // latest version - used for writing new index files
 {
@@ -37,33 +43,123 @@ BamToolsIndex::BamToolsIndex(void)
 
 // dtor
 BamToolsIndex::~BamToolsIndex(void) {
-    ClearAllData();
+    CloseFile();
 }
 
-// creates index data (in-memory) from @reader data
-bool BamToolsIndex::Build(Internal::BamReaderPrivate* reader) {
+bool BamToolsIndex::CheckMagicNumber(void) {
 
-    // skip if invalid reader
-    if ( reader == 0 )
+    // check 'magic number' to see if file is BTI index
+    char magic[4];
+    size_t elementsRead = fread(magic, sizeof(char), 4, m_indexStream);
+    if ( elementsRead != 4 ) {
+        cerr << "BamToolsIndex ERROR: could not read format 'magic' number" << endl;
         return false;
+    }
 
-    // skip if reader's BgzfStream is invalid or not open
-    BgzfStream* bgzfStream = reader->Stream();
-    if ( bgzfStream == 0 || !bgzfStream->IsOpen )
+    if ( strncmp(magic, BamToolsIndex::BTI_MAGIC, 4) != 0 ) {
+        cerr << "BamToolsIndex ERROR: invalid format" << endl;
         return false;
+    }
 
-    // move reader's file pointer to beginning of alignments
-    if ( !reader->Rewind() ) return false;
+    // otherwise ok
+    return true;
+}
 
-    // initialize index data structure with space for all references
-    const int numReferences = reader->GetReferenceCount();
-    m_indexData.clear();
-    m_hasFullDataCache = false;
-    SetReferenceCount(numReferences);
+// check index file version, return true if OK
+bool BamToolsIndex::CheckVersion(void) {
 
-    // set up counters and markers
+    // read version from file
+    size_t elementsRead = fread(&m_inputVersion, sizeof(m_inputVersion), 1, m_indexStream);
+    if ( elementsRead != 1 ) return false;
+    if ( m_isBigEndian ) SwapEndian_32(m_inputVersion);
+
+    // if version is negative, or zero
+    if ( m_inputVersion <= 0 ) {
+        cerr << "BamToolsIndex ERROR: could not load index file: invalid version."
+             << endl;
+        return false;
+    }
+
+    // if version is newer than can be supported by this version of bamtools
+    else if ( m_inputVersion > m_outputVersion ) {
+        cerr << "BamToolsIndex ERROR: could not load index file. This version of BamTools does not recognize new index file version"
+             << endl
+             << "Please update BamTools to a more recent version to support this index file."
+             << endl;
+        return false;
+    }
+
+    // ------------------------------------------------------------------
+    // check for deprecated, unsupported versions
+    // (typically whose format did not accomodate a particular bug fix)
+
+    else if ( (Version)m_inputVersion == BamToolsIndex::BTI_1_0 ) {
+        cerr << "BamToolsIndex ERROR: could not load index file. This version of the index contains a bug related to accessing data near reference ends."
+             << endl << endl
+             << "Please run 'bamtools index -bti -in yourData.bam' to generate an up-to-date, fixed BTI file."
+             << endl << endl;
+        return false;
+    }
+
+    else if ( (Version)m_inputVersion == BamToolsIndex::BTI_1_1 ) {
+        cerr << "BamToolsIndex ERROR: could not load index file. This version of the index contains a bug related to handling empty references."
+             << endl << endl
+             << "Please run 'bamtools index -bti -in yourData.bam' to generate an up-to-date, fixed BTI file."
+             << endl << endl;
+        return false;
+    }
+
+    // otherwise ok
+    else return true;
+}
+
+void BamToolsIndex::ClearReferenceEntry(BtiReferenceEntry& refEntry) {
+    refEntry.ID = -1;
+    refEntry.Blocks.clear();
+}
+
+void BamToolsIndex::CloseFile(void) {
+    if ( IsFileOpen() )
+        fclose(m_indexStream);
+    m_indexFileSummary.clear();
+}
+
+// builds index from associated BAM file & writes out to index file
+bool BamToolsIndex::Create(void) {
+
+    // return false if BamReader is invalid or not open
+    if ( m_reader == 0 || !m_reader->IsOpen() ) {
+        cerr << "BamToolsIndex ERROR: BamReader is not open"
+             << ", aborting index creation" << endl;
+        return false;
+    }
+
+    // rewind BamReader
+    if ( !m_reader->Rewind() ) {
+        cerr << "BamToolsIndex ERROR: could not rewind BamReader to create index"
+             << ", aborting index creation" << endl;
+        return false;
+    }
+
+    // open new index file (read & write)
+    string indexFilename = m_reader->Filename() + Extension();
+    if ( !OpenFile(indexFilename, "w+b") ) {
+        cerr << "BamStandardIndex ERROR: could not open ouput index file " << indexFilename
+             << ", aborting index creation" << endl;
+        return false;
+    }
+
+    // initialize BtiFileSummary with number of references
+    const int& numReferences = m_reader->GetReferenceCount();
+    InitializeFileSummary(numReferences);
+
+    // initialize output file
+    bool createdOk = true;
+    createdOk &= WriteHeader();
+
+    // index building markers
     int32_t currentBlockCount      = 0;
-    int64_t currentAlignmentOffset = bgzfStream->Tell();
+    int64_t currentAlignmentOffset = m_reader->Tell();
     int32_t blockRefId             = 0;
     int32_t blockMaxEndPosition    = 0;
     int64_t blockStartOffset       = currentAlignmentOffset;
@@ -71,16 +167,21 @@ bool BamToolsIndex::Build(Internal::BamReaderPrivate* reader) {
 
     // plow through alignments, storing index entries
     BamAlignment al;
-    while ( reader->LoadNextAlignment(al) ) {
+    BtiReferenceEntry refEntry;
+    while ( m_reader->LoadNextAlignment(al) ) {
 
         // if block contains data (not the first time through) AND alignment is on a new reference
         if ( currentBlockCount > 0 && al.RefID != blockRefId ) {
 
-            // store previous data
-            BamToolsIndexEntry entry(blockMaxEndPosition, blockStartOffset, blockStartPosition);
-            SaveOffsetEntry(blockRefId, entry);
+            // store previous BTI block data in reference entry
+            BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
+            refEntry.Blocks.push_back(block);
 
-            // intialize new block for current alignment's reference
+            // write reference entry, then clear
+            createdOk &= WriteReferenceEntry(refEntry);
+            ClearReferenceEntry(refEntry);
+
+            // update markers
             currentBlockCount   = 0;
             blockMaxEndPosition = al.GetEndPosition();
             blockStartOffset    = currentAlignmentOffset;
@@ -102,489 +203,298 @@ bool BamToolsIndex::Build(Internal::BamReaderPrivate* reader) {
 
         // if block is full, get offset for next block, reset currentBlockCount
         if ( currentBlockCount == m_blockSize ) {
-            BamToolsIndexEntry entry(blockMaxEndPosition, blockStartOffset, blockStartPosition);
-            SaveOffsetEntry(blockRefId, entry);
-            blockStartOffset  = bgzfStream->Tell();
+
+            // store previous block data in reference entry
+            BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
+            refEntry.Blocks.push_back(block);
+
+            // update markers
+            blockStartOffset  = m_reader->Tell();
             currentBlockCount = 0;
         }
 
         // not the best name, but for the next iteration, this value will be the offset of the *current* alignment
         // necessary because we won't know if this next alignment is on a new reference until we actually read it
-        currentAlignmentOffset = bgzfStream->Tell();
+        currentAlignmentOffset = m_reader->Tell();
     }
 
-    // store final block with data
-    BamToolsIndexEntry entry(blockMaxEndPosition, blockStartOffset, blockStartPosition);
-    SaveOffsetEntry(blockRefId, entry);
+    // store last BTI block data in reference entry
+    BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
+    refEntry.Blocks.push_back(block);
 
-    // set flag
-    m_hasFullDataCache = true;
+    // write last reference entry, then clear
+    createdOk &= WriteReferenceEntry(refEntry);
+    ClearReferenceEntry(refEntry);
 
-    // return success/failure of rewind
-    return reader->Rewind();
+    // rewind reader & return result
+    createdOk &= m_reader->Rewind();
+
+    // return result
+    return createdOk;
 }
 
-// check index file magic number, return true if OK
-bool BamToolsIndex::CheckMagicNumber(void) {
-
-    // see if index is valid BAM index
-    char magic[4];
-    size_t elementsRead = fread(magic, 1, 4, m_indexStream);
-    if ( elementsRead != 4 ) return false;
-    if ( strncmp(magic, "BTI\1", 4) != 0 ) {
-        fprintf(stderr, "BamToolsIndex ERROR: could not load index file - invalid magic number.\n");
-        return false;
-    }
-
-    // otherwise ok
-    return true;
+// returns format's file extension
+const std::string BamToolsIndex::Extension(void) {
+    return BamToolsIndex::BTI_EXTENSION;
 }
 
-// check index file version, return true if OK
-bool BamToolsIndex::CheckVersion(void) {
-
-    // read version from file
-    size_t elementsRead = fread(&m_inputVersion, sizeof(m_inputVersion), 1, m_indexStream);
-    if ( elementsRead != 1 ) return false;
-    if ( m_isBigEndian ) SwapEndian_32(m_inputVersion);
-
-    // if version is negative, or zero
-    if ( m_inputVersion <= 0 ) {
-        fprintf(stderr, "BamToolsIndex ERROR: could not load index file - invalid version.\n");
-        return false;
-    }
-
-    // if version is newer than can be supported by this version of bamtools
-    else if ( m_inputVersion > m_outputVersion ) {
-        fprintf(stderr, "BamToolsIndex ERROR: could not load index file - this version of BamTools does not recognize new index file version.\n");
-        fprintf(stderr, "Please update BamTools to a more recent version to support this index file.\n");
-        return false;
-    }
-
-    // ------------------------------------------------------------------
-    // check for deprecated, unsupported versions
-    // (typically whose format did not accomodate a particular bug fix)
-
-    else if ( (Version)m_inputVersion == BTI_1_0 ) {
-        fprintf(stderr, "BamToolsIndex ERROR: could not load index file - this version of the index contains a bug related to accessing data near reference ends.\n");
-        fprintf(stderr, "\nPlease run \'bamtools index -bti -in yourData.bam\' to generate an up-to-date, fixed BTI file.\n\n");
-        return false;
-    }
-
-    else if ( (Version)m_inputVersion == BTI_1_1 ) {
-        fprintf(stderr, "BamToolsIndex ERROR: could not load index file - this version of the index contains a bug related to handling empty references.\n");
-        fprintf(stderr, "\nPlease run \'bamtools index -bti -in yourData.bam\' to generate an up-to-date, fixed BTI file.\n\n");
-        return false;
-    }
-
-    // otherwise ok
-    else return true;
-}
-
-// clear all current index offset data in memory
-void BamToolsIndex::ClearAllData(void) {
-    BamToolsIndexData::const_iterator indexIter = m_indexData.begin();
-    BamToolsIndexData::const_iterator indexEnd  = m_indexData.end();
-    for ( ; indexIter != indexEnd; ++indexIter ) {
-        const int& refId = (*indexIter).first;
-        ClearReferenceOffsets(refId);
-    }
-}
-
-// clear all index offset data for desired reference
-void BamToolsIndex::ClearReferenceOffsets(const int& refId) {
-    if ( m_indexData.find(refId) == m_indexData.end() ) return;
-    vector<BamToolsIndexEntry>& offsets = m_indexData[refId].Offsets;
-    offsets.clear();
-    m_hasFullDataCache = false;
-}
-
-// return file position after header metadata
-off_t BamToolsIndex::DataBeginOffset(void) const {
-    return m_dataBeginOffset;
-}
-
-// calculate BAM file offset for desired region
-// return true if no error (*NOT* equivalent to "has alignments or valid offset")
-//   check @hasAlignmentsInRegion to determine this status
-// @region - target region
-// @offset - resulting seek target
-// @hasAlignmentsInRegion - sometimes a file just lacks data in region, this flag indicates that status
-// N.B. - ignores isRightBoundSpecified
 bool BamToolsIndex::GetOffset(const BamRegion& region, int64_t& offset, bool* hasAlignmentsInRegion) {
 
-    // return false if leftBound refID is not found in index data
-    BamToolsIndexData::const_iterator indexIter = m_indexData.find(region.LeftRefID);
-    if ( indexIter == m_indexData.end() )
+    // return false ref ID is not a valid index in file summary data
+    if ( region.LeftRefID < 0 || region.LeftRefID >= (int)m_indexFileSummary.size() )
         return false;
 
-    // load index data for region if not already cached
-    if ( !IsDataLoaded(region.LeftRefID) ) {
-
-        bool loadedOk = true;
-        loadedOk &= SkipToReference(region.LeftRefID);
-        loadedOk &= LoadReference(region.LeftRefID);
-        if ( !loadedOk ) return false;
+    // retrieve reference index data for left bound reference
+    BtiReferenceEntry refEntry(region.LeftRefID);
+    if ( !ReadReferenceEntry(refEntry) ) {
+        cerr << "BamToolsIndex ERROR: could not retrieve index data from BTI file" << endl;
+        return false;
     }
 
-    // localize index data for this reference (& sanity check that data actually exists)
-    indexIter = m_indexData.find(region.LeftRefID);
-    if ( indexIter == m_indexData.end() )
-        return false;
+    // TODO: can this next loop be sped up?
+    // Binary search for overlap instead of linear search perhaps.
 
-    const vector<BamToolsIndexEntry>& referenceOffsets = (*indexIter).second.Offsets;
-    if ( referenceOffsets.empty() )
-        return false;
+    // iterate over blocks on this reference
+    BtiBlockVector::const_iterator blockIter = refEntry.Blocks.begin();
+    BtiBlockVector::const_iterator blockEnd  = refEntry.Blocks.end();
+    for ( ; blockIter != blockEnd; ++blockIter ) {
+        const BtiBlock& block = (*blockIter);
 
-    // -------------------------------------------------------
-    // calculate nearest index to jump to
-
-    // save first offset
-    offset = (*referenceOffsets.begin()).StartOffset;
-
-    // iterate over offsets entries on this reference
-    vector<BamToolsIndexEntry>::const_iterator offsetIter = referenceOffsets.begin();
-    vector<BamToolsIndexEntry>::const_iterator offsetEnd  = referenceOffsets.end();
-    for ( ; offsetIter != offsetEnd; ++offsetIter ) {
-        const BamToolsIndexEntry& entry = (*offsetIter);
-
-        // break if alignment 'entry' overlaps region
-        if ( entry.MaxEndPosition >= region.LeftPosition ) break;
-        offset = (*offsetIter).StartOffset;
+        // store offset & break if block end overlaps region start
+        if ( block.MaxEndPosition >= region.LeftPosition ) {
+            offset = block.StartOffset;
+            break;
+        }
     }
 
-    // set flag based on whether an index entry was found for this region
-    *hasAlignmentsInRegion = ( offsetIter != offsetEnd );
-
-    // if cache mode set to none, dump the data we just loaded
-    if ( m_cacheMode == BamIndex::NoIndexCaching )
-        ClearReferenceOffsets(region.LeftRefID);
+    // sets to false if blocks container is empty, or if no matching block could be found
+    *hasAlignmentsInRegion = ( blockIter != blockEnd );
 
     // return success
     return true;
 }
 
 // returns whether reference has alignments or no
-bool BamToolsIndex::HasAlignments(const int& refId) const {
-    BamToolsIndexData::const_iterator indexIter = m_indexData.find(refId);
-    if ( indexIter == m_indexData.end()) return false;
-    const BamToolsReferenceEntry& refEntry = (*indexIter).second;
-    return refEntry.HasAlignments;
+bool BamToolsIndex::HasAlignments(const int& referenceID) const {
+    if ( referenceID < 0 || referenceID >= (int)m_indexFileSummary.size() )
+        return false;
+    const BtiReferenceSummary& refSummary = m_indexFileSummary.at(referenceID);
+    return ( refSummary.NumBlocks > 0 );
 }
 
-// return true if all index data is cached
-bool BamToolsIndex::HasFullDataCache(void) const {
-    return m_hasFullDataCache;
+void BamToolsIndex::InitializeFileSummary(const int& numReferences) {
+    m_indexFileSummary.clear();
+    for ( int i = 0; i < numReferences; ++i )
+        m_indexFileSummary.push_back( BtiReferenceSummary() );
 }
 
-// returns true if index cache has data for desired reference
-bool BamToolsIndex::IsDataLoaded(const int& refId) const {
-
-    BamToolsIndexData::const_iterator indexIter = m_indexData.find(refId);
-    if ( indexIter == m_indexData.end()) return false;
-    const BamToolsReferenceEntry& refEntry = (*indexIter).second;
-
-    if ( !refEntry.HasAlignments ) return true; // no data period
-
-    // return whether offsets list contains data
-    return !refEntry.Offsets.empty();
+bool BamToolsIndex::IsFileOpen(void) const {
+    return ( m_indexStream != 0 );
 }
 
-// attempts to use index to jump to @region in @reader; returns success/fail
-bool BamToolsIndex::Jump(Internal::BamReaderPrivate* reader,
-                         const BamTools::BamRegion& region,
-                         bool* hasAlignmentsInRegion)
-{
+// attempts to use index data to jump to @region, returns success/fail
+// a "successful" jump indicates no error, but not whether this region has data
+//   * thus, the method sets a flag to indicate whether there are alignments
+//     available after the jump position
+bool BamToolsIndex::Jump(const BamTools::BamRegion& region, bool* hasAlignmentsInRegion) {
+
     // clear flag
     *hasAlignmentsInRegion = false;
 
-    // skip if invalid reader
-    if ( reader == 0 ) return false;
-
-    // skip if reader's BgzfStream is invalid or not open
-    BgzfStream* bgzfStream = reader->Stream();
-    if ( bgzfStream == 0 || !bgzfStream->IsOpen )
+    // skip if invalid reader or not open
+    if ( m_reader == 0 || !m_reader->IsOpen() )
         return false;
 
     // make sure left-bound position is valid
-    const RefVector& references = reader->GetReferenceData();
+    const RefVector& references = m_reader->GetReferenceData();
     if ( region.LeftPosition > references.at(region.LeftRefID).RefLength )
         return false;
 
     // calculate nearest offset to jump to
     int64_t offset;
     if ( !GetOffset(region, offset, hasAlignmentsInRegion) ) {
-        fprintf(stderr, "BamToolsIndex ERROR: could not jump - unable to calculate offset for specified region.\n");
+        cerr << "BamToolsIndex ERROR: could not jump"
+             << ", unable to calculate offset for specified region" << endl;
         return false;
     }
 
     // return success/failure of seek
-    return bgzfStream->Seek(offset);
+    return m_reader->Seek(offset);
 }
 
-// clears index data from all references except the first
-void BamToolsIndex::KeepOnlyFirstReferenceOffsets(void) {
-    BamToolsIndexData::const_iterator indexBegin = m_indexData.begin();
-    KeepOnlyReferenceOffsets( (*indexBegin).first );
-}
+// loads existing data from file into memory
+bool BamToolsIndex::Load(const std::string& filename) {
 
-// clears index data from all references except the one specified
-void BamToolsIndex::KeepOnlyReferenceOffsets(const int& refId) {
-    BamToolsIndexData::iterator mapIter = m_indexData.begin();
-    BamToolsIndexData::iterator mapEnd  = m_indexData.end();
-    for ( ; mapIter != mapEnd; ++mapIter ) {
-        const int entryRefId = (*mapIter).first;
-        if ( entryRefId != refId )
-            ClearReferenceOffsets(entryRefId);
+    // attempt open index file (read-only)
+    if ( !OpenFile(filename, "rb") ) {
+        cerr << "BamStandardIndex ERROR: could not open input index file " << filename
+             << ", aborting index load" << endl;
+        return false;
     }
+
+    // attempt to load & validate BTI header data
+    if ( !LoadHeader() ) {
+        CloseFile();
+        return false;
+    }
+
+    // attempt to load index file summary, return success/failure
+    return LoadFileSummary();
 }
 
-// load index data for all references, return true if loaded OK
-bool BamToolsIndex::LoadAllReferences(bool saveData) {
+bool BamToolsIndex::LoadFileSummary(void) {
 
-    // skip if data already loaded
-    if ( m_hasFullDataCache ) return true;
+    // load number of reference sequences
+    int numReferences;
+    if ( !LoadNumReferences(numReferences) )
+        return false;
 
-    // read in number of references
-    int32_t numReferences;
-    if ( !LoadReferenceCount(numReferences) ) return false;
-    //SetReferenceCount(numReferences);
+    // initialize file summary data
+    InitializeFileSummary(numReferences);
 
     // iterate over reference entries
     bool loadedOk = true;
-    for ( int i = 0; i < numReferences; ++i )
-        loadedOk &= LoadReference(i, saveData);
+    BtiFileSummary::iterator summaryIter = m_indexFileSummary.begin();
+    BtiFileSummary::iterator summaryEnd  = m_indexFileSummary.end();
+    for ( ; summaryIter != summaryEnd; ++summaryIter )
+        loadedOk &= LoadReferenceSummary(*summaryIter);
 
-    // set flag
-    if ( loadedOk && saveData )
-        m_hasFullDataCache = true;
-
-    // return success/failure of load
+    // return result
     return loadedOk;
 }
 
-// load header data from index file, return true if loaded OK
 bool BamToolsIndex::LoadHeader(void) {
 
-    // check magic number
-    if ( !CheckMagicNumber() ) return false;
+    // if invalid format 'magic number'
+    if ( !CheckMagicNumber() )
+        return false;
 
-    // check BTI version
-    if ( !CheckVersion() ) return false;
+    // if invalid BTI version
+    if ( !CheckVersion() )
+        return false;
 
-    // read in block size
+    // use file's BTI block size to set member variable
     size_t elementsRead = fread(&m_blockSize, sizeof(m_blockSize), 1, m_indexStream);
-    if ( elementsRead != 1 ) return false;
-
-    // swap endian-ness if necessary
     if ( m_isBigEndian ) SwapEndian_32(m_blockSize);
-
-    // store offset of beginning of data
-    m_dataBeginOffset = ftell64(m_indexStream);
-
-    // return success
-    return true;
+    return ( elementsRead == 1 );
 }
 
-// load a single index entry from file, return true if loaded OK
-// @saveData - save data in memory if true, just read & discard if false
-bool BamToolsIndex::LoadIndexEntry(const int& refId, bool saveData) {
-
-    // read in index entry data members
+bool BamToolsIndex::LoadNumBlocks(int& numBlocks) {
     size_t elementsRead = 0;
-    BamToolsIndexEntry entry;
-    elementsRead += fread(&entry.MaxEndPosition, sizeof(entry.MaxEndPosition), 1, m_indexStream);
-    elementsRead += fread(&entry.StartOffset,    sizeof(entry.StartOffset),    1, m_indexStream);
-    elementsRead += fread(&entry.StartPosition,  sizeof(entry.StartPosition),  1, m_indexStream);
-    if ( elementsRead != 3 ) return false;
+    elementsRead += fread(&numBlocks, sizeof(numBlocks), 1, m_indexStream);
+    if ( m_isBigEndian ) SwapEndian_32(numBlocks);
+    return ( elementsRead == 1 );
+}
+
+bool BamToolsIndex::LoadNumReferences(int& numReferences) {
+    size_t elementsRead = 0;
+    elementsRead += fread(&numReferences, sizeof(numReferences), 1, m_indexStream);
+    if ( m_isBigEndian ) SwapEndian_32(numReferences);
+    return ( elementsRead == 1 );
+}
+
+bool BamToolsIndex::LoadReferenceSummary(BtiReferenceSummary& refSummary) {
+
+    // load number of blocks
+    int numBlocks;
+    if ( !LoadNumBlocks(numBlocks) )
+        return false;
+
+    // store block summary data for this reference
+    refSummary.NumBlocks = numBlocks;
+    refSummary.FirstBlockFilePosition = Tell();
+
+    // skip blocks in index file (and return status)
+    return SkipBlocks(numBlocks);
+}
+
+bool BamToolsIndex::OpenFile(const std::string& filename, const char* mode) {
+
+    // make sure any previous index file is closed
+    CloseFile();
+
+    // attempt to open file
+    m_indexStream = fopen(filename.c_str(), mode);
+    return IsFileOpen();
+}
+
+bool BamToolsIndex::ReadBlock(BtiBlock& block) {
+
+    // read in block data members
+    size_t elementsRead = 0;
+    elementsRead += fread(&block.MaxEndPosition, sizeof(block.MaxEndPosition), 1, m_indexStream);
+    elementsRead += fread(&block.StartOffset,    sizeof(block.StartOffset),    1, m_indexStream);
+    elementsRead += fread(&block.StartPosition,  sizeof(block.StartPosition),  1, m_indexStream);
 
     // swap endian-ness if necessary
     if ( m_isBigEndian ) {
-        SwapEndian_32(entry.MaxEndPosition);
-        SwapEndian_64(entry.StartOffset);
-        SwapEndian_32(entry.StartPosition);
+        SwapEndian_32(block.MaxEndPosition);
+        SwapEndian_64(block.StartOffset);
+        SwapEndian_32(block.StartPosition);
     }
 
-    // save data
-    if ( saveData )
-        SaveOffsetEntry(refId, entry);
-
-    // return success/failure of load
-    return true;
+    // return success/failure
+    return ( elementsRead == 3 );
 }
 
-// load a single reference from file, return true if loaded OK
-// @saveData - save data in memory if true, just read & discard if false
-bool BamToolsIndex::LoadFirstReference(bool saveData) {
-    BamToolsIndexData::const_iterator indexBegin = m_indexData.begin();
-    return LoadReference( (*indexBegin).first, saveData );
-}
+bool BamToolsIndex::ReadBlocks(const BtiReferenceSummary& refSummary, BtiBlockVector& blocks) {
 
-// load a single reference from file, return true if loaded OK
-// @saveData - save data in memory if true, just read & discard if false
-bool BamToolsIndex::LoadReference(const int& refId, bool saveData) {
+    // prep blocks container
+    blocks.clear();
+    blocks.reserve(refSummary.NumBlocks);
 
-    // read in number of offsets for this reference
-    uint32_t numOffsets;
-    size_t elementsRead = fread(&numOffsets, sizeof(numOffsets), 1, m_indexStream);
-    if ( elementsRead != 1 ) return false;
-
-    // swap endian-ness if necessary
-    if ( m_isBigEndian ) SwapEndian_32(numOffsets);
-
-    // initialize offsets container for this reference
-    SetOffsetCount(refId, (int)numOffsets);
-
-    // iterate over offset entries
-    for ( unsigned int j = 0; j < numOffsets; ++j )
-        LoadIndexEntry(refId, saveData);
-
-    // return success/failure of load
-    return true;
-}
-
-// loads number of references, return true if loaded OK
-bool BamToolsIndex::LoadReferenceCount(int& numReferences) {
-
-    size_t elementsRead = 0;
-
-    // read reference count
-    elementsRead += fread(&numReferences, sizeof(numReferences), 1, m_indexStream);
-    if ( elementsRead != 1 ) return false;
-
-    // swap endian-ness if necessary
-    if ( m_isBigEndian ) SwapEndian_32(numReferences);
-
-    // return success
-    return true;
-}
-
-// saves an index offset entry in memory
-void BamToolsIndex::SaveOffsetEntry(const int& refId, const BamToolsIndexEntry& entry) {
-    BamToolsReferenceEntry& refEntry = m_indexData[refId];
-    refEntry.HasAlignments = true;
-    refEntry.Offsets.push_back(entry);
-}
-
-// pre-allocates size for offset vector
-void BamToolsIndex::SetOffsetCount(const int& refId, const int& offsetCount) {
-    BamToolsReferenceEntry& refEntry = m_indexData[refId];
-    refEntry.Offsets.reserve(offsetCount);
-    refEntry.HasAlignments = ( offsetCount > 0);
-}
-
-// initializes index data structure to hold @count references
-void BamToolsIndex::SetReferenceCount(const int& count) {
-    for ( int i = 0; i < count; ++i )
-        m_indexData[i].HasAlignments = false;
-}
-
-// position file pointer to first reference begin, return true if skipped OK
-bool BamToolsIndex::SkipToFirstReference(void) {
-    BamToolsIndexData::const_iterator indexBegin = m_indexData.begin();
-    return SkipToReference( (*indexBegin).first );
-}
-
-// position file pointer to desired reference begin, return true if skipped OK
-bool BamToolsIndex::SkipToReference(const int& refId) {
-
-    // attempt rewind
-    if ( !Rewind() ) return false;
-
-    // read in number of references
-    int32_t numReferences;
-    size_t elementsRead = fread(&numReferences, sizeof(numReferences), 1, m_indexStream);
-    if ( elementsRead != 1 ) return false;
-    if ( m_isBigEndian ) SwapEndian_32(numReferences);
-
-    // iterate over reference entries
-    bool skippedOk = true;
-    int currentRefId = 0;
-    while (currentRefId != refId) {
-        skippedOk &= LoadReference(currentRefId, false);
-        ++currentRefId;
+    // skip to first block entry
+    if ( !Seek( refSummary.FirstBlockFilePosition, SEEK_SET ) ) {
+        cerr << "BamToolsIndex ERROR: could not seek to position "
+             << refSummary.FirstBlockFilePosition << endl;
+        return false;
     }
 
-    // return success/failure of skip
-    return skippedOk;
+    // read & store block entries
+    bool readOk = true;
+    BtiBlock block;
+    for ( int i = 0; i < refSummary.NumBlocks; ++i ) {
+        readOk &= ReadBlock(block);
+        blocks.push_back(block);
+    }
+    return readOk;
 }
 
-// write header to new index file
-bool BamToolsIndex::WriteHeader(void) {
+bool BamToolsIndex::ReadReferenceEntry(BtiReferenceEntry& refEntry) {
 
-    size_t elementsWritten = 0;
+    // return false if refId not valid index in file summary structure
+    if ( refEntry.ID < 0 || refEntry.ID >= (int)m_indexFileSummary.size() )
+        return false;
 
-    // write BTI index format 'magic number'
-    elementsWritten += fwrite("BTI\1", 1, 4, m_indexStream);
-
-    // write BTI index format version
-    int32_t currentVersion = (int32_t)m_outputVersion;
-    if ( m_isBigEndian ) SwapEndian_32(currentVersion);
-    elementsWritten += fwrite(&currentVersion, sizeof(currentVersion), 1, m_indexStream);
-
-    // write block size
-    int32_t blockSize = m_blockSize;
-    if ( m_isBigEndian ) SwapEndian_32(blockSize);
-    elementsWritten += fwrite(&blockSize, sizeof(blockSize), 1, m_indexStream);
-
-    // store offset of beginning of data
-    m_dataBeginOffset = ftell64(m_indexStream);
-
-    // return success/failure of write
-    return ( elementsWritten == 6 );
+    // use index summary to assist reading the reference's BTI blocks
+    const BtiReferenceSummary& refSummary = m_indexFileSummary.at(refEntry.ID);
+    return ReadBlocks(refSummary, refEntry.Blocks);
 }
 
-// write index data for all references to new index file
-bool BamToolsIndex::WriteAllReferences(void) {
-
-    size_t elementsWritten = 0;
-
-    // write number of references
-    int32_t numReferences = (int32_t)m_indexData.size();
-    if ( m_isBigEndian ) SwapEndian_32(numReferences);
-    elementsWritten += fwrite(&numReferences, sizeof(numReferences), 1, m_indexStream);
-    if ( elementsWritten != 1 ) return false;
-
-    // iterate through references in index
-    bool refOk = true;
-    BamToolsIndexData::const_iterator refIter = m_indexData.begin();
-    BamToolsIndexData::const_iterator refEnd  = m_indexData.end();
-    for ( ; refIter != refEnd; ++refIter )
-        refOk &= WriteReferenceEntry( (*refIter).second );
-
-    // return success/fail
-    return refOk;
+bool BamToolsIndex::Seek(const int64_t& position, const int& origin) {
+    return ( fseek64(m_indexStream, position, origin) == 0 );
 }
 
-// write current reference index data to new index file
-bool BamToolsIndex::WriteReferenceEntry(const BamToolsReferenceEntry& refEntry) {
-
-    size_t elementsWritten = 0;
-
-    // write number of offsets listed for this reference
-    uint32_t numOffsets = refEntry.Offsets.size();
-    if ( m_isBigEndian ) SwapEndian_32(numOffsets);
-    elementsWritten += fwrite(&numOffsets, sizeof(numOffsets), 1, m_indexStream);
-    if ( elementsWritten != 1 ) return false;
-
-    // iterate over offset entries
-    bool entriesOk = true;
-    vector<BamToolsIndexEntry>::const_iterator offsetIter = refEntry.Offsets.begin();
-    vector<BamToolsIndexEntry>::const_iterator offsetEnd  = refEntry.Offsets.end();
-    for ( ; offsetIter != offsetEnd; ++offsetIter )
-        entriesOk &= WriteIndexEntry( (*offsetIter) );
-
-    // return success/fail
-    return entriesOk;
+// change the index caching behavior
+void BamToolsIndex::SetCacheMode(const BamIndex::IndexCacheMode& mode) {
+    m_cacheMode = mode;
+    // do nothing else here ? cache mode will be ignored from now on, most likely
 }
 
-// write current index offset entry to new index file
-bool BamToolsIndex::WriteIndexEntry(const BamToolsIndexEntry& entry) {
+bool BamToolsIndex::SkipBlocks(const int& numBlocks) {
+    return Seek( numBlocks*BamToolsIndex::SIZEOF_BLOCK, SEEK_CUR );
+}
+
+int64_t BamToolsIndex::Tell(void) const {
+    return ftell64(m_indexStream);
+}
+
+bool BamToolsIndex::WriteBlock(const BtiBlock& block) {
 
     // copy entry data
-    int32_t maxEndPosition = entry.MaxEndPosition;
-    int64_t startOffset    = entry.StartOffset;
-    int32_t startPosition  = entry.StartPosition;
+    int32_t maxEndPosition = block.MaxEndPosition;
+    int64_t startOffset    = block.StartOffset;
+    int32_t startPosition  = block.StartPosition;
 
     // swap endian-ness if necessary
     if ( m_isBigEndian ) {
@@ -599,4 +509,56 @@ bool BamToolsIndex::WriteIndexEntry(const BamToolsIndexEntry& entry) {
     elementsWritten += fwrite(&startOffset,    sizeof(startOffset),    1, m_indexStream);
     elementsWritten += fwrite(&startPosition,  sizeof(startPosition),  1, m_indexStream);
     return ( elementsWritten == 3 );
+}
+
+bool BamToolsIndex::WriteBlocks(const BtiBlockVector& blocks) {
+    bool writtenOk = true;
+    BtiBlockVector::const_iterator blockIter = blocks.begin();
+    BtiBlockVector::const_iterator blockEnd  = blocks.end();
+    for ( ; blockIter != blockEnd; ++blockIter )
+        writtenOk &= WriteBlock(*blockIter);
+    return writtenOk;
+}
+
+bool BamToolsIndex::WriteHeader(void) {
+
+    size_t elementsWritten = 0;
+
+    // write BTI index format 'magic number'
+    elementsWritten += fwrite(BamToolsIndex::BTI_MAGIC, 1, 4, m_indexStream);
+
+    // write BTI index format version
+    int32_t currentVersion = (int32_t)m_outputVersion;
+    if ( m_isBigEndian ) SwapEndian_32(currentVersion);
+    elementsWritten += fwrite(&currentVersion, sizeof(currentVersion), 1, m_indexStream);
+
+    // write block size
+    int32_t blockSize = m_blockSize;
+    if ( m_isBigEndian ) SwapEndian_32(blockSize);
+    elementsWritten += fwrite(&blockSize, sizeof(blockSize), 1, m_indexStream);
+
+    // write number of references
+    int32_t numReferences = m_indexFileSummary.size();
+    cerr << "Writing numReferences = " << numReferences << endl;
+    if ( m_isBigEndian ) SwapEndian_32(numReferences);
+    elementsWritten += fwrite(&numReferences, sizeof(numReferences), 1, m_indexStream);
+
+    // return success/failure of write
+    return ( elementsWritten == 7 );
+}
+
+bool BamToolsIndex::WriteReferenceEntry(const BtiReferenceEntry& refEntry) {
+
+    size_t elementsWritten = 0;
+
+    // write number of blocks this reference
+    uint32_t numBlocks = refEntry.Blocks.size();
+    if ( m_isBigEndian ) SwapEndian_32(numBlocks);
+    elementsWritten += fwrite(&numBlocks, sizeof(numBlocks), 1, m_indexStream);
+
+    // write actual block entries
+    const bool blocksOk = WriteBlocks(refEntry.Blocks);
+
+    // return success/fail
+    return ( elementsWritten == 1) && blocksOk;
 }

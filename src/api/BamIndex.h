@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 24 February 2011 (DB)
+// Last modified: 5 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides basic BAM index interface
 // ***************************************************************************
@@ -13,20 +13,27 @@
 
 #include <api/api_global.h>
 #include <api/BamAux.h>
-#include <iostream>
 #include <string>
-#include <vector>
 
 namespace BamTools {
-
-class BamReader;
 
 namespace Internal {
     class BamReaderPrivate;
 } // namespace Internal
 
-// --------------------------------------------------  
-// BamIndex base class
+/*! \class BamTools::BamIndex
+    \brief Provides methods for generating & loading BAM index files.
+
+    This class straddles the line between public API and internal
+    implementation detail. Most client code should never have to use this
+    class directly.
+
+    It is exposed to the public API to allow advanced users to implement
+    their own custom indexing schemes.
+
+    More documentation on methods & enums coming soon.
+*/
+
 class API_EXPORT BamIndex {
 
     // enums
@@ -44,75 +51,28 @@ class API_EXPORT BamIndex {
   
     // ctor & dtor
     public:
-        BamIndex(void);
-        virtual ~BamIndex(void);
+        BamIndex(Internal::BamReaderPrivate* reader) : m_reader(reader) { }
+        virtual ~BamIndex(void) { }
         
     // index interface
     public:
-        // creates index data (in-memory) from @reader data
-        virtual bool Build(Internal::BamReaderPrivate* reader) =0;
-        // returns supported file extension
-        virtual const std::string Extension(void) =0;
+        // builds index from associated BAM file & writes out to index file
+        virtual bool Create(void) =0; // creates index file from BAM file
         // returns whether reference has alignments or no
         virtual bool HasAlignments(const int& referenceID) const =0;
-        // attempts to use index data to jump to @region in @reader; returns success/fail
+        // attempts to use index data to jump to @region, returns success/fail
         // a "successful" jump indicates no error, but not whether this region has data
         //   * thus, the method sets a flag to indicate whether there are alignments
         //     available after the jump position
-        virtual bool Jump(Internal::BamReaderPrivate* reader,
-                          const BamTools::BamRegion& region,
-                          bool* hasAlignmentsInRegion) =0;
+        virtual bool Jump(const BamTools::BamRegion& region, bool* hasAlignmentsInRegion) =0;
         // loads existing data from file into memory
-        virtual bool Load(const std::string& filename);
+        virtual bool Load(const std::string& filename) =0;
         // change the index caching behavior
-        virtual void SetCacheMode(const BamIndex::IndexCacheMode& mode);
-        // writes in-memory index data out to file 
-        // N.B. - (this is the original BAM filename, method will modify it to use applicable extension)
-        virtual bool Write(const std::string& bamFilename);
-
-    // derived-classes MUST provide implementation
-    protected:
-        // clear all current index offset data in memory
-        virtual void ClearAllData(void) =0;
-        // return file position after header metadata
-        virtual off_t DataBeginOffset(void) const =0;
-        // return true if all index data is cached
-        virtual bool HasFullDataCache(void) const =0;
-        // clears index data from all references except the first
-        virtual void KeepOnlyFirstReferenceOffsets(void) =0;
-        // load index data for all references, return true if loaded OK
-        // @saveData - save data in memory if true, just read & discard if false
-        virtual bool LoadAllReferences(bool saveData = true) =0;
-        // load first reference from file, return true if loaded OK
-        // @saveData - save data in memory if true, just read & discard if false
-        virtual bool LoadFirstReference(bool saveData = true) =0;
-        // load header data from index file, return true if loaded OK
-        virtual bool LoadHeader(void) =0;
-        // position file pointer to first reference begin, return true if skipped OK
-        virtual bool SkipToFirstReference(void) =0;
-        // write index reference data
-        virtual bool WriteAllReferences(void) =0;
-        // write index header data
-        virtual bool WriteHeader(void) =0;
-
-    // internal methods (but available to derived classes)
-    protected:
-        // rewind index file to beginning of index data, return true if rewound OK
-        bool Rewind(void);
-
-    private:
-        // return true if FILE* is open
-        bool IsOpen(void) const;
-        // opens index file according to requested mode, return true if opened OK
-        bool OpenIndexFile(const std::string& filename, const std::string& mode);
-        // updates in-memory cache of index data, depending on current cache mode
-        void UpdateCache(void);
+        virtual void SetCacheMode(const BamIndex::IndexCacheMode& mode) =0;
 
     // data members
     protected:
-        FILE* m_indexStream;
-        std::string m_indexFilename;
-        BamIndex::IndexCacheMode  m_cacheMode;
+        Internal::BamReaderPrivate* m_reader; // copy, not ownedprivate:
 };
 
 } // namespace BamTools

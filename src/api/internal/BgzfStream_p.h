@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 24 February 2011(DB)
+// Last modified: 5 April 2011(DB)
 // ---------------------------------------------------------------------------
 // Based on BGZF routines developed at the Broad Institute.
 // Provides the basic functionality for reading & writing BGZF files
@@ -48,11 +48,11 @@ class BgzfStream {
         // reads BGZF data into a byte buffer
         int Read(char* data, const unsigned int dataLength);
         // seek to position in BGZF file
-        bool Seek(int64_t position);
+        bool Seek(const int64_t& position);
         // enable/disable compressed output
         void SetWriteCompressed(bool ok);
         // get file position in BGZF file
-        int64_t Tell(void);
+        int64_t Tell(void) const;
         // writes the supplied data into the BGZF buffer
         unsigned int Write(const char* data, const unsigned int dataLen);
 

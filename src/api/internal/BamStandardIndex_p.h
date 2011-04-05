@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 January 2011 (DB)
+// Last modified: 5 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the standardized BAM index format (".bai")
 // ***************************************************************************
@@ -24,193 +24,211 @@
 #include <api/BamAux.h>
 #include <api/BamIndex.h>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
 namespace BamTools {
-
-class BamAlignment;
-
 namespace Internal {
 
-// BAM index constants
-const int MAX_BIN        = 37450;    // =(8^6-1)/7+1
-const int BAM_LIDX_SHIFT = 14;
-const std::string BAI_EXTENSION = ".bai";
+// -----------------------------------------------------------------------------
+// BamStandardIndex data structures
 
-// --------------------------------------------------
-// BamStandardIndex data structures & typedefs
-struct Chunk {
+// defines start and end of a contiguous run of alignments
+struct BaiAlignmentChunk {
 
     // data members
     uint64_t Start;
     uint64_t Stop;
 
     // constructor
-    Chunk(const uint64_t& start = 0,
-          const uint64_t& stop = 0)
+    BaiAlignmentChunk(const uint64_t& start = 0,
+                      const uint64_t& stop = 0)
         : Start(start)
         , Stop(stop)
     { }
 };
 
+// comparison operator (for sorting)
 inline
-bool ChunkLessThan(const Chunk& lhs, const Chunk& rhs) {
+bool operator<(const BaiAlignmentChunk& lhs, const BaiAlignmentChunk& rhs) {
     return lhs.Start < rhs.Start;
 }
 
-typedef std::vector<Chunk> ChunkVector;
-typedef std::map<uint32_t, ChunkVector> BamBinMap;
-typedef std::vector<uint64_t> LinearOffsetVector;
+// convenience typedef for a list of all alignment 'chunks' in a BAI bin
+typedef std::vector<BaiAlignmentChunk> BaiAlignmentChunkVector;
 
-struct ReferenceIndex {
+// convenience typedef for a map of all BAI bins in a reference (ID => chunks)
+typedef std::map<uint32_t, BaiAlignmentChunkVector> BaiBinMap;
+
+// convenience typedef for a list of all 'linear offsets' in a reference
+typedef std::vector<uint64_t> BaiLinearOffsetVector;
+
+// contains all fields necessary for building, loading, & writing
+// full BAI index data for a single reference
+struct BaiReferenceEntry {
 
     // data members
-    BamBinMap Bins;
-    LinearOffsetVector Offsets;
-    bool HasAlignments;
+    int32_t ID;
+    BaiBinMap Bins;
+    BaiLinearOffsetVector LinearOffsets;
 
-    // constructor
-    ReferenceIndex(const BamBinMap& binMap = BamBinMap(),
-                   const LinearOffsetVector& offsets = LinearOffsetVector(),
-                   const bool hasAlignments          = false)
-        : Bins(binMap)
-        , Offsets(offsets)
-        , HasAlignments(hasAlignments)
+    // ctor
+    BaiReferenceEntry(const int32_t& id = -1)
+        : ID(id)
     { }
 };
 
-typedef std::map<int32_t, ReferenceIndex> BamStandardIndexData;
+// provides (persistent) summary of BaiReferenceEntry's index data
+struct BaiReferenceSummary {
+
+    // data members
+    int NumBins;
+    int NumLinearOffsets;
+    uint64_t FirstBinFilePosition;
+    uint64_t FirstLinearOffsetFilePosition;
+
+    // ctor
+    BaiReferenceSummary(void)
+        : NumBins(0)
+        , NumLinearOffsets(0)
+        , FirstBinFilePosition(0)
+        , FirstLinearOffsetFilePosition(0)
+    { }
+};
+
+// convenience typedef for describing a full BAI index file summary
+typedef std::vector<BaiReferenceSummary> BaiFileSummary;
+
+// end BamStandardIndex data structures
+// -----------------------------------------------------------------------------
 
 class BamStandardIndex : public BamIndex {
 
     // ctor & dtor
     public:
-        BamStandardIndex(void);
+        BamStandardIndex(Internal::BamReaderPrivate* reader);
         ~BamStandardIndex(void);
 
-    // interface (implements BamIndex virtual methods)
+    // BamIndex implementation
     public:
-        // creates index data (in-memory) from @reader data
-        bool Build(Internal::BamReaderPrivate* reader);
-        // returns supported file extension
-        const std::string Extension(void) { return BAI_EXTENSION; }
+        // builds index from associated BAM file & writes out to index file
+        bool Create(void);
         // returns whether reference has alignments or no
         bool HasAlignments(const int& referenceID) const;
-        // attempts to use index to jump to @region in @reader; returns success/fail
+        // attempts to use index data to jump to @region, returns success/fail
         // a "successful" jump indicates no error, but not whether this region has data
         //   * thus, the method sets a flag to indicate whether there are alignments
         //     available after the jump position
-        bool Jump(Internal::BamReaderPrivate* reader,
-                  const BamTools::BamRegion& region,
-                  bool* hasAlignmentsInRegion);
-
+        bool Jump(const BamTools::BamRegion& region, bool* hasAlignmentsInRegion);
+        // loads existing data from file into memory
+        bool Load(const std::string& filename);
+        // change the index caching behavior
+        void SetCacheMode(const BamIndex::IndexCacheMode& mode);
     public:
-        // clear all current index offset data in memory
-        void ClearAllData(void);
-        // return file position after header metadata
-        off_t DataBeginOffset(void) const;
-        // return true if all index data is cached
-        bool HasFullDataCache(void) const;
-        // clears index data from all references except the first
-        void KeepOnlyFirstReferenceOffsets(void);
-        // load index data for all references, return true if loaded OK
-        // @saveData - save data in memory if true, just read & discard if false
-        bool LoadAllReferences(bool saveData = true);
-        // load first reference from file, return true if loaded OK
-        // @saveData - save data in memory if true, just read & discard if false
-        bool LoadFirstReference(bool saveData = true);
-        // load header data from index file, return true if loaded OK
-        bool LoadHeader(void);
-        // position file pointer to first reference begin, return true if skipped OK
-        bool SkipToFirstReference(void);
-        // write index reference data
-        bool WriteAllReferences(void);
-        // write index header data
-        bool WriteHeader(void);
+        // returns format's file extension
+        static const std::string Extension(void);
 
-    // 'internal' methods
-    public:
-
-        // -----------------------
-        // index file operations
-
-        // check index file magic number, return true if OK
+    // internal file ops
+    private:
         bool CheckMagicNumber(void);
-        // check index file version, return true if OK
-        bool CheckVersion(void);
-        // load a single index bin entry from file, return true if loaded OK
-        // @saveData - save data in memory if true, just read & discard if false
-        bool LoadBin(ReferenceIndex& refEntry, bool saveData = true);
-        bool LoadBins(ReferenceIndex& refEntry, bool saveData = true);
-        // load a single index bin entry from file, return true if loaded OK
-        // @saveData - save data in memory if true, just read & discard if false
-        bool LoadChunk(ChunkVector& chunks, bool saveData = true);
-        bool LoadChunks(ChunkVector& chunks, bool saveData = true);
-        // load a single index linear offset entry from file, return true if loaded OK
-        // @saveData - save data in memory if true, just read & discard if false
-        bool LoadLinearOffsets(ReferenceIndex& refEntry, bool saveData = true);
-        // load a single reference from file, return true if loaded OK
-        // @saveData - save data in memory if true, just read & discard if false
-        bool LoadReference(const int& refId, bool saveData = true);
-        // loads number of references, return true if loaded OK
-        bool LoadReferenceCount(int& numReferences);
-        // position file pointer to desired reference begin, return true if skipped OK
-        bool SkipToReference(const int& refId);
-        // write index data for bin to new index file
-        bool WriteBin(const uint32_t& binId, const ChunkVector& chunks);
-        // write index data for bins to new index file
-        bool WriteBins(const BamBinMap& bins);
-        // write index data for chunk entry to new index file
-        bool WriteChunk(const Chunk& chunk);
-        // write index data for chunk entry to new index file
-        bool WriteChunks(const ChunkVector& chunks);
-        // write index data for linear offsets entry to new index file
-        bool WriteLinearOffsets(const LinearOffsetVector& offsets);
-        // write index data single reference to new index file
-        bool WriteReference(const ReferenceIndex& refEntry);
+        void CloseFile(void);
+        bool IsFileOpen(void) const;
+        bool OpenFile(const std::string& filename, const char* mode);
+        bool Seek(const int64_t& position, const int& origin);
+        int64_t Tell(void) const;
 
-        // -----------------------
-        // index data operations
+    // internal BAI index building methods
+    private:
+        void ClearReferenceEntry(BaiReferenceEntry& refEntry);
+        void SaveAlignmentChunkToBin(BaiBinMap& binMap,
+                                     const uint32_t& currentBin,
+                                     const uint64_t& currentOffset,
+                                     const uint64_t& lastOffset);
+        void SaveLinearOffsetEntry(BaiLinearOffsetVector& offsets,
+                                   const int& alignmentStartPosition,
+                                   const int& alignmentStopPosition,
+                                   const uint64_t& lastOffset);
 
-        // calculate bins that overlap region
-        int BinsFromRegion(const BamRegion& region,
-                           const RefVector& references,
-                           const bool isRightBoundSpecified,
-                           uint16_t bins[MAX_BIN]);
-        // clear all index offset data for desired reference
-        void ClearReferenceOffsets(const int& refId);
-        // calculates offset(s) for a given region
-        bool GetOffsets(const BamRegion& region,
-                        const RefVector& references,
-                        const bool isRightBoundSpecified,
-                        std::vector<int64_t>& offsets,
-                        bool* hasAlignmentsInRegion);
-        // returns true if index cache has data for desired reference
-        bool IsDataLoaded(const int& refId) const;
-        // clears index data from all references except the one specified
-        void KeepOnlyReferenceOffsets(const int& refId);
-        // simplifies index by merging 'chunks'
-        void MergeChunks(void);
-        // saves BAM bin entry for index
-        void SaveBinEntry(BamBinMap& binMap,
-                          const uint32_t& saveBin,
-                          const uint64_t& saveOffset,
-                          const uint64_t& lastOffset);
-        // saves linear offset entry for index
-        void SaveLinearOffset(LinearOffsetVector& offsets,
-                              const BamAlignment& bAlignment,
-                              const uint64_t& lastOffset);
-        // initializes index data structure to hold @count references
-        void SetReferenceCount(const int& count);
+    // internal random-access methods
+    private:
+        bool AdjustRegion(const BamRegion& region, uint32_t& begin, uint32_t& end);
+        void CalculateCandidateBins(const uint32_t& begin,
+                                    const uint32_t& end,
+                                    std::set<uint16_t>& candidateBins);
+        bool CalculateCandidateOffsets(const BaiReferenceSummary& refSummary,
+                                       const uint64_t& minOffset,
+                                       std::set<uint16_t>& candidateBins,
+                                       std::vector<int64_t>& offsets);
+        uint64_t CalculateMinOffset(const BaiReferenceSummary& refSummary, const uint32_t& begin);
+        bool GetOffsets(const BamRegion& region, std::vector<int64_t>& offsets);
+        uint64_t LookupLinearOffset(const BaiReferenceSummary& refSummary, const int& index);
+
+    // internal BAI summary (create/load) methods
+    private:
+        void ReserveForSummary(const int& numReferences);
+        void SaveBinsSummary(const int& refId, const int& numBins);
+        void SaveLinearOffsetsSummary(const int& refId, const int& numLinearOffsets);
+        bool SkipBins(const int& numBins);
+        bool SkipLinearOffsets(const int& numLinearOffsets);
+        bool SummarizeBins(BaiReferenceSummary& refSummary);
+        bool SummarizeIndexFile(void);
+        bool SummarizeLinearOffsets(BaiReferenceSummary& refSummary);
+        bool SummarizeReference(BaiReferenceSummary& refSummary);
+
+    // internal BAI full index input methods
+    private:
+        bool ReadBinID(uint32_t& binId);
+        bool ReadBinIntoBuffer(uint32_t& binId, int32_t& numAlignmentChunks);
+        bool ReadIntoBuffer(const unsigned int& bytesRequested);
+        bool ReadLinearOffset(uint64_t& linearOffset);
+        bool ReadNumAlignmentChunks(int& numAlignmentChunks);
+        bool ReadNumBins(int& numBins);
+        bool ReadNumLinearOffsets(int& numLinearOffsets);
+        bool ReadNumReferences(int& numReferences);
+
+    // internal BAI full index output methods
+    private:
+        void MergeAlignmentChunks(BaiAlignmentChunkVector& chunks);
+        void SortLinearOffsets(BaiLinearOffsetVector& linearOffsets);
+        bool WriteAlignmentChunk(const BaiAlignmentChunk& chunk);
+        bool WriteAlignmentChunks(BaiAlignmentChunkVector& chunks);
+        bool WriteBin(const uint32_t& binId, BaiAlignmentChunkVector& chunks);
+        bool WriteBins(const int& refId, BaiBinMap& bins);
+        bool WriteHeader(void);
+        bool WriteLinearOffsets(const int& refId, BaiLinearOffsetVector& linearOffsets);
+        bool WriteReferenceEntry(BaiReferenceEntry& refEntry);
 
     // data members
     private:
-
-        BamStandardIndexData m_indexData;
-        off_t m_dataBeginOffset;
-        bool  m_hasFullDataCache;
+        FILE* m_indexStream;
         bool  m_isBigEndian;
+        BamIndex::IndexCacheMode m_cacheMode;
+        BaiFileSummary m_indexFileSummary;
+
+        // our input buffer
+        char* m_buffer;
+        unsigned int m_bufferLength;
+
+    // static methods
+    private:
+        // checks if the buffer is large enough to accomodate the requested size
+        static void CheckBufferSize(char*& buffer,
+                                    unsigned int& bufferLength,
+                                    const unsigned int& requestedBytes);
+        // checks if the buffer is large enough to accomodate the requested size
+        static void CheckBufferSize(unsigned char*& buffer,
+                                    unsigned int& bufferLength,
+                                    const unsigned int& requestedBytes);
+    // static constants
+    private:
+        static const int MAX_BIN;
+        static const int BAM_LIDX_SHIFT;
+        static const std::string BAI_EXTENSION;
+        static const char* const BAI_MAGIC;
+        static const int SIZEOF_ALIGNMENTCHUNK;
+        static const int SIZEOF_BINCORE;
+        static const int SIZEOF_LINEAROFFSET;
 };
 
 } // namespace Internal

@@ -14,7 +14,6 @@ add_definitions( -DBAMTOOLS_API_LIBRARY ) # (for proper exporting of library sym
 # list of all BamTools API source (.cpp) files
 set( BamToolsAPISources
         BamAlignment.cpp
-        BamIndex.cpp
         BamMultiReader.cpp
         BamReader.cpp
         BamWriter.cpp

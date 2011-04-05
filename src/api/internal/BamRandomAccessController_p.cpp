@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011(DB)
+// Last modified: 5 April 2011(DB)
 // ---------------------------------------------------------------------------
 // Manages random access operations in a BAM file
 // **************************************************************************
@@ -151,26 +151,21 @@ bool BamRandomAccessController::CreateIndex(BamReaderPrivate* reader,
         return false;
 
     // create new index of requested type
-    BamIndex* newIndex = BamIndexFactory::CreateIndexOfType(type);
+    BamIndex* newIndex = BamIndexFactory::CreateIndexOfType(type, reader);
     if ( newIndex == 0 ) {
         cerr << "BamRandomAccessController ERROR: could not create index of type " << type << endl;
         return false;
     }
 
     // attempt to build index from current BamReader file
-    if ( !newIndex->Build(reader) ) {
-        cerr << "BamRandomAccessController ERROR: could not build index on BAM file: " << reader->Filename() << endl;
+    if ( !newIndex->Create() ) {
+        cerr << "BamRandomAccessController ERROR: could not create index for BAM file: "
+             << reader->Filename() << endl;
         return false;
     }
 
     // save new index
     SetIndex(newIndex);
-
-    // attempt to write new index file
-    if ( newIndex->Write(reader->Filename()) ) {
-        cerr << "BamRandomAccessController ERROR: could not save new index for BAM file: " << reader->Filename() << endl;
-        return false;
-    }
 
     // set new index's cache mode & return success
     newIndex->SetCacheMode(m_indexCacheMode);
@@ -189,24 +184,28 @@ bool BamRandomAccessController::IndexHasAlignmentsForReference(const int& refId)
     return m_index->HasAlignments(refId);
 }
 
-bool BamRandomAccessController::LocateIndex(const string& bamFilename,
+bool BamRandomAccessController::LocateIndex(BamReaderPrivate* reader,
                                             const BamIndex::IndexType& preferredType)
 {
     // look up index filename, deferring to preferredType if possible
-    const string& indexFilename = BamIndexFactory::FindIndexFilename(bamFilename, preferredType);
+    const string& indexFilename = BamIndexFactory::FindIndexFilename(reader->Filename(), preferredType);
 
     // if no index file found (of any type)
-    if ( indexFilename.empty() )
+    if ( indexFilename.empty() ) {
+        cerr << "BamRandomAccessController WARNING: "
+             << "could not find index file for BAM: "
+             << reader->Filename() << endl;
         return false;
+    }
 
     // otherwise open & use index file that was found
-    return OpenIndex(indexFilename);
+    return OpenIndex(indexFilename, reader);
 }
 
-bool BamRandomAccessController::OpenIndex(const string& indexFilename) {
+bool BamRandomAccessController::OpenIndex(const string& indexFilename, BamReaderPrivate* reader) {
 
     // attempt create new index of type based on filename
-    BamIndex* index = BamIndexFactory::CreateIndexFromFilename(indexFilename);
+    BamIndex* index = BamIndexFactory::CreateIndexFromFilename(indexFilename, reader);
     if ( index == 0 ) {
         cerr << "BamRandomAccessController ERROR: could not create index for file: " << indexFilename << endl;
         return false;
@@ -270,5 +269,5 @@ bool BamRandomAccessController::SetRegion(BamReaderPrivate* reader,
     //    alignment on a reference. If this occurs, any subsequent calls to GetNextAlignment[Core]
     //    will not return data. BamMultiReader will still be able to successfully pull alignments
     //    from a region from multiple files even if one or more have no data.
-    return m_index->Jump(reader, m_region, &m_hasAlignmentsInRegion);
+    return m_index->Jump(m_region, &m_hasAlignmentsInRegion);
 }

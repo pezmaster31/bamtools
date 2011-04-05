@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011 (DB)
+// Last modified: 5 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Functionality for simultaneously reading multiple BAM files
 // *************************************************************************
@@ -179,6 +179,8 @@ SamHeader BamMultiReaderPrivate::GetHeader(void) const {
 
 // makes a virtual, unified header for all the bam files in the multireader
 string BamMultiReaderPrivate::GetHeaderText(void) const {
+
+    // TODO: merge SamHeader objects instead of parsing string data (again)
 
     // if only one reader is open
     if ( m_readers.size() == 1 ) {
@@ -545,7 +547,7 @@ BamReader* BamMultiReaderPrivate::OpenReader(const std::string& filename) {
 
     // reader could not open
     else {
-        cerr << "BamMultiReader WARNING: Could not open: "
+        cerr << "BamMultiReader WARNING: Could not open "
               << filename << ", ignoring file" << endl;
     }
 
@@ -646,7 +648,7 @@ bool BamMultiReaderPrivate::SetRegion(const BamRegion& region) {
 
         // attempt to set BamReader's region of interest
         if ( !reader->SetRegion(region) ) {
-            cerr << "BamMultiReader ERROR: could not jump " << reader->GetFilename() << " to "
+            cerr << "BamMultiReader WARNING: could not jump " << reader->GetFilename() << " to "
                  << region.LeftRefID  << ":" << region.LeftPosition   << ".."
                  << region.RightRefID << ":" << region.RightPosition  << endl;
         }

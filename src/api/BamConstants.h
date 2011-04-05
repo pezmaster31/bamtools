@@ -1,10 +1,20 @@
+// ***************************************************************************
+// BamConstants.h (c) 2011 Derek Barnett
+// Marth Lab, Department of Biology, Boston College
+// All rights reserved.
+// ---------------------------------------------------------------------------
+// Last modified: 5 April 2011 (DB)
+// ---------------------------------------------------------------------------
+// Provides basic constants for handling BAM files.
+// ***************************************************************************
+
 #ifndef BAM_CONSTANTS_H
 #define BAM_CONSTANTS_H
 
 #include <string>
 
 /*! \namespace BamTools::Constants
-    \brief Contains most of the constants used throughout BamTools.
+    \brief Provides basic constants for handling BAM files.
 */
 
 namespace BamTools {
@@ -42,6 +52,8 @@ const int BAM_CIGAR_REFSKIP  = 3;
 const int BAM_CIGAR_SOFTCLIP = 4;
 const int BAM_CIGAR_HARDCLIP = 5;
 const int BAM_CIGAR_PAD      = 6;
+
+// TODO: Add support for 'X' and '=' ops
 
 const char BAM_CIGAR_MATCH_CHAR    = 'M';
 const char BAM_CIGAR_INS_CHAR      = 'I';
@@ -103,8 +115,8 @@ const int Z_DEFAULT_MEM_LEVEL = 8;
 // BZGF constants
 const int BGZF_BLOCK_HEADER_LENGTH = 18;
 const int BGZF_BLOCK_FOOTER_LENGTH = 8;
-const int BGZF_MAX_BLOCK_SIZE      = 65536;
-const int BGZF_DEFAULT_BLOCK_SIZE  = 65536;
+const int BGZF_MAX_BLOCK_SIZE      = 262144;
+const int BGZF_DEFAULT_BLOCK_SIZE  = 262144;
 
 } // namespace Constants
 } // namespace BamTools

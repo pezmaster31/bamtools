@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 26 January 2011 (DB)
+// Last modified: 5 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides interface for generating BamIndex implementations
 // ***************************************************************************
@@ -22,9 +22,11 @@ class BamIndexFactory {
     // static interface methods
     public:
         // creates a new BamIndex object, depending on extension of @indexFilename
-        static BamIndex* CreateIndexFromFilename(const std::string& indexFilename);
+        static BamIndex* CreateIndexFromFilename(const std::string& indexFilename,
+                                                 BamReaderPrivate* reader);
         // creates a new BamIndex object, of requested @type
-        static BamIndex* CreateIndexOfType(const BamIndex::IndexType& type);
+        static BamIndex* CreateIndexOfType(const BamIndex::IndexType& type,
+                                           BamReaderPrivate* reader);
         // returns name of existing index file that corresponds to @bamFilename
         // will defer to @preferredType if possible
         // if @preferredType not found, will attempt to load any supported index type

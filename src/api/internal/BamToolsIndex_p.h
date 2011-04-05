@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 January 2011 (DB)
+// Last modified: 5 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the BamTools index format (".bti")
 // ***************************************************************************
@@ -30,11 +30,8 @@
 namespace BamTools {
 namespace Internal {
 
-// BTI constants
-const std::string BTI_EXTENSION = ".bti";
-
-// individual index offset entry
-struct BamToolsIndexEntry {
+// contains data for each 'block' in a BTI index
+struct BtiBlock {
 
     // data members
     int32_t MaxEndPosition;
@@ -42,30 +39,48 @@ struct BamToolsIndexEntry {
     int32_t StartPosition;
 
     // ctor
-    BamToolsIndexEntry(const int32_t& maxEndPosition = 0,
-                       const int64_t& startOffset    = 0,
-                       const int32_t& startPosition  = 0)
+    BtiBlock(const int32_t& maxEndPosition = 0,
+             const int64_t& startOffset    = 0,
+             const int32_t& startPosition  = 0)
         : MaxEndPosition(maxEndPosition)
         , StartOffset(startOffset)
         , StartPosition(startPosition)
     { }
 };
 
-// reference index entry
-struct BamToolsReferenceEntry {
+// convenience typedef for describing a a list of BTI blocks on a reference
+typedef std::vector<BtiBlock> BtiBlockVector;
+
+// contains all fields necessary for building, loading, & writing
+// full BTI index data for a single reference
+struct BtiReferenceEntry {
 
     // data members
-    bool HasAlignments;
-    std::vector<BamToolsIndexEntry> Offsets;
+    int32_t ID;
+    BtiBlockVector Blocks;
 
     // ctor
-    BamToolsReferenceEntry(void)
-        : HasAlignments(false)
+    BtiReferenceEntry(const int& id = -1)
+        : ID(id)
     { }
 };
 
-// the actual index data structure
-typedef std::map<int, BamToolsReferenceEntry> BamToolsIndexData;
+// provides (persistent) summary of BtiReferenceEntry's index data
+struct BtiReferenceSummary {
+
+    // data members
+    int NumBlocks;
+    uint64_t FirstBlockFilePosition;
+
+    // ctor
+    BtiReferenceSummary(void)
+        : NumBlocks(0)
+        , FirstBlockFilePosition(0)
+    { }
+};
+
+// convenience typedef for describing a full BTI index file summary
+typedef std::vector<BtiReferenceSummary> BtiFileSummary;
 
 class BamToolsIndex : public BamIndex {
 
@@ -84,109 +99,87 @@ class BamToolsIndex : public BamIndex {
                  , BTI_1_2
                  };
 
-
     // ctor & dtor
     public:
-        BamToolsIndex(void);
+        BamToolsIndex(Internal::BamReaderPrivate* reader);
         ~BamToolsIndex(void);
 
-    // interface (implements BamIndex virtual methods)
+    // BamIndex implementation
     public:
-        // creates index data (in-memory) from @reader data
-        bool Build(Internal::BamReaderPrivate* reader);
-        // returns supported file extension
-        const std::string Extension(void) { return BTI_EXTENSION; }
+        // builds index from associated BAM file & writes out to index file
+        bool Create(void);
         // returns whether reference has alignments or no
         bool HasAlignments(const int& referenceID) const;
-        // attempts to use index to jump to @region in @reader; returns success/fail
+        // attempts to use index data to jump to @region, returns success/fail
         // a "successful" jump indicates no error, but not whether this region has data
         //   * thus, the method sets a flag to indicate whether there are alignments
         //     available after the jump position
-        bool Jump(Internal::BamReaderPrivate* reader,
-                  const BamTools::BamRegion& region,
-                  bool *hasAlignmentsInRegion);
-
+        bool Jump(const BamTools::BamRegion& region, bool* hasAlignmentsInRegion);
+        // loads existing data from file into memory
+        bool Load(const std::string& filename);
+        // change the index caching behavior
+        void SetCacheMode(const BamIndex::IndexCacheMode& mode);
     public:
-        // clear all current index offset data in memory
-        void ClearAllData(void);
-        // return file position after header metadata
-        off_t DataBeginOffset(void) const;
-        // return true if all index data is cached
-        bool HasFullDataCache(void) const;
-        // clears index data from all references except the first
-        void KeepOnlyFirstReferenceOffsets(void);
-        // load index data for all references, return true if loaded OK
-        // @saveData - save data in memory if true, just read & discard if false
-        bool LoadAllReferences(bool saveData = true);
-        // load first reference from file, return true if loaded OK
-        // @saveData - save data in memory if true, just read & discard if false
-        bool LoadFirstReference(bool saveData = true);
-        // load header data from index file, return true if loaded OK
-        bool LoadHeader(void);
-        // position file pointer to first reference begin, return true if skipped OK
-        bool SkipToFirstReference(void);
-        // write index reference data
-        bool WriteAllReferences(void);
-        // write index header data
-        bool WriteHeader(void);
+        // returns format's file extension
+        static const std::string Extension(void);
 
-    // internal methods
-    public:
-
-        // -----------------------
-        // index file operations
-
-        // check index file magic number, return true if OK
+    // internal file ops
+    private:
         bool CheckMagicNumber(void);
-        // check index file version, return true if OK
         bool CheckVersion(void);
-        // load a single index entry from file, return true if loaded OK
-        // @saveData - save data in memory if true, just read & discard if false
-        bool LoadIndexEntry(const int& refId, bool saveData = true);
-        // load a single reference from file, return true if loaded OK
-        // @saveData - save data in memory if true, just read & discard if false
-        bool LoadReference(const int& refId, bool saveData = true);
-        // loads number of references, return true if loaded OK
-        bool LoadReferenceCount(int& numReferences);
-        // position file pointer to desired reference begin, return true if skipped OK
-        bool SkipToReference(const int& refId);
-        // write current reference index data to new index file
-        bool WriteReferenceEntry(const BamToolsReferenceEntry& refEntry);
-        // write current index offset entry to new index file
-        bool WriteIndexEntry(const BamToolsIndexEntry& entry);
+        void CloseFile(void);
+        bool IsFileOpen(void) const;
+        bool OpenFile(const std::string& filename, const char* mode);
+        bool Seek(const int64_t& position, const int& origin);
+        int64_t Tell(void) const;
 
-        // -----------------------
-        // index data operations
+    // internal BTI index building methods
+    private:
+        void ClearReferenceEntry(BtiReferenceEntry& refEntry);
 
-        // clear all index offset data for desired reference
-        void ClearReferenceOffsets(const int& refId);
-        // calculate BAM file offset for desired region
-        // return true if no error (*NOT* equivalent to "has alignments or valid offset")
-        //   check @hasAlignmentsInRegion to determine this status
-        // @region - target region
-        // @offset - resulting seek target
-        // @hasAlignmentsInRegion - sometimes a file just lacks data in region, this flag indicates that status
+    // internal random-access methods
+    private:
         bool GetOffset(const BamRegion& region, int64_t& offset, bool* hasAlignmentsInRegion);
-        // returns true if index cache has data for desired reference
-        bool IsDataLoaded(const int& refId) const;
-        // clears index data from all references except the one specified
-        void KeepOnlyReferenceOffsets(const int& refId);
-        // saves an index offset entry in memory
-        void SaveOffsetEntry(const int& refId, const BamToolsIndexEntry& entry);
-        // pre-allocates size for offset vector
-        void SetOffsetCount(const int& refId, const int& offsetCount);
-        // initializes index data structure to hold @count references
-        void SetReferenceCount(const int& count);
+
+    // internal BTI summary data methods
+    private:
+        void InitializeFileSummary(const int& numReferences);
+        bool LoadFileSummary(void);
+        bool LoadHeader(void);
+        bool LoadNumBlocks(int& numBlocks);
+        bool LoadNumReferences(int& numReferences);
+        bool LoadReferenceSummary(BtiReferenceSummary& refSummary);
+        bool SkipBlocks(const int& numBlocks);
+
+    // internal BTI full index input methods
+    private:
+        bool ReadBlock(BtiBlock& block);
+        bool ReadBlocks(const BtiReferenceSummary& refSummary, BtiBlockVector& blocks);
+        bool ReadReferenceEntry(BtiReferenceEntry& refEntry);
+
+    // internal BTI full index output methods
+    private:
+        bool WriteBlock(const BtiBlock& block);
+        bool WriteBlocks(const BtiBlockVector& blocks);
+        bool WriteHeader(void);
+        bool WriteReferenceEntry(const BtiReferenceEntry& refEntry);
 
     // data members
     private:
-        int32_t           m_blockSize;
-        BamToolsIndexData m_indexData;
-        off_t             m_dataBeginOffset;
-        bool              m_hasFullDataCache;
-        bool              m_isBigEndian;
-        int32_t           m_inputVersion; // Version is serialized as int
-        Version           m_outputVersion;
+        FILE* m_indexStream;
+        bool  m_isBigEndian;
+        BamIndex::IndexCacheMode m_cacheMode;
+        BtiFileSummary m_indexFileSummary;
+        int m_blockSize;
+        int32_t m_inputVersion; // Version is serialized as int
+        Version m_outputVersion;
+
+    // static constants
+    private:
+        static const int DEFAULT_BLOCK_LENGTH;
+        static const std::string BTI_EXTENSION;
+        static const char* const BTI_MAGIC;
+        static const int SIZEOF_BLOCK;
 };
 
 } // namespace Internal

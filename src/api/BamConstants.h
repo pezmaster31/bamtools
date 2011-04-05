@@ -115,8 +115,8 @@ const int Z_DEFAULT_MEM_LEVEL = 8;
 // BZGF constants
 const int BGZF_BLOCK_HEADER_LENGTH = 18;
 const int BGZF_BLOCK_FOOTER_LENGTH = 8;
-const int BGZF_MAX_BLOCK_SIZE      = 262144;
-const int BGZF_DEFAULT_BLOCK_SIZE  = 262144;
+const int BGZF_MAX_BLOCK_SIZE      = 65536;
+const int BGZF_DEFAULT_BLOCK_SIZE  = 65536;
 
 } // namespace Constants
 } // namespace BamTools

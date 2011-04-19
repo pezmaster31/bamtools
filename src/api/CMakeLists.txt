@@ -18,6 +18,8 @@ set( BamToolsAPISources
         BamReader.cpp
         BamWriter.cpp
         SamHeader.cpp
+        SamProgram.cpp
+        SamProgramChain.cpp
         SamReadGroup.cpp
         SamReadGroupDictionary.cpp
         SamSequence.cpp
@@ -38,7 +40,7 @@ set( BamToolsAPISources
 
 # create main BamTools API shared library
 add_library( BamTools SHARED ${BamToolsAPISources} )
-set_target_properties( BamTools PROPERTIES SOVERSION "1.0.0" )
+set_target_properties( BamTools PROPERTIES SOVERSION "1.0.1" )
 set_target_properties( BamTools PROPERTIES OUTPUT_NAME "bamtools" )
 
 # create main BamTools API static library
@@ -67,6 +69,8 @@ ExportHeader(APIHeaders BamReader.h              ${ApiIncludeDir})
 ExportHeader(APIHeaders BamWriter.h              ${ApiIncludeDir})
 ExportHeader(APIHeaders SamConstants.h           ${ApiIncludeDir})
 ExportHeader(APIHeaders SamHeader.h              ${ApiIncludeDir})
+ExportHeader(APIHeaders SamProgram.h             ${ApiIncludeDir})
+ExportHeader(APIHeaders SamProgramChain.h        ${ApiIncludeDir})
 ExportHeader(APIHeaders SamReadGroup.h           ${ApiIncludeDir})
 ExportHeader(APIHeaders SamReadGroupDictionary.h ${ApiIncludeDir})
 ExportHeader(APIHeaders SamSequence.h            ${ApiIncludeDir})

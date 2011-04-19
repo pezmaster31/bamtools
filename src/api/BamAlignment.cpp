@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011 (DB)
+// Last modified: 19 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -17,6 +17,7 @@ using namespace BamTools;
 #include <cstdlib>
 #include <cstring>
 #include <exception>
+#include <iostream>
 #include <map>
 #include <utility>
 using namespace std;
@@ -68,20 +69,20 @@ bool SkipToNextTag(const char storageType, char* &pTagData, unsigned int& numByt
 
         case (Constants::BAM_TAG_TYPE_INT16)  :
         case (Constants::BAM_TAG_TYPE_UINT16) :
-            numBytesParsed += 2;
-            pTagData       += 2;
+            numBytesParsed += sizeof(uint16_t);
+            pTagData       += sizeof(uint16_t);
             break;
 
         case (Constants::BAM_TAG_TYPE_FLOAT)  :
         case (Constants::BAM_TAG_TYPE_INT32)  :
         case (Constants::BAM_TAG_TYPE_UINT32) :
-            numBytesParsed += 4;
-            pTagData       += 4;
+            numBytesParsed += sizeof(uint32_t);
+            pTagData       += sizeof(uint32_t);
             break;
 
         case (Constants::BAM_TAG_TYPE_STRING) :
         case (Constants::BAM_TAG_TYPE_HEX)    :
-            while(*pTagData) {
+            while( *pTagData ) {
                 ++numBytesParsed;
                 ++pTagData;
             }
@@ -90,9 +91,51 @@ bool SkipToNextTag(const char storageType, char* &pTagData, unsigned int& numByt
             ++pTagData;
             break;
 
+        case (Constants::BAM_TAG_TYPE_ARRAY) :
+
+        {
+            // read array type
+            const char arrayType = *pTagData;
+            ++numBytesParsed;
+            ++pTagData;
+
+            // read number of elements
+            int32_t numElements;
+            memcpy(&numElements, pTagData, sizeof(uint32_t)); // already endian-swapped if necessary
+            numBytesParsed += sizeof(uint32_t);
+            pTagData       += sizeof(uint32_t);
+
+            // calculate number of bytes to skip
+            int bytesToSkip = 0;
+            switch (arrayType) {
+                case (Constants::BAM_TAG_TYPE_INT8)  :
+                case (Constants::BAM_TAG_TYPE_UINT8) :
+                    bytesToSkip = numElements;
+                    break;
+                case (Constants::BAM_TAG_TYPE_INT16)  :
+                case (Constants::BAM_TAG_TYPE_UINT16) :
+                    bytesToSkip = numElements*sizeof(uint16_t);
+                    break;
+                case (Constants::BAM_TAG_TYPE_FLOAT)  :
+                case (Constants::BAM_TAG_TYPE_INT32)  :
+                case (Constants::BAM_TAG_TYPE_UINT32) :
+                    bytesToSkip = numElements*sizeof(uint32_t);
+                    break;
+                default:
+                    cerr << "BamAlignment ERROR: unknown binary array type encountered: "
+                         << arrayType << endl;
+                    return false;
+            }
+
+            // skip binary array contents
+            numBytesParsed += bytesToSkip;
+            pTagData       += bytesToSkip;
+            break;
+        }
+
         default:
-            // error case
-            fprintf(stderr, "BamAlignment ERROR: unknown tag type encountered: [%c]\n", storageType);
+            cerr << "BamAlignment ERROR: unknown tag type encountered"
+                 << storageType << endl;
             return false;
     }
 
@@ -249,9 +292,7 @@ BamAlignment::~BamAlignment(void) { }
     \param value string data to store
 
     \return \c true if the \b new tag was added successfully
-
-    \sa http://samtools.sourceforge.net/SAM-1.3.pdf
-        for more details on reserved tag names, supported tag types, etc.
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
 bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const std::string& value) {
   
@@ -261,8 +302,11 @@ bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const
     // validate tag/type size & that type is OK for string value
     if ( !Internal::IsValidSize(tag, type) ) return false;
     if ( type.at(0) != Constants::BAM_TAG_TYPE_STRING &&
-         type.at(0) != Constants::BAM_TAG_TYPE_HEX )
+         type.at(0) != Constants::BAM_TAG_TYPE_HEX
+       )
+    {
         return false;
+    }
   
     // localize the tag data
     char* pTagData = (char*)TagData.data();
@@ -297,12 +341,11 @@ bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const
     Does NOT modify an existing tag - use \link BamAlignment::EditTag() \endlink instead.
 
     \param tag   2-character tag name
-    \param type  1-character tag type (must NOT be "f", "Z", or "H")
+    \param type  1-character tag type (must NOT be "f", "Z", "H", or "B")
     \param value unsigned int data to store
 
     \return \c true if the \b new tag was added successfully
-    \sa http://samtools.sourceforge.net/SAM-1.3.pdf
-        for more details on reserved tag names, supported tag types, etc.
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
 bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const uint32_t& value) {
   
@@ -311,10 +354,14 @@ bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const
 
     // validate tag/type size & that type is OK for uint32_t value
     if ( !Internal::IsValidSize(tag, type) ) return false;
-    if ( type.at(0) == Constants::BAM_TAG_TYPE_FLOAT ||
+    if ( type.at(0) == Constants::BAM_TAG_TYPE_FLOAT  ||
          type.at(0) == Constants::BAM_TAG_TYPE_STRING ||
-         type.at(0) == Constants::BAM_TAG_TYPE_HEX )
+         type.at(0) == Constants::BAM_TAG_TYPE_HEX    ||
+         type.at(0) == Constants::BAM_TAG_TYPE_ARRAY
+       )
+    {
         return false;
+    }
   
     // localize the tag data
     char* pTagData = (char*)TagData.data();
@@ -354,13 +401,11 @@ bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const
     Does NOT modify an existing tag - use \link BamAlignment::EditTag() \endlink instead.
 
     \param tag   2-character tag name
-    \param type  1-character tag type (must NOT be "f", "Z", or "H")
+    \param type  1-character tag type (must NOT be "f", "Z", "H", or "B")
     \param value signed int data to store
 
     \return \c true if the \b new tag was added successfully
-
-    \sa http://samtools.sourceforge.net/SAM-1.3.pdf
-        for more details on reserved tag names, supported tag types, etc.
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
 bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const int32_t& value) {
     return AddTag(tag, type, (const uint32_t&)value);
@@ -372,13 +417,11 @@ bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const
     Does NOT modify an existing tag - use \link BamAlignment::EditTag() \endlink instead.
 
     \param tag  2-character tag name
-    \param type  1-character tag type (must NOT be "Z" or "H")
+    \param type  1-character tag type (must NOT be "Z", "H", or "B")
     \param value float data to store
 
     \return \c true if the \b new tag was added successfully
-
-    \sa http://samtools.sourceforge.net/SAM-1.3.pdf
-        for more details on reserved tag names, supported tag types, etc.
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
 bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const float& value) {
   
@@ -388,8 +431,12 @@ bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const
     // validate tag/type size & that type is OK for float value
     if ( !Internal::IsValidSize(tag, type) ) return false;
     if ( type.at(0) == Constants::BAM_TAG_TYPE_STRING ||
-         type.at(0) == Constants::BAM_TAG_TYPE_HEX )
+         type.at(0) == Constants::BAM_TAG_TYPE_HEX    ||
+         type.at(0) == Constants::BAM_TAG_TYPE_ARRAY
+       )
+    {
         return false;
+    }
 
     // localize the tag data
     char* pTagData = (char*)TagData.data();
@@ -419,6 +466,461 @@ bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const
     const char* newTagData = (const char*)originalTagData;
     TagData.assign(newTagData, newTagDataLength);
     
+    // return success
+    return true;
+}
+
+/*! \fn bool AddTag(const std::string& tag, const std::vector<uint8_t>& values);
+    \brief Adds a numeric array field to the BAM tags.
+
+    Does NOT modify an existing tag - use \link BamAlignment::EditTag() \endlink instead.
+
+    \param tag    2-character tag name
+    \param values vector of uint8_t values to store
+
+    \return \c true if the \b new tag was added successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+bool BamAlignment::AddTag(const std::string& tag, const std::vector<uint8_t>& values) {
+
+    // skip if core data not parsed
+    if ( SupportData.HasCoreOnly ) return false;
+
+    // check for valid tag length
+    if ( tag.size() != Constants::BAM_TAG_TAGSIZE ) return false;
+
+    // localize the tag data
+    char* pTagData = (char*)TagData.data();
+    const unsigned int tagDataLength = TagData.size();
+    unsigned int numBytesParsed = 0;
+
+    // if tag already exists, return false
+    // use EditTag explicitly instead
+    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+        return false;
+
+    // build new tag's base information
+    char newTagBase[Constants::BAM_TAG_ARRAYBASE_SIZE];
+    memcpy( newTagBase, tag.c_str(), Constants::BAM_TAG_TAGSIZE );
+    newTagBase[2] = Constants::BAM_TAG_TYPE_ARRAY;
+    newTagBase[3] = Constants::BAM_TAG_TYPE_UINT8;
+
+    // add number of array elements to newTagBase
+    const int32_t numElements  = values.size();
+    memcpy(newTagBase + 4, &numElements, sizeof(int32_t));
+
+    // copy current TagData string to temp buffer, leaving room for new tag's contents
+    const int newTagDataLength = tagDataLength +
+                                 Constants::BAM_TAG_ARRAYBASE_SIZE +
+                                 numElements*sizeof(uint8_t);
+    char originalTagData[newTagDataLength];
+    memcpy(originalTagData, TagData.c_str(), tagDataLength+1); // '+1' for TagData's null-term
+
+    // write newTagBase (removes old null term)
+    strcat(originalTagData + tagDataLength, (const char*)newTagBase);
+
+    // add vector elements to tag
+    int elementsBeginOffset = tagDataLength + Constants::BAM_TAG_ARRAYBASE_SIZE;
+    for ( int i = 0 ; i < numElements; ++i ) {
+        const uint8_t value = values.at(i);
+        memcpy(originalTagData + elementsBeginOffset + i*sizeof(uint8_t),
+               &value, sizeof(uint8_t));
+    }
+
+    // store temp buffer back in TagData
+    const char* newTagData = (const char*)originalTagData;
+    TagData.assign(newTagData, newTagDataLength);
+
+    // return success
+    return true;
+}
+
+/*! \fn bool AddTag(const std::string& tag, const std::vector<int8_t>& values);
+    \brief Adds a numeric array field to the BAM tags.
+
+    Does NOT modify an existing tag - use \link BamAlignment::EditTag() \endlink instead.
+
+    \param tag    2-character tag name
+    \param values vector of int8_t values to store
+
+    \return \c true if the \b new tag was added successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+bool BamAlignment::AddTag(const std::string& tag, const std::vector<int8_t>& values) {
+
+    // skip if core data not parsed
+    if ( SupportData.HasCoreOnly ) return false;
+
+    // check for valid tag length
+    if ( tag.size() != Constants::BAM_TAG_TAGSIZE ) return false;
+
+    // localize the tag data
+    char* pTagData = (char*)TagData.data();
+    const unsigned int tagDataLength = TagData.size();
+    unsigned int numBytesParsed = 0;
+
+    // if tag already exists, return false
+    // use EditTag explicitly instead
+    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+        return false;
+
+    // build new tag's base information
+    char newTagBase[Constants::BAM_TAG_ARRAYBASE_SIZE];
+    memcpy( newTagBase, tag.c_str(), Constants::BAM_TAG_TAGSIZE );
+    newTagBase[2] = Constants::BAM_TAG_TYPE_ARRAY;
+    newTagBase[3] = Constants::BAM_TAG_TYPE_INT8;
+
+    // add number of array elements to newTagBase
+    const int32_t numElements  = values.size();
+    memcpy(newTagBase + 4, &numElements, sizeof(int32_t));
+
+    // copy current TagData string to temp buffer, leaving room for new tag's contents
+    const int newTagDataLength = tagDataLength +
+                                 Constants::BAM_TAG_ARRAYBASE_SIZE +
+                                 numElements*sizeof(int8_t);
+    char originalTagData[newTagDataLength];
+    memcpy(originalTagData, TagData.c_str(), tagDataLength+1); // '+1' for TagData's null-term
+
+    // write newTagBase (removes old null term)
+    strcat(originalTagData + tagDataLength, (const char*)newTagBase);
+
+    // add vector elements to tag
+    int elementsBeginOffset = tagDataLength + Constants::BAM_TAG_ARRAYBASE_SIZE;
+    for ( int i = 0 ; i < numElements; ++i ) {
+        const int8_t value = values.at(i);
+        memcpy(originalTagData + elementsBeginOffset + i*sizeof(int8_t),
+               &value, sizeof(int8_t));
+    }
+
+    // store temp buffer back in TagData
+    const char* newTagData = (const char*)originalTagData;
+    TagData.assign(newTagData, newTagDataLength);
+
+    // return success
+    return true;
+}
+
+/*! \fn bool AddTag(const std::string& tag, const std::vector<uint16_t>& values);
+    \brief Adds a numeric array field to the BAM tags.
+
+    Does NOT modify an existing tag - use \link BamAlignment::EditTag() \endlink instead.
+
+    \param tag    2-character tag name
+    \param values vector of uint16_t values to store
+
+    \return \c true if the \b new tag was added successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+bool BamAlignment::AddTag(const std::string& tag, const std::vector<uint16_t>& values) {
+
+    // skip if core data not parsed
+    if ( SupportData.HasCoreOnly ) return false;
+
+    // check for valid tag length
+    if ( tag.size() != Constants::BAM_TAG_TAGSIZE ) return false;
+
+    // localize the tag data
+    char* pTagData = (char*)TagData.data();
+    const unsigned int tagDataLength = TagData.size();
+    unsigned int numBytesParsed = 0;
+
+    // if tag already exists, return false
+    // use EditTag explicitly instead
+    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+        return false;
+
+    // build new tag's base information
+    char newTagBase[Constants::BAM_TAG_ARRAYBASE_SIZE];
+    memcpy( newTagBase, tag.c_str(), Constants::BAM_TAG_TAGSIZE );
+    newTagBase[2] = Constants::BAM_TAG_TYPE_ARRAY;
+    newTagBase[3] = Constants::BAM_TAG_TYPE_UINT16;
+
+    // add number of array elements to newTagBase
+    const int32_t numElements  = values.size();
+    memcpy(newTagBase + 4, &numElements, sizeof(int32_t));
+
+    // copy current TagData string to temp buffer, leaving room for new tag's contents
+    const int newTagDataLength = tagDataLength +
+                                 Constants::BAM_TAG_ARRAYBASE_SIZE +
+                                 numElements*sizeof(uint16_t);
+    char originalTagData[newTagDataLength];
+    memcpy(originalTagData, TagData.c_str(), tagDataLength+1); // '+1' for TagData's null-term
+
+    // write newTagBase (removes old null term)
+    strcat(originalTagData + tagDataLength, (const char*)newTagBase);
+
+    // add vector elements to tag
+    int elementsBeginOffset = tagDataLength + Constants::BAM_TAG_ARRAYBASE_SIZE;
+    for ( int i = 0 ; i < numElements; ++i ) {
+        const uint16_t value = values.at(i);
+        memcpy(originalTagData + elementsBeginOffset + i*sizeof(uint16_t),
+               &value, sizeof(uint16_t));
+    }
+
+    // store temp buffer back in TagData
+    const char* newTagData = (const char*)originalTagData;
+    TagData.assign(newTagData, newTagDataLength);
+
+    // return success
+    return true;
+}
+
+/*! \fn bool AddTag(const std::string& tag, const std::vector<int16_t>& values);
+    \brief Adds a numeric array field to the BAM tags.
+
+    Does NOT modify an existing tag - use \link BamAlignment::EditTag() \endlink instead.
+
+    \param tag    2-character tag name
+    \param values vector of int16_t values to store
+
+    \return \c true if the \b new tag was added successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+bool BamAlignment::AddTag(const std::string& tag, const std::vector<int16_t>& values) {
+
+    // skip if core data not parsed
+    if ( SupportData.HasCoreOnly ) return false;
+
+    // check for valid tag length
+    if ( tag.size() != Constants::BAM_TAG_TAGSIZE ) return false;
+
+    // localize the tag data
+    char* pTagData = (char*)TagData.data();
+    const unsigned int tagDataLength = TagData.size();
+    unsigned int numBytesParsed = 0;
+
+    // if tag already exists, return false
+    // use EditTag explicitly instead
+    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+        return false;
+
+    // build new tag's base information
+    char newTagBase[Constants::BAM_TAG_ARRAYBASE_SIZE];
+    memcpy( newTagBase, tag.c_str(), Constants::BAM_TAG_TAGSIZE );
+    newTagBase[2] = Constants::BAM_TAG_TYPE_ARRAY;
+    newTagBase[3] = Constants::BAM_TAG_TYPE_INT16;
+
+    // add number of array elements to newTagBase
+    const int32_t numElements  = values.size();
+    memcpy(newTagBase + 4, &numElements, sizeof(int32_t));
+
+    // copy current TagData string to temp buffer, leaving room for new tag's contents
+    const int newTagDataLength = tagDataLength +
+                                 Constants::BAM_TAG_ARRAYBASE_SIZE +
+                                 numElements*sizeof(int16_t);
+    char originalTagData[newTagDataLength];
+    memcpy(originalTagData, TagData.c_str(), tagDataLength+1); // '+1' for TagData's null-term
+
+    // write newTagBase (removes old null term)
+    strcat(originalTagData + tagDataLength, (const char*)newTagBase);
+
+    // add vector elements to tag
+    int elementsBeginOffset = tagDataLength + Constants::BAM_TAG_ARRAYBASE_SIZE;
+    for ( int i = 0 ; i < numElements; ++i ) {
+        const int16_t value = values.at(i);
+        memcpy(originalTagData + elementsBeginOffset + i*sizeof(int16_t),
+               &value, sizeof(int16_t));
+    }
+
+    // store temp buffer back in TagData
+    const char* newTagData = (const char*)originalTagData;
+    TagData.assign(newTagData, newTagDataLength);
+
+    // return success
+    return true;
+}
+
+/*! \fn bool AddTag(const std::string& tag, const std::vector<uint32_t>& values);
+    \brief Adds a numeric array field to the BAM tags.
+
+    Does NOT modify an existing tag - use \link BamAlignment::EditTag() \endlink instead.
+
+    \param tag    2-character tag name
+    \param values vector of uint32_t values to store
+
+    \return \c true if the \b new tag was added successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+bool BamAlignment::AddTag(const std::string& tag, const std::vector<uint32_t>& values) {
+
+    // skip if core data not parsed
+    if ( SupportData.HasCoreOnly ) return false;
+
+    // check for valid tag length
+    if ( tag.size() != Constants::BAM_TAG_TAGSIZE ) return false;
+
+    // localize the tag data
+    char* pTagData = (char*)TagData.data();
+    const unsigned int tagDataLength = TagData.size();
+    unsigned int numBytesParsed = 0;
+
+    // if tag already exists, return false
+    // use EditTag explicitly instead
+    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+        return false;
+
+    // build new tag's base information
+    char newTagBase[Constants::BAM_TAG_ARRAYBASE_SIZE];
+    memcpy( newTagBase, tag.c_str(), Constants::BAM_TAG_TAGSIZE );
+    newTagBase[2] = Constants::BAM_TAG_TYPE_ARRAY;
+    newTagBase[3] = Constants::BAM_TAG_TYPE_UINT32;
+
+    // add number of array elements to newTagBase
+    const int32_t numElements  = values.size();
+    memcpy(newTagBase + 4, &numElements, sizeof(int32_t));
+
+    // copy current TagData string to temp buffer, leaving room for new tag's contents
+    const int newTagDataLength = tagDataLength +
+                                 Constants::BAM_TAG_ARRAYBASE_SIZE +
+                                 numElements*sizeof(uint32_t);
+    char originalTagData[newTagDataLength];
+    memcpy(originalTagData, TagData.c_str(), tagDataLength+1); // '+1' for TagData's null-term
+
+    // write newTagBase (removes old null term)
+    strcat(originalTagData + tagDataLength, (const char*)newTagBase);
+
+    // add vector elements to tag
+    int elementsBeginOffset = tagDataLength + Constants::BAM_TAG_ARRAYBASE_SIZE;
+    for ( int i = 0 ; i < numElements; ++i ) {
+        const uint32_t value = values.at(i);
+        memcpy(originalTagData + elementsBeginOffset + i*sizeof(uint32_t),
+               &value, sizeof(uint32_t));
+    }
+
+    // store temp buffer back in TagData
+    const char* newTagData = (const char*)originalTagData;
+    TagData.assign(newTagData, newTagDataLength);
+
+    // return success
+    return true;
+}
+
+/*! \fn bool AddTag(const std::string& tag, const std::vector<int32_t>& values);
+    \brief Adds a numeric array field to the BAM tags.
+
+    Does NOT modify an existing tag - use \link BamAlignment::EditTag() \endlink instead.
+
+    \param tag    2-character tag name
+    \param values vector of int32_t values to store
+
+    \return \c true if the \b new tag was added successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+bool BamAlignment::AddTag(const std::string& tag, const std::vector<int32_t>& values) {
+
+    // skip if core data not parsed
+    if ( SupportData.HasCoreOnly ) return false;
+
+    // check for valid tag length
+    if ( tag.size() != Constants::BAM_TAG_TAGSIZE ) return false;
+
+    // localize the tag data
+    char* pTagData = (char*)TagData.data();
+    const unsigned int tagDataLength = TagData.size();
+    unsigned int numBytesParsed = 0;
+
+    // if tag already exists, return false
+    // use EditTag explicitly instead
+    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+        return false;
+
+    // build new tag's base information
+    char newTagBase[Constants::BAM_TAG_ARRAYBASE_SIZE];
+    memcpy( newTagBase, tag.c_str(), Constants::BAM_TAG_TAGSIZE );
+    newTagBase[2] = Constants::BAM_TAG_TYPE_ARRAY;
+    newTagBase[3] = Constants::BAM_TAG_TYPE_INT32;
+
+    // add number of array elements to newTagBase
+    const int32_t numElements  = values.size();
+    memcpy(newTagBase + 4, &numElements, sizeof(int32_t));
+
+    // copy current TagData string to temp buffer, leaving room for new tag's contents
+    const int newTagDataLength = tagDataLength +
+                                 Constants::BAM_TAG_ARRAYBASE_SIZE +
+                                 numElements*sizeof(int32_t);
+    char originalTagData[newTagDataLength];
+    memcpy(originalTagData, TagData.c_str(), tagDataLength+1); // '+1' for TagData's null-term
+
+    // write newTagBase (removes old null term)
+    strcat(originalTagData + tagDataLength, (const char*)newTagBase);
+
+    // add vector elements to tag
+    int elementsBeginOffset = tagDataLength + Constants::BAM_TAG_ARRAYBASE_SIZE;
+    for ( int i = 0 ; i < numElements; ++i ) {
+        const int32_t value = values.at(i);
+        memcpy(originalTagData + elementsBeginOffset + i*sizeof(int32_t),
+               &value, sizeof(int32_t));
+    }
+
+    // store temp buffer back in TagData
+    const char* newTagData = (const char*)originalTagData;
+    TagData.assign(newTagData, newTagDataLength);
+
+    // return success
+    return true;
+}
+
+/*! \fn bool AddTag(const std::string& tag, const std::vector<float>& values);
+    \brief Adds a numeric array field to the BAM tags.
+
+    Does NOT modify an existing tag - use \link BamAlignment::EditTag() \endlink instead.
+
+    \param tag    2-character tag name
+    \param values vector of float values to store
+
+    \return \c true if the \b new tag was added successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+bool BamAlignment::AddTag(const std::string& tag, const std::vector<float>& values) {
+
+    // skip if core data not parsed
+    if ( SupportData.HasCoreOnly ) return false;
+
+    // check for valid tag length
+    if ( tag.size() != Constants::BAM_TAG_TAGSIZE ) return false;
+
+    // localize the tag data
+    char* pTagData = (char*)TagData.data();
+    const unsigned int tagDataLength = TagData.size();
+    unsigned int numBytesParsed = 0;
+
+    // if tag already exists, return false
+    // use EditTag explicitly instead
+    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+        return false;
+
+    // build new tag's base information
+    char newTagBase[Constants::BAM_TAG_ARRAYBASE_SIZE];
+    memcpy( newTagBase, tag.c_str(), Constants::BAM_TAG_TAGSIZE );
+    newTagBase[2] = Constants::BAM_TAG_TYPE_ARRAY;
+    newTagBase[3] = Constants::BAM_TAG_TYPE_FLOAT;
+
+    // add number of array elements to newTagBase
+    const int32_t numElements  = values.size();
+    memcpy(newTagBase + 4, &numElements, sizeof(int32_t));
+
+    // copy current TagData string to temp buffer, leaving room for new tag's contents
+    const int newTagDataLength = tagDataLength +
+                                 Constants::BAM_TAG_ARRAYBASE_SIZE +
+                                 numElements*sizeof(float);
+    char originalTagData[newTagDataLength];
+    memcpy(originalTagData, TagData.c_str(), tagDataLength+1); // '+1' for TagData's null-term
+
+    // write newTagBase (removes old null term)
+    strcat(originalTagData + tagDataLength, (const char*)newTagBase);
+
+    // add vector elements to tag
+    int elementsBeginOffset = tagDataLength + Constants::BAM_TAG_ARRAYBASE_SIZE;
+    for ( int i = 0 ; i < numElements; ++i ) {
+        const float value = values.at(i);
+        memcpy(originalTagData + elementsBeginOffset + i*sizeof(float),
+               &value, sizeof(float));
+    }
+
+    // store temp buffer back in TagData
+    const char* newTagData = (const char*)originalTagData;
+    TagData.assign(newTagData, newTagDataLength);
+
     // return success
     return true;
 }
@@ -504,9 +1006,11 @@ bool BamAlignment::BuildCharData(void) {
 
             switch (op.Type) {
 
-                // for 'M', 'I' - write bases
-                case (Constants::BAM_CIGAR_MATCH_CHAR) :
-                case (Constants::BAM_CIGAR_INS_CHAR) :
+                // for 'M', 'I', '=', 'X' - write bases
+                case (Constants::BAM_CIGAR_MATCH_CHAR)    :
+                case (Constants::BAM_CIGAR_INS_CHAR)      :
+                case (Constants::BAM_CIGAR_SEQMATCH_CHAR) :
+                case (Constants::BAM_CIGAR_MISMATCH_CHAR) :
                     AlignedBases.append(QueryBases.substr(k, op.Length));
                     // fall through
 
@@ -537,7 +1041,8 @@ bool BamAlignment::BuildCharData(void) {
 
                 // shouldn't get here
                 default:
-                    fprintf(stderr, "BamAlignment ERROR: invalid CIGAR operation type: %c\n", op.Type);
+                    cerr << "BamAlignment ERROR: invalid CIGAR operation type: "
+                         << op.Type << endl;
                     exit(1);
             }
         }
@@ -559,6 +1064,7 @@ bool BamAlignment::BuildCharData(void) {
                     case(Constants::BAM_TAG_TYPE_ASCII) :
                     case(Constants::BAM_TAG_TYPE_INT8)  :
                     case(Constants::BAM_TAG_TYPE_UINT8) :
+                        // no endian swapping necessary for single-byte data
                         ++i;
                         break;
 
@@ -578,14 +1084,59 @@ bool BamAlignment::BuildCharData(void) {
                     case(Constants::BAM_TAG_TYPE_HEX) :
                     case(Constants::BAM_TAG_TYPE_STRING) :
                         // no endian swapping necessary for hex-string/string data
-                        while (tagData[i]) { ++i; }
+                        while ( tagData[i] )
+                            ++i;
                         // increment one more for null terminator
                         ++i;
                         break;
 
+                    case(Constants::BAM_TAG_TYPE_ARRAY) :
+
+                    {
+                        // read array type
+                        const char arrayType = tagData[i];
+                        ++i;
+
+                        // swap endian-ness of number of elements in place, then retrieve for loop
+                        BamTools::SwapEndian_32p(&tagData[i]);
+                        int32_t numElements;
+                        memcpy(&numElements, &tagData[i], sizeof(uint32_t));
+                        i += sizeof(uint32_t);
+
+                        // swap endian-ness of array elements
+                        for ( int j = 0; j < numElements; ++j ) {
+                            switch (arrayType) {
+                                case (Constants::BAM_TAG_TYPE_INT8)  :
+                                case (Constants::BAM_TAG_TYPE_UINT8) :
+                                    // no endian-swapping necessary
+                                    ++i;
+                                    break;
+                                case (Constants::BAM_TAG_TYPE_INT16)  :
+                                case (Constants::BAM_TAG_TYPE_UINT16) :
+                                    BamTools::SwapEndian_16p(&tagData[i]);
+                                    i += sizeof(uint16_t);
+                                    break;
+                                case (Constants::BAM_TAG_TYPE_FLOAT)  :
+                                case (Constants::BAM_TAG_TYPE_INT32)  :
+                                case (Constants::BAM_TAG_TYPE_UINT32) :
+                                    BamTools::SwapEndian_32p(&tagData[i]);
+                                    i += sizeof(uint32_t);
+                                    break;
+                                default:
+                                    // error case
+                                    cerr << "BamAlignment ERROR: unknown binary array type encountered: "
+                                         << arrayType << endl;
+                                    return false;
+                            }
+                        }
+
+                        break;
+                    }
+
                     // shouldn't get here
                     default :
-                        fprintf(stderr, "BamAlignment ERROR: invalid tag value type: %c\n", type);
+                        cerr << "BamAlignment ERROR: invalid tag value type: "
+                             << type << endl;
                         exit(1);
                 }
             }
@@ -615,8 +1166,7 @@ bool BamAlignment::BuildCharData(void) {
     \return \c true if the tag was modified/created successfully
 
     \sa BamAlignment::RemoveTag()
-    \sa http://samtools.sourceforge.net/SAM-1.3.pdf
-        for more details on reserved tag names, supported tag types, etc.
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
 bool BamAlignment::EditTag(const std::string& tag, const std::string& type, const std::string& value) {
   
@@ -637,7 +1187,7 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
     unsigned int newTagDataLength = 0;
     unsigned int numBytesParsed = 0;
     
-    // if tag found, store data in readGroup, return success
+    // if tag found
     if ( Internal::FindTag(tag, pTagData, originalTagDataLength, numBytesParsed) ) {
         
         // make sure array is more than big enough
@@ -648,7 +1198,7 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
         newTagDataLength += beginningTagDataLength;
         memcpy(newTagData, pOriginalTagData, numBytesParsed);
       
-        // copy new VALUE in place of current tag data
+        // copy new @value in place of current tag data
         const unsigned int dataLength = strlen(value.c_str());
         memcpy(newTagData + beginningTagDataLength, (char*)value.c_str(), dataLength+1 );
         
@@ -681,14 +1231,13 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
     If \a tag does not exist, a new entry is created.
 
     \param tag   2-character tag name
-    \param type  1-character tag type (must NOT be "f", "Z", or "H")
+    \param type  1-character tag type (must NOT be "f", "Z", "H", or "B")
     \param value unsigned integer data to store
 
     \return \c true if the tag was modified/created successfully
 
     \sa BamAlignment::RemoveTag()
-    \sa http://samtools.sourceforge.net/SAM-1.3.pdf
-        for more details on reserved tag names, supported tag types, etc.
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
 bool BamAlignment::EditTag(const std::string& tag, const std::string& type, const uint32_t& value) {
   
@@ -697,10 +1246,14 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
 
     // validate tag/type size & that type is OK for uint32_t value
     if ( !Internal::IsValidSize(tag, type) ) return false;
-    if ( type.at(0) == Constants::BAM_TAG_TYPE_FLOAT ||
+    if ( type.at(0) == Constants::BAM_TAG_TYPE_FLOAT  ||
          type.at(0) == Constants::BAM_TAG_TYPE_STRING ||
-         type.at(0) == Constants::BAM_TAG_TYPE_HEX )
+         type.at(0) == Constants::BAM_TAG_TYPE_HEX    ||
+         type.at(0) == Constants::BAM_TAG_TYPE_ARRAY
+       )
+    {
         return false;
+    }
 
     // localize the tag data
     char* pOriginalTagData = (char*)TagData.data();
@@ -710,7 +1263,7 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
     unsigned int newTagDataLength = 0;
     unsigned int numBytesParsed = 0;
     
-    // if tag found, store data in readGroup, return success
+    // if tag found
     if ( Internal::FindTag(tag, pTagData, originalTagDataLength, numBytesParsed) ) {
         
         // make sure array is more than big enough
@@ -721,7 +1274,7 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
         newTagDataLength += beginningTagDataLength;
         memcpy(newTagData, pOriginalTagData, numBytesParsed);
       
-        // copy new VALUE in place of current tag data
+        // copy new @value in place of current tag data
         union { uint32_t value; char valueBuffer[sizeof(uint32_t)]; } un;
         un.value = value;
         memcpy(newTagData + beginningTagDataLength, un.valueBuffer, sizeof(uint32_t));
@@ -755,14 +1308,13 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
     If \a tag does not exist, a new entry is created.
 
     \param tag   2-character tag name
-    \param type  1-character tag type (must NOT be "f", "Z", or "H")
+    \param type  1-character tag type (must NOT be "f", "Z", "H", or "B")
     \param value signed integer data to store
 
     \return \c true if the tag was modified/created successfully
 
     \sa BamAlignment::RemoveTag()
-    \sa http://samtools.sourceforge.net/SAM-1.3.pdf
-        for more details on reserved tag names, supported tag types, etc.
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
 bool BamAlignment::EditTag(const std::string& tag, const std::string& type, const int32_t& value) {
     return EditTag(tag, type, (const uint32_t&)value);
@@ -774,14 +1326,13 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
     If \a tag does not exist, a new entry is created.
 
     \param tag   2-character tag name
-    \param type  1-character tag type (must NOT be "Z" or "H")
+    \param type  1-character tag type (must NOT be "Z", "H", or "B")
     \param value float data to store
 
     \return \c true if the tag was modified/created successfully
 
     \sa BamAlignment::RemoveTag()
-    \sa http://samtools.sourceforge.net/SAM-1.3.pdf
-        for more details on reserved tag names, supported tag types, etc.
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
 bool BamAlignment::EditTag(const std::string& tag, const std::string& type, const float& value) {
   
@@ -791,8 +1342,12 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
     // validate tag/type size & that type is OK for float value
     if ( !Internal::IsValidSize(tag, type) ) return false;
     if ( type.at(0) == Constants::BAM_TAG_TYPE_STRING ||
-         type.at(0) == Constants::BAM_TAG_TYPE_HEX )
+         type.at(0) == Constants::BAM_TAG_TYPE_HEX    ||
+         type.at(0) == Constants::BAM_TAG_TYPE_ARRAY
+       )
+    {
         return false;
+    }
 
      // localize the tag data
     char* pOriginalTagData = (char*)TagData.data();
@@ -802,7 +1357,7 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
     unsigned int newTagDataLength = 0;
     unsigned int numBytesParsed = 0;
     
-    // if tag found, store data in readGroup, return success
+    // if tag found
     if ( Internal::FindTag(tag, pTagData, originalTagDataLength, numBytesParsed) ) {
         
         // make sure array is more than big enough
@@ -813,7 +1368,7 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
         newTagDataLength += beginningTagDataLength;
         memcpy(newTagData, pOriginalTagData, numBytesParsed);
       
-        // copy new VALUE in place of current tag data
+        // copy new @value in place of current tag data
         union { float value; char valueBuffer[sizeof(float)]; } un;
         un.value = value;
         memcpy(newTagData + beginningTagDataLength, un.valueBuffer, sizeof(float));
@@ -839,6 +1394,181 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
     
     // tag not found, attempt AddTag
     else return AddTag(tag, type, value);
+}
+
+/*! \fn bool EditTag(const std::string& tag, const std::vector<uint8_t>& values);
+    \brief Edits a BAM tag field containing a numeric array.
+
+    If \a tag does not exist, a new entry is created.
+
+    \param tag   2-character tag name
+    \param value vector of uint8_t values to store
+
+    \return \c true if the tag was modified/created successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+bool BamAlignment::EditTag(const std::string& tag, const std::vector<uint8_t>& values) {
+
+    // can't do anything if TagData not parsed
+    if ( SupportData.HasCoreOnly )
+        return false;
+
+    // remove existing tag if present
+    if ( HasTag(tag) )
+        RemoveTag(tag);
+
+    // add tag record with new values
+    return AddTag(tag, values);
+}
+
+/*! \fn bool EditTag(const std::string& tag, const std::vector<int8_t>& values);
+    \brief Edits a BAM tag field containing a numeric array.
+
+    If \a tag does not exist, a new entry is created.
+
+    \param tag   2-character tag name
+    \param value vector of int8_t values to store
+
+    \return \c true if the tag was modified/created successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+bool BamAlignment::EditTag(const std::string& tag, const std::vector<int8_t>& values) {
+
+    // can't do anything if TagData not parsed
+    if ( SupportData.HasCoreOnly )
+        return false;
+
+    // remove existing tag if present
+    if ( HasTag(tag) )
+        RemoveTag(tag);
+
+    // add tag record with new values
+    return AddTag(tag, values);
+}
+
+/*! \fn bool EditTag(const std::string& tag, const std::vector<uint16_t>& values);
+    \brief Edits a BAM tag field containing a numeric array.
+
+    If \a tag does not exist, a new entry is created.
+
+    \param tag   2-character tag name
+    \param value vector of uint16_t values to store
+
+    \return \c true if the tag was modified/created successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+bool BamAlignment::EditTag(const std::string& tag, const std::vector<uint16_t>& values) {
+
+    // can't do anything if TagData not parsed
+    if ( SupportData.HasCoreOnly )
+        return false;
+
+    // remove existing tag if present
+    if ( HasTag(tag) )
+        RemoveTag(tag);
+
+    // add tag record with new values
+    return AddTag(tag, values);
+}
+
+/*! \fn bool EditTag(const std::string& tag, const std::vector<int16_t>& values);
+    \brief Edits a BAM tag field containing a numeric array.
+
+    If \a tag does not exist, a new entry is created.
+
+    \param tag   2-character tag name
+    \param value vector of int16_t values to store
+
+    \return \c true if the tag was modified/created successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+bool BamAlignment::EditTag(const std::string& tag, const std::vector<int16_t>& values) {
+
+    // can't do anything if TagData not parsed
+    if ( SupportData.HasCoreOnly )
+        return false;
+
+    // remove existing tag if present
+    if ( HasTag(tag) )
+        RemoveTag(tag);
+
+    // add tag record with new values
+    return AddTag(tag, values);
+}
+
+/*! \fn bool EditTag(const std::string& tag, const std::vector<uint32_t>& values);
+    \brief Edits a BAM tag field containing a numeric array.
+
+    If \a tag does not exist, a new entry is created.
+
+    \param tag   2-character tag name
+    \param value vector of uint32_t values to store
+
+    \return \c true if the tag was modified/created successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+bool BamAlignment::EditTag(const std::string& tag, const std::vector<uint32_t>& values) {
+
+    // can't do anything if TagData not parsed
+    if ( SupportData.HasCoreOnly )
+        return false;
+
+    // remove existing tag if present
+    if ( HasTag(tag) )
+        RemoveTag(tag);
+
+    // add tag record with new values
+    return AddTag(tag, values);
+}
+
+/*! \fn bool EditTag(const std::string& tag, const std::vector<int32_t>& values);
+    \brief Edits a BAM tag field containing a numeric array.
+
+    If \a tag does not exist, a new entry is created.
+
+    \param tag   2-character tag name
+    \param value vector of int32_t values to store
+
+    \return \c true if the tag was modified/created successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+bool BamAlignment::EditTag(const std::string& tag, const std::vector<int32_t>& values) {
+
+    // can't do anything if TagData not parsed
+    if ( SupportData.HasCoreOnly )
+        return false;
+
+    // remove existing tag if present
+    if ( HasTag(tag) )
+        RemoveTag(tag);
+
+    // add tag record with new values
+    return AddTag(tag, values);
+}
+
+/*! \fn bool EditTag(const std::string& tag, const std::vector<float>& values);
+    \brief Edits a BAM tag field containing a numeric array.
+
+    If \a tag does not exist, a new entry is created.
+
+    \param tag   2-character tag name
+    \param value vector of float values to store
+
+    \return \c true if the tag was modified/created successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+bool BamAlignment::EditTag(const std::string& tag, const std::vector<float>& values) {
+
+    // can't do anything if TagData not parsed
+    if ( SupportData.HasCoreOnly )
+        return false;
+
+    // remove existing tag if present
+    if ( HasTag(tag) )
+        RemoveTag(tag);
+
+    // add tag record with new values
+    return AddTag(tag, values);
 }
 
 /*! \fn bool BamAlignment::GetEditDistance(uint32_t& editDistance) const
@@ -929,7 +1659,7 @@ bool BamAlignment::GetTag(const std::string& tag, std::string& destination) cons
     const unsigned int tagDataLength = TagData.size();
     unsigned int numBytesParsed = 0;
     
-    // if tag found, store data in readGroup, return success
+    // if tag found
     if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
         const unsigned int dataLength = strlen(pTagData);
         destination.clear();
@@ -961,7 +1691,7 @@ bool BamAlignment::GetTag(const std::string& tag, uint32_t& destination) const {
     const unsigned int tagDataLength = TagData.size();
     unsigned int numBytesParsed = 0;
     
-    // if tag found, determine data byte-length, store data in readGroup, return success
+    // if tag found
     if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
         
         // determine data byte-length
@@ -992,12 +1722,15 @@ bool BamAlignment::GetTag(const std::string& tag, uint32_t& destination) const {
             case (Constants::BAM_TAG_TYPE_FLOAT)  :
             case (Constants::BAM_TAG_TYPE_STRING) :
             case (Constants::BAM_TAG_TYPE_HEX)    :
-                fprintf(stderr, "BamAlignment ERROR: cannot store tag of type %c in integer destination\n", type);
+            case (Constants::BAM_TAG_TYPE_ARRAY)  :
+                cerr << "BamAlignment ERROR: cannot store tag of type " << type
+                     << " in integer destination" << endl;
                 return false;
 
             // unknown tag type
             default:
-                fprintf(stderr, "BamAlignment ERROR: unknown tag type encountered: [%c]\n", type);
+                cerr << "BamAlignment ERROR: unknown tag type encountered: "
+                     << type << endl;
                 return false;
         }
           
@@ -1042,7 +1775,7 @@ bool BamAlignment::GetTag(const std::string& tag, float& destination) const {
     const unsigned int tagDataLength = TagData.size();
     unsigned int numBytesParsed = 0;
     
-    // if tag found, determine data byte-length, store data in readGroup, return success
+    // if tag found
     if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
         
         // determine data byte-length
@@ -1073,12 +1806,15 @@ bool BamAlignment::GetTag(const std::string& tag, float& destination) const {
             // unsupported type (var-length strings)
             case (Constants::BAM_TAG_TYPE_STRING) :
             case (Constants::BAM_TAG_TYPE_HEX)    :
-                fprintf(stderr, "BamAlignment ERROR: cannot store tag of type %c in float destination\n", type);
+            case (Constants::BAM_TAG_TYPE_ARRAY)  :
+                cerr << "BamAlignment ERROR: cannot store tag of type " << type
+                     << " in float destination" << endl;
                 return false;
 
             // unknown tag type
             default:
-                fprintf(stderr, "BamAlignment ERROR: unknown tag type encountered: [%c]\n", type);
+                cerr << "BamAlignment ERROR: unknown tag type encountered: "
+                     << type << endl;
                 return false;
         }
           
@@ -1092,6 +1828,268 @@ bool BamAlignment::GetTag(const std::string& tag, float& destination) const {
     return false;
 }
 
+/*! \fn bool BamAlignment::GetTag(const std::string& tag, std::vector<uint32_t>& destination) const
+    \brief Retrieves the numeric array data associated with a BAM tag
+
+    \param tag         2-character tag name
+    \param destination destination for retrieved data
+
+    \return \c true if found
+*/
+bool BamAlignment::GetTag(const std::string& tag, std::vector<uint32_t>& destination) const {
+
+    // make sure tag data exists
+    if ( SupportData.HasCoreOnly || TagData.empty() )
+        return false;
+
+    // localize the tag data
+    char* pTagData = (char*)TagData.data();
+    const unsigned int tagDataLength = TagData.size();
+    unsigned int numBytesParsed = 0;
+
+    // return false if tag not found
+    if ( !Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+        return false;
+
+    // check that tag is array type
+    const char tagType = *(pTagData - 1);
+    if ( tagType != Constants::BAM_TAG_TYPE_ARRAY ) {
+        cerr << "BamAlignment ERROR: Cannot store non-array data from tag: "
+             << tag << " in array destination" << endl;
+        return false;
+    }
+
+    // calculate length of each element in tag's array
+    const char elementType = *pTagData;
+    ++pTagData;
+    int elementLength = 0;
+    switch ( elementType ) {
+        case (Constants::BAM_TAG_TYPE_ASCII) :
+        case (Constants::BAM_TAG_TYPE_INT8)  :
+        case (Constants::BAM_TAG_TYPE_UINT8) :
+            elementLength = sizeof(uint8_t);
+            break;
+
+        case (Constants::BAM_TAG_TYPE_INT16)  :
+        case (Constants::BAM_TAG_TYPE_UINT16) :
+            elementLength = sizeof(uint16_t);
+            break;
+
+        case (Constants::BAM_TAG_TYPE_INT32)  :
+        case (Constants::BAM_TAG_TYPE_UINT32) :
+            elementLength = sizeof(uint32_t);
+            break;
+
+        // unsupported type for integer destination (float or var-length data)
+        case (Constants::BAM_TAG_TYPE_FLOAT)  :
+        case (Constants::BAM_TAG_TYPE_STRING) :
+        case (Constants::BAM_TAG_TYPE_HEX)    :
+        case (Constants::BAM_TAG_TYPE_ARRAY)  :
+            cerr << "BamAlignment ERROR: array element type: " << elementType
+                 << " cannot be stored in integer value" << endl;
+            return false;
+
+        // unknown tag type
+        default:
+            cerr << "BamAlignment ERROR: unknown element type encountered: "
+                 << elementType << endl;
+            return false;
+    }
+
+    // get number of elements
+    int32_t numElements;
+    memcpy(&numElements, pTagData, sizeof(int32_t));
+    pTagData += 4;
+    destination.clear();
+    destination.reserve(numElements);
+
+    // read in elements
+    uint32_t value;
+    for ( int i = 0 ; i < numElements; ++i ) {
+        memcpy(&value, pTagData, sizeof(uint32_t));
+        pTagData += sizeof(uint32_t);
+        destination.push_back(value);
+    }
+
+    // return success
+    return false;
+}
+
+/*! \fn bool BamAlignment::GetTag(const std::string& tag, std::vector<int32_t>& destination) const
+    \brief Retrieves the numeric array data associated with a BAM tag
+
+    \param tag         2-character tag name
+    \param destination destination for retrieved data
+
+    \return \c true if found
+*/
+bool BamAlignment::GetTag(const std::string& tag, std::vector<int32_t>& destination) const {
+
+    // make sure tag data exists
+    if ( SupportData.HasCoreOnly || TagData.empty() )
+        return false;
+
+    // localize the tag data
+    char* pTagData = (char*)TagData.data();
+    const unsigned int tagDataLength = TagData.size();
+    unsigned int numBytesParsed = 0;
+
+    // return false if tag not found
+    if ( !Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+        return false;
+
+    // check that tag is array type
+    const char tagType = *(pTagData - 1);
+    if ( tagType != Constants::BAM_TAG_TYPE_ARRAY ) {
+        cerr << "BamAlignment ERROR: Cannot store non-array data from tag: "
+             << tag << " in array destination" << endl;
+        return false;
+    }
+
+    // calculate length of each element in tag's array
+    const char elementType = *pTagData;
+    ++pTagData;
+    int elementLength = 0;
+    switch ( elementType ) {
+        case (Constants::BAM_TAG_TYPE_ASCII) :
+        case (Constants::BAM_TAG_TYPE_INT8)  :
+        case (Constants::BAM_TAG_TYPE_UINT8) :
+            elementLength = sizeof(uint8_t);
+            break;
+
+        case (Constants::BAM_TAG_TYPE_INT16)  :
+        case (Constants::BAM_TAG_TYPE_UINT16) :
+            elementLength = sizeof(uint16_t);
+            break;
+
+        case (Constants::BAM_TAG_TYPE_INT32)  :
+        case (Constants::BAM_TAG_TYPE_UINT32) :
+            elementLength = sizeof(uint32_t);
+            break;
+
+        // unsupported type for integer destination (float or var-length data)
+        case (Constants::BAM_TAG_TYPE_FLOAT)  :
+        case (Constants::BAM_TAG_TYPE_STRING) :
+        case (Constants::BAM_TAG_TYPE_HEX)    :
+        case (Constants::BAM_TAG_TYPE_ARRAY)  :
+            cerr << "BamAlignment ERROR: array element type: " << elementType
+                 << " cannot be stored in integer value" << endl;
+            return false;
+
+        // unknown tag type
+        default:
+            cerr << "BamAlignment ERROR: unknown element type encountered: "
+                 << elementType << endl;
+            return false;
+    }
+
+    // get number of elements
+    int32_t numElements;
+    memcpy(&numElements, pTagData, sizeof(int32_t));
+    pTagData += 4;
+    destination.clear();
+    destination.reserve(numElements);
+
+    // read in elements
+    int32_t value;
+    for ( int i = 0 ; i < numElements; ++i ) {
+        memcpy(&value, pTagData, sizeof(int32_t));
+        pTagData += sizeof(int32_t);
+        destination.push_back(value);
+    }
+
+    // return success
+    return false;
+
+}
+
+/*! \fn bool BamAlignment::GetTag(const std::string& tag, std::vector<float>& destination) const
+    \brief Retrieves the numeric array data associated with a BAM tag
+
+    \param tag         2-character tag name
+    \param destination destination for retrieved data
+
+    \return \c true if found
+*/
+bool BamAlignment::GetTag(const std::string& tag, std::vector<float>& destination) const {
+
+    // make sure tag data exists
+    if ( SupportData.HasCoreOnly || TagData.empty() )
+        return false;
+
+    // localize the tag data
+    char* pTagData = (char*)TagData.data();
+    const unsigned int tagDataLength = TagData.size();
+    unsigned int numBytesParsed = 0;
+
+    // return false if tag not found
+    if ( !Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+        return false;
+
+    // check that tag is array type
+    const char tagType = *(pTagData - 1);
+    if ( tagType != Constants::BAM_TAG_TYPE_ARRAY ) {
+        cerr << "BamAlignment ERROR: Cannot store non-array data from tag: "
+             << tag << " in array destination" << endl;
+        return false;
+    }
+
+    // calculate length of each element in tag's array
+    const char elementType = *pTagData;
+    ++pTagData;
+    int elementLength = 0;
+    switch ( elementType ) {
+        case (Constants::BAM_TAG_TYPE_ASCII) :
+        case (Constants::BAM_TAG_TYPE_INT8)  :
+        case (Constants::BAM_TAG_TYPE_UINT8) :
+            elementLength = sizeof(uint8_t);
+            break;
+
+        case (Constants::BAM_TAG_TYPE_INT16)  :
+        case (Constants::BAM_TAG_TYPE_UINT16) :
+            elementLength = sizeof(uint16_t);
+            break;
+
+        case (Constants::BAM_TAG_TYPE_INT32)  :
+        case (Constants::BAM_TAG_TYPE_UINT32) :
+        case (Constants::BAM_TAG_TYPE_FLOAT)  :
+            elementLength = sizeof(uint32_t);
+            break;
+
+        // unsupported type for float destination (var-length data)
+        case (Constants::BAM_TAG_TYPE_STRING) :
+        case (Constants::BAM_TAG_TYPE_HEX)    :
+        case (Constants::BAM_TAG_TYPE_ARRAY)  :
+            cerr << "BamAlignment ERROR: array element type: " << elementType
+                 << " cannot be stored in float value" << endl;
+            return false;
+
+        // unknown tag type
+        default:
+            cerr << "BamAlignment ERROR: unknown element type encountered: "
+                 << elementType << endl;
+            return false;
+    }
+
+    // get number of elements
+    int32_t numElements;
+    memcpy(&numElements, pTagData, sizeof(int32_t));
+    pTagData += 4;
+    destination.clear();
+    destination.reserve(numElements);
+
+    // read in elements
+    float value;
+    for ( int i = 0 ; i < numElements; ++i ) {
+        memcpy(&value, pTagData, sizeof(float));
+        pTagData += sizeof(float);
+        destination.push_back(value);
+    }
+
+    // return success
+    return false;
+}
+
 /*! \fn bool BamAlignment::GetTagType(const std::string& tag, char& type) const
     \brief Retrieves the BAM tag type-code associated with requested tag name.
 
@@ -1099,9 +2097,7 @@ bool BamAlignment::GetTag(const std::string& tag, float& destination) const {
     \param type destination for the retrieved (1-character) tag type
 
     \return \c true if found
-
-    \sa http://samtools.sourceforge.net/SAM-1.3.pdf
-        for more details on reserved tag names, supported tag types, etc.
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
 bool BamAlignment::GetTagType(const std::string& tag, char& type) const {
   
@@ -1132,17 +2128,39 @@ bool BamAlignment::GetTagType(const std::string& tag, char& type) const {
             case (Constants::BAM_TAG_TYPE_FLOAT)  :
             case (Constants::BAM_TAG_TYPE_STRING) :
             case (Constants::BAM_TAG_TYPE_HEX)    :
+            case (Constants::BAM_TAG_TYPE_ARRAY)  :
                 return true;
 
             // unknown tag type
             default:
-                fprintf(stderr, "BamAlignment ERROR: unknown tag type encountered: [%c]\n", type);
+                cerr << "BamAlignment ERROR: unknown tag type encountered: "
+                     << type << endl;
                 return false;
         }
     }
     
     // tag not found, return failure
     return false;
+}
+
+/*! \fn bool BamAlignment::HasTag(const std::string& tag) const
+    \brief Returns true if alignment has a record for requested tag.
+    \param tag 2-character tag name
+    \return \c true if alignment has a record for tag
+*/
+bool BamAlignment::HasTag(const std::string& tag) const {
+
+    // return false if no tag data present
+    if ( SupportData.HasCoreOnly || TagData.empty() )
+        return false;
+
+    // localize the tag data for lookup
+    char* pTagData = (char*)TagData.data();
+    const unsigned int tagDataLength = TagData.size();
+    unsigned int numBytesParsed = 0;
+
+    // if result of tag lookup
+    return Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed);
 }
 
 /*! \fn bool BamAlignment::IsDuplicate(void) const
@@ -1229,8 +2247,7 @@ bool BamAlignment::IsSecondMate(void) const {
 */
 bool BamAlignment::RemoveTag(const std::string& tag) {
   
-    // BamAlignments fetched using BamReader::GetNextAlignmentCore() are not allowed
-    // also, return false if no data present to remove
+    // skip if no tag data available
     if ( SupportData.HasCoreOnly || TagData.empty() )
         return false;
   
@@ -1241,7 +2258,7 @@ bool BamAlignment::RemoveTag(const std::string& tag) {
     unsigned int newTagDataLength = 0;
     unsigned int numBytesParsed = 0;
     
-    // if tag found, store data in readGroup, return success
+    // if tag found
     if ( Internal::FindTag(tag, pTagData, originalTagDataLength, numBytesParsed) ) {
         
         char newTagData[originalTagDataLength];

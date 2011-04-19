@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 20 March 2011
+// Last modified: 18 April 2011
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamSequence entries.
 // ***************************************************************************
@@ -76,7 +76,6 @@ class API_EXPORT SamSequenceDictionary {
 
     // internal methods
     private:
-        int IndexOf(const SamSequence& sequence) const;
         int IndexOf(const std::string& name) const;
 
     // data members
@@ -86,5 +85,5 @@ class API_EXPORT SamSequenceDictionary {
 
 } // namespace BamTools
 
-#endif // SAM_SEQUENCE_DICTIONARY 
+#endif // SAM_SEQUENCE_DICTIONARY_H
 

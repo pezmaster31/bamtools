@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 20 March 2011 (DB)
+// Last modified: 18 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamSequence entries.
 // *************************************************************************
@@ -40,11 +40,14 @@ SamSequenceDictionary::~SamSequenceDictionary(void) { }
 /*! \fn void SamSequenceDictionary::Add(const SamSequence& sequence)
     \brief Adds a sequence to the dictionary.
 
-    Duplicate entries are discarded.
+    Duplicate entries are silently discarded.
 
     \param sequence entry to be added
 */
 void SamSequenceDictionary::Add(const SamSequence& sequence) {
+
+    // TODO: report error on attempted duplicate?
+
     if ( IsEmpty() || !Contains(sequence) )
         m_data.push_back(sequence);
 }
@@ -104,10 +107,10 @@ SamSequenceIterator SamSequenceDictionary::Begin(void) {
 }
 
 /*! \fn SamSequenceConstIterator SamSequenceDictionary::Begin(void) const
+    \return an STL const_iterator pointing to the first sequence
 
     This is an overloaded function.
 
-    \return a const STL iterator pointing to the first sequence
     \sa ConstBegin(), End()
 */
 SamSequenceConstIterator SamSequenceDictionary::Begin(void) const {
@@ -122,7 +125,7 @@ void SamSequenceDictionary::Clear(void) {
 }
 
 /*! \fn SamSequenceConstIterator SamSequenceDictionary::ConstBegin(void) const
-    \return a const STL iterator pointing to the first sequence
+    \return an STL const_iterator pointing to the first sequence
     \sa Begin(), ConstEnd()
 */
 SamSequenceConstIterator SamSequenceDictionary::ConstBegin(void) const {
@@ -130,7 +133,7 @@ SamSequenceConstIterator SamSequenceDictionary::ConstBegin(void) const {
 }
 
 /*! \fn SamSequenceConstIterator SamSequenceDictionary::ConstEnd(void) const
-    \return a const STL iterator pointing to the imaginary entry after the last sequence
+    \return an STL const_iterator pointing to the imaginary entry after the last sequence
     \sa End(), ConstBegin()
 */
 SamSequenceConstIterator SamSequenceDictionary::ConstEnd(void) const {
@@ -147,12 +150,15 @@ bool SamSequenceDictionary::Contains(const std::string& sequenceName) const {
 }
 
 /*! \fn bool SamSequenceDictionary::Contains(const SamSequence& sequence) const
-    \brief Returns true if dictionary contains sequence.
+    \brief Returns true if dictionary contains sequence (matches on name).
+
+    This is an overloaded function.
+
     \param sequence search for this sequence
-    \return \c true if dictionary contains sequence
+    \return \c true if dictionary contains sequence (matching on name)
 */
 bool SamSequenceDictionary::Contains(const SamSequence& sequence) const {
-    return ( IndexOf(sequence) != (int)m_data.size() );
+    return ( IndexOf(sequence.Name) != (int)m_data.size() );
 }
 
 /*! \fn SamSequenceIterator SamSequenceDictionary::End(void)
@@ -164,41 +170,19 @@ SamSequenceIterator SamSequenceDictionary::End(void) {
 }
 
 /*! \fn SamSequenceConstIterator SamSequenceDictionary::End(void) const
+    \return an STL const_iterator pointing to the imaginary entry after the last sequence
 
     This is an overloaded function.
 
-    \return a const STL iterator pointing to the imaginary entry after the last sequence
     \sa Begin(), ConstEnd()
 */
 SamSequenceConstIterator SamSequenceDictionary::End(void) const {
     return m_data.end();
 }
 
-/*! \fn int SamSequenceDictionary::IndexOf(const SamSequence& sequence) const
-    \internal
-
-    Uses operator==(SamSequence, SamSequence)
-
-    \return index of sequence if found.  Otherwise, returns vector::size() (invalid index).
-*/
-int SamSequenceDictionary::IndexOf(const SamSequence& sequence) const {
-    SamSequenceConstIterator begin = ConstBegin();
-    SamSequenceConstIterator iter  = begin;
-    SamSequenceConstIterator end   = ConstEnd();
-    for ( ; iter != end; ++iter ) {
-        const SamSequence& currentSeq = (*iter);
-        if ( currentSeq == sequence )
-            break;
-    }
-    return distance( begin, iter );
-}
-
 /*! \fn int SamSequenceDictionary::IndexOf(const std::string& name) const
     \internal
-
-    Use comparison of SamSequence::Name to \a name
-
-    \return index of sequence if found.  Otherwise, returns vector::size() (invalid index).
+    \return index of sequence if found (matching on name).  Otherwise, returns vector::size() (invalid index).
 */
 int SamSequenceDictionary::IndexOf(const std::string& name) const {
     SamSequenceConstIterator begin = ConstBegin();
@@ -221,12 +205,14 @@ bool SamSequenceDictionary::IsEmpty(void) const {
 }
 
 /*! \fn void SamSequenceDictionary::Remove(const SamSequence& sequence)
-    \brief Removes sequence from dictionary, if found.
-    \param sequence sequence to remove
+    \brief Removes sequence from dictionary, if found (matches on name).
+
+    This is an overloaded function.
+
+    \param sequence SamSequence to remove (matching on name)
 */
 void SamSequenceDictionary::Remove(const SamSequence& sequence) {
-    if ( Contains(sequence) )
-        m_data.erase( m_data.begin() + IndexOf(sequence) );
+    Remove( sequence.Name );
 }
 
 /*! \fn void SamSequenceDictionary::Remove(const std::string& sequenceName)
@@ -282,7 +268,7 @@ int SamSequenceDictionary::Size(void) const {
     \brief Retrieves the modifiable SamSequence that matches \a sequenceName.
 
     NOTE - If the dictionary contains no sequence matching this name, this function inserts
-    a new one with this name, and returns a reference to it.
+    a new one with this name (length:0), and returns a reference to it.
 
     If you want to avoid this insertion behavior, check the result of Contains() before
     using this operator.

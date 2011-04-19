@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011 (DB)
+// Last modified: 19 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -84,18 +84,41 @@ struct API_EXPORT BamAlignment {
         bool AddTag(const std::string& tag, const std::string& type, const uint32_t& value);
         bool AddTag(const std::string& tag, const std::string& type, const int32_t& value);
         bool AddTag(const std::string& tag, const std::string& type, const float& value);
-        
+
+        // adds a "binary array" tag
+        bool AddTag(const std::string& tag, const std::vector<uint8_t>& values);
+        bool AddTag(const std::string& tag, const std::vector<int8_t>& values);
+        bool AddTag(const std::string& tag, const std::vector<uint16_t>& values);
+        bool AddTag(const std::string& tag, const std::vector<int16_t>& values);
+        bool AddTag(const std::string& tag, const std::vector<uint32_t>& values);
+        bool AddTag(const std::string& tag, const std::vector<int32_t>& values);
+        bool AddTag(const std::string& tag, const std::vector<float>& values);
+
         // edits a tag
         bool EditTag(const std::string& tag, const std::string& type, const std::string& value);
         bool EditTag(const std::string& tag, const std::string& type, const uint32_t& value);
         bool EditTag(const std::string& tag, const std::string& type, const int32_t& value);
         bool EditTag(const std::string& tag, const std::string& type, const float& value);
 
+        // edits a "binary array" tag
+        bool EditTag(const std::string& tag, const std::vector<uint8_t>& values);
+        bool EditTag(const std::string& tag, const std::vector<int8_t>& values);
+        bool EditTag(const std::string& tag, const std::vector<uint16_t>& values);
+        bool EditTag(const std::string& tag, const std::vector<int16_t>& values);
+        bool EditTag(const std::string& tag, const std::vector<uint32_t>& values);
+        bool EditTag(const std::string& tag, const std::vector<int32_t>& values);
+        bool EditTag(const std::string& tag, const std::vector<float>& values);
+
         // retrieves data for a tag
         bool GetTag(const std::string& tag, std::string& destination) const;
         bool GetTag(const std::string& tag, uint32_t& destination) const;
         bool GetTag(const std::string& tag, int32_t& destination) const;
         bool GetTag(const std::string& tag, float& destination) const;
+
+        // retrieves data for a "binary array" tag
+        bool GetTag(const std::string& tag, std::vector<uint32_t>& destination) const;
+        bool GetTag(const std::string& tag, std::vector<int32_t>& destination) const;
+        bool GetTag(const std::string& tag, std::vector<float>& destination) const;
 
         // retrieves the BAM tag-type character for a tag
         bool GetTagType(const std::string& tag, char& type) const;
@@ -104,6 +127,9 @@ struct API_EXPORT BamAlignment {
         bool GetEditDistance(uint32_t& editDistance) const;         // retrieves value of "NM" tag
         bool GetReadGroup(std::string& readGroup) const;            // retrieves value of "RG" tag
         
+        // returns true if alignment has a record for this tag name
+        bool HasTag(const std::string& tag) const;
+
         // removes a tag
         bool RemoveTag(const std::string& tag);
 
@@ -127,7 +153,7 @@ struct API_EXPORT BamAlignment {
         uint16_t    Bin;                // BAM (standard) index bin number for this alignment
         uint16_t    MapQuality;         // mapping quality score
         uint32_t    AlignmentFlag;      // alignment bit-flag (use provided methods to query/modify)
-        std::vector<CigarOp> CigarData;  // CIGAR operations for this alignment
+        std::vector<CigarOp> CigarData; // CIGAR operations for this alignment
         int32_t     MateRefID;          // ID number for reference sequence where alignment's mate was aligned
         int32_t     MatePosition;       // position (0-based) where alignment's mate starts
         int32_t     InsertSize;         // mate-pair insert size

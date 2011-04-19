@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011 (DB)
+// Last modified: 19 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -70,6 +70,8 @@ void BamWriterPrivate::CreatePackedCigar(const vector<CigarOp>& cigarOperations,
             case (Constants::BAM_CIGAR_SOFTCLIP_CHAR) : cigarOp = Constants::BAM_CIGAR_SOFTCLIP; break;
             case (Constants::BAM_CIGAR_HARDCLIP_CHAR) : cigarOp = Constants::BAM_CIGAR_HARDCLIP; break;
             case (Constants::BAM_CIGAR_PAD_CHAR)      : cigarOp = Constants::BAM_CIGAR_PAD;      break;
+            case (Constants::BAM_CIGAR_SEQMATCH_CHAR) : cigarOp = Constants::BAM_CIGAR_SEQMATCH; break;
+            case (Constants::BAM_CIGAR_MISMATCH_CHAR) : cigarOp = Constants::BAM_CIGAR_MISMATCH; break;
             default:
               fprintf(stderr, "BamWriter ERROR: unknown cigar operation found: %c\n", coIter->Type);
               exit(1);
@@ -241,8 +243,10 @@ void BamWriterPrivate::SaveAlignment(const BamAlignment& al) {
         if ( m_isBigEndian ) {
             char* cigarData = (char*)calloc(sizeof(char), packedCigarLength);
             memcpy(cigarData, packedCigar.data(), packedCigarLength);
-            for (unsigned int i = 0; i < packedCigarLength; ++i)
-                if (m_isBigEndian) BamTools::SwapEndian_32p(&cigarData[i]);
+            if ( m_isBigEndian ) {
+                for ( unsigned int i = 0; i < packedCigarLength; ++i )
+                    BamTools::SwapEndian_32p(&cigarData[i]);
+            }
             m_stream.Write(cigarData, packedCigarLength);
             free(cigarData);
         }
@@ -254,7 +258,7 @@ void BamWriterPrivate::SaveAlignment(const BamAlignment& al) {
 
         // write the base qualities
         char* pBaseQualities = (char*)al.Qualities.data();
-        for(unsigned int i = 0; i < queryLength; i++)
+        for ( unsigned int i = 0; i < queryLength; i++ )
             pBaseQualities[i] -= 33; // FASTQ conversion
         m_stream.Write(pBaseQualities, queryLength);
 
@@ -295,10 +299,55 @@ void BamWriterPrivate::SaveAlignment(const BamAlignment& al) {
                     case(Constants::BAM_TAG_TYPE_HEX) :
                     case(Constants::BAM_TAG_TYPE_STRING) :
                         // no endian swapping necessary for hex-string/string data
-                        while (tagData[i]) { ++i; }
+                        while ( tagData[i] )
+                            ++i;
                         // increment one more for null terminator
                         ++i;
                         break;
+
+                    case(Constants::BAM_TAG_TYPE_ARRAY) :
+
+                    {
+                        // read array type
+                        const char arrayType = tagData[i];
+                        ++i;
+
+                        // swap endian-ness of number of elements in place, then retrieve for loop
+                        BamTools::SwapEndian_32p(&tagData[i]);
+                        int32_t numElements;
+                        memcpy(&numElements, &tagData[i], sizeof(uint32_t));
+                        i += sizeof(uint32_t);
+
+                        // swap endian-ness of array elements
+                        for ( int j = 0; j < numElements; ++j ) {
+                            switch (arrayType) {
+                                case (Constants::BAM_TAG_TYPE_INT8)  :
+                                case (Constants::BAM_TAG_TYPE_UINT8) :
+                                    // no endian-swapping necessary
+                                    ++i;
+                                    break;
+                                case (Constants::BAM_TAG_TYPE_INT16)  :
+                                case (Constants::BAM_TAG_TYPE_UINT16) :
+                                    BamTools::SwapEndian_16p(&tagData[i]);
+                                    i += sizeof(uint16_t);
+                                    break;
+                                case (Constants::BAM_TAG_TYPE_FLOAT)  :
+                                case (Constants::BAM_TAG_TYPE_INT32)  :
+                                case (Constants::BAM_TAG_TYPE_UINT32) :
+                                    BamTools::SwapEndian_32p(&tagData[i]);
+                                    i += sizeof(uint32_t);
+                                    break;
+                                default:
+                                    // error case
+                                    fprintf(stderr,
+                                            "BamWriter ERROR: unknown binary array type encountered: [%c]\n",
+                                            arrayType);
+                                    exit(1);
+                            }
+                        }
+
+                        break;
+                    }
 
                     default :
                         fprintf(stderr, "BamWriter ERROR: invalid tag value type\n"); // shouldn't get here
@@ -368,6 +417,6 @@ void BamWriterPrivate::WriteSamHeaderText(const std::string& samHeaderText) {
     m_stream.Write((char*)&samHeaderLen, Constants::BAM_SIZEOF_INT);
 
     // write the SAM header text
-    if (samHeaderLen > 0)
+    if ( samHeaderLen > 0 )
         m_stream.Write(samHeaderText.data(), samHeaderLen);
 }

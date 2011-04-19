@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 20 March 2011 (DB)
+// Last modified: 18 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides direct read/write access to the SAM sequence data fields.
 // ***************************************************************************
@@ -18,13 +18,7 @@ using namespace std;
 
     Provides direct read/write access to the SAM sequence data fields.
 
-    \sa http://samtools.sourceforge.net/SAM-1.3.pdf
-*/
-/*! \var SamSequence::Name
-    \brief corresponds to \@SQ SN:\<Name\>
-*/
-/*! \var SamSequence::Length
-    \brief corresponds to \@SQ LN:\<Length\>
+    \sa \samSpecURL
 */
 /*! \var SamSequence::AssemblyID
     \brief corresponds to \@SQ AS:\<AssemblyID\>
@@ -32,53 +26,80 @@ using namespace std;
 /*! \var SamSequence::Checksum
     \brief corresponds to \@SQ M5:\<Checksum\>
 */
-/*! \var SamSequence::URI
-    \brief corresponds to \@SQ UR:\<URI\>
+/*! \var SamSequence::Length
+    \brief corresponds to \@SQ LN:\<Length\>
+
+    Required for valid SAM header.
+*/
+/*! \var SamSequence::Name
+    \brief corresponds to \@SQ SN:\<Name\>
+
+    Required for valid SAM header.
 */
 /*! \var SamSequence::Species
     \brief corresponds to \@SQ SP:\<Species\>
+*/
+/*! \var SamSequence::URI
+    \brief corresponds to \@SQ UR:\<URI\>
 */
 
 /*! \fn SamSequence::SamSequence(void)
     \brief default constructor
 */
 SamSequence::SamSequence(void)
-    : Name("")
-    , Length("")
-    , AssemblyID("")
+    : AssemblyID("")
     , Checksum("")
-    , URI("")
+    , Length("")
+    , Name("")
     , Species("")
+    , URI("")
 { }
 
 /*! \fn SamSequence::SamSequence(const std::string& name, const int& length)
     \brief constructs sequence with \a name and \a length
 
-    \param name desired sequence name
+    \param name   desired sequence name
     \param length desired sequence length (numeric value)
 */
-SamSequence::SamSequence(const std::string& name, const int& length)
-    : Name(name)
-    , AssemblyID("")
+SamSequence::SamSequence(const std::string& name,
+                         const int& length)
+    : AssemblyID("")
     , Checksum("")
-    , URI("")
+    , Name(name)
     , Species("")
+    , URI("")
 {
     stringstream s("");
     s << length;
     Length = s.str();
 }
 
+/*! \fn SamSequence::SamSequence(const std::string& name, const std::string& length)
+    \brief constructs sequence with \a name and \a length
+
+    \param name   desired sequence name
+    \param length desired sequence length (string value)
+*/
+SamSequence::SamSequence(const std::string& name,
+                         const std::string& length)
+    : AssemblyID("")
+    , Checksum("")
+    , Length(length)
+    , Name(name)
+    , Species("")
+    , URI("")
+{ }
+
 /*! \fn SamSequence::SamSequence(const SamSequence& other)
     \brief copy constructor
 */
 SamSequence::SamSequence(const SamSequence& other)
-    : Name(other.Name)
-    , Length(other.Length)
-    , AssemblyID(other.AssemblyID)
+    : AssemblyID(other.AssemblyID)
     , Checksum(other.Checksum)
-    , URI(other.URI)
+    , Length(other.Length)
+    , Name(other.Name)
     , Species(other.Species)
+    , URI(other.URI)
 { }
 
 /*! \fn SamSequence::~SamSequence(void)
@@ -90,26 +111,12 @@ SamSequence::~SamSequence(void) { }
     \brief Clears all data fields.
 */
 void SamSequence::Clear(void) {
-    Name.clear();
-    Length.clear();
     AssemblyID.clear();
     Checksum.clear();
-    URI.clear();
+    Length.clear();
+    Name.clear();
     Species.clear();
-}
-
-/*! \fn bool SamSequence::HasName(void) const
-    \brief Returns \c true if sequence contains \@SQ SN:\<Name\>
-*/
-bool SamSequence::HasName(void) const {
-    return (!Name.empty());
-}
-
-/*! \fn bool SamSequence::HasLength(void) const
-    \brief Returns \c true if sequence contains \@SQ LN:\<Length\>
-*/
-bool SamSequence::HasLength(void) const {
-    return (!Length.empty());
+    URI.clear();
 }
 
 /*! \fn bool SamSequence::HasAssemblyID(void) const
@@ -126,11 +133,18 @@ bool SamSequence::HasChecksum(void) const {
     return (!Checksum.empty());
 }
 
-/*! \fn bool SamSequence::HasURI(void) const
-    \brief Returns \c true if sequence contains \@SQ UR:\<URI\>
+/*! \fn bool SamSequence::HasLength(void) const
+    \brief Returns \c true if sequence contains \@SQ LN:\<Length\>
 */
-bool SamSequence::HasURI(void) const {
-    return (!URI.empty());
+bool SamSequence::HasLength(void) const {
+    return (!Length.empty());
+}
+
+/*! \fn bool SamSequence::HasName(void) const
+    \brief Returns \c true if sequence contains \@SQ SN:\<Name\>
+*/
+bool SamSequence::HasName(void) const {
+    return (!Name.empty());
 }
 
 /*! \fn bool SamSequence::HasSpecies(void) const
@@ -138,4 +152,11 @@ bool SamSequence::HasURI(void) const {
 */
 bool SamSequence::HasSpecies(void) const {
     return (!Species.empty());
+}
+
+/*! \fn bool SamSequence::HasURI(void) const
+    \brief Returns \c true if sequence contains \@SQ UR:\<URI\>
+*/
+bool SamSequence::HasURI(void) const {
+    return (!URI.empty());
 }

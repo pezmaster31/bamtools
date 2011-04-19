@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011 (DB)
+// Last modified: 18 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for validating SamHeader data
 // ***************************************************************************
@@ -15,10 +15,35 @@
 using namespace BamTools;
 using namespace BamTools::Internal;
 
+#include <cctype>
 #include <iostream>
 #include <set>
 #include <sstream>
 using namespace std;
+
+namespace BamTools {
+namespace Internal {
+
+bool caseInsensitiveCompare(const string& lhs, const string& rhs) {
+
+    // can omit checking chars if lengths not equal
+    const int lhsLength = lhs.length();
+    const int rhsLength = rhs.length();
+    if ( lhsLength != rhsLength )
+        return false;
+
+    // do *basic* toupper checks on each string char's
+    for ( int i = 0; i < lhsLength; ++i ) {
+        if ( toupper( (int)lhs.at(i)) != toupper( (int)rhs.at(i)) )
+            return false;
+    }
+
+    // otherwise OK
+    return true;
+}
+
+} // namespace Internal
+} // namespace BamTools
 
 // ------------------------------------------------------------------------
 // Allow validation rules to vary, as needed, between SAM header versions
@@ -32,7 +57,10 @@ using namespace std;
 //     // use rule introduced with version 2.0
 
 static const SamHeaderVersion SAM_VERSION_1_0 = SamHeaderVersion(1,0);
+static const SamHeaderVersion SAM_VERSION_1_1 = SamHeaderVersion(1,1);
+static const SamHeaderVersion SAM_VERSION_1_2 = SamHeaderVersion(1,2);
 static const SamHeaderVersion SAM_VERSION_1_3 = SamHeaderVersion(1,3);
+static const SamHeaderVersion SAM_VERSION_1_4 = SamHeaderVersion(1,4);
 
 // TODO: This functionality is currently unused.
 //       Make validation "version-aware."
@@ -56,7 +84,7 @@ bool SamHeaderValidator::Validate(bool verbose) {
     isValid &= ValidateMetadata();
     isValid &= ValidateSequenceDictionary();
     isValid &= ValidateReadGroupDictionary();
-    isValid &= ValidateProgramData();
+    isValid &= ValidateProgramChain();
 
     // report errors if desired
     if ( verbose ) {
@@ -168,8 +196,6 @@ bool SamHeaderValidator::ValidateGroupOrder(void) {
 
 bool SamHeaderValidator::ValidateSequenceDictionary(void) {
 
-    // TODO: warn/error if no sequences ?
-
     bool isValid = true;
 
     // check for unique sequence names
@@ -200,9 +226,9 @@ bool SamHeaderValidator::ContainsUniqueSequenceNames(void) {
     SamSequenceConstIterator seqEnd  = sequences.ConstEnd();
     for ( ; seqIter != seqEnd; ++seqIter ) {
         const SamSequence& seq = (*seqIter);
-        const string& name = seq.Name;
 
         // lookup sequence name
+        const string& name = seq.Name;
         nameIter = sequenceNames.find(name);
 
         // error if found (duplicate entry)
@@ -268,8 +294,6 @@ bool SamHeaderValidator::CheckLengthInRange(const string& length) {
 }
 
 bool SamHeaderValidator::ValidateReadGroupDictionary(void) {
-
-    // TODO: warn/error if no read groups ?
 
     bool isValid = true;
 
@@ -367,11 +391,13 @@ bool SamHeaderValidator::CheckSequencingTechnology(const string& technology) {
         return true;
 
     // if technology is valid keyword
-    if ( Is454(technology)      ||
-         IsHelicos(technology)  ||
-         IsIllumina(technology) ||
-         IsPacBio(technology)   ||
-         IsSolid(technology)
+    if ( caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_CAPILLARY)  ||
+         caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_HELICOS)    ||
+         caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_ILLUMINA)   ||
+         caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_IONTORRENT) ||
+         caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_LS454)      ||
+         caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_PACBIO)     ||
+         caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_SOLID)
        )
     {
         return true;
@@ -382,38 +408,7 @@ bool SamHeaderValidator::CheckSequencingTechnology(const string& technology) {
     return false;
 }
 
-bool SamHeaderValidator::Is454(const string& technology) {
-    return ( technology == Constants::SAM_RG_SEQTECHNOLOGY_454 ||
-             technology == Constants::SAM_RG_SEQTECHNOLOGY_LS454_LOWER ||
-             technology == Constants::SAM_RG_SEQTECHNOLOGY_LS454_UPPER
-           );
-}
-
-bool SamHeaderValidator::IsHelicos(const string& technology) {
-    return ( technology == Constants::SAM_RG_SEQTECHNOLOGY_HELICOS_LOWER ||
-             technology == Constants::SAM_RG_SEQTECHNOLOGY_HELICOS_UPPER
-           );
-}
-
-bool SamHeaderValidator::IsIllumina(const string& technology) {
-    return ( technology == Constants::SAM_RG_SEQTECHNOLOGY_ILLUMINA_LOWER ||
-             technology == Constants::SAM_RG_SEQTECHNOLOGY_ILLUMINA_UPPER
-           );
-}
-
-bool SamHeaderValidator::IsPacBio(const string& technology) {
-    return ( technology == Constants::SAM_RG_SEQTECHNOLOGY_PACBIO_LOWER ||
-             technology == Constants::SAM_RG_SEQTECHNOLOGY_PACBIO_UPPER
-           );
-}
-
-bool SamHeaderValidator::IsSolid(const string& technology) {
-    return ( technology == Constants::SAM_RG_SEQTECHNOLOGY_SOLID_LOWER ||
-             technology == Constants::SAM_RG_SEQTECHNOLOGY_SOLID_UPPER
-           );
-}
-
-bool SamHeaderValidator::ValidateProgramData(void) {
+bool SamHeaderValidator::ValidateProgramChain(void) {
     bool isValid = true;
     isValid &= ContainsUniqueProgramIds();
     isValid &= ValidatePreviousProgramIds();
@@ -421,17 +416,60 @@ bool SamHeaderValidator::ValidateProgramData(void) {
 }
 
 bool SamHeaderValidator::ContainsUniqueProgramIds(void) {
+
     bool isValid = true;
-    // TODO: once we have ability to handle multiple @PG entries,
-    // check here for duplicate ID's
-    // but for now, just return true
+    set<string> programIds;
+    set<string>::iterator pgIdIter;
+
+    // iterate over program records
+    const SamProgramChain& programs = m_header.Programs;
+    SamProgramConstIterator pgIter = programs.ConstBegin();
+    SamProgramConstIterator pgEnd  = programs.ConstEnd();
+    for ( ; pgIter != pgEnd; ++pgIter ) {
+        const SamProgram& pg = (*pgIter);
+
+        // lookup program ID
+        const string& pgId = pg.ID;
+        pgIdIter = programIds.find(pgId);
+
+        // error if found (duplicate entry)
+        if ( pgIdIter != programIds.end() ) {
+            AddError("Program ID (ID): " + pgId + " is not unique");
+            isValid = false;
+        }
+
+        // otherwise ok, store ID
+        programIds.insert(pgId);
+    }
+
+    // return validation state
     return isValid;
 }
 
 bool SamHeaderValidator::ValidatePreviousProgramIds(void) {
+
     bool isValid = true;
-    // TODO: check that PP entries are valid later, after we get multiple @PG-entry handling
-    // just return true for now
+
+    // iterate over program records
+    const SamProgramChain& programs = m_header.Programs;
+    SamProgramConstIterator pgIter = programs.ConstBegin();
+    SamProgramConstIterator pgEnd  = programs.ConstEnd();
+    for ( ; pgIter != pgEnd; ++pgIter ) {
+        const SamProgram& pg = (*pgIter);
+
+        // ignore record for validation if PreviousProgramID is empty
+        const string& ppId = pg.PreviousProgramID;
+        if ( ppId.empty() )
+            continue;
+
+        // see if program "chain" contains an entry for ppId
+        if ( !programs.Contains(ppId) ) {
+            AddError("PreviousProgramID (PP): " + ppId + " is not a known ID");
+            isValid = false;
+        }
+    }
+
+    // return validation state
     return isValid;
 }
 void SamHeaderValidator::AddError(const string& message) {

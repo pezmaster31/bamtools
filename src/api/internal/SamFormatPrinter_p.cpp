@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011 (DB)
+// Last modified: 19 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for printing formatted SAM header to string
 // ***************************************************************************
@@ -88,13 +88,13 @@ void SamFormatPrinter::PrintSQ(std::stringstream& out) const {
         if ( seq.HasChecksum() )
             out << FormatTag(Constants::SAM_SQ_CHECKSUM_TAG, seq.Checksum);
 
-        // UR:<URI>
-        if ( seq.HasURI() )
-            out << FormatTag(Constants::SAM_SQ_URI_TAG, seq.URI);
-
         // SP:<Species>
         if ( seq.HasSpecies() )
             out << FormatTag(Constants::SAM_SQ_SPECIES_TAG, seq.Species);
+
+        // UR:<URI>
+        if ( seq.HasURI() )
+            out << FormatTag(Constants::SAM_SQ_URI_TAG, seq.URI);
 
         // newline
         out << endl;
@@ -109,38 +109,53 @@ void SamFormatPrinter::PrintRG(std::stringstream& out) const {
     for ( ; rgIter != rgEnd; ++rgIter ) {
         const SamReadGroup& rg = (*rgIter);
 
-        // @RG ID:<ID> SM:<Sample>
+        // @RG ID:<ID>
         out << Constants::SAM_RG_BEGIN_TOKEN
-            << FormatTag(Constants::SAM_RG_ID_TAG, rg.ID)
-            << FormatTag(Constants::SAM_RG_SAMPLE_TAG, rg.Sample);
-
-        // LB:<Library>
-        if ( rg.HasLibrary() )
-            out << FormatTag(Constants::SAM_RG_LIBRARY_TAG, rg.Library);
-
-        // DS:<Description>
-        if ( rg.HasDescription() )
-            out << FormatTag(Constants::SAM_RG_DESCRIPTION_TAG, rg.Description);
-
-        // PU:<PlatformUnit>
-        if ( rg.HasPlatformUnit() )
-            out << FormatTag(Constants::SAM_RG_PLATFORMUNIT_TAG, rg.PlatformUnit);
-
-        // PI:<PredictedInsertSize>
-        if ( rg.HasPredictedInsertSize() )
-            out << FormatTag(Constants::SAM_RG_PREDICTEDINSERTSIZE_TAG, rg.PredictedInsertSize);
+            << FormatTag(Constants::SAM_RG_ID_TAG, rg.ID);
 
         // CN:<SequencingCenter>
         if ( rg.HasSequencingCenter() )
             out << FormatTag(Constants::SAM_RG_SEQCENTER_TAG, rg.SequencingCenter);
 
+        // DS:<Description>
+        if ( rg.HasDescription() )
+            out << FormatTag(Constants::SAM_RG_DESCRIPTION_TAG, rg.Description);
+
         // DT:<ProductionDate>
         if ( rg.HasProductionDate() )
             out << FormatTag(Constants::SAM_RG_PRODUCTIONDATE_TAG, rg.ProductionDate);
 
+        // FO:<FlowOrder>
+        if ( rg.HasFlowOrder() )
+            out << FormatTag(Constants::SAM_RG_FLOWORDER_TAG, rg.FlowOrder);
+
+        // KS:<KeySequence>
+        if ( rg.HasKeySequence() )
+            out << FormatTag(Constants::SAM_RG_KEYSEQUENCE_TAG, rg.KeySequence);
+
+        // LB:<Library>
+        if ( rg.HasLibrary() )
+            out << FormatTag(Constants::SAM_RG_LIBRARY_TAG, rg.Library);
+
+        // PG:<Program>
+        if ( rg.HasProgram() )
+            out << FormatTag(Constants::SAM_RG_PROGRAM_TAG, rg.Program);
+
+        // PI:<PredictedInsertSize>
+        if ( rg.HasPredictedInsertSize() )
+            out << FormatTag(Constants::SAM_RG_PREDICTEDINSERTSIZE_TAG, rg.PredictedInsertSize);
+
         // PL:<SequencingTechnology>
         if ( rg.HasSequencingTechnology() )
             out << FormatTag(Constants::SAM_RG_SEQTECHNOLOGY_TAG, rg.SequencingTechnology);
+
+        // PU:<PlatformUnit>
+        if ( rg.HasPlatformUnit() )
+            out << FormatTag(Constants::SAM_RG_PLATFORMUNIT_TAG, rg.PlatformUnit);
+
+        // SM:<Sample>
+        if ( rg.HasSample() )
+            out << FormatTag(Constants::SAM_RG_SAMPLE_TAG, rg.Sample);
 
         // newline
         out << endl;
@@ -149,20 +164,31 @@ void SamFormatPrinter::PrintRG(std::stringstream& out) const {
 
 void SamFormatPrinter::PrintPG(std::stringstream& out) const {
 
-    // if header has @PG data
-    if ( m_header.HasProgramName() ) {
+    // iterate over program record entries
+    SamProgramConstIterator pgIter = m_header.Programs.ConstBegin();
+    SamProgramConstIterator pgEnd  = m_header.Programs.ConstEnd();
+    for ( ; pgIter != pgEnd; ++pgIter ) {
+        const SamProgram& pg = (*pgIter);
 
-        // @PG ID:<ProgramName>
+        // @PG ID:<ID>
         out << Constants::SAM_PG_BEGIN_TOKEN
-            << FormatTag(Constants::SAM_PG_NAME_TAG, m_header.ProgramName);
+            << FormatTag(Constants::SAM_PG_ID_TAG, pg.ID);
 
-        // VN:<ProgramVersion>
-        if ( m_header.HasProgramVersion() )
-            out << FormatTag(Constants::SAM_PG_VERSION_TAG, m_header.ProgramVersion);
+        // PN:<Name>
+        if ( pg.HasName() )
+            out << FormatTag(Constants::SAM_PG_NAME_TAG, pg.Name);
 
-        // CL:<ProgramCommandLine>
-        if ( m_header.HasProgramCommandLine() )
-            out << FormatTag(Constants::SAM_PG_COMMANDLINE_TAG, m_header.ProgramCommandLine);
+        // CL:<CommandLine>
+        if ( pg.HasCommandLine() )
+            out << FormatTag(Constants::SAM_PG_COMMANDLINE_TAG, pg.CommandLine);
+
+        // PP:<PreviousProgramID>
+        if ( pg.HasPreviousProgramID() )
+            out << FormatTag(Constants::SAM_PG_PREVIOUSPROGRAM_TAG, pg.PreviousProgramID);
+
+        // VN:<Version>
+        if ( pg.HasVersion() )
+            out << FormatTag(Constants::SAM_PG_VERSION_TAG, pg.Version);
 
         // newline
         out << endl;

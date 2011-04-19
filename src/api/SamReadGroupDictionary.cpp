@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 4 March 2011 (DB)
+// Last modified: 18 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamReadGroup entries.
 // ***************************************************************************
@@ -41,11 +41,14 @@ SamReadGroupDictionary::~SamReadGroupDictionary(void) { }
 /*! \fn void SamReadGroupDictionary::Add(const SamReadGroup& readGroup)
     \brief Adds a read group to the dictionary.
 
-    Duplicate entries are discarded.
+    Duplicate entries are silently discarded.
 
     \param readGroup entry to be added
 */
 void SamReadGroupDictionary::Add(const SamReadGroup& readGroup) {
+
+    // TODO: report error on attempted duplicate?
+
     if ( IsEmpty() || !Contains(readGroup) )
         m_data.push_back(readGroup);
 }
@@ -101,10 +104,10 @@ SamReadGroupIterator SamReadGroupDictionary::Begin(void) {
 }
 
 /*! \fn SamReadGroupConstIterator SamReadGroupDictionary::Begin(void) const
+    \return an STL const_iterator pointing to the first read group
 
     This is an overloaded function.
 
-    \return a const STL iterator pointing to the first read group
     \sa ConstBegin(), End()
 */
 SamReadGroupConstIterator SamReadGroupDictionary::Begin(void) const {
@@ -119,7 +122,7 @@ void SamReadGroupDictionary::Clear(void) {
 }
 
 /*! \fn SamReadGroupConstIterator SamReadGroupDictionary::ConstBegin(void) const
-    \return a const STL iterator pointing to the first read group
+    \return an STL const_iterator pointing to the first read group
     \sa Begin(), ConstEnd()
 */
 SamReadGroupConstIterator SamReadGroupDictionary::ConstBegin(void) const {
@@ -127,7 +130,7 @@ SamReadGroupConstIterator SamReadGroupDictionary::ConstBegin(void) const {
 }
 
 /*! \fn SamReadGroupConstIterator SamReadGroupDictionary::ConstEnd(void) const
-    \return a const STL iterator pointing to the imaginary entry after the last read group
+    \return an STL const_iterator pointing to the imaginary entry after the last read group
     \sa ConstBegin(), End()
 */
 SamReadGroupConstIterator SamReadGroupDictionary::ConstEnd(void) const {
@@ -136,23 +139,23 @@ SamReadGroupConstIterator SamReadGroupDictionary::ConstEnd(void) const {
 
 /*! \fn bool SamReadGroupDictionary::Contains(const std::string& readGroupId) const
     \brief Returns true if dictionary contains read group.
-
-    This is an overloaded function.
-
     \param readGroupId search for read group matching this ID
     \return \c true if dictionary contains a read group with this ID
 */
 bool SamReadGroupDictionary::Contains(const std::string& readGroupId) const {
-    return Contains( SamReadGroup(readGroupId) );
+    return ( IndexOf(readGroupId) != (int)m_data.size() );
 }
 
 /*! \fn bool SamReadGroupDictionary::Contains(const SamReadGroup& readGroup) const
-    \brief Returns true if dictionary contains read group.
+    \brief Returns true if dictionary contains read group (matching on ID).
+
+    This is an overloaded function.
+
     \param readGroup search for this read group
-    \return \c true if dictionary contains read group
+    \return \c true if dictionary contains read group (matching on ID).
 */
 bool SamReadGroupDictionary::Contains(const SamReadGroup& readGroup) const {
-    return ( IndexOf(readGroup) != (int)m_data.size() );
+    return Contains( readGroup.ID );
 }
 
 /*! \fn SamReadGroupIterator SamReadGroupDictionary::End(void)
@@ -164,26 +167,27 @@ SamReadGroupIterator SamReadGroupDictionary::End(void) {
 }
 
 /*! \fn SamReadGroupConstIterator SamReadGroupDictionary::End(void) const
+    \return an STL const_iterator pointing to the imaginary entry after the last read group
 
     This is an overloaded function.
 
-    \return a const STL iterator pointing to the imaginary entry after the last read group
     \sa Begin(), ConstEnd()
 */
 SamReadGroupConstIterator SamReadGroupDictionary::End(void) const {
     return m_data.end();
 }
 
-/*! \fn int SamReadGroupDictionary::IndexOf(const SamReadGroup& readGroup) const
+/*! \fn int SamReadGroupDictionary::IndexOf(const std::string& readGroupId) const
     \internal
     \return index of read group if found.  Otherwise, returns vector::size() (invalid index).
 */
-int SamReadGroupDictionary::IndexOf(const SamReadGroup& readGroup) const {
+int SamReadGroupDictionary::IndexOf(const std::string& readGroupId) const {
     SamReadGroupConstIterator begin = ConstBegin();
     SamReadGroupConstIterator iter  = begin;
     SamReadGroupConstIterator end   = ConstEnd();
     for ( ; iter != end; ++iter ) {
-        if ( *iter == readGroup )
+        const SamReadGroup& current = (*iter);
+        if ( current.ID == readGroupId )
             break;
     }
     return distance( begin, iter );
@@ -198,28 +202,28 @@ bool SamReadGroupDictionary::IsEmpty(void) const {
 }
 
 /*! \fn void SamReadGroupDictionary::Remove(const SamReadGroup& readGroup)
-    \brief Removes read group from dictionary, if found.
-    \param readGroup read group to remove
+    \brief Removes read group from dictionary, if found (matching on ID).
+
+    This is an overloaded function.
+
+    \param readGroup read group to remove (matches on ID)
 */
 void SamReadGroupDictionary::Remove(const SamReadGroup& readGroup) {
-    if ( Contains(readGroup) )
-        m_data.erase( m_data.begin() + IndexOf(readGroup) );
+    Remove( readGroup.ID );
 }
 
 /*! \fn void SamReadGroupDictionary::Remove(const std::string& readGroupId)
     \brief Removes read group from dictionary, if found.
-
-    This is an overloaded function.
-
     \param readGroupId ID of read group to remove
     \sa Remove()
 */
 void SamReadGroupDictionary::Remove(const std::string& readGroupId) {
-    Remove( SamReadGroup(readGroupId) );
+    if ( Contains(readGroupId) )
+        m_data.erase( m_data.begin() + IndexOf(readGroupId) );
 }
 
 /*! \fn void SamReadGroupDictionary::Remove(const std::vector<SamReadGroup>& readGroups)
-    \brief Removes multiple read groups from dictionary.
+    \brief Removes multiple read groups from dictionary (matching on ID).
 
     This is an overloaded function.
 
@@ -271,7 +275,7 @@ int SamReadGroupDictionary::Size(void) const {
 SamReadGroup& SamReadGroupDictionary::operator[](const std::string& readGroupId) {
 
     // look up read group ID
-    int index = IndexOf( SamReadGroup(readGroupId) );
+    int index = IndexOf(readGroupId);
 
     // if found, return read group at index
     if ( index != (int)m_data.size() )

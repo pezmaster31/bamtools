@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 4 March 2011 (DB)
+// Last modified: 18 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides direct read/write access to the SAM header data fields.
 // ***************************************************************************
@@ -12,6 +12,7 @@
 #define SAM_HEADER_H
 
 #include <api/api_global.h>
+#include <api/SamProgramChain.h>
 #include <api/SamReadGroupDictionary.h>
 #include <api/SamSequenceDictionary.h>
 #include <string>
@@ -38,17 +39,17 @@ struct API_EXPORT SamHeader {
     bool HasGroupOrder(void) const;         // returns true if header contains group order entry
     bool HasSequences(void) const;          // returns true if header contains any sequence entries
     bool HasReadGroups(void) const;         // returns true if header contains any read group entries
-    bool HasProgramName(void) const;        // returns true if header contains program name
-    bool HasProgramVersion(void) const;     // returns true if header contains program version
-    bool HasProgramCommandLine(void) const; // returns true if header contains program command line
+    bool HasPrograms(void) const;           // returns true if header contains any program record entries
     bool HasComments(void) const;           // returns true if header contains comments
 
+    // --------------
     // data members
+    // --------------
 
     // header metadata (@HD line)
-    std::string Version;                // VN:<Version>
-    std::string SortOrder;              // SO:<SortOrder>
-    std::string GroupOrder;             // GO:<GroupOrder>
+    std::string Version;                    // VN:<Version>  *Required for valid SAM header, if @HD record is present*
+    std::string SortOrder;                  // SO:<SortOrder>
+    std::string GroupOrder;                 // GO:<GroupOrder>
 
     // header sequences (@SQ entries)
     SamSequenceDictionary Sequences;
@@ -57,9 +58,7 @@ struct API_EXPORT SamHeader {
     SamReadGroupDictionary ReadGroups;
 
     // header program data (@PG entries)
-    std::string ProgramName;            // ID:<ProgramName>
-    std::string ProgramVersion;         // VN:<ProgramVersion>
-    std::string ProgramCommandLine;     // CL:<ProgramCommandLine>
+    SamProgramChain Programs;
 
     // header comments (@CO entries)
     std::vector<std::string> Comments;

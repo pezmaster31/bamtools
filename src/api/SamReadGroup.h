@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 4 March 2011 (DB)
+// Last modified: 18 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides direct read/write access to the SAM read group data fields.
 // ***************************************************************************
@@ -28,26 +28,33 @@ struct API_EXPORT SamReadGroup {
     void Clear(void);                           // clears all data fields
 
     // convenience query methods
-    bool HasID(void) const;                     // returns true if read group has a group ID
-    bool HasSample(void) const;                 // returns true if read group has a sample name
-    bool HasLibrary(void) const;                // returns true if read group has a library name
     bool HasDescription(void) const;            // returns true if read group has a description
+    bool HasFlowOrder(void) const;              // returns true if read group has a flow order entry
+    bool HasID(void) const;                     // returns true if read group has a group ID
+    bool HasKeySequence(void) const;            // returns true if read group has a key sequence
+    bool HasLibrary(void) const;                // returns true if read group has a library name
     bool HasPlatformUnit(void) const;           // returns true if read group has a platform unit ID
     bool HasPredictedInsertSize(void) const;    // returns true if read group has a predicted insert size
-    bool HasSequencingCenter(void) const;       // returns true if read group has a sequencing center ID
     bool HasProductionDate(void) const;         // returns true if read group has a production date
+    bool HasProgram(void) const;                // returns true if read group has a program entry
+    bool HasSample(void) const;                 // returns true if read group has a sample name
+    bool HasSequencingCenter(void) const;       // returns true if read group has a sequencing center ID
     bool HasSequencingTechnology(void) const;   // returns true if read group has a sequencing technology ID
 
-    // data members
-    std::string ID;                   // ID:<ID>
-    std::string Sample;               // SM:<Sample>
-    std::string Library;              // LB:<Library>
-    std::string Description;          // DS:<Description>
-    std::string PlatformUnit;         // PU:<PlatformUnit>
-    std::string PredictedInsertSize;  // PI:<PredictedInsertSize>
-    std::string SequencingCenter;     // CN:<SequencingCenter>
-    std::string ProductionDate;       // DT:<ProductionDate>
-    std::string SequencingTechnology; // PL:<SequencingTechnology>
+
+    // data fields
+    std::string Description;                    // DS:<Description>
+    std::string FlowOrder;                      // FO:<FlowOrder>
+    std::string ID;                             // ID:<ID>              *Required for valid SAM header*
+    std::string KeySequence;                    // KS:<KeySequence>
+    std::string Library;                        // LB:<Library>
+    std::string PlatformUnit;                   // PU:<PlatformUnit>
+    std::string PredictedInsertSize;            // PI:<PredictedInsertSize>
+    std::string ProductionDate;                 // DT:<ProductionDate>
+    std::string Program;                        // PG:<Program>
+    std::string Sample;                         // SM:<Sample>
+    std::string SequencingCenter;               // CN:<SequencingCenter>
+    std::string SequencingTechnology;           // PL:<SequencingTechnology>
 };
 
 /*! \fn bool operator==(const SamReadGroup& lhs, const SamReadGroup& rhs)

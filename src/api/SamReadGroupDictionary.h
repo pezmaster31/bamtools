@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 4 March 2011 (DB)
+// Last modified: 18 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamReadGroup entries.
 // ***************************************************************************
@@ -75,7 +75,7 @@ class API_EXPORT SamReadGroupDictionary {
 
     // internal methods
     private:
-        int IndexOf(const SamReadGroup& readGroup) const;
+        int IndexOf(const std::string& readGroupId) const;
 
     // data members
     private:
@@ -84,4 +84,4 @@ class API_EXPORT SamReadGroupDictionary {
 
 } // namespace BamTools
 
-#endif // SAM_READGROUP_DICTIONARY 
+#endif // SAM_READGROUP_DICTIONARY_H

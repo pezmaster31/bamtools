@@ -64,18 +64,13 @@ class SamHeaderValidator {
 
         // validate read group dictionary
         bool ValidateReadGroupDictionary(void);
-        bool ValidateReadGroup(const SamReadGroup& rg);
         bool ContainsUniqueIDsAndPlatformUnits(void);
+        bool ValidateReadGroup(const SamReadGroup& rg);
         bool CheckReadGroupID(const std::string& id);
         bool CheckSequencingTechnology(const std::string& technology);
-        bool Is454(const std::string& technology);
-        bool IsHelicos(const std::string& technology);
-        bool IsIllumina(const std::string& technology);
-        bool IsPacBio(const std::string& technology);
-        bool IsSolid(const std::string& technology);
 
         // validate program data
-        bool ValidateProgramData(void);
+        bool ValidateProgramChain(void);
         bool ContainsUniqueProgramIds(void);
         bool ValidatePreviousProgramIds(void);
 

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 5 April 2011 (DB)
+// Last modified: 19 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides basic constants for handling BAM files.
 // ***************************************************************************
@@ -31,20 +31,20 @@ const int BAM_CORE_SIZE = 32;
 const int BAM_CORE_BUFFER_SIZE = 8;
 
 // BAM alignment flags
-const int BAM_ALIGNMENT_PAIRED              = 1;
-const int BAM_ALIGNMENT_PROPER_PAIR         = 2;
-const int BAM_ALIGNMENT_UNMAPPED            = 4;
-const int BAM_ALIGNMENT_MATE_UNMAPPED       = 8;
-const int BAM_ALIGNMENT_REVERSE_STRAND      = 16;
-const int BAM_ALIGNMENT_MATE_REVERSE_STRAND = 32;
-const int BAM_ALIGNMENT_READ_1              = 64;
-const int BAM_ALIGNMENT_READ_2              = 128;
-const int BAM_ALIGNMENT_SECONDARY           = 256;
-const int BAM_ALIGNMENT_QC_FAILED           = 512;
-const int BAM_ALIGNMENT_DUPLICATE           = 1024;
+const int BAM_ALIGNMENT_PAIRED              = 0x0001;
+const int BAM_ALIGNMENT_PROPER_PAIR         = 0x0002;
+const int BAM_ALIGNMENT_UNMAPPED            = 0x0004;
+const int BAM_ALIGNMENT_MATE_UNMAPPED       = 0x0008;
+const int BAM_ALIGNMENT_REVERSE_STRAND      = 0x0010;
+const int BAM_ALIGNMENT_MATE_REVERSE_STRAND = 0x0020;
+const int BAM_ALIGNMENT_READ_1              = 0x0040;
+const int BAM_ALIGNMENT_READ_2              = 0x0080;
+const int BAM_ALIGNMENT_SECONDARY           = 0x0100;
+const int BAM_ALIGNMENT_QC_FAILED           = 0x0200;
+const int BAM_ALIGNMENT_DUPLICATE           = 0x0400;
 
 // CIGAR constants
-const char* const BAM_CIGAR_LOOKUP = "MIDNSHP";
+const char* const BAM_CIGAR_LOOKUP = "MIDNSHP=X";
 const int BAM_CIGAR_MATCH    = 0;
 const int BAM_CIGAR_INS      = 1;
 const int BAM_CIGAR_DEL      = 2;
@@ -52,8 +52,8 @@ const int BAM_CIGAR_REFSKIP  = 3;
 const int BAM_CIGAR_SOFTCLIP = 4;
 const int BAM_CIGAR_HARDCLIP = 5;
 const int BAM_CIGAR_PAD      = 6;
-
-// TODO: Add support for 'X' and '=' ops
+const int BAM_CIGAR_SEQMATCH = 7;
+const int BAM_CIGAR_MISMATCH = 8;
 
 const char BAM_CIGAR_MATCH_CHAR    = 'M';
 const char BAM_CIGAR_INS_CHAR      = 'I';
@@ -62,6 +62,8 @@ const char BAM_CIGAR_REFSKIP_CHAR  = 'N';
 const char BAM_CIGAR_SOFTCLIP_CHAR = 'S';
 const char BAM_CIGAR_HARDCLIP_CHAR = 'H';
 const char BAM_CIGAR_PAD_CHAR      = 'P';
+const char BAM_CIGAR_SEQMATCH_CHAR = '=';
+const char BAM_CIGAR_MISMATCH_CHAR = 'X';
 
 const int BAM_CIGAR_SHIFT    = 4;
 const int BAM_CIGAR_MASK     = ((1 << BAM_CIGAR_SHIFT) - 1);
@@ -77,9 +79,11 @@ const char BAM_TAG_TYPE_INT32  = 'I';
 const char BAM_TAG_TYPE_FLOAT  = 'f';
 const char BAM_TAG_TYPE_STRING = 'Z';
 const char BAM_TAG_TYPE_HEX    = 'H';
+const char BAM_TAG_TYPE_ARRAY  = 'B';
 
 const size_t BAM_TAG_TAGSIZE  = 2;
 const size_t BAM_TAG_TYPESIZE = 1;
+const int BAM_TAG_ARRAYBASE_SIZE = 8;
 
 // DNA bases
 const char* const BAM_DNA_LOOKUP = "=ACMGRSVTWYHKDBN";

@@ -3,11 +3,12 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 4 March 2011 (DB)
+// Last modified: 19 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides direct read/write access to the SAM header data fields.
 // ***************************************************************************
 
+#include <api/SamConstants.h>
 #include <api/SamHeader.h>
 #include <api/internal/SamFormatParser_p.h>
 #include <api/internal/SamFormatPrinter_p.h>
@@ -21,10 +22,12 @@ using namespace std;
 
     Provides direct read/write access to the SAM header data fields.
 
-    \sa http://samtools.sourceforge.net/SAM-1.3.pdf
+    \sa \samSpecURL
 */
 /*! \var SamHeader::Version
     \brief corresponds to \@HD VN:\<Version\>
+
+    Required for valid SAM header, if @HD record is present.
 */
 /*! \var SamHeader::SortOrder
     \brief corresponds to \@HD SO:\<SortOrder\>
@@ -58,11 +61,8 @@ using namespace std;
 */
 SamHeader::SamHeader(const std::string& headerText)
     : Version("")
-    , SortOrder("")
+    , SortOrder(Constants::SAM_HD_SORTORDER_UNKNOWN)
     , GroupOrder("")
-    , ProgramName("")
-    , ProgramVersion("")
-    , ProgramCommandLine("")
 {
     SamFormatParser parser(*this);
     parser.Parse(headerText);
@@ -77,9 +77,7 @@ SamHeader::SamHeader(const SamHeader& other)
     , GroupOrder(other.GroupOrder)
     , Sequences(other.Sequences)
     , ReadGroups(other.ReadGroups)
-    , ProgramName(other.ProgramName)
-    , ProgramVersion(other.ProgramVersion)
-    , ProgramCommandLine(other.ProgramCommandLine)
+    , Programs(other.Programs)
 { }
 
 /*! \fn SamHeader::~SamHeader(void)
@@ -96,9 +94,7 @@ void SamHeader::Clear(void) {
     GroupOrder.clear();
     Sequences.Clear();
     ReadGroups.Clear();
-    ProgramName.clear();
-    ProgramVersion.clear();
-    ProgramCommandLine.clear();
+    Programs.Clear();
     Comments.clear();
 }
 
@@ -137,25 +133,11 @@ bool SamHeader::HasReadGroups(void) const {
     return (!ReadGroups.IsEmpty());
 }
 
-/*! \fn bool SamHeader::HasProgramName(void) const
-    \brief Returns \c true if header contains \@PG ID:\<ProgramName\>
+/*! \fn bool SamHeader::HasPrograms(void) const
+    \brief Returns \c true if header contains any \@PG entries
 */
-bool SamHeader::HasProgramName(void) const {
-    return (!ProgramName.empty());
-}
-
-/*! \fn bool SamHeader::HasProgramVersion(void) const
-    \brief Returns \c true if header contains \@PG VN:\<ProgramVersion\>
-*/
-bool SamHeader::HasProgramVersion(void) const {
-    return (!ProgramVersion.empty());
-}
-
-/*! \fn bool SamHeader::HasProgramCommandLine(void) const
-    \brief Returns \c true if header contains \@PG CL:\<ProgramCommandLine\>
-*/
-bool SamHeader::HasProgramCommandLine(void) const {
-    return (!ProgramCommandLine.empty());
+bool SamHeader::HasPrograms(void) const {
+    return (!Programs.IsEmpty());
 }
 
 /*! \fn bool SamHeader::HasComments(void) const

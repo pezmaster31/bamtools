@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 April 2011 (DB)
+// Last modified: 22 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -21,173 +21,6 @@ using namespace BamTools;
 #include <map>
 #include <utility>
 using namespace std;
-
-// internal utility methods
-namespace BamTools {
-namespace Internal {
-
-/*! \fn bool IsValidSize(const string& tag, const string& type)
-    \internal
-
-    Checks that tag name & type strings are expected sizes.
-    \a tag  should have length
-    \a type should have length 1
-
-    \param tag  BAM tag name
-    \param type BAM tag type-code
-
-    \return \c true if both \a tag and \a type are correct sizes
-*/
-bool IsValidSize(const string& tag, const string& type) {
-    return (tag.size()  == Constants::BAM_TAG_TAGSIZE) &&
-           (type.size() == Constants::BAM_TAG_TYPESIZE);
-}
-
-/*! \fn bool SkipToNextTag(const char storageType, char* &pTagData, unsigned int& numBytesParsed)
-    \internal
-
-    Moves to next available tag in tag data string
-
-    \param storageType    BAM tag type-code that determines how far to move cursor
-    \param pTagData       pointer to current position (cursor) in tag string
-    \param numBytesParsed report of how many bytes were parsed (cumulatively)
-
-    \return \c if storageType was a recognized BAM tag type
-    \post \a pTagData will point to the byte where the next tag data begins.
-          \a numBytesParsed will correspond to the cursor's position in the full TagData string.
-*/
-bool SkipToNextTag(const char storageType, char* &pTagData, unsigned int& numBytesParsed) {
-
-    switch (storageType) {
-
-        case (Constants::BAM_TAG_TYPE_ASCII) :
-        case (Constants::BAM_TAG_TYPE_INT8)  :
-        case (Constants::BAM_TAG_TYPE_UINT8) :
-            ++numBytesParsed;
-            ++pTagData;
-            break;
-
-        case (Constants::BAM_TAG_TYPE_INT16)  :
-        case (Constants::BAM_TAG_TYPE_UINT16) :
-            numBytesParsed += sizeof(uint16_t);
-            pTagData       += sizeof(uint16_t);
-            break;
-
-        case (Constants::BAM_TAG_TYPE_FLOAT)  :
-        case (Constants::BAM_TAG_TYPE_INT32)  :
-        case (Constants::BAM_TAG_TYPE_UINT32) :
-            numBytesParsed += sizeof(uint32_t);
-            pTagData       += sizeof(uint32_t);
-            break;
-
-        case (Constants::BAM_TAG_TYPE_STRING) :
-        case (Constants::BAM_TAG_TYPE_HEX)    :
-            while( *pTagData ) {
-                ++numBytesParsed;
-                ++pTagData;
-            }
-            // increment for null-terminator
-            ++numBytesParsed;
-            ++pTagData;
-            break;
-
-        case (Constants::BAM_TAG_TYPE_ARRAY) :
-
-        {
-            // read array type
-            const char arrayType = *pTagData;
-            ++numBytesParsed;
-            ++pTagData;
-
-            // read number of elements
-            int32_t numElements;
-            memcpy(&numElements, pTagData, sizeof(uint32_t)); // already endian-swapped if necessary
-            numBytesParsed += sizeof(uint32_t);
-            pTagData       += sizeof(uint32_t);
-
-            // calculate number of bytes to skip
-            int bytesToSkip = 0;
-            switch (arrayType) {
-                case (Constants::BAM_TAG_TYPE_INT8)  :
-                case (Constants::BAM_TAG_TYPE_UINT8) :
-                    bytesToSkip = numElements;
-                    break;
-                case (Constants::BAM_TAG_TYPE_INT16)  :
-                case (Constants::BAM_TAG_TYPE_UINT16) :
-                    bytesToSkip = numElements*sizeof(uint16_t);
-                    break;
-                case (Constants::BAM_TAG_TYPE_FLOAT)  :
-                case (Constants::BAM_TAG_TYPE_INT32)  :
-                case (Constants::BAM_TAG_TYPE_UINT32) :
-                    bytesToSkip = numElements*sizeof(uint32_t);
-                    break;
-                default:
-                    cerr << "BamAlignment ERROR: unknown binary array type encountered: "
-                         << arrayType << endl;
-                    return false;
-            }
-
-            // skip binary array contents
-            numBytesParsed += bytesToSkip;
-            pTagData       += bytesToSkip;
-            break;
-        }
-
-        default:
-            cerr << "BamAlignment ERROR: unknown tag type encountered"
-                 << storageType << endl;
-            return false;
-    }
-
-    // return success
-    return true;
-}
-
-/*! \fn bool FindTag(const std::string& tag, char* &pTagData, const unsigned int& tagDataLength, unsigned int& numBytesParsed)
-    \internal
-
-    Searches for requested tag in BAM tag data.
-
-    \param tag            requested 2-character tag name
-    \param pTagData       pointer to current position in BamAlignment::TagData
-    \param tagDataLength  length of BamAlignment::TagData
-    \param numBytesParsed number of bytes parsed so far
-
-    \return \c true if found
-
-    \post If \a tag is found, \a pTagData will point to the byte where the tag data begins.
-          \a numBytesParsed will correspond to the position in the full TagData string.
-
-*/
-bool FindTag(const std::string& tag,
-             char* &pTagData,
-             const unsigned int& tagDataLength,
-             unsigned int& numBytesParsed)
-{
-
-    while ( numBytesParsed < tagDataLength ) {
-
-        const char* pTagType        = pTagData;
-        const char* pTagStorageType = pTagData + 2;
-        pTagData       += 3;
-        numBytesParsed += 3;
-
-        // check the current tag, return true on match
-        if ( strncmp(pTagType, tag.c_str(), 2) == 0 )
-            return true;
-
-        // get the storage class and find the next tag
-        if ( *pTagStorageType == '\0' ) return false;
-        if ( !SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) ) return false;
-        if ( *pTagData == '\0' ) return false;
-    }
-
-    // checked all tags, none match
-    return false;
-}
-
-} // namespace Internal
-} // namespace BamTools
 
 /*! \class BamTools::BamAlignment
     \brief The main BAM alignment data structure.
@@ -300,7 +133,7 @@ bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const
     if ( SupportData.HasCoreOnly ) return false;
 
     // validate tag/type size & that type is OK for string value
-    if ( !Internal::IsValidSize(tag, type) ) return false;
+    if ( !IsValidSize(tag, type) ) return false;
     if ( type.at(0) != Constants::BAM_TAG_TYPE_STRING &&
          type.at(0) != Constants::BAM_TAG_TYPE_HEX
        )
@@ -315,7 +148,7 @@ bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const
     
     // if tag already exists, return false
     // use EditTag explicitly instead
-    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
         return false;
   
     // otherwise, copy tag data to temp buffer
@@ -353,7 +186,7 @@ bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const
     if ( SupportData.HasCoreOnly ) return false;
 
     // validate tag/type size & that type is OK for uint32_t value
-    if ( !Internal::IsValidSize(tag, type) ) return false;
+    if ( !IsValidSize(tag, type) ) return false;
     if ( type.at(0) == Constants::BAM_TAG_TYPE_FLOAT  ||
          type.at(0) == Constants::BAM_TAG_TYPE_STRING ||
          type.at(0) == Constants::BAM_TAG_TYPE_HEX    ||
@@ -370,7 +203,7 @@ bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const
     
     // if tag already exists, return false
     // use EditTag explicitly instead
-    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
         return false;
   
     // otherwise, convert value to string
@@ -429,7 +262,7 @@ bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const
     if ( SupportData.HasCoreOnly ) return false;
 
     // validate tag/type size & that type is OK for float value
-    if ( !Internal::IsValidSize(tag, type) ) return false;
+    if ( !IsValidSize(tag, type) ) return false;
     if ( type.at(0) == Constants::BAM_TAG_TYPE_STRING ||
          type.at(0) == Constants::BAM_TAG_TYPE_HEX    ||
          type.at(0) == Constants::BAM_TAG_TYPE_ARRAY
@@ -445,7 +278,7 @@ bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const
     
     // if tag already exists, return false
     // use EditTag explicitly instead
-    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
         return false;
   
     // otherwise, convert value to string
@@ -496,7 +329,7 @@ bool BamAlignment::AddTag(const std::string& tag, const std::vector<uint8_t>& va
 
     // if tag already exists, return false
     // use EditTag explicitly instead
-    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
         return false;
 
     // build new tag's base information
@@ -561,7 +394,7 @@ bool BamAlignment::AddTag(const std::string& tag, const std::vector<int8_t>& val
 
     // if tag already exists, return false
     // use EditTag explicitly instead
-    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
         return false;
 
     // build new tag's base information
@@ -626,7 +459,7 @@ bool BamAlignment::AddTag(const std::string& tag, const std::vector<uint16_t>& v
 
     // if tag already exists, return false
     // use EditTag explicitly instead
-    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
         return false;
 
     // build new tag's base information
@@ -691,7 +524,7 @@ bool BamAlignment::AddTag(const std::string& tag, const std::vector<int16_t>& va
 
     // if tag already exists, return false
     // use EditTag explicitly instead
-    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
         return false;
 
     // build new tag's base information
@@ -756,7 +589,7 @@ bool BamAlignment::AddTag(const std::string& tag, const std::vector<uint32_t>& v
 
     // if tag already exists, return false
     // use EditTag explicitly instead
-    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
         return false;
 
     // build new tag's base information
@@ -821,7 +654,7 @@ bool BamAlignment::AddTag(const std::string& tag, const std::vector<int32_t>& va
 
     // if tag already exists, return false
     // use EditTag explicitly instead
-    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
         return false;
 
     // build new tag's base information
@@ -886,7 +719,7 @@ bool BamAlignment::AddTag(const std::string& tag, const std::vector<float>& valu
 
     // if tag already exists, return false
     // use EditTag explicitly instead
-    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
         return false;
 
     // build new tag's base information
@@ -1174,7 +1007,7 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
     if ( SupportData.HasCoreOnly ) return false;
 
     // validate tag/type size & that type is OK for string value
-    if ( !Internal::IsValidSize(tag, type) ) return false;
+    if ( !IsValidSize(tag, type) ) return false;
     if ( type.at(0) != Constants::BAM_TAG_TYPE_STRING &&
          type.at(0) != Constants::BAM_TAG_TYPE_HEX )
         return false;
@@ -1188,7 +1021,7 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
     unsigned int numBytesParsed = 0;
     
     // if tag found
-    if ( Internal::FindTag(tag, pTagData, originalTagDataLength, numBytesParsed) ) {
+    if ( FindTag(tag, pTagData, originalTagDataLength, numBytesParsed) ) {
         
         // make sure array is more than big enough
         char newTagData[originalTagDataLength + value.size()];  
@@ -1204,7 +1037,7 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
         
         // skip to next tag (if tag for removal is last, return true) 
         const char* pTagStorageType = pTagData - 1;
-        if ( !Internal::SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) )
+        if ( !SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) )
             return true;
          
         // copy everything from current tag (the next one after tag for removal) to end
@@ -1245,7 +1078,7 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
     if ( SupportData.HasCoreOnly ) return false;
 
     // validate tag/type size & that type is OK for uint32_t value
-    if ( !Internal::IsValidSize(tag, type) ) return false;
+    if ( !IsValidSize(tag, type) ) return false;
     if ( type.at(0) == Constants::BAM_TAG_TYPE_FLOAT  ||
          type.at(0) == Constants::BAM_TAG_TYPE_STRING ||
          type.at(0) == Constants::BAM_TAG_TYPE_HEX    ||
@@ -1264,7 +1097,7 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
     unsigned int numBytesParsed = 0;
     
     // if tag found
-    if ( Internal::FindTag(tag, pTagData, originalTagDataLength, numBytesParsed) ) {
+    if ( FindTag(tag, pTagData, originalTagDataLength, numBytesParsed) ) {
         
         // make sure array is more than big enough
         char newTagData[originalTagDataLength + sizeof(value)];  
@@ -1281,7 +1114,7 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
         
         // skip to next tag (if tag for removal is last, return true) 
         const char* pTagStorageType = pTagData - 1;
-        if ( !Internal::SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) )
+        if ( !SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) )
             return true;
          
         // copy everything from current tag (the next one after tag for removal) to end
@@ -1340,7 +1173,7 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
     if ( SupportData.HasCoreOnly ) return false;
 
     // validate tag/type size & that type is OK for float value
-    if ( !Internal::IsValidSize(tag, type) ) return false;
+    if ( !IsValidSize(tag, type) ) return false;
     if ( type.at(0) == Constants::BAM_TAG_TYPE_STRING ||
          type.at(0) == Constants::BAM_TAG_TYPE_HEX    ||
          type.at(0) == Constants::BAM_TAG_TYPE_ARRAY
@@ -1358,7 +1191,7 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
     unsigned int numBytesParsed = 0;
     
     // if tag found
-    if ( Internal::FindTag(tag, pTagData, originalTagDataLength, numBytesParsed) ) {
+    if ( FindTag(tag, pTagData, originalTagDataLength, numBytesParsed) ) {
         
         // make sure array is more than big enough
         char newTagData[originalTagDataLength + sizeof(value)];  
@@ -1375,7 +1208,7 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
         
         // skip to next tag (if tag for removal is last, return true) 
         const char* pTagStorageType = pTagData - 1;
-        if ( !Internal::SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) )
+        if ( !SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) )
             return true;
          
         // copy everything from current tag (the next one after tag for removal) to end
@@ -1571,6 +1404,49 @@ bool BamAlignment::EditTag(const std::string& tag, const std::vector<float>& val
     return AddTag(tag, values);
 }
 
+/*! \fn bool BamAlignment::FindTag(const std::string& tag, char*& pTagData, const unsigned int& tagDataLength, unsigned int& numBytesParsed)
+    \internal
+
+    Searches for requested tag in BAM tag data.
+
+    \param tag            requested 2-character tag name
+    \param pTagData       pointer to current position in BamAlignment::TagData
+    \param tagDataLength  length of BamAlignment::TagData
+    \param numBytesParsed number of bytes parsed so far
+
+    \return \c true if found
+
+    \post If \a tag is found, \a pTagData will point to the byte where the tag data begins.
+          \a numBytesParsed will correspond to the position in the full TagData string.
+
+*/
+bool BamAlignment::FindTag(const std::string& tag,
+                           char*& pTagData,
+                           const unsigned int& tagDataLength,
+                           unsigned int& numBytesParsed) const
+{
+
+    while ( numBytesParsed < tagDataLength ) {
+
+        const char* pTagType        = pTagData;
+        const char* pTagStorageType = pTagData + 2;
+        pTagData       += 3;
+        numBytesParsed += 3;
+
+        // check the current tag, return true on match
+        if ( strncmp(pTagType, tag.c_str(), 2) == 0 )
+            return true;
+
+        // get the storage class and find the next tag
+        if ( *pTagStorageType == '\0' ) return false;
+        if ( !SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) ) return false;
+        if ( *pTagData == '\0' ) return false;
+    }
+
+    // checked all tags, none match
+    return false;
+}
+
 /*! \fn bool BamAlignment::GetEditDistance(uint32_t& editDistance) const
     \brief Retrieves value of edit distance tag ("NM").
 
@@ -1660,7 +1536,7 @@ bool BamAlignment::GetTag(const std::string& tag, std::string& destination) cons
     unsigned int numBytesParsed = 0;
     
     // if tag found
-    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
         const unsigned int dataLength = strlen(pTagData);
         destination.clear();
         destination.resize(dataLength);
@@ -1692,7 +1568,7 @@ bool BamAlignment::GetTag(const std::string& tag, uint32_t& destination) const {
     unsigned int numBytesParsed = 0;
     
     // if tag found
-    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
         
         // determine data byte-length
         const char type = *(pTagData - 1);
@@ -1776,7 +1652,7 @@ bool BamAlignment::GetTag(const std::string& tag, float& destination) const {
     unsigned int numBytesParsed = 0;
     
     // if tag found
-    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
         
         // determine data byte-length
         const char type = *(pTagData - 1);
@@ -1848,7 +1724,7 @@ bool BamAlignment::GetTag(const std::string& tag, std::vector<uint32_t>& destina
     unsigned int numBytesParsed = 0;
 
     // return false if tag not found
-    if ( !Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( !FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
         return false;
 
     // check that tag is array type
@@ -1935,7 +1811,7 @@ bool BamAlignment::GetTag(const std::string& tag, std::vector<int32_t>& destinat
     unsigned int numBytesParsed = 0;
 
     // return false if tag not found
-    if ( !Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( !FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
         return false;
 
     // check that tag is array type
@@ -2023,7 +1899,7 @@ bool BamAlignment::GetTag(const std::string& tag, std::vector<float>& destinatio
     unsigned int numBytesParsed = 0;
 
     // return false if tag not found
-    if ( !Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( !FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
         return false;
 
     // check that tag is array type
@@ -2111,7 +1987,7 @@ bool BamAlignment::GetTagType(const std::string& tag, char& type) const {
     unsigned int numBytesParsed = 0;
     
     // lookup tag
-    if ( Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
         
         // retrieve tag type code
         type = *(pTagData - 1);
@@ -2160,7 +2036,7 @@ bool BamAlignment::HasTag(const std::string& tag) const {
     unsigned int numBytesParsed = 0;
 
     // if result of tag lookup
-    return Internal::FindTag(tag, pTagData, tagDataLength, numBytesParsed);
+    return FindTag(tag, pTagData, tagDataLength, numBytesParsed);
 }
 
 /*! \fn bool BamAlignment::IsDuplicate(void) const
@@ -2240,6 +2116,23 @@ bool BamAlignment::IsSecondMate(void) const {
     return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_READ_2) != 0 );
 }
 
+/*! \fn bool BamAlignment::IsValidSize(const string& tag, const string& type) const
+    \internal
+
+    Checks that tag name & type strings are expected sizes.
+    \a tag  should have length
+    \a type should have length 1
+
+    \param tag  BAM tag name
+    \param type BAM tag type-code
+
+    \return \c true if both \a tag and \a type are correct sizes
+*/
+bool BamAlignment::IsValidSize(const string& tag, const string& type) const {
+    return (tag.size()  == Constants::BAM_TAG_TAGSIZE) &&
+           (type.size() == Constants::BAM_TAG_TYPESIZE);
+}
+
 /*! \fn bool BamAlignment::RemoveTag(const std::string& tag)
     \brief Removes field from BAM tags.
 
@@ -2259,7 +2152,7 @@ bool BamAlignment::RemoveTag(const std::string& tag) {
     unsigned int numBytesParsed = 0;
     
     // if tag found
-    if ( Internal::FindTag(tag, pTagData, originalTagDataLength, numBytesParsed) ) {
+    if ( FindTag(tag, pTagData, originalTagDataLength, numBytesParsed) ) {
         
         char newTagData[originalTagDataLength];
 
@@ -2274,7 +2167,7 @@ bool BamAlignment::RemoveTag(const std::string& tag) {
         const char* pTagStorageType = pTagData + 2;
         pTagData       += 3;
         numBytesParsed += 3;
-        if ( !Internal::SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) )
+        if ( !SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) )
             return true;
          
         // copy everything from current tag (the next one after tag for removal) to end
@@ -2404,4 +2297,106 @@ void BamAlignment::SetIsSecondMate(bool ok) {
 */
 void BamAlignment::SetIsUnmapped(bool ok) {
     SetIsMapped(!ok);
+}
+
+/*! \fn bool BamAlignment::SkipToNextTag(const char storageType, char*& pTagData, unsigned int& numBytesParsed)
+    \internal
+
+    Moves to next available tag in tag data string
+
+    \param storageType    BAM tag type-code that determines how far to move cursor
+    \param pTagData       pointer to current position (cursor) in tag string
+    \param numBytesParsed report of how many bytes were parsed (cumulatively)
+
+    \return \c if storageType was a recognized BAM tag type
+    \post \a pTagData will point to the byte where the next tag data begins.
+          \a numBytesParsed will correspond to the cursor's position in the full TagData string.
+*/
+bool BamAlignment::SkipToNextTag(const char storageType,
+                                 char*& pTagData,
+                                 unsigned int& numBytesParsed) const
+{
+    switch (storageType) {
+
+        case (Constants::BAM_TAG_TYPE_ASCII) :
+        case (Constants::BAM_TAG_TYPE_INT8)  :
+        case (Constants::BAM_TAG_TYPE_UINT8) :
+            ++numBytesParsed;
+            ++pTagData;
+            break;
+
+        case (Constants::BAM_TAG_TYPE_INT16)  :
+        case (Constants::BAM_TAG_TYPE_UINT16) :
+            numBytesParsed += sizeof(uint16_t);
+            pTagData       += sizeof(uint16_t);
+            break;
+
+        case (Constants::BAM_TAG_TYPE_FLOAT)  :
+        case (Constants::BAM_TAG_TYPE_INT32)  :
+        case (Constants::BAM_TAG_TYPE_UINT32) :
+            numBytesParsed += sizeof(uint32_t);
+            pTagData       += sizeof(uint32_t);
+            break;
+
+        case (Constants::BAM_TAG_TYPE_STRING) :
+        case (Constants::BAM_TAG_TYPE_HEX)    :
+            while( *pTagData ) {
+                ++numBytesParsed;
+                ++pTagData;
+            }
+            // increment for null-terminator
+            ++numBytesParsed;
+            ++pTagData;
+            break;
+
+        case (Constants::BAM_TAG_TYPE_ARRAY) :
+
+        {
+            // read array type
+            const char arrayType = *pTagData;
+            ++numBytesParsed;
+            ++pTagData;
+
+            // read number of elements
+            int32_t numElements;
+            memcpy(&numElements, pTagData, sizeof(uint32_t)); // already endian-swapped if necessary
+            numBytesParsed += sizeof(uint32_t);
+            pTagData       += sizeof(uint32_t);
+
+            // calculate number of bytes to skip
+            int bytesToSkip = 0;
+            switch (arrayType) {
+                case (Constants::BAM_TAG_TYPE_INT8)  :
+                case (Constants::BAM_TAG_TYPE_UINT8) :
+                    bytesToSkip = numElements;
+                    break;
+                case (Constants::BAM_TAG_TYPE_INT16)  :
+                case (Constants::BAM_TAG_TYPE_UINT16) :
+                    bytesToSkip = numElements*sizeof(uint16_t);
+                    break;
+                case (Constants::BAM_TAG_TYPE_FLOAT)  :
+                case (Constants::BAM_TAG_TYPE_INT32)  :
+                case (Constants::BAM_TAG_TYPE_UINT32) :
+                    bytesToSkip = numElements*sizeof(uint32_t);
+                    break;
+                default:
+                    cerr << "BamAlignment ERROR: unknown binary array type encountered: "
+                         << arrayType << endl;
+                    return false;
+            }
+
+            // skip binary array contents
+            numBytesParsed += bytesToSkip;
+            pTagData       += bytesToSkip;
+            break;
+        }
+
+        default:
+            cerr << "BamAlignment ERROR: unknown tag type encountered"
+                 << storageType << endl;
+            return false;
+    }
+
+    // return success
+    return true;
 }

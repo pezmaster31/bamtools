@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 April 2011 (DB)
+// Last modified: 22 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -159,9 +159,22 @@ struct API_EXPORT BamAlignment {
         int32_t     InsertSize;         // mate-pair insert size
         std::string Filename;           // name of BAM file which this alignment comes from
 
+    //! \cond
+    // internal utility methods
+    private:
+        bool FindTag(const std::string& tag,
+                     char*& pTagData,
+                     const unsigned int& tagDataLength,
+                     unsigned int& numBytesParsed) const;
+        bool IsValidSize(const std::string& tag,
+                         const std::string& type) const;
+        bool SkipToNextTag(const char storageType,
+                           char*& pTagData,
+                           unsigned int& numBytesParsed) const;
+
     // internal data
     private:
-        //! \cond
+
         struct BamAlignmentSupportData {
       
             // data members
@@ -184,7 +197,7 @@ struct API_EXPORT BamAlignment {
         BamAlignmentSupportData SupportData;
         friend class Internal::BamReaderPrivate;
         friend class Internal::BamWriterPrivate;
-        //! \endcond
+    //! \endcond
 };
 
 typedef std::vector<BamAlignment> BamAlignmentVector;

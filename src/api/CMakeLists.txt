@@ -40,7 +40,7 @@ set( BamToolsAPISources
 
 # create main BamTools API shared library
 add_library( BamTools SHARED ${BamToolsAPISources} )
-set_target_properties( BamTools PROPERTIES SOVERSION "1.0.1" )
+set_target_properties( BamTools PROPERTIES SOVERSION "1.0.2" )
 set_target_properties( BamTools PROPERTIES OUTPUT_NAME "bamtools" )
 
 # create main BamTools API static library

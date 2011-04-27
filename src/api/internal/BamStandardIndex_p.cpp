@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 5 April 2011 (DB)
+// Last modified: 27 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the standardized BAM index format (".bai")
 // ***************************************************************************
@@ -247,6 +247,8 @@ void BamStandardIndex::CloseFile(void) {
 // builds index from associated BAM file & writes out to index file
 bool BamStandardIndex::Create(void) {
 
+    cerr << "Creating BAI..." << endl;
+
     // return false if BamReader is invalid or not open
     if ( m_reader == 0 || !m_reader->IsOpen() ) {
         cerr << "BamStandardIndex ERROR: BamReader is not open"
@@ -254,12 +256,16 @@ bool BamStandardIndex::Create(void) {
         return false;
     }
 
+    cerr << "BAM file is open" << endl;
+
     // rewind BamReader
     if ( !m_reader->Rewind() ) {
         cerr << "BamStandardIndex ERROR: could not rewind BamReader to create index"
              << ", aborting index creation" << endl;
         return false;
     }
+
+    cerr << "BAM file is rewound" << endl;
 
     // open new index file (read & write)
     string indexFilename = m_reader->Filename() + Extension();
@@ -302,11 +308,26 @@ bool BamStandardIndex::Create(void) {
                 createdOk &= WriteReferenceEntry(refEntry);
                 ClearReferenceEntry(refEntry);
 
+                // write any empty references between (but *NOT* including) lastRefID & al.RefID
+                for ( int i = lastRefID+1; i < al.RefID; ++i ) {
+                    BaiReferenceEntry emptyEntry(i);
+                    createdOk &= WriteReferenceEntry(emptyEntry);
+                }
+
                 // update bin markers
                 currentOffset = lastOffset;
                 currentBin    = al.Bin;
                 lastBin       = al.Bin;
                 currentRefID  = al.RefID;
+            }
+
+            // first pass
+            // write any empty references up to (but *NOT* including) al.RefID
+            else {
+                for ( int i = 0; i < al.RefID; ++i ) {
+                    BaiReferenceEntry emptyEntry(i);
+                    createdOk &= WriteReferenceEntry(emptyEntry);
+                }
             }
 
             // update reference markers
@@ -361,10 +382,18 @@ bool BamStandardIndex::Create(void) {
         lastPosition = al.Position;
     }
 
-    // store last alignment chunk to its bin, then write last reference entry
+    // after finishing alignments, if any data was read, check:
     if ( currentRefID >= 0 ) {
+
+        // store last alignment chunk to its bin, then write last reference entry with data
         SaveAlignmentChunkToBin(refEntry.Bins, currentBin, currentOffset, lastOffset);
         createdOk &= WriteReferenceEntry(refEntry);
+
+        // then write any empty references remaining at end of file
+        for ( int i = currentRefID+1; i < numReferences; ++i ) {
+            BaiReferenceEntry emptyEntry(i);
+            createdOk &= WriteReferenceEntry(emptyEntry);
+        }
     }
 
     // rewind reader now that we're done building
@@ -496,12 +525,22 @@ bool BamStandardIndex::Load(const std::string& filename) {
 
     // if invalid format 'magic number', close & return failure
     if ( !CheckMagicNumber() ) {
+        cerr << "BamStandardIndex ERROR: unexpected format for index file: " << filename
+             << ", aborting index load" << endl;
         CloseFile();
         return false;
     }
 
     // attempt to load index file summary, return success/failure
-    return SummarizeIndexFile();
+    if ( !SummarizeIndexFile() ) {
+        cerr << "BamStandardIndex ERROR: could not generate a summary of index file " << filename
+             << ", aborting index load" << endl;
+        CloseFile();
+        return false;
+    }
+
+    // if we get here, index summary is loaded OK
+    return true;
 }
 
 uint64_t BamStandardIndex::LookupLinearOffset(const BaiReferenceSummary& refSummary, const int& index) {
@@ -741,7 +780,11 @@ bool BamStandardIndex::SummarizeBins(BaiReferenceSummary& refSummary) {
     refSummary.FirstBinFilePosition = Tell();
 
     // attempt skip reference bins, return success/failure
-    return SkipBins(numBins);
+    if ( !SkipBins(numBins) )
+        return false;
+
+    // if we get here, bin summarized OK
+    return true;
 }
 
 bool BamStandardIndex::SummarizeIndexFile(void) {
@@ -777,7 +820,11 @@ bool BamStandardIndex::SummarizeLinearOffsets(BaiReferenceSummary& refSummary) {
     refSummary.FirstLinearOffsetFilePosition = Tell();
 
     // skip linear offsets in index file
-    return SkipLinearOffsets(numLinearOffsets);
+    if ( !SkipLinearOffsets(numLinearOffsets) )
+        return false;
+
+    // if get here, linear offsets summarized OK
+    return true;
 }
 
 bool BamStandardIndex::SummarizeReference(BaiReferenceSummary& refSummary) {

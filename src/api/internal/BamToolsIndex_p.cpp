@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 5 April 2011 (DB)
+// Last modified: 27 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the BamTools index format (".bti")
 // ***************************************************************************
@@ -20,6 +20,7 @@ using namespace BamTools::Internal;
 #include <cstring>
 #include <algorithm>
 #include <iostream>
+#include <iterator>
 #include <map>
 using namespace std;
 
@@ -144,7 +145,7 @@ bool BamToolsIndex::Create(void) {
     // open new index file (read & write)
     string indexFilename = m_reader->Filename() + Extension();
     if ( !OpenFile(indexFilename, "w+b") ) {
-        cerr << "BamStandardIndex ERROR: could not open ouput index file " << indexFilename
+        cerr << "BamToolsIndex ERROR: could not open ouput index file " << indexFilename
              << ", aborting index creation" << endl;
         return false;
     }
@@ -160,8 +161,8 @@ bool BamToolsIndex::Create(void) {
     // index building markers
     int32_t currentBlockCount      = 0;
     int64_t currentAlignmentOffset = m_reader->Tell();
-    int32_t blockRefId             = 0;
-    int32_t blockMaxEndPosition    = 0;
+    int32_t blockRefId             = -1;
+    int32_t blockMaxEndPosition    = -1;
     int64_t blockStartOffset       = currentAlignmentOffset;
     int32_t blockStartPosition     = -1;
 
@@ -170,27 +171,50 @@ bool BamToolsIndex::Create(void) {
     BtiReferenceEntry refEntry;
     while ( m_reader->LoadNextAlignment(al) ) {
 
-        // if block contains data (not the first time through) AND alignment is on a new reference
-        if ( currentBlockCount > 0 && al.RefID != blockRefId ) {
+        // if moved to new reference
+        if ( al.RefID != blockRefId ) {
 
-            // store previous BTI block data in reference entry
-            BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
-            refEntry.Blocks.push_back(block);
+            // if first pass, check:
+            if ( currentBlockCount == 0 ) {
 
-            // write reference entry, then clear
-            createdOk &= WriteReferenceEntry(refEntry);
-            ClearReferenceEntry(refEntry);
+                // write any empty references up to (but not including) al.RefID
+                for ( int i = 0; i < al.RefID; ++i ) {
+                    BtiReferenceEntry emptyEntry(i);
+                    createdOk &= WriteReferenceEntry(emptyEntry);
+                }
+            }
 
-            // update markers
-            currentBlockCount   = 0;
-            blockMaxEndPosition = al.GetEndPosition();
-            blockStartOffset    = currentAlignmentOffset;
+            // not first pass:
+            else {
+
+                // store previous BTI block data in reference entry
+                BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
+                refEntry.Blocks.push_back(block);
+
+                // write reference entry, then clear
+                createdOk &= WriteReferenceEntry(refEntry);
+                ClearReferenceEntry(refEntry);
+
+                // write any empty references between (but not including) the last blockRefID and current al.RefID
+                for ( int i = blockRefId+1; i < al.RefID; ++i ) {
+                    BtiReferenceEntry emptyEntry(i);
+                    createdOk &= WriteReferenceEntry(emptyEntry);
+                }
+
+                // reset block count
+                currentBlockCount = 0;
+            }
+
+            // set ID for new reference entry
+            refEntry.ID = al.RefID;
         }
 
-        // if beginning of block, save first alignment's refID & position
+        // if beginning of block, update counters
         if ( currentBlockCount == 0 ) {
-            blockRefId         = al.RefID;
-            blockStartPosition = al.Position;
+            blockRefId          = al.RefID;
+            blockStartOffset    = currentAlignmentOffset;
+            blockStartPosition  = al.Position;
+            blockMaxEndPosition = al.GetEndPosition();
         }
 
         // increment block counter
@@ -218,13 +242,23 @@ bool BamToolsIndex::Create(void) {
         currentAlignmentOffset = m_reader->Tell();
     }
 
-    // store last BTI block data in reference entry
-    BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
-    refEntry.Blocks.push_back(block);
+    // after finishing alignments, if any data was read, check:
+    if ( blockRefId >= 0 ) {
 
-    // write last reference entry, then clear
-    createdOk &= WriteReferenceEntry(refEntry);
-    ClearReferenceEntry(refEntry);
+        // store last BTI block data in reference entry
+        BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
+        refEntry.Blocks.push_back(block);
+
+        // write last reference entry, then clear
+        createdOk &= WriteReferenceEntry(refEntry);
+        ClearReferenceEntry(refEntry);
+
+        // then write any empty references remaining at end of file
+        for ( int i = blockRefId+1; i < numReferences; ++i ) {
+            BtiReferenceEntry emptyEntry(i);
+            createdOk &= WriteReferenceEntry(emptyEntry);
+        }
+    }
 
     // rewind reader & return result
     createdOk &= m_reader->Rewind();
@@ -251,24 +285,59 @@ bool BamToolsIndex::GetOffset(const BamRegion& region, int64_t& offset, bool* ha
         return false;
     }
 
-    // TODO: can this next loop be sped up?
-    // Binary search for overlap instead of linear search perhaps.
+    // binary search for an overlapping block (may not be first one though)
+    bool found = false;
+    typedef BtiBlockVector::const_iterator BtiBlockConstIterator;
+    BtiBlockConstIterator blockFirst = refEntry.Blocks.begin();
+    BtiBlockConstIterator blockIter  = blockFirst;
+    BtiBlockConstIterator blockLast  = refEntry.Blocks.end();
+    iterator_traits<BtiBlockConstIterator>::difference_type count = distance(blockFirst, blockLast);
+    iterator_traits<BtiBlockConstIterator>::difference_type step;
+    while ( count > 0 ) {
+        blockIter = blockFirst;
+        step = count/2;
+        advance(blockIter, step);
 
-    // iterate over blocks on this reference
-    BtiBlockVector::const_iterator blockIter = refEntry.Blocks.begin();
-    BtiBlockVector::const_iterator blockEnd  = refEntry.Blocks.end();
-    for ( ; blockIter != blockEnd; ++blockIter ) {
         const BtiBlock& block = (*blockIter);
+        if ( block.StartPosition <= region.RightPosition ) {
+            if ( block.MaxEndPosition >= region.LeftPosition ) {
+                offset = block.StartOffset;
+                break;
+            }
+            blockFirst = ++blockIter;
+            count -= step+1;
+        }
+        else count = step;
+    }
 
-        // store offset & break if block end overlaps region start
-        if ( block.MaxEndPosition >= region.LeftPosition ) {
+    // if we didn't search "off the end" of the blocks
+    if ( blockIter != blockLast ) {
+
+        // "walk back" until we've gone too far
+        while ( blockIter != blockFirst ) {
+            const BtiBlock& currentBlock = (*blockIter);
+
+            --blockIter;
+            const BtiBlock& previousBlock = (*blockIter);
+            if ( previousBlock.MaxEndPosition < region.LeftPosition ) {
+                offset = currentBlock.StartOffset;
+                found = true;
+                break;
+            }
+        }
+
+        // if we walked all the way to first block, just return that and let the reader's
+        // region overlap parsing do the rest
+        if ( blockIter == blockFirst ) {
+            const BtiBlock& block = (*blockIter);
             offset = block.StartOffset;
-            break;
+            found = true;
         }
     }
 
+
     // sets to false if blocks container is empty, or if no matching block could be found
-    *hasAlignmentsInRegion = ( blockIter != blockEnd );
+    *hasAlignmentsInRegion = found;
 
     // return success
     return true;
@@ -327,19 +396,29 @@ bool BamToolsIndex::Load(const std::string& filename) {
 
     // attempt open index file (read-only)
     if ( !OpenFile(filename, "rb") ) {
-        cerr << "BamStandardIndex ERROR: could not open input index file " << filename
+        cerr << "BamToolsIndex ERROR: could not open input index file " << filename
              << ", aborting index load" << endl;
         return false;
     }
 
     // attempt to load & validate BTI header data
     if ( !LoadHeader() ) {
+        cerr << "BamToolsIndex ERROR: could load header from index file " << filename
+             << ", aborting index load" << endl;
         CloseFile();
         return false;
     }
 
-    // attempt to load index file summary, return success/failure
-    return LoadFileSummary();
+    // attempt to load index file summary
+    if ( !LoadFileSummary() ) {
+        cerr << "BamToolsIndex ERROR: could not generate a summary of index file " << filename
+             << ", aborting index load" << endl;
+        CloseFile();
+        return false;
+    }
+
+    // if we get here, index summary is loaded OK
+    return true;
 }
 
 bool BamToolsIndex::LoadFileSummary(void) {
@@ -356,8 +435,9 @@ bool BamToolsIndex::LoadFileSummary(void) {
     bool loadedOk = true;
     BtiFileSummary::iterator summaryIter = m_indexFileSummary.begin();
     BtiFileSummary::iterator summaryEnd  = m_indexFileSummary.end();
-    for ( ; summaryIter != summaryEnd; ++summaryIter )
+    for ( ; summaryIter != summaryEnd; ++summaryIter ) {
         loadedOk &= LoadReferenceSummary(*summaryIter);
+    }
 
     // return result
     return loadedOk;
@@ -539,7 +619,6 @@ bool BamToolsIndex::WriteHeader(void) {
 
     // write number of references
     int32_t numReferences = m_indexFileSummary.size();
-    cerr << "Writing numReferences = " << numReferences << endl;
     if ( m_isBigEndian ) SwapEndian_32(numReferences);
     elementsWritten += fwrite(&numReferences, sizeof(numReferences), 1, m_indexStream);
 

@@ -247,8 +247,6 @@ void BamStandardIndex::CloseFile(void) {
 // builds index from associated BAM file & writes out to index file
 bool BamStandardIndex::Create(void) {
 
-    cerr << "Creating BAI..." << endl;
-
     // return false if BamReader is invalid or not open
     if ( m_reader == 0 || !m_reader->IsOpen() ) {
         cerr << "BamStandardIndex ERROR: BamReader is not open"
@@ -256,16 +254,12 @@ bool BamStandardIndex::Create(void) {
         return false;
     }
 
-    cerr << "BAM file is open" << endl;
-
     // rewind BamReader
     if ( !m_reader->Rewind() ) {
         cerr << "BamStandardIndex ERROR: could not rewind BamReader to create index"
              << ", aborting index creation" << endl;
         return false;
     }
-
-    cerr << "BAM file is rewound" << endl;
 
     // open new index file (read & write)
     string indexFilename = m_reader->Filename() + Extension();

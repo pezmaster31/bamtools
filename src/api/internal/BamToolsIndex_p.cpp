@@ -435,9 +435,8 @@ bool BamToolsIndex::LoadFileSummary(void) {
     bool loadedOk = true;
     BtiFileSummary::iterator summaryIter = m_indexFileSummary.begin();
     BtiFileSummary::iterator summaryEnd  = m_indexFileSummary.end();
-    for ( ; summaryIter != summaryEnd; ++summaryIter ) {
+    for ( ; summaryIter != summaryEnd; ++summaryIter )
         loadedOk &= LoadReferenceSummary(*summaryIter);
-    }
 
     // return result
     return loadedOk;

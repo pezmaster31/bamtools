@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 5 April 2011 (DB)
+// Last modified: 10 May 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
@@ -306,16 +306,24 @@ bool BamReaderPrivate::Open(const string& filename) {
         Close();
 
     // attempt to open BgzfStream for reading
-    if ( !m_stream.Open(filename, "rb") )
+    if ( !m_stream.Open(filename, "rb") ) {
+        cerr << "BamReader ERROR: Could not open BGZF stream for " << filename << endl;
         return false;
+    }
 
     // attempt to load header data
-    if ( !LoadHeaderData() )
+    if ( !LoadHeaderData() ) {
+        cerr << "BamReader ERROR: Could not load header data for " << filename << endl;
+        Close();
         return false;
+    }
 
     // attempt to load reference data
-    if ( !LoadReferenceData() )
+    if ( !LoadReferenceData() ) {
+        cerr << "BamReader ERROR: Could not load reference data for " << filename << endl;
+        Close();
         return false;
+    }
 
     // if all OK, store filename & offset of first alignment
     m_filename = filename;

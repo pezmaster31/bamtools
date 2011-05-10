@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 27 April 2011 (DB)
+// Last modified: 10 May 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the standardized BAM index format (".bai")
 // ***************************************************************************
@@ -136,7 +136,7 @@ bool BamStandardIndex::CalculateCandidateOffsets(const BaiReferenceSummary& refS
 
                 // store alignment chunk's start offset
                 // if its stop offset is larger than our 'minOffset'
-                if ( chunkStop > minOffset )
+                if ( chunkStop >= minOffset )
                     offsets.push_back(chunkStart);
             }
 
@@ -414,8 +414,10 @@ bool BamStandardIndex::GetOffsets(const BamRegion& region, vector<int64_t>& offs
     // set up region boundaries based on actual BamReader data
     uint32_t begin;
     uint32_t end;
-    if ( !AdjustRegion(region, begin, end) )
+    if ( !AdjustRegion(region, begin, end) ) {
+        cerr << "BamStandardIndex ERROR: cannot calculate offsets on invalid region" << endl;
         return false;
+    }
 
     // retrieve all candidate bin IDs for region
     set<uint16_t> candidateBins;
@@ -426,8 +428,10 @@ bool BamStandardIndex::GetOffsets(const BamRegion& region, vector<int64_t>& offs
     const uint64_t& minOffset = CalculateMinOffset(refSummary, begin);
 
     // attempt to use reference summary, minOffset, & candidateBins to calculate offsets
-    if ( !CalculateCandidateOffsets(refSummary, minOffset, candidateBins, offsets) )
+    if ( !CalculateCandidateOffsets(refSummary, minOffset, candidateBins, offsets) ) {
+        cerr << "Could not caluclate candidate offsets for region" << endl;
         return false;
+    }
 
     // ensure that offsets are sorted before returning
     sort( offsets.begin(), offsets.end() );
@@ -684,6 +688,8 @@ void BamStandardIndex::SaveAlignmentChunkToBin(BaiBinMap& binMap,
     // create new alignment chunk
     BaiAlignmentChunk newChunk(currentOffset, lastOffset);
 
+
+
     // if no entry exists yet for this bin, create one and store alignment chunk
     BaiBinMap::iterator binIter = binMap.find(currentBin);
     if ( binIter == binMap.end() ) {
@@ -822,6 +828,7 @@ bool BamStandardIndex::SummarizeLinearOffsets(BaiReferenceSummary& refSummary) {
 }
 
 bool BamStandardIndex::SummarizeReference(BaiReferenceSummary& refSummary) {
+
     bool loadedOk = true;
     loadedOk &= SummarizeBins(refSummary);
     loadedOk &= SummarizeLinearOffsets(refSummary);

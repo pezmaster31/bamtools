@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 April 2011 (DB)
+// Last modified: 10 May 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -258,7 +258,7 @@ void BamWriterPrivate::SaveAlignment(const BamAlignment& al) {
 
         // write the base qualities
         char* pBaseQualities = (char*)al.Qualities.data();
-        for ( unsigned int i = 0; i < queryLength; i++ )
+        for ( unsigned int i = 0; i < queryLength; ++i )
             pBaseQualities[i] -= 33; // FASTQ conversion
         m_stream.Write(pBaseQualities, queryLength);
 

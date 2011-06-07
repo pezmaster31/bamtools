@@ -3,9 +3,10 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 7 April 2011
+// Last modified: 19 April 2011
 // ---------------------------------------------------------------------------
-// Resolves paired-end reads (marking the IsProperPair flag as needed)
+// Resolves paired-end reads (marking the IsProperPair flag as needed) in a
+// BAM file.
 // ***************************************************************************
 
 #ifndef BAMTOOLS_RESOLVE_H

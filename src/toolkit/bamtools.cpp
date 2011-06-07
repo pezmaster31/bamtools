@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011 (DB)
+// Last modified: 18 May 2011 (DB)
 // ---------------------------------------------------------------------------
 // Integrates a number of BamTools functionalities into a single executable.
 // ***************************************************************************
@@ -16,6 +16,7 @@
 #include "bamtools_index.h"
 #include "bamtools_merge.h"
 #include "bamtools_random.h"
+#include "bamtools_resolve.h"
 #include "bamtools_revert.h"
 #include "bamtools_sort.h"
 #include "bamtools_split.h"
@@ -38,6 +39,7 @@ static const string HEADER   = "header";
 static const string INDEX    = "index";
 static const string MERGE    = "merge";
 static const string RANDOM   = "random";
+static const string RESOLVE  = "resolve";
 static const string REVERT   = "revert";
 static const string SORT     = "sort";
 static const string SPLIT    = "split";
@@ -77,6 +79,7 @@ AbstractTool* CreateTool(const string& arg) {
     if ( arg == INDEX )    return new IndexTool;
     if ( arg == MERGE )    return new MergeTool;
     if ( arg == RANDOM )   return new RandomTool;
+    if ( arg == RESOLVE )  return new ResolveTool;
     if ( arg == REVERT )   return new RevertTool;
     if ( arg == SORT )     return new SortTool;
     if ( arg == SPLIT )    return new SplitTool;
@@ -111,7 +114,8 @@ int Help(int argc, char* argv[]) {
     cerr << "\theader          Prints BAM header information" << endl;
     cerr << "\tindex           Generates index for BAM file" << endl;
     cerr << "\tmerge           Merge multiple BAM files into single file" << endl;
-    cerr << "\trandom          Select random alignments from existing BAM file(s)" << endl;
+    cerr << "\trandom          Select random alignments from existing BAM file(s), intended more as a testing tool." << endl;
+    cerr << "\tresolve         Resolves paired-end reads (marking the IsProperPair flag as needed)" << endl;
     cerr << "\trevert          Removes duplicate marks and restores original base qualities" << endl;
     cerr << "\tsort            Sorts the BAM file according to some criteria" << endl;
     cerr << "\tsplit           Splits a BAM file on user-specified property, creating a new BAM output file for each value found" << endl;

@@ -3,9 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011
+// Last modified: 7 April 2011
 // ---------------------------------------------------------------------------
-// Filters BAM file(s) according to some user-specified criteria.
+// Filters BAM file(s) according to some user-specified criteria
 // ***************************************************************************
 
 #include "bamtools_filter.h"
@@ -224,61 +224,29 @@ struct BamAlignmentChecker {
 } // namespace BamTools
   
 // ---------------------------------------------
-// FilterToolPrivate declaration
-
-class FilterTool::FilterToolPrivate {
-      
-    // ctor & dtor
-    public:
-        FilterToolPrivate(FilterTool::FilterSettings* settings);
-        ~FilterToolPrivate(void);  
-        
-    // 'public' interface
-    public:
-        bool Run(void);
-        
-    // internal methods
-    private:
-        bool AddPropertyTokensToFilter(const string& filterName, const map<string, string>& propertyTokens);
-        bool CheckAlignment(const BamAlignment& al);
-        const string GetScriptContents(void);
-        void InitProperties(void);
-        bool ParseCommandLine(void);
-        bool ParseFilterObject(const string& filterName, const Json::Value& filterObject);
-        bool ParseScript(void);
-        bool SetupFilters(void);
-        
-    // data members
-    private:
-        vector<string> m_propertyNames;
-        FilterTool::FilterSettings* m_settings;
-        FilterEngine<BamAlignmentChecker> m_filterEngine;
-};
-  
-// ---------------------------------------------
 // FilterSettings implementation
 
 struct FilterTool::FilterSettings {
 
     // ----------------------------------
     // IO opts
-  
+
     // flags
     bool HasInputBamFilename;
     bool HasOutputBamFilename;
     bool HasRegion;
     bool HasScriptFilename;
     bool IsForceCompression;
-    
+
     // filenames
     vector<string> InputFiles;
     string OutputFilename;
     string Region;
     string ScriptFilename;
-    
+
     // -----------------------------------
     // General filter opts
-    
+
     // flags
     bool HasAlignmentFlagFilter;
     bool HasInsertSizeFilter;
@@ -297,7 +265,7 @@ struct FilterTool::FilterSettings {
 
     // -----------------------------------
     // AlignmentFlag filter opts
-    
+
     // flags
     bool HasIsDuplicateFilter;
     bool HasIsFailedQCFilter;
@@ -310,7 +278,7 @@ struct FilterTool::FilterSettings {
     bool HasIsProperPairFilter;
     bool HasIsReverseStrandFilter;
     bool HasIsSecondMateFilter;
-    
+
     // filters
     string IsDuplicateFilter;
     string IsFailedQCFilter;
@@ -323,10 +291,10 @@ struct FilterTool::FilterSettings {
     string IsProperPairFilter;
     string IsReverseStrandFilter;
     string IsSecondMateFilter;
-    
+
     // ---------------------------------
     // constructor
-    
+
     FilterSettings(void)
         : HasInputBamFilename(false)
         , HasOutputBamFilename(false)
@@ -363,72 +331,39 @@ struct FilterTool::FilterSettings {
         , IsReverseStrandFilter(TRUE_STR)
         , IsSecondMateFilter(TRUE_STR)
     { }
-};  
+};
 
 // ---------------------------------------------
-// FilterTool implementation
+// FilterToolPrivate declaration
 
-FilterTool::FilterTool(void)
-    : AbstractTool()
-    , m_settings(new FilterSettings)
-    , m_impl(0)
-{
-    // set program details
-    Options::SetProgramInfo("bamtools filter", "filters BAM file(s)", "[-in <filename> -in <filename> ...] [-out <filename> | [-forceCompression]] [-region <REGION>] [ [-script <filename] | [filterOptions] ]");
-    
-    OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInputBamFilename,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());
-    Options::AddValueOption("-out",    "BAM filename", "the output BAM file",   "", m_settings->HasOutputBamFilename, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
-    Options::AddValueOption("-region", "REGION",       "only read data from this genomic region (see documentation for more details)", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
-    Options::AddValueOption("-script", "filename",     "the filter script file (see documentation for more details)", "", m_settings->HasScriptFilename, m_settings->ScriptFilename, IO_Opts);
-    Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
-    
-    OptionGroup* FilterOpts = Options::CreateOptionGroup("General Filters");
-    Options::AddValueOption("-alignmentFlag", "int",        "keep reads with this *exact* alignment flag (for more detailed queries, see below)", "", m_settings->HasAlignmentFlagFilter, m_settings->AlignmentFlagFilter, FilterOpts);
-    Options::AddValueOption("-insertSize",    "int",        "keep reads with insert size that mathces pattern",             "", m_settings->HasInsertSizeFilter, m_settings->InsertSizeFilter, FilterOpts);
-    Options::AddValueOption("-mapQuality",    "[0-255]",    "keep reads with map quality that matches pattern",             "", m_settings->HasMapQualityFilter, m_settings->MapQualityFilter, FilterOpts);
-    Options::AddValueOption("-name",          "string",     "keep reads with name that matches pattern",                    "", m_settings->HasNameFilter,       m_settings->NameFilter,       FilterOpts);
-    Options::AddValueOption("-queryBases",    "string",     "keep reads with motif that mathces pattern",                   "", m_settings->HasQueryBasesFilter, m_settings->QueryBasesFilter, FilterOpts);
-    Options::AddValueOption("-tag",           "TAG:VALUE",  "keep reads with this key=>value pair",                         "", m_settings->HasTagFilter,        m_settings->TagFilter,        FilterOpts);
-    
-    OptionGroup* AlignmentFlagOpts = Options::CreateOptionGroup("Alignment Flag Filters");
-    Options::AddValueOption("-isDuplicate",         "true/false", "keep only alignments that are marked as duplicate?", "", m_settings->HasIsDuplicateFilter,         m_settings->IsDuplicateFilter,         AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isFailedQC",          "true/false", "keep only alignments that failed QC?",               "", m_settings->HasIsFailedQCFilter,          m_settings->IsFailedQCFilter,          AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isFirstMate",         "true/false", "keep only alignments marked as first mate?",         "", m_settings->HasIsFirstMateFilter,         m_settings->IsFirstMateFilter,         AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isMapped",            "true/false", "keep only alignments that were mapped?",             "", m_settings->HasIsMappedFilter,            m_settings->IsMappedFilter,            AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isMateMapped",        "true/false", "keep only alignments with mates that mapped",        "", m_settings->HasIsMateMappedFilter,        m_settings->IsMateMappedFilter,        AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isMateReverseStrand", "true/false", "keep only alignments with mate on reverese strand?", "", m_settings->HasIsMateReverseStrandFilter, m_settings->IsMateReverseStrandFilter, AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isPaired",            "true/false", "keep only alignments that were sequenced as paired?","", m_settings->HasIsPairedFilter,            m_settings->IsPairedFilter,            AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isPrimaryAlignment",  "true/false", "keep only alignments marked as primary?",            "", m_settings->HasIsPrimaryAlignmentFilter,  m_settings->IsPrimaryAlignmentFilter,  AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isProperPair",        "true/false", "keep only alignments that passed PE resolution?",    "", m_settings->HasIsProperPairFilter,        m_settings->IsProperPairFilter,        AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isReverseStrand",     "true/false", "keep only alignments on reverse strand?",            "", m_settings->HasIsReverseStrandFilter,     m_settings->IsReverseStrandFilter,     AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isSecondMate",        "true/false", "keep only alignments marked as second mate?",        "", m_settings->HasIsSecondMateFilter,        m_settings->IsSecondMateFilter,        AlignmentFlagOpts, TRUE_STR);
-}
-
-FilterTool::~FilterTool(void) {
-    delete m_settings;
-    m_settings = 0;
-    
-    delete m_impl;
-    m_impl = 0;
-}
-
-int FilterTool::Help(void) {
-    Options::DisplayHelp();
-    return 0;
-}
-
-int FilterTool::Run(int argc, char* argv[]) {
-  
-    // parse command line arguments
-    Options::Parse(argc, argv, 1);
-    
-    // run internal FilterTool implementation, return success/fail
-    m_impl = new FilterToolPrivate(m_settings);
-    
-    if ( m_impl->Run() ) return 0;
-    else return 1;
-}
+class FilterTool::FilterToolPrivate {
+      
+    // ctor & dtor
+    public:
+        FilterToolPrivate(FilterTool::FilterSettings* settings);
+        ~FilterToolPrivate(void);  
+        
+    // 'public' interface
+    public:
+        bool Run(void);
+        
+    // internal methods
+    private:
+        bool AddPropertyTokensToFilter(const string& filterName, const map<string, string>& propertyTokens);
+        bool CheckAlignment(const BamAlignment& al);
+        const string GetScriptContents(void);
+        void InitProperties(void);
+        bool ParseCommandLine(void);
+        bool ParseFilterObject(const string& filterName, const Json::Value& filterObject);
+        bool ParseScript(void);
+        bool SetupFilters(void);
+        
+    // data members
+    private:
+        vector<string> m_propertyNames;
+        FilterTool::FilterSettings* m_settings;
+        FilterEngine<BamAlignmentChecker> m_filterEngine;
+};
  
 // ---------------------------------------------
 // FilterToolPrivate implementation
@@ -846,4 +781,73 @@ bool FilterTool::FilterToolPrivate::SetupFilters(void) {
     
     // otherwise check command line for filters
     else return ParseCommandLine();
+}
+
+// ---------------------------------------------
+// FilterTool implementation
+
+FilterTool::FilterTool(void)
+    : AbstractTool()
+    , m_settings(new FilterSettings)
+    , m_impl(0)
+{
+    // set program details
+    Options::SetProgramInfo("bamtools filter", "filters BAM file(s)", "[-in <filename> -in <filename> ...] [-out <filename> | [-forceCompression]] [-region <REGION>] [ [-script <filename] | [filterOptions] ]");
+
+    OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
+    Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInputBamFilename,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-out",    "BAM filename", "the output BAM file",   "", m_settings->HasOutputBamFilename, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
+    Options::AddValueOption("-region", "REGION",       "only read data from this genomic region (see documentation for more details)", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
+    Options::AddValueOption("-script", "filename",     "the filter script file (see documentation for more details)", "", m_settings->HasScriptFilename, m_settings->ScriptFilename, IO_Opts);
+    Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
+
+    OptionGroup* FilterOpts = Options::CreateOptionGroup("General Filters");
+    Options::AddValueOption("-alignmentFlag", "int",        "keep reads with this *exact* alignment flag (for more detailed queries, see below)", "", m_settings->HasAlignmentFlagFilter, m_settings->AlignmentFlagFilter, FilterOpts);
+    Options::AddValueOption("-insertSize",    "int",        "keep reads with insert size that mathces pattern",             "", m_settings->HasInsertSizeFilter, m_settings->InsertSizeFilter, FilterOpts);
+    Options::AddValueOption("-mapQuality",    "[0-255]",    "keep reads with map quality that matches pattern",             "", m_settings->HasMapQualityFilter, m_settings->MapQualityFilter, FilterOpts);
+    Options::AddValueOption("-name",          "string",     "keep reads with name that matches pattern",                    "", m_settings->HasNameFilter,       m_settings->NameFilter,       FilterOpts);
+    Options::AddValueOption("-queryBases",    "string",     "keep reads with motif that mathces pattern",                   "", m_settings->HasQueryBasesFilter, m_settings->QueryBasesFilter, FilterOpts);
+    Options::AddValueOption("-tag",           "TAG:VALUE",  "keep reads with this key=>value pair",                         "", m_settings->HasTagFilter,        m_settings->TagFilter,        FilterOpts);
+
+    OptionGroup* AlignmentFlagOpts = Options::CreateOptionGroup("Alignment Flag Filters");
+    Options::AddValueOption("-isDuplicate",         "true/false", "keep only alignments that are marked as duplicate?", "", m_settings->HasIsDuplicateFilter,         m_settings->IsDuplicateFilter,         AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isFailedQC",          "true/false", "keep only alignments that failed QC?",               "", m_settings->HasIsFailedQCFilter,          m_settings->IsFailedQCFilter,          AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isFirstMate",         "true/false", "keep only alignments marked as first mate?",         "", m_settings->HasIsFirstMateFilter,         m_settings->IsFirstMateFilter,         AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isMapped",            "true/false", "keep only alignments that were mapped?",             "", m_settings->HasIsMappedFilter,            m_settings->IsMappedFilter,            AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isMateMapped",        "true/false", "keep only alignments with mates that mapped",        "", m_settings->HasIsMateMappedFilter,        m_settings->IsMateMappedFilter,        AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isMateReverseStrand", "true/false", "keep only alignments with mate on reverese strand?", "", m_settings->HasIsMateReverseStrandFilter, m_settings->IsMateReverseStrandFilter, AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isPaired",            "true/false", "keep only alignments that were sequenced as paired?","", m_settings->HasIsPairedFilter,            m_settings->IsPairedFilter,            AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isPrimaryAlignment",  "true/false", "keep only alignments marked as primary?",            "", m_settings->HasIsPrimaryAlignmentFilter,  m_settings->IsPrimaryAlignmentFilter,  AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isProperPair",        "true/false", "keep only alignments that passed PE resolution?",    "", m_settings->HasIsProperPairFilter,        m_settings->IsProperPairFilter,        AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isReverseStrand",     "true/false", "keep only alignments on reverse strand?",            "", m_settings->HasIsReverseStrandFilter,     m_settings->IsReverseStrandFilter,     AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isSecondMate",        "true/false", "keep only alignments marked as second mate?",        "", m_settings->HasIsSecondMateFilter,        m_settings->IsSecondMateFilter,        AlignmentFlagOpts, TRUE_STR);
+}
+
+FilterTool::~FilterTool(void) {
+
+    delete m_settings;
+    m_settings = 0;
+
+    delete m_impl;
+    m_impl = 0;
+}
+
+int FilterTool::Help(void) {
+    Options::DisplayHelp();
+    return 0;
+}
+
+int FilterTool::Run(int argc, char* argv[]) {
+
+    // parse command line arguments
+    Options::Parse(argc, argv, 1);
+
+    // initialize FilterTool with settings
+    m_impl = new FilterToolPrivate(m_settings);
+
+    // run FilterTool, return success/fail
+    if ( m_impl->Run() )
+        return 0;
+    else
+        return 1;
 }

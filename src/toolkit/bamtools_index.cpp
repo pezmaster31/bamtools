@@ -3,9 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011
+// Last modified: 7 April 2011
 // ---------------------------------------------------------------------------
-// Creates a BAM index file.
+// Creates a BAM index file
 // ***************************************************************************
 
 #include "bamtools_index.h"
@@ -39,11 +39,54 @@ struct IndexTool::IndexSettings {
 };  
 
 // ---------------------------------------------
+// IndexToolPrivate implementation
+
+struct IndexTool::IndexToolPrivate {
+
+    // ctor & dtor
+    public:
+        IndexToolPrivate(IndexTool::IndexSettings* settings)
+            : m_settings(settings)
+        { }
+
+        ~IndexToolPrivate(void) { }
+
+    // interface
+    public:
+        bool Run(void);
+
+    // data members
+    private:
+        IndexTool::IndexSettings* m_settings;
+};
+
+bool IndexTool::IndexToolPrivate::Run(void) {
+
+    // open our BAM reader
+    BamReader reader;
+    if ( !reader.Open(m_settings->InputBamFilename) ) {
+        cerr << "bamtools index ERROR: could not open BAM file: "
+             << m_settings->InputBamFilename << endl;
+        return false;
+    }
+
+    // create index for BAM file
+    const BamIndex::IndexType type = ( m_settings->IsUsingBamtoolsIndex ? BamIndex::BAMTOOLS
+                                                                        : BamIndex::STANDARD );
+    reader.CreateIndex(type);
+
+    // clean & exit
+    reader.Close();
+    return true;
+}
+
+// ---------------------------------------------
 // IndexTool implementation
 
 IndexTool::IndexTool(void)
     : AbstractTool()
     , m_settings(new IndexSettings)
+    , m_impl(0)
 {
     // set program details
     Options::SetProgramInfo("bamtools index", "creates index for BAM file", "[-in <filename>] [-bti]");
@@ -55,8 +98,12 @@ IndexTool::IndexTool(void)
 }
 
 IndexTool::~IndexTool(void) {
+
     delete m_settings;
     m_settings = 0;
+
+    delete m_impl;
+    m_impl = 0;
 }
 
 int IndexTool::Help(void) {
@@ -69,19 +116,12 @@ int IndexTool::Run(int argc, char* argv[]) {
     // parse command line arguments
     Options::Parse(argc, argv, 1);
     
-    // open our BAM reader
-    BamReader reader;
-    if ( !reader.Open(m_settings->InputBamFilename) ) {
-        cerr << "bamtools index ERROR: could not open BAM file: " << m_settings->InputBamFilename << endl;
+    // initialize IndexTool with settings
+    m_impl = new IndexToolPrivate(m_settings);
+
+    // run IndexTool, return success/fail
+    if ( m_impl->Run() )
+        return 0;
+    else
         return 1;
-    }
-    
-    // create index for BAM file
-    const BamIndex::IndexType type = ( m_settings->IsUsingBamtoolsIndex ? BamIndex::BAMTOOLS
-                                                                        : BamIndex::STANDARD );
-    reader.CreateIndex(type);
-    
-    // clean & exit
-    reader.Close();
-    return 0;
 }

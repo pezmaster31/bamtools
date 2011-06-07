@@ -3,9 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011 (DB)
+// Last modified: 7 April 2011 (DB)
 // ---------------------------------------------------------------------------
-// Grab a random subset of alignments.
+// Grab a random subset of alignments (testing tool)
 // ***************************************************************************
 
 #include "bamtools_random.h"
@@ -67,11 +67,150 @@ struct RandomTool::RandomSettings {
 };  
 
 // ---------------------------------------------
+// RandomToolPrivate implementation
+
+struct RandomTool::RandomToolPrivate {
+
+    // ctor & dtor
+    public:
+        RandomToolPrivate(RandomTool::RandomSettings* settings)
+            : m_settings(settings)
+        { }
+
+        ~RandomToolPrivate(void) { }
+
+    // interface
+    public:
+        bool Run(void);
+
+    // data members
+    private:
+        RandomTool::RandomSettings* m_settings;
+};
+
+bool RandomTool::RandomToolPrivate::Run(void) {
+
+    // set to default stdin if no input files provided
+    if ( !m_settings->HasInput )
+        m_settings->InputFiles.push_back(Options::StandardIn());
+
+    // open our reader
+    BamMultiReader reader;
+    if ( !reader.Open(m_settings->InputFiles) ) {
+        cerr << "bamtools random ERROR: could not open input BAM file(s)... Aborting." << endl;
+        return false;
+    }
+
+    // look up index files for all BAM files
+    reader.LocateIndexes();
+
+    // make sure index data is available
+    if ( !reader.HasIndexes() ) {
+        cerr << "bamtools random ERROR: could not load index data for all input BAM file(s)... Aborting." << endl;
+        reader.Close();
+        return false;
+    }
+
+    // get BamReader metadata
+    const string headerText = reader.GetHeaderText();
+    const RefVector references = reader.GetReferenceData();
+    if ( references.empty() ) {
+        cerr << "bamtools random ERROR: no reference data available... Aborting." << endl;
+        reader.Close();
+        return false;
+    }
+
+    // determine compression mode for BamWriter
+    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() &&
+                              !m_settings->IsForceCompression );
+    BamWriter::CompressionMode compressionMode = BamWriter::Compressed;
+    if ( writeUncompressed ) compressionMode = BamWriter::Uncompressed;
+
+    // open BamWriter
+    BamWriter writer;
+    writer.SetCompressionMode(compressionMode);
+    if ( !writer.Open(m_settings->OutputFilename, headerText, references) ) {
+        cerr << "bamtools random ERROR: could not open " << m_settings->OutputFilename
+             << " for writing... Aborting." << endl;
+        reader.Close();
+        return false;
+    }
+
+    // if user specified a REGION constraint, attempt to parse REGION string
+    BamRegion region;
+    if ( m_settings->HasRegion && !Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
+        cerr << "bamtools random ERROR: could not parse REGION: " << m_settings->Region << endl;
+        cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
+             << endl;
+        reader.Close();
+        writer.Close();
+        return false;
+    }
+
+    // seed our random number generator
+    srand( time(NULL) );
+
+    // grab random alignments
+    BamAlignment al;
+    unsigned int i = 0;
+    while ( i < m_settings->AlignmentCount ) {
+
+        int randomRefId    = 0;
+        int randomPosition = 0;
+
+        // use REGION constraints to select random refId & position
+        if ( m_settings->HasRegion ) {
+
+            // select a random refId
+            randomRefId = getRandomInt(region.LeftRefID, region.RightRefID);
+
+            // select a random position based on randomRefId
+            const int lowerBoundPosition = ( (randomRefId == region.LeftRefID)
+                                             ? region.LeftPosition
+                                             : 0 );
+            const int upperBoundPosition = ( (randomRefId == region.RightRefID)
+                                             ? region.RightPosition
+                                             : (references.at(randomRefId).RefLength - 1) );
+            randomPosition = getRandomInt(lowerBoundPosition, upperBoundPosition);
+        }
+
+        // otherwise select from all possible random refId & position
+        else {
+
+            // select random refId
+            randomRefId = getRandomInt(0, (int)references.size() - 1);
+
+            // select random position based on randomRefId
+            const int lowerBoundPosition = 0;
+            const int upperBoundPosition = references.at(randomRefId).RefLength - 1;
+            randomPosition = getRandomInt(lowerBoundPosition, upperBoundPosition);
+        }
+
+        // if jump & read successful, save first alignment that overlaps random refId & position
+        if ( reader.Jump(randomRefId, randomPosition) ) {
+            while ( reader.GetNextAlignmentCore(al) ) {
+                if ( al.RefID == randomRefId && al.Position >= randomPosition ) {
+                    writer.SaveAlignment(al);
+                    ++i;
+                    break;
+                }
+            }
+        }
+    }
+
+    // cleanup & exit
+    reader.Close();
+    writer.Close();
+    return true;
+}
+
+// ---------------------------------------------
 // RandomTool implementation
 
 RandomTool::RandomTool(void) 
     : AbstractTool()
     , m_settings(new RandomSettings)
+    , m_impl(0)
 { 
     // set program details
     Options::SetProgramInfo("bamtools random", "grab a random subset of alignments", "[-in <filename> -in <filename> ...] [-out <filename>] [-forceCompression] [-n] [-region <REGION>]");
@@ -88,8 +227,12 @@ RandomTool::RandomTool(void)
 }
 
 RandomTool::~RandomTool(void) { 
+
     delete m_settings;
     m_settings = 0;
+
+    delete m_impl;
+    m_impl = 0;
 }
 
 int RandomTool::Help(void) { 
@@ -102,111 +245,12 @@ int RandomTool::Run(int argc, char* argv[]) {
     // parse command line arguments
     Options::Parse(argc, argv, 1);
 
-    // set to default stdin if no input files provided
-    if ( !m_settings->HasInput ) 
-        m_settings->InputFiles.push_back(Options::StandardIn());
-    
-    // open our reader
-    BamMultiReader reader;
-    if ( !reader.Open(m_settings->InputFiles) ) {
-        cerr << "bamtools random ERROR: could not open input BAM file(s)... Aborting." << endl;
-        return 1;
-    }
-     
-    // look up index files for all BAM files
-    reader.LocateIndexes();
+    // initialize RandomTool with settings
+    m_impl = new RandomToolPrivate(m_settings);
 
-    // make sure index data is available
-    if ( !reader.HasIndexes() ) {
-        cerr << "bamtools random ERROR: could not load index data for all input BAM file(s)... Aborting." << endl;
-        reader.Close();
+    // run RandomTool, return success/fail
+    if ( m_impl->Run() )
+        return 0;
+    else
         return 1;
-    }
-     
-    // get BamReader metadata  
-    const string headerText = reader.GetHeaderText();
-    const RefVector references = reader.GetReferenceData();
-    if ( references.empty() ) {
-        cerr << "bamtools random ERROR: no reference data available... Aborting." << endl;
-        reader.Close();
-        return 1;
-    }
-    
-    // determine compression mode for BamWriter
-    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() &&
-                              !m_settings->IsForceCompression );
-    BamWriter::CompressionMode compressionMode = BamWriter::Compressed;
-    if ( writeUncompressed ) compressionMode = BamWriter::Uncompressed;
-
-    // open BamWriter
-    BamWriter writer;
-    writer.SetCompressionMode(compressionMode);
-    if ( !writer.Open(m_settings->OutputFilename, headerText, references) ) {
-        cerr << "bamtools random ERROR: could not open " << m_settings->OutputFilename << " for writing... Aborting." << endl;
-        reader.Close();
-        return 1;
-    }
-
-    // if user specified a REGION constraint, attempt to parse REGION string 
-    BamRegion region; 
-    if ( m_settings->HasRegion && !Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
-        cerr << "bamtools random ERROR: could not parse REGION: " << m_settings->Region << endl;
-        cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
-             << endl;
-        reader.Close();
-        writer.Close();
-        return 1;
-    }
-      
-    // seed our random number generator
-    srand( time(NULL) );
-    
-    // grab random alignments 
-    BamAlignment al;
-    unsigned int i = 0;
-    while ( i < m_settings->AlignmentCount ) {
-      
-        int randomRefId    = 0;
-        int randomPosition = 0;
-      
-        // use REGION constraints to select random refId & position
-        if ( m_settings->HasRegion ) {
-          
-            // select a random refId
-            randomRefId = getRandomInt(region.LeftRefID, region.RightRefID);
-            
-            // select a random position based on randomRefId
-            const int lowerBoundPosition = ( (randomRefId == region.LeftRefID)  ? region.LeftPosition  : 0 );
-            const int upperBoundPosition = ( (randomRefId == region.RightRefID) ? region.RightPosition : (references.at(randomRefId).RefLength - 1) );
-            randomPosition = getRandomInt(lowerBoundPosition, upperBoundPosition);
-        } 
-        
-        // otherwise select from all possible random refId & position
-        else {
-          
-            // select random refId
-            randomRefId = getRandomInt(0, (int)references.size() - 1);
-            
-            // select random position based on randomRefId
-            const int lowerBoundPosition = 0;
-            const int upperBoundPosition = references.at(randomRefId).RefLength - 1;
-            randomPosition = getRandomInt(lowerBoundPosition, upperBoundPosition); 
-        }
-      
-        // if jump & read successful, save first alignment that overlaps random refId & position
-        if ( reader.Jump(randomRefId, randomPosition) ) {
-            while ( reader.GetNextAlignmentCore(al) ) {
-                if ( al.RefID == randomRefId && al.Position >= randomPosition ) {
-                    writer.SaveAlignment(al);
-                    ++i;
-                    break;
-                }
-            }
-        }
-    }
-    
-    // cleanup & exit
-    reader.Close();
-    writer.Close();
-    return 0;
 }

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 1 June 2010
+// Last modified: 7 April 2011
 // ---------------------------------------------------------------------------
 // Prints the SAM-style header from a single BAM file ( or merged header from
 // multiple BAM files) to stdout
@@ -29,6 +29,9 @@ class HeaderTool : public AbstractTool {
     private:
         struct HeaderSettings;
         HeaderSettings* m_settings;
+
+        struct HeaderToolPrivate;
+        HeaderToolPrivate* m_impl;
 };
   
 } // namespace BamTools

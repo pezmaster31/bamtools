@@ -3,9 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 20 July 2010 (DB)
+// Last modified: 7 April 2010 (DB)
 // ---------------------------------------------------------------------------
-// Grab a random subset of alignments.
+// Grab a random subset of alignments (testing tool)
 // ***************************************************************************
 
 #ifndef BAMTOOLS_RANDOM_H
@@ -28,6 +28,9 @@ class RandomTool : public AbstractTool {
     private:
         struct RandomSettings;
         RandomSettings* m_settings;
+
+        struct RandomToolPrivate;
+        RandomToolPrivate* m_impl;
 };
   
 } // namespace BamTools

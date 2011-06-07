@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011
+// Last modified: 7 April 2011
 // ---------------------------------------------------------------------------
 // Prints coverage data for a single BAM file 
 // ***************************************************************************
@@ -81,8 +81,12 @@ struct CoverageTool::CoverageToolPrivate {
   
     // ctor & dtor
     public:
-        CoverageToolPrivate(CoverageTool::CoverageSettings* settings);
-        ~CoverageToolPrivate(void);
+        CoverageToolPrivate(CoverageTool::CoverageSettings* settings)
+            : m_settings(settings)
+            , m_out(cout.rdbuf())
+        { }
+
+        ~CoverageToolPrivate(void) { }
     
     // interface
     public:
@@ -95,13 +99,6 @@ struct CoverageTool::CoverageToolPrivate {
         RefVector m_references;
 };  
 
-CoverageTool::CoverageToolPrivate::CoverageToolPrivate(CoverageTool::CoverageSettings* settings)
-    : m_settings(settings)
-    , m_out(cout.rdbuf()) // default output to cout
-{ }
-
-CoverageTool::CoverageToolPrivate::~CoverageToolPrivate(void) { }  
-  
 bool CoverageTool::CoverageToolPrivate::Run(void) {  
   
     // if output filename given
@@ -171,6 +168,7 @@ CoverageTool::CoverageTool(void)
 }
 
 CoverageTool::~CoverageTool(void) { 
+
     delete m_settings;
     m_settings = 0;
     
@@ -188,9 +186,10 @@ int CoverageTool::Run(int argc, char* argv[]) {
     // parse command line arguments
     Options::Parse(argc, argv, 1);
     
-    // run internal ConvertTool implementation, return success/fail
+    // initialize CoverageTool with settings
     m_impl = new CoverageToolPrivate(m_settings);
     
+    // run CoverageTool, return success/fail
     if ( m_impl->Run() ) 
         return 0;
     else 

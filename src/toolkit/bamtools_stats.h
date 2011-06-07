@@ -3,12 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 1 June 2010
+// Last modified: 7 April 2011
 // ---------------------------------------------------------------------------
-// Prints general statistics for a single BAM file.
-//
-// ** Expand to multiple? **
-//
+// Prints general statistics for a single BAM file
 // ***************************************************************************
 
 #ifndef BAMTOOLS_STATS_H

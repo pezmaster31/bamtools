@@ -3,12 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 1 June 2010
+// Last modified: 7 April 2011
 // ---------------------------------------------------------------------------
-// Prints alignment count for BAM file
-//
-// ** Expand to multiple?? 
-//
+// Prints alignment count for BAM file(s)
 // ***************************************************************************
 
 #ifndef BAMTOOLS_COUNT_H
@@ -31,6 +28,9 @@ class CountTool : public AbstractTool {
     private: 
         struct CountSettings;
         CountSettings* m_settings;
+
+        struct CountToolPrivate;
+        CountToolPrivate* m_impl;
 };
   
 } // namespace BamTools

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 1 June 2010
+// Last modified: 7 April 2011
 // ---------------------------------------------------------------------------
 // Merges multiple BAM files into one
 // ***************************************************************************
@@ -28,6 +28,9 @@ class MergeTool : public AbstractTool {
     private:
         struct MergeSettings;
         MergeSettings* m_settings;
+
+        struct MergeToolPrivate;
+        MergeToolPrivate* m_impl;
 };
   
 } // namespace BamTools

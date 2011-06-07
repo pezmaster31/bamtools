@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011
+// Last modified: 7 April 2011
 // ---------------------------------------------------------------------------
 // Converts between BAM and a number of other formats
 // ***************************************************************************
@@ -27,46 +27,46 @@ using namespace std;
   
 namespace BamTools { 
   
-    // ---------------------------------------------
-    // ConvertTool constants
-  
-    // supported conversion format command-line names
-    static const string FORMAT_BED    = "bed";
-    static const string FORMAT_FASTA  = "fasta";
-    static const string FORMAT_FASTQ  = "fastq";
-    static const string FORMAT_JSON   = "json";
-    static const string FORMAT_SAM    = "sam";
-    static const string FORMAT_PILEUP = "pileup";
-    static const string FORMAT_YAML   = "yaml";
+// ---------------------------------------------
+// ConvertTool constants
 
-    // other constants
-    static const unsigned int FASTA_LINE_MAX = 50;
-    
-    // ---------------------------------------------
-    // ConvertPileupFormatVisitor declaration
-    
-    class ConvertPileupFormatVisitor : public PileupVisitor {
-      
-        // ctor & dtor
-        public:
-            ConvertPileupFormatVisitor(const RefVector& references, 
-                                       const string& fastaFilename,
-                                       const bool isPrintingMapQualities,
-                                       ostream* out);
-            ~ConvertPileupFormatVisitor(void);
-      
-        // PileupVisitor interface implementation
-        public:
-            void Visit(const PileupPosition& pileupData);
-            
-        // data members
-        private:
-            Fasta     m_fasta;
-            bool      m_hasFasta;
-            bool      m_isPrintingMapQualities;
-            ostream*  m_out;
-            RefVector m_references;
-    };
+// supported conversion format command-line names
+static const string FORMAT_BED    = "bed";
+static const string FORMAT_FASTA  = "fasta";
+static const string FORMAT_FASTQ  = "fastq";
+static const string FORMAT_JSON   = "json";
+static const string FORMAT_SAM    = "sam";
+static const string FORMAT_PILEUP = "pileup";
+static const string FORMAT_YAML   = "yaml";
+
+// other constants
+static const unsigned int FASTA_LINE_MAX = 50;
+
+// ---------------------------------------------
+// ConvertPileupFormatVisitor declaration
+
+class ConvertPileupFormatVisitor : public PileupVisitor {
+
+    // ctor & dtor
+    public:
+        ConvertPileupFormatVisitor(const RefVector& references,
+                                   const string& fastaFilename,
+                                   const bool isPrintingMapQualities,
+                                   ostream* out);
+        ~ConvertPileupFormatVisitor(void);
+
+    // PileupVisitor interface implementation
+    public:
+        void Visit(const PileupPosition& pileupData);
+
+    // data members
+    private:
+        Fasta     m_fasta;
+        bool      m_hasFasta;
+        bool      m_isPrintingMapQualities;
+        ostream*  m_out;
+        RefVector m_references;
+};
     
 } // namespace BamTools
   
@@ -75,7 +75,7 @@ namespace BamTools {
 
 struct ConvertTool::ConvertSettings {
 
-    // flags
+    // flag
     bool HasInput;
     bool HasOutput;
     bool HasFormat;
@@ -116,8 +116,12 @@ struct ConvertTool::ConvertToolPrivate {
   
     // ctor & dtor
     public:
-        ConvertToolPrivate(ConvertTool::ConvertSettings* settings);
-        ~ConvertToolPrivate(void);
+        ConvertToolPrivate(ConvertTool::ConvertSettings* settings)
+            : m_settings(settings)
+            , m_out(cout.rdbuf())
+        { }
+
+        ~ConvertToolPrivate(void) { }
     
     // interface
     public:
@@ -141,13 +145,6 @@ struct ConvertTool::ConvertToolPrivate {
         RefVector m_references;
         ostream m_out;
 };
-
-ConvertTool::ConvertToolPrivate::ConvertToolPrivate(ConvertTool::ConvertSettings* settings)
-    : m_settings(settings)
-    , m_out(cout.rdbuf()) // default output to cout
-{ }
-
-ConvertTool::ConvertToolPrivate::~ConvertToolPrivate(void) { }
 
 bool ConvertTool::ConvertToolPrivate::Run(void) {
  
@@ -713,6 +710,7 @@ ConvertTool::ConvertTool(void)
 }
 
 ConvertTool::~ConvertTool(void) {
+
     delete m_settings;
     m_settings = 0;
     
@@ -730,9 +728,10 @@ int ConvertTool::Run(int argc, char* argv[]) {
     // parse command line arguments
     Options::Parse(argc, argv, 1);
     
-    // run internal ConvertTool implementation, return success/fail
+    // initialize ConvertTool with settings
     m_impl = new ConvertToolPrivate(m_settings);
     
+    // run ConvertTool, return success/fail
     if ( m_impl->Run() ) 
         return 0;
     else 

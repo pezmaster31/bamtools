@@ -3,10 +3,10 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011 (DB)
+// Last modified: 7 April 2011 (DB)
 // ---------------------------------------------------------------------------
 // Splits a BAM file on user-specified property, creating a new BAM output
-// file for each value found.
+// file for each value found
 // ***************************************************************************
 
 #include "bamtools_split.h"
@@ -101,8 +101,13 @@ class SplitTool::SplitToolPrivate {
       
     // ctor & dtor
     public:
-        SplitToolPrivate(SplitTool::SplitSettings* settings);
-        ~SplitToolPrivate(void);
+        SplitToolPrivate(SplitTool::SplitSettings* settings)
+            : m_settings(settings)
+        { }
+
+        ~SplitToolPrivate(void) {
+            m_reader.Close();
+        }
         
     // 'public' interface
     public:
@@ -139,16 +144,6 @@ class SplitTool::SplitToolPrivate {
         string m_header;
         RefVector m_references;
 };
-
-// constructor
-SplitTool::SplitToolPrivate::SplitToolPrivate(SplitTool::SplitSettings* settings) 
-    : m_settings(settings)
-{ }
-
-// destructor
-SplitTool::SplitToolPrivate::~SplitToolPrivate(void) { 
-    m_reader.Close();
-}
 
 void SplitTool::SplitToolPrivate::DetermineOutputFilenameStub(void) {
   
@@ -392,8 +387,9 @@ bool SplitTool::SplitToolPrivate::SplitTag(void) {
 
 // --------------------------------------------------------------------------------
 // template method implementation
-// N.B. - *technical note* - use of template methods defined in ".cpp" goes against normal practices
-// but works here because these are purely internal (no one can call from outside this file)
+// *Technical Note* - use of template methods declared & defined in ".cpp" file
+//                    goes against normal practices, but works here because these
+//                    are purely internal (no one can call from outside this file)
 
 // close BamWriters & delete pointers
 template<typename T>
@@ -407,13 +403,17 @@ void SplitTool::SplitToolPrivate::CloseWriters(map<T, BamWriter*>& writers) {
     WriterMapIterator writerEnd  = writers.end();
     for ( ; writerIter != writerEnd; ++writerIter ) {
         BamWriter* writer = (*writerIter).second;
-        if (writer == 0 ) continue;
+        if ( writer == 0 ) continue;
 
-        // close & delete writer
+        // close BamWriter
         writer->Close();
+
+        // destroy BamWriter
         delete writer;
         writer = 0;
     }
+
+    // clear the container (destroying the items doesn't remove them)
     writers.clear();
 }
 
@@ -541,10 +541,10 @@ int SplitTool::Run(int argc, char* argv[]) {
     // parse command line arguments
     Options::Parse(argc, argv, 1);
     
-    // initialize internal implementation
+    // initialize SplitTool with settings
     m_impl = new SplitToolPrivate(m_settings);
     
-    // run tool, return success/fail
+    // run SplitTool, return success/fail
     if ( m_impl->Run() ) 
         return 0;
     else 

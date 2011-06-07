@@ -3,9 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 18 January 2011
+// Last modified: 7 April 2011
 // ---------------------------------------------------------------------------
-// Creates a BAM index file.
+// Creates a BAM index file
 // ***************************************************************************
 
 #ifndef BAMTOOLS_INDEX_H
@@ -28,6 +28,9 @@ class IndexTool : public AbstractTool {
     private:
         struct IndexSettings;
         IndexSettings* m_settings;
+
+        struct IndexToolPrivate;
+        IndexToolPrivate* m_impl;
 };
   
 } // namespace BamTools

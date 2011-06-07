@@ -1,11 +1,11 @@
 // ***************************************************************************
-// bamtools_stats.h (c) 2010 Derek Barnett, Alistair Ward
+// bamtools_revert.h (c) 2010 Derek Barnett, Alistair Ward
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 5 December 2010
+// Last modified: 7 April 2011
 // ---------------------------------------------------------------------------
-//
+// Removes duplicate marks and restores original base qualities
 // ***************************************************************************
 
 #ifndef BAMTOOLS_REVERT_H

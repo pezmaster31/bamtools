@@ -1,11 +1,11 @@
 // ***************************************************************************
-// bamtools_cpp (c) 2010 Derek Barnett, Alistair Ward
+// bamtools_revert.cpp (c) 2010 Derek Barnett, Alistair Ward
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011
+// Last modified: 7 April 2011
 // ---------------------------------------------------------------------------
-// Prints general alignment statistics for BAM file(s).
+// Removes duplicate marks and restores original base qualities
 // ***************************************************************************
 
 #include "bamtools_revert.h"
@@ -19,6 +19,12 @@ using namespace BamTools;
 #include <iostream>
 #include <string>
 using namespace std;
+
+namespace BamTools {
+
+static const string OQ_TAG = "OQ";
+
+} // namespace BamTools;
 
 // ---------------------------------------------
 // RevertSettings implementation
@@ -55,8 +61,10 @@ struct RevertTool::RevertToolPrivate {
   
     // ctor & dtor
     public:
-        RevertToolPrivate(RevertTool::RevertSettings* settings);
-        ~RevertToolPrivate(void);
+        RevertToolPrivate(RevertTool::RevertSettings* settings)
+            : m_settings(settings)
+        { }
+        ~RevertToolPrivate(void) { }
   
     // 'public' interface
     public:
@@ -69,27 +77,21 @@ struct RevertTool::RevertToolPrivate {
     // data members
     private:
         RevertTool::RevertSettings* m_settings;
-        string m_OQ;
 };
 
-RevertTool::RevertToolPrivate::RevertToolPrivate(RevertTool::RevertSettings* settings)
-    : m_settings(settings)
-    , m_OQ("OQ")
-{ }
-
-RevertTool::RevertToolPrivate::~RevertToolPrivate(void) { }
-
-// reverts a BAM alignment
-// default behavior (for now) is : replace Qualities with OQ, clear IsDuplicate flag
+// 'reverts' a BAM alignment
+// default behavior (for now) is:
+//   1 - replace Qualities with OQ contents
+//   2 - clear IsDuplicate flag
 // can override default behavior using command line options
 void RevertTool::RevertToolPrivate::RevertAlignment(BamAlignment& al) {
 
-    // replace Qualities with OQ, if requested
+    // replace Qualities with OQ contents, if requested
     if ( !m_settings->IsKeepQualities ) {
         string originalQualities;
-        if ( al.GetTag(m_OQ, originalQualities) ) {
+        if ( al.GetTag(OQ_TAG, originalQualities) ) {
             al.Qualities = originalQualities;
-            al.RemoveTag(m_OQ);
+            al.RemoveTag(OQ_TAG);
         }
     }
 
@@ -164,6 +166,7 @@ RevertTool::RevertTool(void)
 }
 
 RevertTool::~RevertTool(void) {
+
     delete m_settings;
     m_settings = 0;
     
@@ -181,9 +184,12 @@ int RevertTool::Run(int argc, char* argv[]) {
     // parse command line arguments
     Options::Parse(argc, argv, 1);
 
-    // run internal RevertTool implementation, return success/fail
+    // intialize RevertTool with settings
     m_impl = new RevertToolPrivate(m_settings);
     
-    if ( m_impl->Run() ) return 0;
-    else return 1;
+    // run RevertTool, return success/fail
+    if ( m_impl->Run() )
+        return 0;
+    else
+        return 1;
 }

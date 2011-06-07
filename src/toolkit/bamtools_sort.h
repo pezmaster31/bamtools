@@ -3,9 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 June 2010 (DB)
+// Last modified: 7 April 2011 (DB)
 // ---------------------------------------------------------------------------
-// Sorts a BAM file.
+// Sorts a BAM file
 // ***************************************************************************
 
 #ifndef BAMTOOLS_SORT_H

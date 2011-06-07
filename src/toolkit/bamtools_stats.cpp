@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011
+// Last modified: 7 April 2011
 // ---------------------------------------------------------------------------
 // Prints general alignment statistics for BAM file(s).
 // ***************************************************************************
@@ -50,7 +50,7 @@ struct StatsTool::StatsToolPrivate {
     // ctor & dtor
     public:
         StatsToolPrivate(StatsTool::StatsSettings* _settings);
-        ~StatsToolPrivate(void);
+        ~StatsToolPrivate(void) { }
   
     // 'public' interface
     public:
@@ -64,41 +64,39 @@ struct StatsTool::StatsToolPrivate {
         
     // data members
     private:
-        StatsTool::StatsSettings* settings;
-        unsigned int numReads;
-        unsigned int numPaired;
-        unsigned int numProperPair;
-        unsigned int numMapped;
-        unsigned int numBothMatesMapped;
-        unsigned int numForwardStrand;
-        unsigned int numReverseStrand;
-        unsigned int numFirstMate;
-        unsigned int numSecondMate;
-        unsigned int numSingletons;
-        unsigned int numFailedQC;
-        unsigned int numDuplicates;
-        vector<int> insertSizes;
+        StatsTool::StatsSettings* m_settings;
+        unsigned int m_numReads;
+        unsigned int m_numPaired;
+        unsigned int m_numProperPair;
+        unsigned int m_numMapped;
+        unsigned int m_numBothMatesMapped;
+        unsigned int m_numForwardStrand;
+        unsigned int m_numReverseStrand;
+        unsigned int m_numFirstMate;
+        unsigned int m_numSecondMate;
+        unsigned int m_numSingletons;
+        unsigned int m_numFailedQC;
+        unsigned int m_numDuplicates;
+        vector<int> m_insertSizes;
 };
 
-StatsTool::StatsToolPrivate::StatsToolPrivate(StatsTool::StatsSettings* _settings)
-    : settings(_settings)
-    , numReads(0)
-    , numPaired(0)
-    , numProperPair(0)
-    , numMapped(0)
-    , numBothMatesMapped(0)
-    , numForwardStrand(0)
-    , numReverseStrand(0)
-    , numFirstMate(0)
-    , numSecondMate(0)
-    , numSingletons(0)
-    , numFailedQC(0)
-    , numDuplicates(0)
+StatsTool::StatsToolPrivate::StatsToolPrivate(StatsTool::StatsSettings* settings)
+    : m_settings(settings)
+    , m_numReads(0)
+    , m_numPaired(0)
+    , m_numProperPair(0)
+    , m_numMapped(0)
+    , m_numBothMatesMapped(0)
+    , m_numForwardStrand(0)
+    , m_numReverseStrand(0)
+    , m_numFirstMate(0)
+    , m_numSecondMate(0)
+    , m_numSingletons(0)
+    , m_numFailedQC(0)
+    , m_numDuplicates(0)
 { 
-    insertSizes.reserve(100000);
+    m_insertSizes.reserve(100000);
 }
-
-StatsTool::StatsToolPrivate::~StatsToolPrivate(void) { }
 
 // median is of type double because in the case of even number of data elements,
 // we need to return the average of middle 2 elements
@@ -136,32 +134,32 @@ void StatsTool::StatsToolPrivate::PrintStats(void) {
     cout << "Stats for BAM file(s): " << endl;
     cout << "**********************************************" << endl;
     cout << endl;
-    cout << "Total reads:       " << numReads << endl;
-    cout << "Mapped reads:      " << numMapped << "\t(" << ((float)numMapped/numReads)*100 << "%)" << endl;
-    cout << "Forward strand:    " << numForwardStrand << "\t(" << ((float)numForwardStrand/numReads)*100 << "%)" << endl;
-    cout << "Reverse strand:    " << numReverseStrand << "\t(" << ((float)numReverseStrand/numReads)*100 << "%)" << endl;
-    cout << "Failed QC:         " << numFailedQC << "\t(" << ((float)numFailedQC/numReads)*100 << "%)" << endl;
-    cout << "Duplicates:        " << numDuplicates << "\t(" << ((float)numDuplicates/numReads)*100 << "%)" << endl;
-    cout << "Paired-end reads:  " << numPaired << "\t(" << ((float)numPaired/numReads)*100 << "%)" << endl;
+    cout << "Total reads:       " << m_numReads << endl;
+    cout << "Mapped reads:      " << m_numMapped << "\t(" << ((float)m_numMapped/m_numReads)*100 << "%)" << endl;
+    cout << "Forward strand:    " << m_numForwardStrand << "\t(" << ((float)m_numForwardStrand/m_numReads)*100 << "%)" << endl;
+    cout << "Reverse strand:    " << m_numReverseStrand << "\t(" << ((float)m_numReverseStrand/m_numReads)*100 << "%)" << endl;
+    cout << "Failed QC:         " << m_numFailedQC << "\t(" << ((float)m_numFailedQC/m_numReads)*100 << "%)" << endl;
+    cout << "Duplicates:        " << m_numDuplicates << "\t(" << ((float)m_numDuplicates/m_numReads)*100 << "%)" << endl;
+    cout << "Paired-end reads:  " << m_numPaired << "\t(" << ((float)m_numPaired/m_numReads)*100 << "%)" << endl;
     
-    if ( numPaired != 0 ) {
-        cout << "'Proper-pairs':    " << numProperPair << "\t(" << ((float)numProperPair/numPaired)*100 << "%)" << endl;
-        cout << "Both pairs mapped: " << numBothMatesMapped << "\t(" << ((float)numBothMatesMapped/numPaired)*100 << "%)" << endl;
-        cout << "Read 1:            " << numFirstMate << endl;
-        cout << "Read 2:            " << numSecondMate << endl;
-        cout << "Singletons:        " << numSingletons << "\t(" << ((float)numSingletons/numPaired)*100 << "%)" << endl;
+    if ( m_numPaired != 0 ) {
+        cout << "'Proper-pairs':    " << m_numProperPair << "\t(" << ((float)m_numProperPair/m_numPaired)*100 << "%)" << endl;
+        cout << "Both pairs mapped: " << m_numBothMatesMapped << "\t(" << ((float)m_numBothMatesMapped/m_numPaired)*100 << "%)" << endl;
+        cout << "Read 1:            " << m_numFirstMate << endl;
+        cout << "Read 2:            " << m_numSecondMate << endl;
+        cout << "Singletons:        " << m_numSingletons << "\t(" << ((float)m_numSingletons/m_numPaired)*100 << "%)" << endl;
     }
     
-    if ( settings->IsShowingInsertSizeSummary ) {
+    if ( m_settings->IsShowingInsertSizeSummary ) {
       
         double avgInsertSize = 0.0;
-        if ( !insertSizes.empty() ) {
-            avgInsertSize = ( accumulate(insertSizes.begin(), insertSizes.end(), 0.0) / (double)insertSizes.size() );
+        if ( !m_insertSizes.empty() ) {
+            avgInsertSize = ( accumulate(m_insertSizes.begin(), m_insertSizes.end(), 0.0) / (double)m_insertSizes.size() );
             cout << "Average insert size (absolute value): " << avgInsertSize << endl;
         }
         
         double medianInsertSize = 0.0;
-        if ( CalculateMedian(insertSizes, medianInsertSize) )
+        if ( CalculateMedian(m_insertSizes, medianInsertSize) )
             cout << "Median insert size (absolute value): " << medianInsertSize << endl;
     }
     cout << endl;
@@ -171,55 +169,59 @@ void StatsTool::StatsToolPrivate::PrintStats(void) {
 void StatsTool::StatsToolPrivate::ProcessAlignment(const BamAlignment& al) {
   
     // increment total alignment counter
-    ++numReads;
+    ++m_numReads;
     
-    // check the paired-independent flags
-    if ( al.IsDuplicate() ) ++numDuplicates;
-    if ( al.IsFailedQC()  ) ++numFailedQC;
-    if ( al.IsMapped()    ) ++numMapped;
+    // incrememt counters for pairing-independent flags
+    if ( al.IsDuplicate() ) ++m_numDuplicates;
+    if ( al.IsFailedQC()  ) ++m_numFailedQC;
+    if ( al.IsMapped()    ) ++m_numMapped;
     
-    // check forward/reverse strand
+    // increment strand counters
     if ( al.IsReverseStrand() ) 
-        ++numReverseStrand; 
+        ++m_numReverseStrand;
     else 
-        ++numForwardStrand;
+        ++m_numForwardStrand;
     
     // if alignment is paired-end
     if ( al.IsPaired() ) {
       
         // increment PE counter
-        ++numPaired;
+        ++m_numPaired;
       
         // increment first mate/second mate counters
-        if ( al.IsFirstMate()  ) ++numFirstMate;
-        if ( al.IsSecondMate() ) ++numSecondMate;
+        if ( al.IsFirstMate()  ) ++m_numFirstMate;
+        if ( al.IsSecondMate() ) ++m_numSecondMate;
         
         // if alignment is mapped, check mate status
         if ( al.IsMapped() ) {
             // if mate mapped
             if ( al.IsMateMapped() ) 
-                ++numBothMatesMapped;
+                ++m_numBothMatesMapped;
             // else singleton
             else 
-                ++numSingletons;
+                ++m_numSingletons;
         }
         
         // check for explicit proper pair flag
-        if ( al.IsProperPair() ) ++numProperPair;
+        if ( al.IsProperPair() ) ++m_numProperPair;
         
         // store insert size for first mate 
-        if ( settings->IsShowingInsertSizeSummary && al.IsFirstMate() && (al.InsertSize != 0) ) {
+        if ( m_settings->IsShowingInsertSizeSummary && al.IsFirstMate() && (al.InsertSize != 0) ) {
             int insertSize = abs(al.InsertSize);
-            insertSizes.push_back( insertSize );
+            m_insertSizes.push_back( insertSize );
         }
     }
 }
 
 bool StatsTool::StatsToolPrivate::Run() {
   
+    // set to default input if none provided
+    if ( !m_settings->HasInput )
+        m_settings->InputFiles.push_back(Options::StandardIn());
+
     // open the BAM files
     BamMultiReader reader;
-    if ( !reader.Open(settings->InputFiles) ) {
+    if ( !reader.Open(m_settings->InputFiles) ) {
         cerr << "bamtools stats ERROR: could not open input BAM file(s)... Aborting." << endl;
         reader.Close();
         return false;
@@ -256,6 +258,7 @@ StatsTool::StatsTool(void)
 }
 
 StatsTool::~StatsTool(void) {
+
     delete m_settings;
     m_settings = 0;
     
@@ -272,14 +275,13 @@ int StatsTool::Run(int argc, char* argv[]) {
   
     // parse command line arguments
     Options::Parse(argc, argv, 1);
-
-    // set to default input if none provided
-    if ( !m_settings->HasInput ) 
-        m_settings->InputFiles.push_back(Options::StandardIn());
     
-    // run internal StatsTool implementation, return success/fail
+    // initialize StatsTool with settings
     m_impl = new StatsToolPrivate(m_settings);
     
-    if ( m_impl->Run() ) return 0;
-    else return 1;
+    // run StatsTool, return success/fail
+    if ( m_impl->Run() )
+        return 0;
+    else
+        return 1;
 }

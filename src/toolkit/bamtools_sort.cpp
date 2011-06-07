@@ -3,9 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011 (DB)
+// Last modified: 7 April 2011 (DB)
 // ---------------------------------------------------------------------------
-// Sorts an input BAM file (default by position) and stores in a new BAM file.
+// Sorts an input BAM file
 // ***************************************************************************
 
 #include "bamtools_sort.h"
@@ -26,44 +26,79 @@ using namespace std;
 
 namespace BamTools {
   
-    // defaults
-    //
-    // ** These defaults should be tweaked & 'optimized' per testing ** //
-    //
-    //    I say 'optimized' because each system will naturally perform
-    //    differently.  We will attempt to determine a sensible 
-    //    compromise that should perform well on average.
-    const unsigned int SORT_DEFAULT_MAX_BUFFER_COUNT  = 500000;  // max numberOfAlignments for buffer
-    const unsigned int SORT_DEFAULT_MAX_BUFFER_MEMORY = 1024;    // Mb
+// defaults
+//
+// ** These defaults should be tweaked & 'optimized' per testing ** //
+//
+//    I say 'optimized' because each system will naturally perform
+//    differently.  We will attempt to determine a sensible
+//    compromise that should perform well on average.
+const unsigned int SORT_DEFAULT_MAX_BUFFER_COUNT  = 500000;  // max numberOfAlignments for buffer
+const unsigned int SORT_DEFAULT_MAX_BUFFER_MEMORY = 1024;    // Mb
 
-    // -----------------------------------
-    // comparison objects (for sorting) 
+// -----------------------------------
+// comparison objects (for sorting)
 
-    struct SortLessThanPosition {
-        bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
-            if ( lhs.RefID != rhs.RefID )
-                return lhs.RefID < rhs.RefID;
-            else 
-                return lhs.Position < rhs.Position;
-        }
-    };
-    
-    struct SortLessThanName {
-        bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
-            return lhs.Name < rhs.Name;
-        }
-    };
+struct SortLessThanPosition {
+    bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
+        if ( lhs.RefID != rhs.RefID )
+            return lhs.RefID < rhs.RefID;
+        else
+            return lhs.Position < rhs.Position;
+    }
+};
+
+struct SortLessThanName {
+    bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
+        return lhs.Name < rhs.Name;
+    }
+};
     
 } // namespace BamTools
 
 // ---------------------------------------------
-// SortToolPrivate declaration
+// SortSettings implementation
+
+struct SortTool::SortSettings {
+
+    // flags
+    bool HasInputBamFilename;
+    bool HasMaxBufferCount;
+    bool HasMaxBufferMemory;
+    bool HasOutputBamFilename;
+    bool IsSortingByName;
+
+    // filenames
+    string InputBamFilename;
+    string OutputBamFilename;
+
+    // parameters
+    unsigned int MaxBufferCount;
+    unsigned int MaxBufferMemory;
+
+    // constructor
+    SortSettings(void)
+        : HasInputBamFilename(false)
+        , HasMaxBufferCount(false)
+        , HasMaxBufferMemory(false)
+        , HasOutputBamFilename(false)
+        , IsSortingByName(false)
+        , InputBamFilename(Options::StandardIn())
+        , OutputBamFilename(Options::StandardOut())
+        , MaxBufferCount(SORT_DEFAULT_MAX_BUFFER_COUNT)
+        , MaxBufferMemory(SORT_DEFAULT_MAX_BUFFER_MEMORY)
+    { }
+};
+
+// ---------------------------------------------
+// SortToolPrivate implementation
+
 class SortTool::SortToolPrivate {
       
     // ctor & dtor
     public:
         SortToolPrivate(SortTool::SortSettings* settings);
-        ~SortToolPrivate(void);
+        ~SortToolPrivate(void) { }
         
     // 'public' interface
     public:
@@ -88,92 +123,6 @@ class SortTool::SortToolPrivate {
         vector<string> m_tempFilenames;
 };
 
-// ---------------------------------------------
-// SortSettings implementation
-
-struct SortTool::SortSettings {
-
-    // flags
-    bool HasInputBamFilename;
-    bool HasMaxBufferCount;
-    bool HasMaxBufferMemory;
-    bool HasOutputBamFilename;
-    bool IsSortingByName;
-
-    // filenames
-    string InputBamFilename;
-    string OutputBamFilename;
-    
-    // parameters
-    unsigned int MaxBufferCount;
-    unsigned int MaxBufferMemory;
-    
-    // constructor
-    SortSettings(void)
-        : HasInputBamFilename(false)
-        , HasMaxBufferCount(false)
-        , HasMaxBufferMemory(false)
-        , HasOutputBamFilename(false)
-        , IsSortingByName(false)
-        , InputBamFilename(Options::StandardIn())
-        , OutputBamFilename(Options::StandardOut())
-        , MaxBufferCount(SORT_DEFAULT_MAX_BUFFER_COUNT)
-        , MaxBufferMemory(SORT_DEFAULT_MAX_BUFFER_MEMORY)
-    { } 
-};  
-
-// ---------------------------------------------
-// SortTool implementation
-
-SortTool::SortTool(void)
-    : AbstractTool()
-    , m_settings(new SortSettings)
-    , m_impl(0)
-{
-    // set program details
-    Options::SetProgramInfo("bamtools sort", "sorts a BAM file", "[-in <filename>] [-out <filename>] [sortOptions]");
-    
-    // set up options 
-    OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",  "BAM filename", "the input BAM file",  "", m_settings->HasInputBamFilename,  m_settings->InputBamFilename,  IO_Opts, Options::StandardIn());
-    Options::AddValueOption("-out", "BAM filename", "the output BAM file", "", m_settings->HasOutputBamFilename, m_settings->OutputBamFilename, IO_Opts, Options::StandardOut());
-    
-    OptionGroup* SortOpts = Options::CreateOptionGroup("Sorting Methods");
-    Options::AddOption("-byname", "sort by alignment name", m_settings->IsSortingByName, SortOpts);
-    
-    OptionGroup* MemOpts = Options::CreateOptionGroup("Memory Settings");
-    Options::AddValueOption("-n",   "count", "max number of alignments per tempfile", "", m_settings->HasMaxBufferCount,  m_settings->MaxBufferCount,  MemOpts, SORT_DEFAULT_MAX_BUFFER_COUNT);
-    Options::AddValueOption("-mem", "Mb",    "max memory to use",                     "", m_settings->HasMaxBufferMemory, m_settings->MaxBufferMemory, MemOpts, SORT_DEFAULT_MAX_BUFFER_MEMORY);
-}
-
-SortTool::~SortTool(void) {
-    
-    delete m_settings;
-    m_settings = 0;
-    
-    delete m_impl;
-    m_impl = 0;
-}
-
-int SortTool::Help(void) {
-    Options::DisplayHelp();
-    return 0;
-}
-
-int SortTool::Run(int argc, char* argv[]) {
-  
-    // parse command line arguments
-    Options::Parse(argc, argv, 1);
-    
-    // run internal SortTool implementation, return success/fail
-    m_impl = new SortToolPrivate(m_settings);
-    
-    if ( m_impl->Run() ) return 0;
-    else return 1;
-}
-
-// ---------------------------------------------
-// SortToolPrivate implementation
 
 // constructor
 SortTool::SortToolPrivate::SortToolPrivate(SortTool::SortSettings* settings) 
@@ -189,9 +138,6 @@ SortTool::SortToolPrivate::SortToolPrivate(SortTool::SortSettings* settings)
         m_tempFilenameStub.append(".sort.temp.");
     }
 }
-
-// destructor
-SortTool::SortToolPrivate::~SortToolPrivate(void) { }
 
 // generates mutiple sorted temp BAM files from single unsorted BAM file
 bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
@@ -370,4 +316,57 @@ bool SortTool::SortToolPrivate::WriteTempFile(const vector<BamAlignment>& buffer
     // close temp file & return success
     tempWriter.Close();
     return true;
+}
+
+// ---------------------------------------------
+// SortTool implementation
+
+SortTool::SortTool(void)
+    : AbstractTool()
+    , m_settings(new SortSettings)
+    , m_impl(0)
+{
+    // set program details
+    Options::SetProgramInfo("bamtools sort", "sorts a BAM file", "[-in <filename>] [-out <filename>] [sortOptions]");
+
+    // set up options
+    OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
+    Options::AddValueOption("-in",  "BAM filename", "the input BAM file",  "", m_settings->HasInputBamFilename,  m_settings->InputBamFilename,  IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-out", "BAM filename", "the output BAM file", "", m_settings->HasOutputBamFilename, m_settings->OutputBamFilename, IO_Opts, Options::StandardOut());
+
+    OptionGroup* SortOpts = Options::CreateOptionGroup("Sorting Methods");
+    Options::AddOption("-byname", "sort by alignment name", m_settings->IsSortingByName, SortOpts);
+
+    OptionGroup* MemOpts = Options::CreateOptionGroup("Memory Settings");
+    Options::AddValueOption("-n",   "count", "max number of alignments per tempfile", "", m_settings->HasMaxBufferCount,  m_settings->MaxBufferCount,  MemOpts, SORT_DEFAULT_MAX_BUFFER_COUNT);
+    Options::AddValueOption("-mem", "Mb",    "max memory to use",                     "", m_settings->HasMaxBufferMemory, m_settings->MaxBufferMemory, MemOpts, SORT_DEFAULT_MAX_BUFFER_MEMORY);
+}
+
+SortTool::~SortTool(void) {
+
+    delete m_settings;
+    m_settings = 0;
+
+    delete m_impl;
+    m_impl = 0;
+}
+
+int SortTool::Help(void) {
+    Options::DisplayHelp();
+    return 0;
+}
+
+int SortTool::Run(int argc, char* argv[]) {
+
+    // parse command line arguments
+    Options::Parse(argc, argv, 1);
+
+    // initialize SortTool with settings
+    m_impl = new SortToolPrivate(m_settings);
+
+    // run SortTool, return success/fail
+    if ( m_impl->Run() )
+        return 0;
+    else
+        return 1;
 }

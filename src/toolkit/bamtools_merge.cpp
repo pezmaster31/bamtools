@@ -3,9 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 21 March 2011
+// Last modified: 7 April 2011
 // ---------------------------------------------------------------------------
-// Merges multiple BAM files into one.
+// Merges multiple BAM files into one
 // ***************************************************************************
 
 #include "bamtools_merge.h"
@@ -50,11 +50,136 @@ struct MergeTool::MergeSettings {
 };  
 
 // ---------------------------------------------
+// MergeToolPrivate implementation
+
+struct MergeTool::MergeToolPrivate {
+
+    // ctor & dtor
+    public:
+        MergeToolPrivate(MergeTool::MergeSettings* settings)
+            : m_settings(settings)
+        { }
+
+        ~MergeToolPrivate(void) { }
+
+    // interface
+    public:
+        bool Run(void);
+
+    // data members
+    private:
+        MergeTool::MergeSettings* m_settings;
+};
+
+bool MergeTool::MergeToolPrivate::Run(void) {
+
+    // set to default input if none provided
+    if ( !m_settings->HasInputBamFilename )
+        m_settings->InputFiles.push_back(Options::StandardIn());
+
+    // opens the BAM files (by default without checking for indexes)
+    BamMultiReader reader;
+    if ( !reader.Open(m_settings->InputFiles) ) {
+        cerr << "bamtools merge ERROR: could not open input BAM file(s)... Aborting." << endl;
+        return false;
+    }
+
+    // retrieve header & reference dictionary info
+    std::string mergedHeader = reader.GetHeaderText();
+    RefVector references = reader.GetReferenceData();
+
+    // determine compression mode for BamWriter
+    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() &&
+                               !m_settings->IsForceCompression );
+    BamWriter::CompressionMode compressionMode = BamWriter::Compressed;
+    if ( writeUncompressed ) compressionMode = BamWriter::Uncompressed;
+
+    // open BamWriter
+    BamWriter writer;
+    writer.SetCompressionMode(compressionMode);
+    if ( !writer.Open(m_settings->OutputFilename, mergedHeader, references) ) {
+        cerr << "bamtools merge ERROR: could not open "
+             << m_settings->OutputFilename << " for writing." << endl;
+        reader.Close();
+        return false;
+    }
+
+    // if no region specified, store entire contents of file(s)
+    if ( !m_settings->HasRegion ) {
+        BamAlignment al;
+        while ( reader.GetNextAlignmentCore(al) )
+            writer.SaveAlignment(al);
+    }
+
+    // otherwise attempt to use region as constraint
+    else {
+
+        // if region string parses OK
+        BamRegion region;
+        if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
+
+            // attempt to find index files
+            reader.LocateIndexes();
+
+            // if index data available for all BAM files, we can use SetRegion
+            if ( reader.HasIndexes() ) {
+
+                // attempt to use SetRegion(), if failed report error
+                if ( !reader.SetRegion(region.LeftRefID,
+                                       region.LeftPosition,
+                                       region.RightRefID,
+                                       region.RightPosition) )
+                {
+                    cerr << "bamtools merge ERROR: set region failed. Check that REGION describes a valid range"
+                         << endl;
+                    reader.Close();
+                    return false;
+                }
+
+                // everything checks out, just iterate through specified region, storing alignments
+                BamAlignment al;
+                while ( reader.GetNextAlignmentCore(al) )
+                    writer.SaveAlignment(al);
+            }
+
+            // no index data available, we have to iterate through until we
+            // find overlapping alignments
+            else {
+                BamAlignment al;
+                while ( reader.GetNextAlignmentCore(al) ) {
+                    if ( (al.RefID >= region.LeftRefID)  && ( (al.Position + al.Length) >= region.LeftPosition ) &&
+                         (al.RefID <= region.RightRefID) && ( al.Position <= region.RightPosition) )
+                    {
+                        writer.SaveAlignment(al);
+                    }
+                }
+            }
+        }
+
+        // error parsing REGION string
+        else {
+            cerr << "bamtools merge ERROR: could not parse REGION - " << m_settings->Region << endl;
+            cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
+                 << endl;
+            reader.Close();
+            writer.Close();
+            return false;
+        }
+    }
+
+    // clean & exit
+    reader.Close();
+    writer.Close();
+    return true;
+}
+
+// ---------------------------------------------
 // MergeTool implementation
 
 MergeTool::MergeTool(void)
     : AbstractTool()
     , m_settings(new MergeSettings)
+    , m_impl(0)
 {
     // set program details
     Options::SetProgramInfo("bamtools merge", "merges multiple BAM files into one", "[-in <filename> -in <filename> ...] [-out <filename> | [-forceCompression]] [-region <REGION>]");
@@ -68,8 +193,12 @@ MergeTool::MergeTool(void)
 }
 
 MergeTool::~MergeTool(void) {
+
     delete m_settings;
     m_settings = 0;
+
+    delete m_impl;
+    m_impl = 0;
 }
 
 int MergeTool::Help(void) {
@@ -82,96 +211,12 @@ int MergeTool::Run(int argc, char* argv[]) {
     // parse command line arguments
     Options::Parse(argc, argv, 1);
     
-     // set to default input if none provided
-    if ( !m_settings->HasInputBamFilename ) 
-        m_settings->InputFiles.push_back(Options::StandardIn());
-    
-    // opens the BAM files (by default without checking for indexes)
-    BamMultiReader reader;
-    if ( !reader.Open(m_settings->InputFiles) ) {
-        cerr << "bamtools merge ERROR: could not open input BAM file(s)... Aborting." << endl;
+    // initialize MergeTool with settings
+    m_impl = new MergeToolPrivate(m_settings);
+
+    // run MergeTool, return success/fail
+    if ( m_impl->Run() )
+        return 0;
+    else
         return 1;
-    }
-    
-    // retrieve header & reference dictionary info
-    std::string mergedHeader = reader.GetHeaderText();
-    RefVector references = reader.GetReferenceData();
-
-    // determine compression mode for BamWriter
-    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() &&
-                              !m_settings->IsForceCompression );
-    BamWriter::CompressionMode compressionMode = BamWriter::Compressed;
-    if ( writeUncompressed ) compressionMode = BamWriter::Uncompressed;
-
-    // open BamWriter
-    BamWriter writer;
-    writer.SetCompressionMode(compressionMode);
-    if ( !writer.Open(m_settings->OutputFilename, mergedHeader, references) ) {
-        cerr << "bamtools merge ERROR: could not open " << m_settings->OutputFilename << " for writing." << endl;
-        reader.Close();
-        return false;
-    }
-
-    // if no region specified, store entire contents of file(s)
-    if ( !m_settings->HasRegion ) {
-        BamAlignment al;
-        while ( reader.GetNextAlignmentCore(al) )
-            writer.SaveAlignment(al);
-    }
-    
-    // otherwise attempt to use region as constraint
-    else {
-        
-        // if region string parses OK
-        BamRegion region;
-        if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
-
-            // attempt to find index files
-            reader.LocateIndexes();
-
-            // if index data available for all BAM files, we can use SetRegion
-            if ( reader.HasIndexes() ) {
-
-                // attempt to use SetRegion(), if failed report error
-                if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {
-                    cerr << "bamtools merge ERROR: set region failed. Check that REGION describes a valid range" << endl;
-                    reader.Close();
-                    return 1;
-                } 
-              
-                // everything checks out, just iterate through specified region, storing alignments
-                BamAlignment al;
-                while ( reader.GetNextAlignmentCore(al) )
-                    writer.SaveAlignment(al);
-            } 
-            
-            // no index data available, we have to iterate through until we
-            // find overlapping alignments
-            else {
-                BamAlignment al;
-                while ( reader.GetNextAlignmentCore(al) ) {
-                    if ( (al.RefID >= region.LeftRefID)  && ( (al.Position + al.Length) >= region.LeftPosition ) &&
-                          (al.RefID <= region.RightRefID) && ( al.Position <= region.RightPosition) ) 
-                    {
-                        writer.SaveAlignment(al);
-                    }
-                }
-            }
-        } 
-        
-        // error parsing REGION string
-        else {
-            cerr << "bamtools merge ERROR: could not parse REGION - " << m_settings->Region << endl;
-            cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
-                 << endl;
-            reader.Close();
-            writer.Close();
-            return 1;
-        }
-    }
-    
-    // clean & exit
-    reader.Close();
-    writer.Close();
-    return 0;  
 }

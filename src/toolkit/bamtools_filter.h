@@ -5,8 +5,7 @@
 // ---------------------------------------------------------------------------
 // Last modified: 28 August 2010
 // ---------------------------------------------------------------------------
-// Filters a single BAM file (or filters multiple BAM files and merges) 
-// according to some user-specified criteria.
+// Filters BAM file(s) according to some user-specified criteria
 // ***************************************************************************
 
 #ifndef BAMTOOLS_FILTER_H

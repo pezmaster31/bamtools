@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 7 April 2011
+// Last modified: 11 June 2011
 // ---------------------------------------------------------------------------
 // Converts between BAM and a number of other formats
 // ***************************************************************************
@@ -295,7 +295,7 @@ void ConvertTool::ConvertToolPrivate::PrintFasta(const BamAlignment& a) {
     // N.B. - QueryBases are reverse-complemented if aligned to reverse strand
   
     // print header
-    m_out << "> " << a.Name << endl;
+    m_out << ">" << a.Name << endl;
     
     // handle reverse strand alignment - bases 
     string sequence = a.QueryBases;

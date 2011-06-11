@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 26 January 2011
+// Last modified: 9 June 2011
 // ---------------------------------------------------------------------------
 // Provides general utilities used by BamTools sub-tools.
 // ***************************************************************************
@@ -15,8 +15,10 @@ using namespace BamTools;
 
 #include <algorithm>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 using namespace std;
 
 namespace BamTools {
@@ -31,6 +33,26 @@ const char REVCOMP_LOOKUP[] = {'T',  0,  'G', 'H',
   
 } // namespace BamTools 
   
+// returns true if 'source' contains 'pattern'
+bool Utilities::Contains(const string& source, const string& pattern) {
+    return ( source.find(pattern) != string::npos );
+}
+
+// returns true if 'source' contains 'c'
+bool Utilities::Contains(const std::string &source, const char c) {
+    return ( source.find(c) != string::npos );
+}
+
+// returns true if 'source' ends with 'pattern'
+bool Utilities::EndsWith(const string& source, const string& pattern) {
+    return ( source.find(pattern) == (source.length() - pattern.length()) );
+}
+
+// returns true if 'source' ends with 'c'
+bool Utilities::EndsWith(const std::string& source, const char c) {
+    return ( source.find(c) == (source.length() - 1) );
+}
+
 // check if a file exists
 bool Utilities::FileExists(const string& filename) {
     ifstream f(filename.c_str(), ifstream::in);
@@ -269,4 +291,42 @@ void Utilities::ReverseComplement(string& sequence) {
     
     // reverse it
     Reverse(sequence);
+}
+
+vector<string> Utilities::Split(const string& source, const char delim) {
+
+    stringstream ss(source);
+    string field;
+    vector<string> fields;
+
+    while ( getline(ss, field, delim) )
+        fields.push_back(field);
+    return fields;
+}
+
+vector<string> Utilities::Split(const string& source, const string& delims) {
+
+    vector<string> fields;
+
+    char* tok;
+    char cchars [source.size()+1];
+    char* cstr = &cchars[0];
+    strcpy(cstr, source.c_str());
+    tok = strtok(cstr, delims.c_str());
+    while (tok != NULL) {
+        fields.push_back(tok);
+        tok = strtok(NULL, delims.c_str());
+    }
+
+    return fields;
+}
+
+// returns true if 'source' starts with 'pattern'
+bool Utilities::StartsWith(const string& source, const string& pattern) {
+    return ( source.find(pattern) == 0 );
+}
+
+// returns true if 'source' starts with 'c'
+bool Utilities::StartsWith(const std::string &source, const char c) {
+    return ( source.find(c) == 0 );
 }

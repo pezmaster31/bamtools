@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010
+// Last modified: 11 June 2011
 // ---------------------------------------------------------------------------
 // Parses command line arguments and creates a help menu
 // ---------------------------------------------------------------------------
@@ -34,8 +34,8 @@
 namespace BamTools {
 
 #define ARGUMENT_LENGTH       35
-#define DESC_LENGTH_FIRST_ROW 50
-#define DESC_LENGTH           39
+#define DESC_LENGTH_FIRST_ROW 30
+#define DESC_LENGTH           42
 #define MAX_LINE_LENGTH       78
 
 #ifdef WIN32
@@ -130,7 +130,9 @@ class UTILS_EXPORT Options {
         // parses the command line
         static void Parse(int argc, char* argv[], int offset = 0);
         // sets the program info
-        static void SetProgramInfo(const std::string& programName, const std::string& description, const std::string& arguments);
+        static void SetProgramInfo(const std::string& programName,
+                                   const std::string& description,
+                                   const std::string& arguments);
         // returns string representation of stdin
         static const std::string& StandardIn(void);
         // returns string representation of stdout
@@ -149,9 +151,9 @@ class UTILS_EXPORT Options {
         // stores the options in a map
         static std::map<std::string, OptionValue> m_optionsMap;
         // string representation of stdin
-        static std::string m_stdin;
+        static const std::string m_stdin;
         // string representation of stdout
-        static std::string m_stdout;
+        static const std::string m_stdout;
 };
 
 // adds a value option to the parser

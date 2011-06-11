@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010
+// Last modified: 11 June 2011
 // ---------------------------------------------------------------------------
 // Parses command line arguments and creates a help menu
 // ---------------------------------------------------------------------------
@@ -32,12 +32,15 @@ string Options::m_description;                   // the main description
 string Options::m_exampleArguments;              // the example arguments
 vector<OptionGroup> Options::m_optionGroups;     // stores the option groups
 map<string, OptionValue> Options::m_optionsMap;  // stores the options in a map
-string Options::m_stdin  = "stdin";              // string representation of stdin
-string Options::m_stdout = "stdout";             // string representation of stdout
+const string Options::m_stdin  = "stdin";        // string representation of stdin
+const string Options::m_stdout = "stdout";       // string representation of stdout
 
 // adds a simple option to the parser
-void Options::AddOption(const string& argument, const string& optionDescription, bool& foundArgument, OptionGroup* group) {
-
+void Options::AddOption(const string& argument,
+                        const string& optionDescription,
+                        bool& foundArgument,
+                        OptionGroup* group)
+{
     Option o;
     o.Argument    = argument;
     o.Description = optionDescription;
@@ -110,7 +113,8 @@ void Options::DisplayHelp(void) {
                     const std::string stringValue = optionIter->DefaultValue;
                     sb << stringValue;
                 } else {
-                    printf("ERROR: Found an unsupported data type for argument %s when casting the default value.\n", optionIter->Argument.c_str());
+                    printf("ERROR: Found an unsupported data type for argument %s when casting the default value.\n",
+                           optionIter->Argument.c_str());
                     exit(1);
                 }
 
@@ -231,15 +235,18 @@ void Options::Parse(int argc, char* argv[], int offset) {
                             vector<string>* pVectorValue = (vector<string>*)ovMapIter->second.pValue;
                             pVectorValue->push_back(val);
                         } else {
-                            printf("ERROR: Found an unsupported data type for argument %s when parsing the arguments.\n", argument.c_str());
+                            printf("ERROR: Found an unsupported data type for argument %s when parsing the arguments.\n",
+                                   argument.c_str());
                             exit(1);
                         }
                     } else {
-                        errorBuilder << ERROR_SPACER << "The argument (" << argument << ") expects a value, but none was found." << endl;
+                        errorBuilder << ERROR_SPACER << "The argument (" << argument
+                                     << ") expects a value, but none was found." << endl;
                         foundError = true;
                     }
                 } else {
-                    errorBuilder << ERROR_SPACER << "The argument (" << argument << ") expects a value, but none was found." << endl;
+                    errorBuilder << ERROR_SPACER << "The argument (" << argument
+                                 << ") expects a value, but none was found." << endl;
                     foundError = true;
                 }
             }
@@ -249,7 +256,8 @@ void Options::Parse(int argc, char* argv[], int offset) {
     // check if we missed any required parameters
     for (ovMapIter = m_optionsMap.begin(); ovMapIter != m_optionsMap.end(); ++ovMapIter) {
         if (ovMapIter->second.IsRequired && !*ovMapIter->second.pFoundArgument) {
-            errorBuilder << ERROR_SPACER << ovMapIter->second.ValueTypeDescription << " was not specified. Please use the " << ovMapIter->first << " parameter." << endl;
+            errorBuilder << ERROR_SPACER << ovMapIter->second.ValueTypeDescription
+                         << " was not specified. Please use the " << ovMapIter->first << " parameter." << endl;
             foundError = true;
         }
     }
@@ -264,7 +272,10 @@ void Options::Parse(int argc, char* argv[], int offset) {
 }
 
 // sets the program info
-void Options::SetProgramInfo(const string& programName, const string& description, const string& arguments) {
+void Options::SetProgramInfo(const string& programName,
+                             const string& description,
+                             const string& arguments)
+{
     m_programName      = programName;
     m_description      = description;
     m_exampleArguments = arguments;

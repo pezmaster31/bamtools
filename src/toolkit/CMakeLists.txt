@@ -31,7 +31,7 @@ add_executable ( bamtools
 
 # set BamTools application properties
 set_target_properties( BamTools PROPERTIES
-                       VERSION  1.0.0
+                       VERSION  1.0.2
                      )
 # make version info available in application
 configure_file(bamtools_version.h.in ${BamTools_SOURCE_DIR}/src/toolkit/bamtools_version.h)

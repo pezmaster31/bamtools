@@ -3,10 +3,9 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 April 2011
+// Last modified: 11 June 2011
 // ---------------------------------------------------------------------------
-// Resolves paired-end reads (marking the IsProperPair flag as needed) in a
-// BAM file.
+// Resolves paired-end reads (marking the IsProperPair flag as needed).
 // ***************************************************************************
 
 #ifndef BAMTOOLS_RESOLVE_H
@@ -32,6 +31,9 @@ class ResolveTool : public AbstractTool {
 
         struct ResolveToolPrivate;
         ResolveToolPrivate* m_impl;
+
+        struct StatsFileReader;
+        struct StatsFileWriter;
 };
 
 } // namespace BamTools

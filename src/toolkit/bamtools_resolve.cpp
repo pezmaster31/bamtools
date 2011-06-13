@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 11 June 2011
+// Last modified: 13 June 2011
 // ---------------------------------------------------------------------------
 // Resolves paired-end reads (marking the IsProperPair flag as needed).
 // ***************************************************************************
@@ -67,6 +67,10 @@ static const string OPTION_CONFIDENCEINTERVAL   = "ConfidenceInterval";
 static const string OPTION_UNUSEDMODELTHRESHOLD = "UnusedModelThreshold";
 static const string OPTION_FORCEMARKREADGROUPS  = "ForceMarkReadGroups";
 
+// other string constants
+static const string RG_FIELD_DESCRIPTION =
+    "#<name> <medianFL> <minFL> <maxFL> <topModelID> <nextTopModelID> <isAmbiguous?>";
+
 // --------------------------------------------------------------------------
 // ModelType implementation
 
@@ -74,7 +78,7 @@ struct ModelType {
 
     // data members
     uint16_t ID;
-    vector<uint32_t> FragmentLengths;
+    vector<int32_t> FragmentLengths;
 
     // ctor
     ModelType(const uint16_t id)
@@ -85,12 +89,12 @@ struct ModelType {
     }
 
     // convenience access to internal fragment lengths vector
-    vector<uint32_t>::iterator begin(void) { return FragmentLengths.begin(); }
-    vector<uint32_t>::const_iterator begin(void) const { return FragmentLengths.begin(); }
+    vector<int32_t>::iterator begin(void) { return FragmentLengths.begin(); }
+    vector<int32_t>::const_iterator begin(void) const { return FragmentLengths.begin(); }
     void clear(void) { FragmentLengths.clear(); }
-    vector<uint32_t>::iterator end(void) { return FragmentLengths.end(); }
-    vector<uint32_t>::const_iterator end(void) const { return FragmentLengths.end(); }
-    void push_back(const uint32_t& x) { FragmentLengths.push_back(x); }
+    vector<int32_t>::iterator end(void) { return FragmentLengths.end(); }
+    vector<int32_t>::const_iterator end(void) const { return FragmentLengths.end(); }
+    void push_back(const int32_t& x) { FragmentLengths.push_back(x); }
     size_t size(void) const { return FragmentLengths.size(); }
 
     // constants
@@ -113,15 +117,15 @@ uint16_t CalculateModelType(const BamAlignment& al) {
 
     // determine 'model type'
     if ( m1_begin < m2_begin ) {
-        if ( !m1_isReverseStrand && !m2_isReverseStrand ) return 0;
-        if ( !m1_isReverseStrand &&  m2_isReverseStrand ) return 1;
-        if (  m1_isReverseStrand && !m2_isReverseStrand ) return 2;
-        if (  m1_isReverseStrand &&  m2_isReverseStrand ) return 3;
+        if ( !m1_isReverseStrand && !m2_isReverseStrand ) return 0; // ID: 1
+        if ( !m1_isReverseStrand &&  m2_isReverseStrand ) return 1; // ID: 2
+        if (  m1_isReverseStrand && !m2_isReverseStrand ) return 2; // ID: 3
+        if (  m1_isReverseStrand &&  m2_isReverseStrand ) return 3; // ID: 4
     } else {
-        if ( !m2_isReverseStrand && !m1_isReverseStrand ) return 4;
-        if ( !m2_isReverseStrand &&  m1_isReverseStrand ) return 5;
-        if (  m2_isReverseStrand && !m1_isReverseStrand ) return 6;
-        if (  m2_isReverseStrand &&  m1_isReverseStrand ) return 7;
+        if ( !m2_isReverseStrand && !m1_isReverseStrand ) return 4; // ID: 5
+        if ( !m2_isReverseStrand &&  m1_isReverseStrand ) return 5; // ID: 6
+        if (  m2_isReverseStrand && !m1_isReverseStrand ) return 6; // ID: 7
+        if (  m2_isReverseStrand &&  m1_isReverseStrand ) return 7; // ID: 8
     }
 
     // unknown model
@@ -184,17 +188,17 @@ bool ReadGroupResolver::IsValidInsertSize(const BamAlignment& al) const {
 }
 
 bool ReadGroupResolver::IsValidOrientation(const BamAlignment& al) const {
-    const uint16_t currentModel = CalculateModelType(al);
-    return ( currentModel == TopModelId || currentModel == NextTopModelId );
+    const uint16_t currentModelId = CalculateModelType(al) + 1; // convert model type (array index) to ID number
+    return ( currentModelId == TopModelId || currentModelId == NextTopModelId );
 }
 
 void ReadGroupResolver::DetermineTopModels(const string& readGroupName) {
 
-    // sort models (most common -> least common)
+    // sort models (from most common to least common)
     sort( Models.begin(), Models.end(), std::greater<ModelType>() );
 
     // store top 2 models for later
-    TopModelId = Models[0].ID;
+    TopModelId     = Models[0].ID;
     NextTopModelId = Models[1].ID;
 
     // make sure that the 2 most common models are some threshold more common
@@ -231,7 +235,7 @@ void ReadGroupResolver::DetermineTopModels(const string& readGroupName) {
     }
 
     // store only the fragments from the best alignment models, then sort
-    vector<uint32_t> fragments;
+    vector<int32_t> fragments;
     fragments.reserve( Models[0].size() + Models[1].size() );
     fragments.insert( fragments.end(), Models[0].begin(), Models[0].end() );
     fragments.insert( fragments.end(), Models[1].begin(), Models[1].end() );
@@ -240,11 +244,16 @@ void ReadGroupResolver::DetermineTopModels(const string& readGroupName) {
     // clear out Model fragment data, not needed anymore
     Models.clear();
 
-    // determine min,median, & max fragment lengths for each read group
-    const double halfNonConfidenceInterval = (1.0 - ReadGroupResolver::ConfidenceInterval)/2.0;
-    const unsigned int numFragmentLengths = fragments.size();
-    if ( numFragmentLengths == 0 ) return;
+    // skip if no fragments found for this read group
+    if ( fragments.empty() ) {
+        HasData = false;
+        return;
+    } else
+        HasData = true;
 
+    // calculate & store the min,median, & max fragment lengths
+    const unsigned int numFragmentLengths = fragments.size();
+    const double halfNonConfidenceInterval = (1.0 - ReadGroupResolver::ConfidenceInterval)/2.0;
     const unsigned int minIndex    = (unsigned int)(numFragmentLengths * halfNonConfidenceInterval);
     const unsigned int medianIndex = (unsigned int)(numFragmentLengths * 0.5);
     const unsigned int maxIndex    = (unsigned int)(numFragmentLengths * (1.0-halfNonConfidenceInterval));
@@ -252,7 +261,6 @@ void ReadGroupResolver::DetermineTopModels(const string& readGroupName) {
     MinFragmentLength    = fragments[minIndex];
     MedianFragmentLength = fragments[medianIndex];
     MaxFragmentLength    = fragments[maxIndex];
-    HasData = true;
 }
 
 void ReadGroupResolver::SetConfidenceInterval(const double& ci) {
@@ -622,7 +630,9 @@ void ResolveTool::StatsFileWriter::WriteOptions(ResolveTool::ResolveSettings* se
 void ResolveTool::StatsFileWriter::WriteReadGroups(const map<string, ReadGroupResolver>& readGroups) {
 
     // [ReadGroups]
-    m_stream << READGROUPS_TOKEN << endl;
+    // #<name> <medianFL> <minFL> <maxFL> <topModelID> <nextTopModelID> <isAmbiguous?>
+    m_stream << READGROUPS_TOKEN << endl
+             << RG_FIELD_DESCRIPTION << endl;
 
     // iterate over read groups
     map<string, ReadGroupResolver>::const_iterator rgIter = readGroups.begin();
@@ -636,7 +646,6 @@ void ResolveTool::StatsFileWriter::WriteReadGroups(const map<string, ReadGroupRe
             continue;
 
         // write read group data
-        // <name> <medianFragmentLength> <minFragmentLength> <maxFragmentLength> <topModelId> <nextTopModelId> <isAmbiguous?>
         m_stream << name << TAB_CHAR
                  << resolver.MedianFragmentLength << TAB_CHAR
                  << resolver.MinFragmentLength << TAB_CHAR
@@ -712,7 +721,7 @@ bool ResolveTool::ResolveToolPrivate::CheckSettings(vector<string>& errors) {
             errors.push_back("Cannot use -forceMarkReadGroups. -markPairs options are DISABLED in -makeStats mode.");
     }
 
-    // if UseStats mode
+    // if MarkPairs mode
     else if ( m_settings->IsMarkPairs ) {
 
         // ensure mutex mode
@@ -776,10 +785,8 @@ bool ResolveTool::ResolveToolPrivate::MakeStats(void) {
         return false;
     }
 
-    // retrieve header & reference dictionary info
+    // retrieve header & parse for read groups
     const SamHeader& header = reader.GetHeader();
-
-    // parse BAM header for read groups
     ParseHeader(header);
 
     // read through BAM file
@@ -791,6 +798,12 @@ bool ResolveTool::ResolveToolPrivate::MakeStats(void) {
         // skip if alignment is not paired, mapped, nor mate is mapped
         if ( !al.IsPaired() || !al.IsMapped() || !al.IsMateMapped() )
             continue;
+
+        // skip if alignment & mate not on same reference sequence
+        if ( al.RefID != al.MateRefID ) continue;
+
+        // skip if map quality is 0
+        if ( al.MapQuality == 0 ) continue;
 
         // determine model type, skip if model unknown
         const uint16_t currentModelType = CalculateModelType(al);
@@ -878,6 +891,9 @@ void ResolveTool::ResolveToolPrivate::ResolveAlignment(BamAlignment& al) {
 
     // quit check if either alignment or its mate are unmapped
     if ( !al.IsMapped() || !al.IsMateMapped() ) return;
+
+    // quit check if alignment & its mate are on differenct references
+    if ( al.RefID != al.MateRefID ) return;
 
     // quit check if map quality is 0
     if ( al.MapQuality == 0 ) return;

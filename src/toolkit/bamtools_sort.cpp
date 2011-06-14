@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 7 April 2011 (DB)
+// Last modified: 14 June 2011 (DB)
 // ---------------------------------------------------------------------------
 // Sorts an input BAM file
 // ***************************************************************************
@@ -106,9 +106,8 @@ class SortTool::SortToolPrivate {
         
     // internal methods
     private:
-        void ClearBuffer(vector<BamAlignment>& buffer);
+        bool CreateSortedTempFile(vector<BamAlignment>& buffer);
         bool GenerateSortedRuns(void);
-        bool HandleBufferContents(vector<BamAlignment>& buffer);
         bool MergeSortedRuns(void);
         bool WriteTempFile(const vector<BamAlignment>& buffer, const string& tempFilename);
         void SortBuffer(vector<BamAlignment>& buffer);
@@ -122,7 +121,6 @@ class SortTool::SortToolPrivate {
         RefVector m_references;
         vector<string> m_tempFilenames;
 };
-
 
 // constructor
 SortTool::SortToolPrivate::SortToolPrivate(SortTool::SortSettings* settings) 
@@ -143,68 +141,100 @@ SortTool::SortToolPrivate::SortToolPrivate(SortTool::SortSettings* settings)
 bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
     
     // open input BAM file
-    BamReader inputReader;
-    if ( !inputReader.Open(m_settings->InputBamFilename) ) {
+    BamReader reader;
+    if ( !reader.Open(m_settings->InputBamFilename) ) {
         cerr << "bamtools sort ERROR: could not open " << m_settings->InputBamFilename
              << " for reading... Aborting." << endl;
         return false;
     }
     
     // get basic data that will be shared by all temp/output files 
-    SamHeader header = inputReader.GetHeader();
+    SamHeader header = reader.GetHeader();
     header.SortOrder = ( m_settings->IsSortingByName
                        ? Constants::SAM_HD_SORTORDER_QUERYNAME
                        : Constants::SAM_HD_SORTORDER_COORDINATE );
     m_headerText = header.ToString();
-    m_references = inputReader.GetReferenceData();
+    m_references = reader.GetReferenceData();
     
     // set up alignments buffer
     BamAlignment al;
     vector<BamAlignment> buffer;
-    buffer.reserve(m_settings->MaxBufferCount);
+    buffer.reserve( (size_t)(m_settings->MaxBufferCount*1.1) );
+    bool bufferFull = false;
     
     // if sorting by name, we need to generate full char data
     // so can't use GetNextAlignmentCore()
     if ( m_settings->IsSortingByName ) {
 
         // iterate through file
-        while ( inputReader.GetNextAlignment(al)) {
+        while ( reader.GetNextAlignment(al)) {
 
-            // store alignments in buffer
-            buffer.push_back(al);
+            // check buffer's usage
+            bufferFull = ( buffer.size() >= m_settings->MaxBufferCount );
 
-            // if buffer is full, handle contents (sort & write to temp file)
-            if ( buffer.size() == m_settings->MaxBufferCount )
-                HandleBufferContents(buffer);
+            // store alignments until buffer is "full"
+            if ( !bufferFull )
+                buffer.push_back(al);
+
+            // if buffer is "full"
+            else {
+
+                // push any unmapped reads into buffer,
+                // don't want to split these into a separate temp file
+                if ( !al.IsMapped() )
+                    buffer.push_back(al);
+
+                // "al" is mapped, so create a sorted temp file with current buffer contents
+                // then push "al" into fresh buffer
+                else {
+                    CreateSortedTempFile(buffer);
+                    buffer.push_back(al);
+                }
+            }
         }
-
     }
 
     // sorting by position, can take advantage of GNACore() speedup
     else {
 
         // iterate through file
-        while ( inputReader.GetNextAlignmentCore(al) ) {
+        while ( reader.GetNextAlignmentCore(al) ) {
 
-            // store alignments in buffer
-            buffer.push_back(al);
+            // check buffer's usage
+            bufferFull = ( buffer.size() >= m_settings->MaxBufferCount );
 
-            // if buffer is full, handle contents (sort & write to temp file)
-            if ( buffer.size() == m_settings->MaxBufferCount )
-                HandleBufferContents(buffer);
+            // store alignments until buffer is "full"
+            if ( !bufferFull )
+                buffer.push_back(al);
+
+            // if buffer is "full"
+            else {
+
+                // push any unmapped reads into buffer,
+                // don't want to split these into a separate temp file
+                if ( !al.IsMapped() )
+                    buffer.push_back(al);
+
+                // "al" is mapped, so create a sorted temp file with current buffer contents
+                // then push "al" into fresh buffer
+                else {
+                    CreateSortedTempFile(buffer);
+                    buffer.push_back(al);
+                }
+            }
         }
     }
 
-    // handle any remaining buffer contents
-    if ( buffer.size() > 0 )
-        HandleBufferContents(buffer);
+    // handle any leftover buffer contents
+    if ( !buffer.empty() )
+        CreateSortedTempFile(buffer);
     
     // close reader & return success
-    inputReader.Close();
+    reader.Close();
     return true;
 }
 
-bool SortTool::SortToolPrivate::HandleBufferContents(vector<BamAlignment>& buffer ) {
+bool SortTool::SortToolPrivate::CreateSortedTempFile(vector<BamAlignment>& buffer) {
  
     // do sorting
     SortBuffer(buffer);
@@ -233,7 +263,8 @@ bool SortTool::SortToolPrivate::MergeSortedRuns(void) {
     // this might get broken up if we do a multi-pass system later ??
     BamMultiReader multiReader;
     if ( !multiReader.Open(m_tempFilenames) ) {
-        cerr << "bamtools sort ERROR: could not open BamMultiReader for merging temp files... Aborting." << endl;
+        cerr << "bamtools sort ERROR: could not open BamMultiReader for merging temp files... Aborting."
+             << endl;
         return false;
     }
 
@@ -289,14 +320,14 @@ void SortTool::SortToolPrivate::SortBuffer(vector<BamAlignment>& buffer) {
     
     // sort buffer by desired method
     if ( m_settings->IsSortingByName )
-        sort ( buffer.begin(), buffer.end(), SortLessThanName() );
+        std::stable_sort ( buffer.begin(), buffer.end(), SortLessThanName() );
     else 
-        sort ( buffer.begin(), buffer.end(), SortLessThanPosition() );
+        std::stable_sort ( buffer.begin(), buffer.end(), SortLessThanPosition() );
 }
     
-    
-bool SortTool::SortToolPrivate::WriteTempFile(const vector<BamAlignment>& buffer, const string& tempFilename) {
-
+bool SortTool::SortToolPrivate::WriteTempFile(const vector<BamAlignment>& buffer,
+                                              const string& tempFilename)
+{
     // open temp file for writing
     BamWriter tempWriter;
     if ( !tempWriter.Open(tempFilename, m_headerText, m_references) ) {
@@ -331,15 +362,23 @@ SortTool::SortTool(void)
 
     // set up options
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",  "BAM filename", "the input BAM file",  "", m_settings->HasInputBamFilename,  m_settings->InputBamFilename,  IO_Opts, Options::StandardIn());
-    Options::AddValueOption("-out", "BAM filename", "the output BAM file", "", m_settings->HasOutputBamFilename, m_settings->OutputBamFilename, IO_Opts, Options::StandardOut());
+    Options::AddValueOption("-in",  "BAM filename", "the input BAM file",  "",
+                            m_settings->HasInputBamFilename,  m_settings->InputBamFilename,
+                            IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-out", "BAM filename", "the output BAM file", "",
+                            m_settings->HasOutputBamFilename, m_settings->OutputBamFilename,
+                            IO_Opts, Options::StandardOut());
 
     OptionGroup* SortOpts = Options::CreateOptionGroup("Sorting Methods");
     Options::AddOption("-byname", "sort by alignment name", m_settings->IsSortingByName, SortOpts);
 
     OptionGroup* MemOpts = Options::CreateOptionGroup("Memory Settings");
-    Options::AddValueOption("-n",   "count", "max number of alignments per tempfile", "", m_settings->HasMaxBufferCount,  m_settings->MaxBufferCount,  MemOpts, SORT_DEFAULT_MAX_BUFFER_COUNT);
-    Options::AddValueOption("-mem", "Mb",    "max memory to use",                     "", m_settings->HasMaxBufferMemory, m_settings->MaxBufferMemory, MemOpts, SORT_DEFAULT_MAX_BUFFER_MEMORY);
+    Options::AddValueOption("-n",   "count", "max number of alignments per tempfile", "",
+                            m_settings->HasMaxBufferCount,  m_settings->MaxBufferCount,
+                            MemOpts, SORT_DEFAULT_MAX_BUFFER_COUNT);
+    Options::AddValueOption("-mem", "Mb", "max memory to use", "",
+                            m_settings->HasMaxBufferMemory, m_settings->MaxBufferMemory,
+                            MemOpts, SORT_DEFAULT_MAX_BUFFER_MEMORY);
 }
 
 SortTool::~SortTool(void) {

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 13 June 2011
+// Last modified: 14 June 2011
 // ---------------------------------------------------------------------------
 // Resolves paired-end reads (marking the IsProperPair flag as needed).
 // ***************************************************************************
@@ -182,9 +182,10 @@ ReadGroupResolver::ReadGroupResolver(void)
         Models.push_back( ModelType(i+1) );
 }
 
-bool ReadGroupResolver::IsValidInsertSize(const BamAlignment& al) const {
-    return ( al.InsertSize >= MinFragmentLength &&
-             al.InsertSize <= MaxFragmentLength );
+bool ReadGroupResolver::IsValidInsertSize(const BamAlignment& al) const {  
+    const int32_t absInsertSize = abs(al.InsertSize);
+    return ( absInsertSize >= MinFragmentLength &&
+             absInsertSize <= MaxFragmentLength );
 }
 
 bool ReadGroupResolver::IsValidOrientation(const BamAlignment& al) const {
@@ -804,6 +805,10 @@ bool ResolveTool::ResolveToolPrivate::MakeStats(void) {
 
         // skip if map quality is 0
         if ( al.MapQuality == 0 ) continue;
+
+        // skip if insert size is less than (we'll count its mate)
+        // or equal to zero (single-end or missing data)
+        if ( al.InsertSize <= 0 ) continue;
 
         // determine model type, skip if model unknown
         const uint16_t currentModelType = CalculateModelType(al);

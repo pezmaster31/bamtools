@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 10 May 2011 (DB)
+// Last modified: 16 June 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the standardized BAM index format (".bai")
 // ***************************************************************************
@@ -149,8 +149,8 @@ bool BamStandardIndex::CalculateCandidateOffsets(const BaiReferenceSummary& refS
         }
     }
 
-    // return success/failure on calculating at least 1 offset
-    return ( !offsets.empty() );
+    // return success
+    return true;
 }
 
 uint64_t BamStandardIndex::CalculateMinOffset(const BaiReferenceSummary& refSummary,
@@ -428,8 +428,9 @@ bool BamStandardIndex::GetOffsets(const BamRegion& region, vector<int64_t>& offs
     const uint64_t& minOffset = CalculateMinOffset(refSummary, begin);
 
     // attempt to use reference summary, minOffset, & candidateBins to calculate offsets
+    // no data should not be error
     if ( !CalculateCandidateOffsets(refSummary, minOffset, candidateBins, offsets) ) {
-        cerr << "Could not caluclate candidate offsets for region" << endl;
+        cerr << "BamStandardIndex ERROR: could not calculate candidate offsets for requested region" << endl;
         return false;
     }
 
@@ -458,34 +459,35 @@ bool BamStandardIndex::IsFileOpen(void) const {
 //     available after the jump position
 bool BamStandardIndex::Jump(const BamRegion& region, bool* hasAlignmentsInRegion) {
 
+    // clear out flag
+    *hasAlignmentsInRegion = false;
+
     // skip if reader is not valid or is not open
     if ( m_reader == 0 || !m_reader->IsOpen() )
         return false;
 
     // calculate offsets for this region
-    // if failed, print message, set flag, and return failure
     vector<int64_t> offsets;
     if ( !GetOffsets(region, offsets) ) {
         cerr << "BamStandardIndex ERROR: could not jump"
              << ", unable to retrieve offsets for region" << endl;
-        *hasAlignmentsInRegion = false;
         return false;
     }
 
-    // if no offsets retrieved, set flag
-    if ( offsets.empty() )
-        *hasAlignmentsInRegion = false;
-
     // iterate through candidate offsets
     BamAlignment al;
-    bool result = true;
     vector<int64_t>::const_iterator offsetIter = offsets.begin();
     vector<int64_t>::const_iterator offsetEnd  = offsets.end();
     for ( ; offsetIter != offsetEnd; ++offsetIter) {
 
-        // attempt seek & load first available alignment
-        // set flag to true if data exists
-        result &= m_reader->Seek(*offsetIter);
+        // attempt seek
+        if ( !m_reader->Seek(*offsetIter) ) {
+            cerr << "BamStandardIndex ERROR: could not jump"
+                 << ", there was a problem seeking in BAM file" << endl;
+            return false;
+        }
+
+        // load first available alignment, setting flag to true if data exists
         *hasAlignmentsInRegion = m_reader->LoadNextAlignment(al);
 
         // if this alignment corresponds to desired position
@@ -500,15 +502,9 @@ bool BamStandardIndex::Jump(const BamRegion& region, bool* hasAlignmentsInRegion
         }
     }
 
-    // if error in jumping, print message & set flag
-    if ( !result ) {
-        cerr << "BamStandardIndex ERROR: could not jump"
-             << ", there was a problem seeking in BAM file" << endl;
-        *hasAlignmentsInRegion = false;
-    }
-
-    // return success/failure
-    return result;
+    // return success (no offset data is not an error,
+    // but hasAlignments flag will be marked accordingly)
+    return true;
 }
 
 // loads existing data from file into memory

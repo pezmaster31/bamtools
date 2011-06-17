@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 10 May 2011 (DB)
+// Last modified: 16 June 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -156,11 +156,14 @@ void BamWriterPrivate::SaveAlignment(const BamAlignment& al) {
         if ( m_isBigEndian ) BamTools::SwapEndian_32(blockSize);
         m_stream.Write((char*)&blockSize, Constants::BAM_SIZEOF_INT);
 
+        // re-calculate bin (in case BamAlignment's position has been previously modified)
+        const uint32_t alignmentBin = CalculateMinimumBin(al.Position, al.GetEndPosition());
+
         // assign the BAM core data
         uint32_t buffer[Constants::BAM_CORE_BUFFER_SIZE];
         buffer[0] = al.RefID;
         buffer[1] = al.Position;
-        buffer[2] = (al.Bin << 16) | (al.MapQuality << 8) | al.SupportData.QueryNameLength;
+        buffer[2] = (alignmentBin << 16) | (al.MapQuality << 8) | al.SupportData.QueryNameLength;
         buffer[3] = (al.AlignmentFlag << 16) | al.SupportData.NumCigarOperations;
         buffer[4] = al.SupportData.QuerySequenceLength;
         buffer[5] = al.MateRefID;

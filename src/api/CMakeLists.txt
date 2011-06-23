@@ -10,7 +10,7 @@ include_directories( ${BamTools_SOURCE_DIR}/src )
 
 # add compiler definitions 
 add_definitions( -DBAMTOOLS_API_LIBRARY ) # (for proper exporting of library symbols)
-add_definitions( -fPIC ) # (attempt to force PIC compiling on some archs)
+add_definitions( -fPIC ) # (attempt to force PIC compiling on CentOS, not being set on shared libs by CMake)
 
 # list of all BamTools API source (.cpp) files
 set( BamToolsAPISources

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 11 June 2011
+// Last modified: 23 June 2011
 // ---------------------------------------------------------------------------
 // Resolves paired-end reads (marking the IsProperPair flag as needed).
 // ***************************************************************************
@@ -32,6 +32,8 @@ class ResolveTool : public AbstractTool {
         struct ResolveToolPrivate;
         ResolveToolPrivate* m_impl;
 
+        struct ReadNamesFileReader;
+        struct ReadNamesFileWriter;
         struct StatsFileReader;
         struct StatsFileWriter;
 };

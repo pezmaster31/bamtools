@@ -54,7 +54,7 @@ target_link_libraries( BamTools z )
 target_link_libraries( BamTools-static z )
 
 # set library install destinations
-install( TARGETS BamTools LIBRARY DESTINATION "lib/bamtools")
+install( TARGETS BamTools LIBRARY DESTINATION "lib/bamtools" RUNTIME DESTINATION "bin")
 install( TARGETS BamTools-static ARCHIVE DESTINATION "lib/bamtools")
 
 # export API headers

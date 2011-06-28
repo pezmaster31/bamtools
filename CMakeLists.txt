@@ -39,7 +39,8 @@ set (EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin")
 set (LIBRARY_OUTPUT_PATH    "${CMAKE_SOURCE_DIR}/lib")
 
 # define compiler flags for all code
-add_definitions (-Wall -O2 -D_FILE_OFFSET_BITS=64)
+set (CMAKE_BUILD_TYPE Release)
+add_definitions (-Wall -D_FILE_OFFSET_BITS=64)
 
 # add our includes root path
 include_directories (src)

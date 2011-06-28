@@ -309,7 +309,7 @@ vector<string> Utilities::Split(const string& source, const string& delims) {
     vector<string> fields;
 
     char* tok;
-    char cchars [source.size()+1];
+    char* cchars = new char[source.size()+1];
     char* cstr = &cchars[0];
     strcpy(cstr, source.c_str());
     tok = strtok(cstr, delims.c_str());
@@ -317,6 +317,8 @@ vector<string> Utilities::Split(const string& source, const string& delims) {
         fields.push_back(tok);
         tok = strtok(NULL, delims.c_str());
     }
+
+    delete[] cchars;
 
     return fields;
 }

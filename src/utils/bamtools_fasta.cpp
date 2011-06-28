@@ -20,6 +20,11 @@ using namespace BamTools;
 #include <vector>
 using namespace std;
 
+#ifdef _MSC_VER
+	#define ftello _ftelli64
+	#define fseeko _fseeki64
+#endif
+
 struct Fasta::FastaPrivate {
   
     struct FastaIndexData {

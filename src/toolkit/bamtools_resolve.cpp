@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 28 June 2011
+// Last modified: 6 July 2011
 // ---------------------------------------------------------------------------
 // Resolves paired-end reads (marking the IsProperPair flag as needed).
 // ***************************************************************************
@@ -34,10 +34,11 @@ using namespace std;
 // general ResolveTool constants
 // --------------------------------------------------------------------------
 
-static const int NUM_MODELS = 8;
-static const string READ_GROUP_TAG = "RG";
-static const double DEFAULT_CONFIDENCE_INTERVAL = 0.9973;
-static const double DEFAULT_UNUSEDMODEL_THRESHOLD = 0.1;
+static const int      NUM_MODELS = 8;
+static const string   READ_GROUP_TAG = "RG";
+static const double   DEFAULT_CONFIDENCE_INTERVAL = 0.9973;
+static const uint16_t DEFAULT_MIN_MAPQUALITY = 1;
+static const double   DEFAULT_UNUSEDMODEL_THRESHOLD = 0.1;
 
 // --------------------------------------------------------------------------
 // stats file constants
@@ -65,6 +66,7 @@ static const string READGROUPS_TOKEN = "[ReadGroups]";
 
 // option keywords
 static const string OPTION_CONFIDENCEINTERVAL   = "ConfidenceInterval";
+static const string OPTION_MINIMUMMAPQUALITY    = "MinimumMapQuality";
 static const string OPTION_UNUSEDMODELTHRESHOLD = "UnusedModelThreshold";
 static const string OPTION_FORCEMARKREADGROUPS  = "ForceMarkReadGroups";
 
@@ -286,46 +288,54 @@ void ReadGroupResolver::SetUnusedModelThreshold(const double& umt) {
 
 struct ResolveTool::ResolveSettings {
 
-    // flags
-    bool HasInputBamFile;
-    bool HasOutputBamFile;
-    bool IsForceCompression;
-    bool HasStatsFile;
+    // modes
     bool IsMakeStats;
     bool IsMarkPairs;
     bool IsTwoPass;
+
+    // I/O flags
+    bool HasInputBamFile;
+    bool HasOutputBamFile;
+    bool HasStatsFile;
+    bool IsForceCompression;
+
+    // resolve option flags
     bool HasConfidenceInterval;
+    bool HasForceMarkReadGroups;
+    bool HasMinimumMapQuality;
     bool HasUnusedModelThreshold;
 
-    // filenames
+    // I/O filenames
     string InputBamFilename;
     string OutputBamFilename;
     string StatsFilename;
     string ReadNamesFilename; //  ** N.B. - Only used internally, not set from cmdline **
 
-    // 'resolve options'
-    double ConfidenceInterval;
-    double UnusedModelThreshold;
-    bool HasForceMarkReadGroups;
+    // resolve options
+    double   ConfidenceInterval;
+    uint16_t MinimumMapQuality;
+    double   UnusedModelThreshold;
 
     // constructor
     ResolveSettings(void)
-        : HasInputBamFile(false)
-        , HasOutputBamFile(false)
-        , IsForceCompression(false)
-        , HasStatsFile(false)
-        , IsMakeStats(false)
+        : IsMakeStats(false)
         , IsMarkPairs(false)
         , IsTwoPass(false)
+        , HasInputBamFile(false)
+        , HasOutputBamFile(false)
+        , HasStatsFile(false)
+        , IsForceCompression(false)
         , HasConfidenceInterval(false)
+        , HasForceMarkReadGroups(false)
+        , HasMinimumMapQuality(false)
         , HasUnusedModelThreshold(false)
         , InputBamFilename(Options::StandardIn())
         , OutputBamFilename(Options::StandardOut())
         , StatsFilename("")
         , ReadNamesFilename(DEFAULT_READNAME_FILE)
         , ConfidenceInterval(DEFAULT_CONFIDENCE_INTERVAL)
+        , MinimumMapQuality(DEFAULT_MIN_MAPQUALITY)
         , UnusedModelThreshold(DEFAULT_UNUSEDMODEL_THRESHOLD)
-        , HasForceMarkReadGroups(false)
     { }
 };
 
@@ -524,16 +534,23 @@ bool ResolveTool::StatsFileReader::ParseOptionLine(const string& line,
         return true;
     }
 
+    // ForceMarkReadGroups
+    if ( option == OPTION_FORCEMARKREADGROUPS ) {
+        value >> settings->HasForceMarkReadGroups;
+        return true;
+    }
+
+    // MinimumMapQuality
+    if ( option == OPTION_MINIMUMMAPQUALITY ) {
+        value >> settings->MinimumMapQuality;
+        settings->HasMinimumMapQuality = true;
+        return true;
+    }
+
     // UnusedModelThreshold
     if ( option == OPTION_UNUSEDMODELTHRESHOLD ) {
         value >> settings->UnusedModelThreshold;
         settings->HasUnusedModelThreshold = true;
-        return true;
-    }
-
-    // ForceMarkReadGroups
-    if ( option == OPTION_FORCEMARKREADGROUPS ) {
-        value >> settings->HasForceMarkReadGroups;
         return true;
     }
 
@@ -736,14 +753,16 @@ void ResolveTool::StatsFileWriter::WriteOptions(ResolveTool::ResolveSettings* se
 
     // [Options]
     // ConfidenceInterval=<double>
-    // UnusedModelThreshold=<double>
     // ForceMarkReadGroups=<true|false>
+    // MinimumMapQuality=<uint16_t>
+    // UnusedModelThreshold=<double>
     // \n
 
     m_stream << OPTIONS_TOKEN << endl
              << OPTION_CONFIDENCEINTERVAL   << EQUAL_CHAR << settings->ConfidenceInterval << endl
-             << OPTION_UNUSEDMODELTHRESHOLD << EQUAL_CHAR << settings->UnusedModelThreshold << endl
+             << OPTION_MINIMUMMAPQUALITY    << EQUAL_CHAR << settings->MinimumMapQuality << endl
              << OPTION_FORCEMARKREADGROUPS  << EQUAL_CHAR << boolalpha << settings->HasForceMarkReadGroups << endl
+             << OPTION_UNUSEDMODELTHRESHOLD << EQUAL_CHAR << settings->UnusedModelThreshold << endl
              << endl;
 }
 
@@ -882,6 +901,10 @@ bool ResolveTool::ResolveToolPrivate::CheckSettings(vector<string>& errors) {
         if ( m_settings->ConfidenceInterval < 0.0 || m_settings->ConfidenceInterval > 1.0 )
             errors.push_back("Invalid confidence interval. Must be between 0 and 1");
     }
+    if ( m_settings->HasMinimumMapQuality ) {
+        if ( m_settings->MinimumMapQuality >= 256 )
+            errors.push_back("Invalid minimum map quality. Must be between 0 and 255");
+    }
     if ( m_settings->HasUnusedModelThreshold ) {
         if ( m_settings->UnusedModelThreshold < 0.0 || m_settings->UnusedModelThreshold > 1.0 )
             errors.push_back("Invalid unused model threshold. Must be between 0 and 1");
@@ -950,7 +973,7 @@ bool ResolveTool::ResolveToolPrivate::MakeStats(void) {
         ReadGroupResolver& resolver = (*rgIter).second;
 
         // determine unique-ness of current alignment
-        const bool isCurrentMateUnique = ( al.MapQuality != 0 );
+        const bool isCurrentMateUnique = ( al.MapQuality >= m_settings->MinimumMapQuality );
 
         // look up read name
         readNameIter = resolver.ReadNames.find(al.Name);
@@ -1051,8 +1074,8 @@ void ResolveTool::ResolveToolPrivate::ResolveAlignment(BamAlignment& al) {
     // quit check if alignment & its mate are on differenct references
     if ( al.RefID != al.MateRefID ) return;
 
-    // quit check if map quality is 0
-    if ( al.MapQuality == 0 ) return;
+    // quit check if map quality less than cutoff
+    if ( al.MapQuality < m_settings->MinimumMapQuality ) return;
 
     // get read group from alignment
     // empty string if not found, this is OK - we handle empty read group case
@@ -1293,6 +1316,8 @@ ResolveTool::ResolveTool(void)
             "All MakeStats & MarkPairs Mode Settings are available. "
             "The intermediate stats file is not necessary, but if the -stats options is used, then one will be generated. "
             "You may find this useful for documentation purposes.";
+    const string minMapQualDescription = "minimum map quality. Used in -makeStats mode as a heuristic for determining a mate's "
+            "uniqueness. Used in -markPairs mode as a filter for marking candidate proper pairs.";
     const string confidenceIntervalDescription = "confidence interval. Set min/max fragment lengths such that we capture "
             "this fraction of pairs";
     const string unusedModelThresholdDescription = "unused model threshold. The resolve tool considers 8 possible orientation models "
@@ -1327,6 +1352,10 @@ ResolveTool::ResolveTool(void)
     Options::AddOption("-makeStats", makeStatsDescription, m_settings->IsMakeStats, ModeOpts);
     Options::AddOption("-markPairs", markPairsDescription, m_settings->IsMarkPairs, ModeOpts);
     Options::AddOption("-twoPass",   twoPassDescription,   m_settings->IsTwoPass,   ModeOpts);
+
+    OptionGroup* GeneralOpts = Options::CreateOptionGroup("General Resolve Options (available in all modes)");
+    Options::AddValueOption("-minMQ", "unsigned short", minMapQualDescription, "",
+                            m_settings->HasMinimumMapQuality, m_settings->MinimumMapQuality, GeneralOpts);
 
     OptionGroup* MakeStatsOpts = Options::CreateOptionGroup("MakeStats Mode Options (disabled in -markPairs mode)");
     Options::AddValueOption("-ci", "double", confidenceIntervalDescription, "",

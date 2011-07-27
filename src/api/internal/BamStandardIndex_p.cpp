@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 16 June 2011 (DB)
+// Last modified: 24 June 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the standardized BAM index format (".bai")
 // ***************************************************************************
@@ -402,7 +402,7 @@ const string BamStandardIndex::Extension(void) {
     return BamStandardIndex::BAI_EXTENSION;
 }
 
-bool BamStandardIndex::GetOffsets(const BamRegion& region, vector<int64_t>& offsets) {
+bool BamStandardIndex::GetOffset(const BamRegion& region, int64_t& offset, bool* hasAlignmentsInRegion) {
 
     // cannot calculate offsets if unknown/invalid reference ID requested
     if ( region.LeftRefID < 0 || region.LeftRefID >= (int)m_indexFileSummary.size() )
@@ -429,13 +429,50 @@ bool BamStandardIndex::GetOffsets(const BamRegion& region, vector<int64_t>& offs
 
     // attempt to use reference summary, minOffset, & candidateBins to calculate offsets
     // no data should not be error
+    vector<int64_t> offsets;
     if ( !CalculateCandidateOffsets(refSummary, minOffset, candidateBins, offsets) ) {
         cerr << "BamStandardIndex ERROR: could not calculate candidate offsets for requested region" << endl;
         return false;
     }
 
-    // ensure that offsets are sorted before returning
+    // ensure that offsets are sorted before processing
     sort( offsets.begin(), offsets.end() );
+
+    // binary search for an overlapping block (may not be first one though)
+    BamAlignment al;
+    typedef vector<int64_t>::const_iterator OffsetConstIterator;
+    OffsetConstIterator offsetFirst = offsets.begin();
+    OffsetConstIterator offsetIter  = offsetFirst;
+    OffsetConstIterator offsetLast  = offsets.end();
+    iterator_traits<OffsetConstIterator>::difference_type count = distance(offsetFirst, offsetLast);
+    iterator_traits<OffsetConstIterator>::difference_type step;
+    while ( count > 0 ) {
+        offsetIter = offsetFirst;
+        step = count/2;
+        advance(offsetIter, step);
+
+        // attempt seek to candidate offset
+        const int64_t& candidateOffset = (*offsetIter);
+        if ( !m_reader->Seek(candidateOffset) ) {
+            cerr << "BamStandardIndex ERROR: could not jump"
+                 << ", there was a problem seeking in BAM file" << endl;
+            return false;
+        }
+
+        // load first available alignment, setting flag to true if data exists
+        *hasAlignmentsInRegion = m_reader->LoadNextAlignment(al);
+
+        // check alignment against region
+        if ( al.GetEndPosition() < region.LeftPosition ) {
+            offsetFirst = ++offsetIter;
+            count -= step+1;
+        } else count = step;
+    }
+
+    // seek back to the offset before the 'current offset' (to cover overlaps)
+    if ( offsetIter != offsets.begin() )
+        --offsetIter;
+    offset = (*offsetIter);
 
     // return succes
     return true;
@@ -466,44 +503,20 @@ bool BamStandardIndex::Jump(const BamRegion& region, bool* hasAlignmentsInRegion
     if ( m_reader == 0 || !m_reader->IsOpen() )
         return false;
 
-    // calculate offsets for this region
-    vector<int64_t> offsets;
-    if ( !GetOffsets(region, offsets) ) {
+    // calculate nearest offset to jump to
+    int64_t offset;
+    if ( !GetOffset(region, offset, hasAlignmentsInRegion) ) {
         cerr << "BamStandardIndex ERROR: could not jump"
-             << ", unable to retrieve offsets for region" << endl;
+             << ", unable to calculate offset for specified region" << endl;
         return false;
     }
 
-    // iterate through candidate offsets
-    BamAlignment al;
-    vector<int64_t>::const_iterator offsetIter = offsets.begin();
-    vector<int64_t>::const_iterator offsetEnd  = offsets.end();
-    for ( ; offsetIter != offsetEnd; ++offsetIter) {
+    // if region has alignments, return success/fail of seeking there
+    if ( *hasAlignmentsInRegion )
+        return m_reader->Seek(offset);
 
-        // attempt seek
-        if ( !m_reader->Seek(*offsetIter) ) {
-            cerr << "BamStandardIndex ERROR: could not jump"
-                 << ", there was a problem seeking in BAM file" << endl;
-            return false;
-        }
-
-        // load first available alignment, setting flag to true if data exists
-        *hasAlignmentsInRegion = m_reader->LoadNextAlignment(al);
-
-        // if this alignment corresponds to desired position
-        // return success of seeking back to the offset before the 'current offset' (to cover overlaps)
-        if ( ((al.RefID == region.LeftRefID) &&
-             ((al.Position + al.Length) > region.LeftPosition)) ||
-             (al.RefID > region.LeftRefID) )
-        {
-            if ( offsetIter != offsets.begin() )
-                --offsetIter;
-            return m_reader->Seek(*offsetIter);
-        }
-    }
-
-    // return success (no offset data is not an error,
-    // but hasAlignments flag will be marked accordingly)
+    // otherwise, simply return true (but hasAlignmentsInRegion flag has been set to false)
+    // (this is OK, BamReader will check this flag before trying to load data)
     return true;
 }
 

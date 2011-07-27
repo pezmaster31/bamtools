@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 5 April 2011 (DB)
+// Last modified: 24 June 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the standardized BAM index format (".bai")
 // ***************************************************************************
@@ -161,7 +161,7 @@ class BamStandardIndex : public BamIndex {
                                        std::set<uint16_t>& candidateBins,
                                        std::vector<int64_t>& offsets);
         uint64_t CalculateMinOffset(const BaiReferenceSummary& refSummary, const uint32_t& begin);
-        bool GetOffsets(const BamRegion& region, std::vector<int64_t>& offsets);
+        bool GetOffset(const BamRegion& region, int64_t& offset, bool* hasAlignmentsInRegion);
         uint64_t LookupLinearOffset(const BaiReferenceSummary& refSummary, const int& index);
 
     // internal BAI summary (create/load) methods

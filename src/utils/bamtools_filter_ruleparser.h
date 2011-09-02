@@ -54,7 +54,9 @@ inline int priority(const RuleToken& token) {
         case ( RuleToken::OR_OPERATOR  )      : return 1;
         case ( RuleToken::LEFT_PARENTHESIS )  : return 0;
         case ( RuleToken::RIGHT_PARENTHESIS ) : return 0;
-        default: BAMTOOLS_ASSERT_UNREACHABLE;
+        default:
+            BAMTOOLS_ASSERT_UNREACHABLE;
+            return -1;
     } 
 }
 

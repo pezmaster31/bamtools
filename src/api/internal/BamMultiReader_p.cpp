@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 5 April 2011 (DB)
+// Last modified: 9 September 2011 (DB)
 // ---------------------------------------------------------------------------
 // Functionality for simultaneously reading multiple BAM files
 // *************************************************************************
@@ -25,7 +25,6 @@ using namespace std;
 // ctor
 BamMultiReaderPrivate::BamMultiReaderPrivate(void)
     : m_alignments(0)
-    , m_isCoreMode(false)
     , m_sortOrder(BamMultiReader::SortedByPosition)
 { }
 
@@ -261,14 +260,12 @@ string BamMultiReaderPrivate::GetHeaderText(void) const {
 
 // get next alignment among all files
 bool BamMultiReaderPrivate::GetNextAlignment(BamAlignment& al) {
-    m_isCoreMode = false;
-    return LoadNextAlignment(al);
+    return PopNextCachedAlignment(al, true);
 }
 
 // get next alignment among all files without parsing character data from alignments
 bool BamMultiReaderPrivate::GetNextAlignmentCore(BamAlignment& al) {
-    m_isCoreMode = true;
-    return LoadNextAlignment(al);
+    return PopNextCachedAlignment(al, false);
 }
 
 // ---------------------------------------------------------------------------------------
@@ -406,25 +403,10 @@ bool BamMultiReaderPrivate::Jump(int refID, int position) {
     return true;
 }
 
-bool BamMultiReaderPrivate::LoadNextAlignment(BamAlignment& al) {
-
-    // bail out if no more data to process
-    if ( !HasAlignmentData() )
-        return false;
-
-    // "pop" next alignment and reader
-    ReaderAlignment nextReaderAlignment = m_alignments->TakeFirst();
-    BamReader* reader = nextReaderAlignment.first;
-    BamAlignment* alignment = nextReaderAlignment.second;
-
-    // store cached alignment into destination parameter (by copy)
-    al = *alignment;
-
-    // peek to next alignment & store in cache
-    SaveNextAlignment(reader, alignment);
-
-    // return success
-    return true;
+bool BamMultiReaderPrivate::LoadNextAlignment(BamReader* reader, BamAlignment* alignment) {
+    // lazy building of alignment's char data,
+    // only populated on demand by sorting merger or client call to GetNextAlignment()
+    return reader->GetNextAlignmentCore(*alignment);
 }
 
 // locate (& load) index files for BAM readers that don't already have one loaded
@@ -566,6 +548,33 @@ void BamMultiReaderPrivate::PrintFilenames(void) const {
         cout << (*filenameIter) << endl;
 }
 
+bool BamMultiReaderPrivate::PopNextCachedAlignment(BamAlignment& al, const bool needCharData) {
+
+    // bail out if no more data to process
+    if ( !HasAlignmentData() )
+        return false;
+
+    // "pop" next alignment and reader
+    ReaderAlignment nextReaderAlignment = m_alignments->TakeFirst();
+    BamReader* reader = nextReaderAlignment.first;
+    BamAlignment* alignment = nextReaderAlignment.second;
+
+    // store cached alignment into destination parameter (by copy)
+    al = *alignment;
+
+    // set char data if requested
+    if ( needCharData ) {
+        al.BuildCharData();
+        al.Filename = reader->GetFilename();
+    }
+
+    // peek to next alignment & store in cache
+    SaveNextAlignment(reader, alignment);
+
+    // return success
+    return true;
+}
+
 // returns BAM file pointers to beginning of alignment data & resets alignment cache
 bool BamMultiReaderPrivate::Rewind(void) {
 
@@ -604,17 +613,9 @@ bool BamMultiReaderPrivate::RewindReaders(void) {
 
 void BamMultiReaderPrivate::SaveNextAlignment(BamReader* reader, BamAlignment* alignment) {
 
-    // must be in core mode && NOT sorting by read name to call GNACore()
-    if ( m_isCoreMode && m_sortOrder != BamMultiReader::SortedByReadName ) {
-        if ( reader->GetNextAlignmentCore(*alignment) )
-            m_alignments->Add( make_pair(reader, alignment) );
-    }
-
-    // not in core mode and/or sorting by readname, must call GNA()
-    else {
-        if ( reader->GetNextAlignment(*alignment) )
-            m_alignments->Add( make_pair(reader, alignment) );
-    }
+    // if can read alignment from reader, store in cache
+    if ( LoadNextAlignment(reader, alignment) )
+        m_alignments->Add( make_pair(reader, alignment) );
 }
 
 // sets the index caching mode on the readers
@@ -702,10 +703,6 @@ void BamMultiReaderPrivate::UpdateAlignmentCache(void) {
 
     // clear the cache
     m_alignments->Clear();
-
-    // seed cache with fully-populated alignments
-    // further updates will fill with full/core-only as requested
-    m_isCoreMode = false;
 
     // iterate over readers
     vector<ReaderAlignment>::iterator readerIter = m_readers.begin();

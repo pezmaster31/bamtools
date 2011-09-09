@@ -3,38 +3,41 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 2 September 2011(DB)
+// Last modified: 9 September 2011(DB)
 // ---------------------------------------------------------------------------
 // Based on BGZF routines developed at the Broad Institute.
 // Provides the basic functionality for reading & writing BGZF files
 // Replaces the old BGZF.* files to avoid clashing with other toolkits
 // ***************************************************************************
 
+#include <api/internal/BamDeviceFactory_p.h>
 #include <api/internal/BgzfStream_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
 
 #include <cstring>
 #include <algorithm>
+#include <iostream>
 using namespace std;
 
 // constructor
 BgzfStream::BgzfStream(void)
-    : UncompressedBlockSize(Constants::BGZF_DEFAULT_BLOCK_SIZE)
-    , CompressedBlockSize(Constants::BGZF_MAX_BLOCK_SIZE)
-    , BlockLength(0)
-    , BlockOffset(0)
-    , BlockAddress(0)
-    , IsOpen(false)
-    , IsWriteOnly(false)
-    , IsWriteCompressed(true)
-    , Stream(NULL)
-    , UncompressedBlock(NULL)
-    , CompressedBlock(NULL)
+    : m_uncompressedBlockSize(Constants::BGZF_DEFAULT_BLOCK_SIZE)
+    , m_compressedBlockSize(Constants::BGZF_MAX_BLOCK_SIZE)
+    , m_blockLength(0)
+    , m_blockOffset(0)
+    , m_blockAddress(0)
+    , m_uncompressedBlock(NULL)
+    , m_compressedBlock(NULL)
+    , m_isOpen(false)
+    , m_isWriteOnly(false)
+    , m_isWriteCompressed(true)
+    , m_device(0)
+    , m_stream(NULL)
 {
     try {
-        CompressedBlock   = new char[CompressedBlockSize];
-        UncompressedBlock = new char[UncompressedBlockSize];
+        m_compressedBlock   = new char[m_compressedBlockSize];
+        m_uncompressedBlock = new char[m_uncompressedBlockSize];
     } catch( std::bad_alloc& ba ) {
         fprintf(stderr, "BgzfStream ERROR: unable to allocate memory\n");
         exit(1);
@@ -43,38 +46,40 @@ BgzfStream::BgzfStream(void)
 
 // destructor
 BgzfStream::~BgzfStream(void) {
-    if( CompressedBlock   ) delete[] CompressedBlock;
-    if( UncompressedBlock ) delete[] UncompressedBlock;
+    if( m_compressedBlock   ) delete[] m_compressedBlock;
+    if( m_uncompressedBlock ) delete[] m_uncompressedBlock;
 }
 
 // closes BGZF file
 void BgzfStream::Close(void) {
 
-    // skip if file not open
-    if ( !IsOpen ) return;
+    // skip if no device open
+    if ( m_device == 0 )
+        return;
 
     // if writing to file, flush the current BGZF block,
     // then write an empty block (as EOF marker)
-    if ( IsWriteOnly ) {
+    if ( m_device->IsOpen() && (m_device->Mode() == IBamIODevice::WriteOnly) ) {
         FlushBlock();
         int blockLength = DeflateBlock();
-        fwrite(CompressedBlock, 1, blockLength, Stream);
+        m_device->Write(m_compressedBlock, blockLength);
     }
 
-    // flush and close stream
-    fflush(Stream);
-    fclose(Stream);
+    // close device
+    m_device->Close();
 
-    // reset flags
-    IsWriteCompressed = true;
-    IsOpen = false;
+    // clean up & reset flags
+    delete m_device;
+    m_device = 0;
+    m_isWriteCompressed = true;
+    m_isOpen = false;
 }
 
 // compresses the current block
-int BgzfStream::DeflateBlock(void) {
+unsigned int BgzfStream::DeflateBlock(void) {
 
     // initialize the gzip header
-    char* buffer = CompressedBlock;
+    char* buffer = m_compressedBlock;
     memset(buffer, 0, 18);
     buffer[0]  = Constants::GZIP_ID1;
     buffer[1]  = (char)Constants::GZIP_ID2;
@@ -87,12 +92,12 @@ int BgzfStream::DeflateBlock(void) {
     buffer[14] = Constants::BGZF_LEN;
 
     // set compression level
-    const int compressionLevel = ( IsWriteCompressed ? Z_DEFAULT_COMPRESSION : 0 );
+    const int compressionLevel = ( m_isWriteCompressed ? Z_DEFAULT_COMPRESSION : 0 );
 
     // loop to retry for blocks that do not compress enough
-    int inputLength = BlockOffset;
-    int compressedLength = 0;
-    unsigned int bufferSize = CompressedBlockSize;
+    int inputLength = m_blockOffset;
+    unsigned int compressedLength = 0;
+    unsigned int bufferSize = m_compressedBlockSize;
 
     while ( true ) {
 
@@ -100,7 +105,7 @@ int BgzfStream::DeflateBlock(void) {
         z_stream zs;
         zs.zalloc    = NULL;
         zs.zfree     = NULL;
-        zs.next_in   = (Bytef*)UncompressedBlock;
+        zs.next_in   = (Bytef*)m_uncompressedBlock;
         zs.avail_in  = inputLength;
         zs.next_out  = (Bytef*)&buffer[Constants::BGZF_BLOCK_HEADER_LENGTH];
         zs.avail_out = bufferSize - Constants::BGZF_BLOCK_HEADER_LENGTH - Constants::BGZF_BLOCK_FOOTER_LENGTH;
@@ -158,22 +163,22 @@ int BgzfStream::DeflateBlock(void) {
 
     // store the CRC32 checksum
     unsigned int crc = crc32(0, NULL, 0);
-    crc = crc32(crc, (Bytef*)UncompressedBlock, inputLength);
+    crc = crc32(crc, (Bytef*)m_uncompressedBlock, inputLength);
     BamTools::PackUnsignedInt(&buffer[compressedLength - 8], crc);
     BamTools::PackUnsignedInt(&buffer[compressedLength - 4], inputLength);
 
     // ensure that we have less than a block of data left
-    int remaining = BlockOffset - inputLength;
+    int remaining = m_blockOffset - inputLength;
     if ( remaining > 0 ) {
         if ( remaining > inputLength ) {
             fprintf(stderr, "BgzfStream ERROR: after deflate, remainder too large\n");
             exit(1);
         }
-        memcpy(UncompressedBlock, UncompressedBlock + inputLength, remaining);
+        memcpy(m_uncompressedBlock, m_uncompressedBlock + inputLength, remaining);
     }
 
     // update block data
-    BlockOffset = remaining;
+    m_blockOffset = remaining;
 
     // return result
     return compressedLength;
@@ -182,14 +187,16 @@ int BgzfStream::DeflateBlock(void) {
 // flushes the data in the BGZF block
 void BgzfStream::FlushBlock(void) {
 
+    BT_ASSERT_X( m_device, "BgzfStream::FlushBlock() - attempting to flush to null device" );
+
     // flush all of the remaining blocks
-    while ( BlockOffset > 0 ) {
+    while ( m_blockOffset > 0 ) {
 
         // compress the data block
-        int blockLength = DeflateBlock();
+        unsigned int blockLength = DeflateBlock();
 
         // flush the data to our output stream
-        int numBytesWritten = fwrite(CompressedBlock, 1, blockLength, Stream);
+        unsigned int numBytesWritten = m_device->Write(m_compressedBlock, blockLength);
         if ( numBytesWritten != blockLength ) {
             fprintf(stderr, "BgzfStream ERROR: expected to write %u bytes during flushing, but wrote %u bytes\n",
                     blockLength, numBytesWritten);
@@ -197,7 +204,7 @@ void BgzfStream::FlushBlock(void) {
         }
 
         // update block data
-        BlockAddress += blockLength;
+        m_blockAddress += blockLength;
     }
 }
 
@@ -208,10 +215,10 @@ int BgzfStream::InflateBlock(const int& blockLength) {
     z_stream zs;
     zs.zalloc    = NULL;
     zs.zfree     = NULL;
-    zs.next_in   = (Bytef*)CompressedBlock + 18;
+    zs.next_in   = (Bytef*)m_compressedBlock + 18;
     zs.avail_in  = blockLength - 16;
-    zs.next_out  = (Bytef*)UncompressedBlock;
-    zs.avail_out = UncompressedBlockSize;
+    zs.next_out  = (Bytef*)m_uncompressedBlock;
+    zs.avail_out = m_uncompressedBlockSize;
 
     int status = inflateInit2(&zs, Constants::GZIP_WINDOW_BITS);
     if ( status != Z_OK ) {
@@ -236,17 +243,51 @@ int BgzfStream::InflateBlock(const int& blockLength) {
     return zs.total_out;
 }
 
+bool BgzfStream::IsOpen(void) const {
+    if ( m_device == 0 )
+        return false;
+    return m_device->IsOpen();
+}
+
+bool BgzfStream::Open(const string& filename, const IBamIODevice::OpenMode mode) {
+
+    // close current device if necessary
+    Close();
+
+    // sanity check
+    BT_ASSERT_X( (m_device == 0), "BgzfStream::Open() - unable to properly close previous IO device" );
+
+    // retrieve new IO device depending on filename
+    m_device = BamDeviceFactory::CreateDevice(filename);
+
+    // sanity check
+    BT_ASSERT_X( m_device, "BgzfStream::Open() - unable to create IO device from filename" );
+
+    // if device fails to open
+    if ( !m_device->Open(mode) ) {
+        cerr << "BgzfStream::Open() - unable to open IO device:" << endl;
+        cerr << m_device->ErrorString();
+        return false;
+    }
+
+    // otherwise, set flag & return true
+    m_isOpen = true;
+    m_isWriteOnly = ( mode == IBamIODevice::WriteOnly );
+    return true;
+
+}
+
 // opens the BGZF file for reading (mode is either "rb" for reading, or "wb" for writing)
 bool BgzfStream::Open(const string& filename, const char* mode) {
 
     // close current stream, if necessary, before opening next
-    if ( IsOpen ) Close();
+    if ( m_isOpen ) Close();
 
     // determine open mode
     if ( strcmp(mode, "rb") == 0 )
-        IsWriteOnly = false;
+        m_isWriteOnly = false;
     else if ( strcmp(mode, "wb") == 0)
-        IsWriteOnly = true;
+        m_isWriteOnly = true;
     else {
         fprintf(stderr, "BgzfStream ERROR: unknown file mode: %s\n", mode);
         return false;
@@ -254,31 +295,35 @@ bool BgzfStream::Open(const string& filename, const char* mode) {
 
     // open BGZF stream on a file
     if ( (filename != "stdin") && (filename != "stdout") && (filename != "-"))
-        Stream = fopen(filename.c_str(), mode);
+        m_stream = fopen(filename.c_str(), mode);
 
     // open BGZF stream on stdin
     else if ( (filename == "stdin" || filename == "-") && (strcmp(mode, "rb") == 0 ) )
-        Stream = freopen(NULL, mode, stdin);
+        m_stream = freopen(NULL, mode, stdin);
 
     // open BGZF stream on stdout
     else if ( (filename == "stdout" || filename == "-") && (strcmp(mode, "wb") == 0) )
-        Stream = freopen(NULL, mode, stdout);
+        m_stream = freopen(NULL, mode, stdout);
 
-    if ( !Stream ) {
+    if ( !m_stream ) {
         fprintf(stderr, "BgzfStream ERROR: unable to open file %s\n", filename.c_str() );
         return false;
     }
 
     // set flag & return success
-    IsOpen = true;
+    m_isOpen = true;
     return true;
 }
 
 // reads BGZF data into a byte buffer
-int BgzfStream::Read(char* data, const unsigned int dataLength) {
+unsigned int BgzfStream::Read(char* data, const unsigned int dataLength) {
 
-    // if stream not open for reading (or empty request)
-    if ( !IsOpen || IsWriteOnly || dataLength == 0 )
+    if ( dataLength == 0 )
+        return 0;
+
+    // if stream not open for reading
+    BT_ASSERT_X( m_device, "BgzfStream::Read() - trying to read from null device");
+    if ( !m_device->IsOpen() || (m_device->Mode() != IBamIODevice::ReadOnly) )
         return 0;
 
     // read blocks as needed until desired data length is retrieved
@@ -287,31 +332,31 @@ int BgzfStream::Read(char* data, const unsigned int dataLength) {
     while ( numBytesRead < dataLength ) {
 
         // determine bytes available in current block
-        int bytesAvailable = BlockLength - BlockOffset;
+        int bytesAvailable = m_blockLength - m_blockOffset;
 
         // read (and decompress) next block if needed
         if ( bytesAvailable <= 0 ) {
             if ( !ReadBlock() ) return -1;
-            bytesAvailable = BlockLength - BlockOffset;
+            bytesAvailable = m_blockLength - m_blockOffset;
             if ( bytesAvailable <= 0 ) break;
         }
 
         // copy data from uncompressed source buffer into data destination buffer
-        char* buffer   = UncompressedBlock;
+        char* buffer   = m_uncompressedBlock;
         int copyLength = min( (int)(dataLength-numBytesRead), bytesAvailable );
-        memcpy(output, buffer + BlockOffset, copyLength);
+        memcpy(output, buffer + m_blockOffset, copyLength);
 
         // update counters
-        BlockOffset  += copyLength;
-        output       += copyLength;
-        numBytesRead += copyLength;
+        m_blockOffset += copyLength;
+        output        += copyLength;
+        numBytesRead  += copyLength;
     }
 
     // update block data
-    if ( BlockOffset == BlockLength ) {
-        BlockAddress = ftell64(Stream);
-        BlockOffset  = 0;
-        BlockLength  = 0;
+    if ( m_blockOffset == m_blockLength ) {
+        m_blockAddress = m_device->Tell();
+        m_blockOffset  = 0;
+        m_blockLength  = 0;
     }
 
     return numBytesRead;
@@ -320,20 +365,23 @@ int BgzfStream::Read(char* data, const unsigned int dataLength) {
 // reads a BGZF block
 bool BgzfStream::ReadBlock(void) {
 
-    char header[Constants::BGZF_BLOCK_HEADER_LENGTH];
-    int64_t blockAddress = ftell64(Stream);
+    BT_ASSERT_X( m_device, "BgzfStream::ReadBlock() - trying to read from null IO device");
+
+    // store block's starting address
+    int64_t blockAddress = m_device->Tell();
 
     // read block header from file
-    int count = fread(header, 1, sizeof(header), Stream);
+    char header[Constants::BGZF_BLOCK_HEADER_LENGTH];
+    int numBytesRead = m_device->Read(header, Constants::BGZF_BLOCK_HEADER_LENGTH);
 
     // if block header empty
-    if ( count == 0 ) {
-        BlockLength = 0;
+    if ( numBytesRead == 0 ) {
+        m_blockLength = 0;
         return true;
     }
 
     // if block header invalid size
-    if ( count != sizeof(header) ) {
+    if ( numBytesRead != Constants::BGZF_BLOCK_HEADER_LENGTH ) {
         fprintf(stderr, "BgzfStream ERROR: read block failed - could not read block header\n");
         return false;
     }
@@ -346,29 +394,29 @@ bool BgzfStream::ReadBlock(void) {
 
     // copy header contents to compressed buffer
     int blockLength = BamTools::UnpackUnsignedShort(&header[16]) + 1;
-    char* compressedBlock = CompressedBlock;
+    char* compressedBlock = m_compressedBlock;
     memcpy(compressedBlock, header, Constants::BGZF_BLOCK_HEADER_LENGTH);
     int remaining = blockLength - Constants::BGZF_BLOCK_HEADER_LENGTH;
 
     // read remainder of block
-    count = fread(&compressedBlock[Constants::BGZF_BLOCK_HEADER_LENGTH], 1, remaining, Stream);
-    if ( count != remaining ) {
+    numBytesRead = m_device->Read(&compressedBlock[Constants::BGZF_BLOCK_HEADER_LENGTH], remaining);
+    if ( numBytesRead != remaining ) {
         fprintf(stderr, "BgzfStream ERROR: read block failed - could not read data from block\n");
         return false;
     }
 
     // decompress block data
-    count = InflateBlock(blockLength);
-    if ( count < 0 ) {
+    numBytesRead = InflateBlock(blockLength);
+    if ( numBytesRead < 0 ) {
         fprintf(stderr, "BgzfStream ERROR: read block failed - could not decompress block data\n");
         return false;
     }
 
     // update block data
-    if ( BlockLength != 0 )
-        BlockOffset = 0;
-    BlockAddress = blockAddress;
-    BlockLength  = count;
+    if ( m_blockLength != 0 )
+        m_blockOffset = 0;
+    m_blockAddress = blockAddress;
+    m_blockLength  = numBytesRead;
 
     // return success
     return true;
@@ -377,61 +425,65 @@ bool BgzfStream::ReadBlock(void) {
 // seek to position in BGZF file
 bool BgzfStream::Seek(const int64_t& position) {
 
-    // skip if not open
-    if ( !IsOpen ) return false;
+    BT_ASSERT_X( m_device, "BgzfStream::Seek() - trying to seek on null IO device");
+
+    // skip if not open or not seek-able
+    if ( !IsOpen() || !m_device->IsRandomAccess() )
+        return false;
 
     // determine adjusted offset & address
     int     blockOffset  = (position & 0xFFFF);
     int64_t blockAddress = (position >> 16) & 0xFFFFFFFFFFFFLL;
 
     // attempt seek in file
-    if ( fseek64(Stream, blockAddress, SEEK_SET) != 0 ) {
+    if ( !m_device->Seek(blockAddress) ) {
         fprintf(stderr, "BgzfStream ERROR: unable to seek in file\n");
         return false;
     }
 
     // update block data & return success
-    BlockLength  = 0;
-    BlockAddress = blockAddress;
-    BlockOffset  = blockOffset;
+    m_blockLength  = 0;
+    m_blockAddress = blockAddress;
+    m_blockOffset  = blockOffset;
     return true;
 }
 
 void BgzfStream::SetWriteCompressed(bool ok) {
-    IsWriteCompressed = ok;
+    m_isWriteCompressed = ok;
 }
 
 // get file position in BGZF file
 int64_t BgzfStream::Tell(void) const {
-    if ( !IsOpen )
-        return 0;
-    return ( (BlockAddress << 16) | (BlockOffset & 0xFFFF) );
+    if ( !m_isOpen ) return 0;
+    return ( (m_blockAddress << 16) | (m_blockOffset & 0xFFFF) );
 }
 
 // writes the supplied data into the BGZF buffer
-unsigned int BgzfStream::Write(const char* data, const unsigned int dataLen) {
+unsigned int BgzfStream::Write(const char* data, const unsigned int dataLength) {
 
-    // skip if file not open for writing
-    if ( !IsOpen || !IsWriteOnly ) return false;
+    BT_ASSERT_X( m_device, "BgzfStream::Write() - trying to write to null IO device");
+    BT_ASSERT_X( (m_device->Mode() == IBamIODevice::WriteOnly),
+                 "BgzfStream::Write() - trying to write to non-writable IO device");
 
     // write blocks as needed til all data is written
     unsigned int numBytesWritten = 0;
     const char* input = data;
-    unsigned int blockLength = UncompressedBlockSize;
-    while ( numBytesWritten < dataLen ) {
+    unsigned int blockLength = m_uncompressedBlockSize;
+    while ( numBytesWritten < dataLength ) {
 
         // copy data contents to uncompressed output buffer
-        unsigned int copyLength = min(blockLength - BlockOffset, dataLen - numBytesWritten);
-        char* buffer = UncompressedBlock;
-        memcpy(buffer + BlockOffset, input, copyLength);
+        unsigned int copyLength = min(blockLength - m_blockOffset, dataLength - numBytesWritten);
+        char* buffer = m_uncompressedBlock;
+        memcpy(buffer + m_blockOffset, input, copyLength);
 
         // update counter
-        BlockOffset     += copyLength;
+        m_blockOffset   += copyLength;
         input           += copyLength;
         numBytesWritten += copyLength;
 
         // flush (& compress) output buffer when full
-        if ( BlockOffset == blockLength ) FlushBlock();
+        if ( m_blockOffset == blockLength )
+            FlushBlock();
     }
 
     // return result

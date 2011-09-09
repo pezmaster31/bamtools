@@ -25,6 +25,7 @@
 
 #include <api/BamAux.h>
 #include <api/BamConstants.h>
+#include <api/IBamIODevice.h>
 #include "zlib.h"
 #include <cstdio>
 #include <string>
@@ -43,23 +44,27 @@ class BgzfStream {
     public:
         // closes BGZF file
         void Close(void);
-        // opens the BGZF file (mode is either "rb" for reading, or "wb" for writing)
+        bool IsOpen(void) const;
+        // opens the BGZF stream in requested mode
         bool Open(const std::string& filename, const char* mode);
+        bool Open(const std::string& filename, const IBamIODevice::OpenMode mode);
         // reads BGZF data into a byte buffer
-        int Read(char* data, const unsigned int dataLength);
+        unsigned int Read(char* data, const unsigned int dataLength);
         // seek to position in BGZF file
         bool Seek(const int64_t& position);
+        // sets IO device (closes previous, if any, but does not attempt to open)
+        void SetIODevice(IBamIODevice* device);
         // enable/disable compressed output
         void SetWriteCompressed(bool ok);
         // get file position in BGZF file
         int64_t Tell(void) const;
         // writes the supplied data into the BGZF buffer
-        unsigned int Write(const char* data, const unsigned int dataLen);
+        unsigned int Write(const char* data, const unsigned int dataLength);
 
     // internal methods
     private:
         // compresses the current block
-        int DeflateBlock(void);
+        unsigned int DeflateBlock(void);
         // flushes the data in the BGZF block
         void FlushBlock(void);
         // de-compresses the current block
@@ -74,17 +79,21 @@ class BgzfStream {
 
     // data members
     public:
-        unsigned int UncompressedBlockSize;
-        unsigned int CompressedBlockSize;
-        unsigned int BlockLength;
-        unsigned int BlockOffset;
-        uint64_t BlockAddress;
-        bool IsOpen;
-        bool IsWriteOnly;
-        bool IsWriteCompressed;
-        FILE* Stream;
-        char* UncompressedBlock;
-        char* CompressedBlock;
+        unsigned int m_uncompressedBlockSize;
+        unsigned int m_compressedBlockSize;
+        unsigned int m_blockLength;
+        unsigned int m_blockOffset;
+        uint64_t     m_blockAddress;
+
+        char* m_uncompressedBlock;
+        char* m_compressedBlock;
+
+        bool m_isOpen;
+        bool m_isWriteOnly;
+        bool m_isWriteCompressed;
+
+        IBamIODevice* m_device;
+        FILE* m_stream;
 };
 
 // -------------------------------------------------------------

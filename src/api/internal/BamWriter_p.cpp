@@ -125,7 +125,7 @@ void BamWriterPrivate::EncodeQuerySequence(const string& query, string& encodedQ
 
 // returns whether BAM file is open for writing or not
 bool BamWriterPrivate::IsOpen(void) const {
-    return m_stream.IsOpen;
+    return m_stream.IsOpen();
 }
 
 // opens the alignment archive

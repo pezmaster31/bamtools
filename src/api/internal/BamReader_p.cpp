@@ -10,6 +10,8 @@
 
 #include <api/BamConstants.h>
 #include <api/BamReader.h>
+#include <api/IBamIODevice.h>
+#include <api/internal/BamDeviceFactory_p.h>
 #include <api/internal/BamHeader_p.h>
 #include <api/internal/BamRandomAccessController_p.h>
 #include <api/internal/BamReader_p.h>
@@ -97,6 +99,9 @@ bool BamReaderPrivate::GetNextAlignment(BamAlignment& alignment) {
 // useful for operations requiring ONLY positional or other alignment-related information
 bool BamReaderPrivate::GetNextAlignmentCore(BamAlignment& alignment) {
 
+    if ( !m_stream.IsOpen() )
+        return false;
+
     // skip if region is set but has no alignments
     if ( m_randomAccessController.HasRegion() &&
          !m_randomAccessController.RegionHasAlignments() )
@@ -165,7 +170,7 @@ bool BamReaderPrivate::HasIndex(void) const {
 }
 
 bool BamReaderPrivate::IsOpen(void) const {
-    return m_stream.IsOpen;
+    return m_stream.IsOpen();
 }
 
 // load BAM header data
@@ -190,7 +195,7 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment) {
 
     // swap core endian-ness if necessary
     if ( m_isBigEndian ) {
-        for ( int i = 0; i < Constants::BAM_CORE_SIZE; i+=sizeof(uint32_t) )
+        for ( unsigned int i = 0; i < Constants::BAM_CORE_SIZE; i+=sizeof(uint32_t) )
             BamTools::SwapEndian_32p(&x[i]);
     }
 
@@ -220,7 +225,7 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment) {
     const unsigned int dataLength = alignment.SupportData.BlockLength - Constants::BAM_CORE_SIZE;
     char* allCharData = (char*)calloc(sizeof(char), dataLength);
 
-    if ( m_stream.Read(allCharData, dataLength) == (signed int)dataLength ) {
+    if ( m_stream.Read(allCharData, dataLength) == dataLength ) {
 
         // store 'allCharData' in supportData structure
         alignment.SupportData.AllCharData.assign((const char*)allCharData, dataLength);
@@ -301,12 +306,11 @@ bool BamReaderPrivate::LocateIndex(const BamIndex::IndexType& preferredType) {
 // opens BAM file (and index)
 bool BamReaderPrivate::Open(const string& filename) {
 
-    // close current BAM file if open
-    if ( m_stream.IsOpen )
-        Close();
+    // make sure we're starting with a fresh slate
+    Close();
 
     // attempt to open BgzfStream for reading
-    if ( !m_stream.Open(filename, "rb") ) {
+    if ( !m_stream.Open(filename, IBamIODevice::ReadOnly) ) {
         cerr << "BamReader ERROR: Could not open BGZF stream for " << filename << endl;
         return false;
     }
@@ -339,6 +343,9 @@ bool BamReaderPrivate::OpenIndex(const std::string& indexFilename) {
 
 // returns BAM file pointer to beginning of alignment data
 bool BamReaderPrivate::Rewind(void) {
+
+    if ( !m_stream.IsOpen() )
+        return false;
 
     // attempt rewind to first alignment
     if ( !m_stream.Seek(m_alignmentsBeginOffset) )

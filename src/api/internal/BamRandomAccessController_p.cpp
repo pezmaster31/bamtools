@@ -134,6 +134,8 @@ void BamRandomAccessController::Close(void) {
 }
 
 void BamRandomAccessController::ClearIndex(void) {
+    if ( m_index == 0 )
+        return;
     delete m_index;
     m_index = 0;
 }

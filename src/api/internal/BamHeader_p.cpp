@@ -32,7 +32,7 @@ bool BamHeader::CheckMagicNumber(BgzfStream* stream) {
 
     // try to read magic number
     char buffer[Constants::BAM_HEADER_MAGIC_LENGTH];
-    if ( stream->Read(buffer, Constants::BAM_HEADER_MAGIC_LENGTH) != (int)Constants::BAM_HEADER_MAGIC_LENGTH ) {
+    if ( stream->Read(buffer, Constants::BAM_HEADER_MAGIC_LENGTH) != Constants::BAM_HEADER_MAGIC_LENGTH ) {
         fprintf(stderr, "BamHeader ERROR: could not read magic number\n");
         return false;
     }

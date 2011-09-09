@@ -76,4 +76,11 @@
     #endif
 #endif // BAMTOOLS_TYPES
 
+#include <cassert>
+#include <stdexcept>
+#ifndef BAMTOOLS_ASSERTS
+#define BT_ASSERT_UNREACHABLE assert( false )
+#define BT_ASSERT_X( condition, message ) if (!( condition )) throw std::runtime_error( message );
+#endif // BAMTOOLS_ASSERTS
+
 #endif // BAMTOOLS_GLOBAL_H

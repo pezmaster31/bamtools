@@ -25,9 +25,14 @@ set( BamToolsAPISources
         SamReadGroupDictionary.cpp
         SamSequence.cpp
         SamSequenceDictionary.cpp
+        internal/BamDeviceFactory_p.cpp
+        internal/BamFile_p.cpp
+        internal/BamFtp_p.cpp
         internal/BamHeader_p.cpp
+        internal/BamHttp_p.cpp
         internal/BamIndexFactory_p.cpp
         internal/BamMultiReader_p.cpp
+        internal/BamPipe_p.cpp
         internal/BamRandomAccessController_p.cpp
         internal/BamReader_p.cpp
         internal/BamStandardIndex_p.cpp
@@ -68,6 +73,7 @@ ExportHeader(APIHeaders BamIndex.h               ${ApiIncludeDir})
 ExportHeader(APIHeaders BamMultiReader.h         ${ApiIncludeDir})
 ExportHeader(APIHeaders BamReader.h              ${ApiIncludeDir})
 ExportHeader(APIHeaders BamWriter.h              ${ApiIncludeDir})
+ExportHeader(APIHeaders IBamIODevice.h           ${ApiIncludeDir})
 ExportHeader(APIHeaders SamConstants.h           ${ApiIncludeDir})
 ExportHeader(APIHeaders SamHeader.h              ${ApiIncludeDir})
 ExportHeader(APIHeaders SamProgram.h             ${ApiIncludeDir})

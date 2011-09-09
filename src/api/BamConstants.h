@@ -1,9 +1,8 @@
 // ***************************************************************************
 // BamConstants.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 April 2011 (DB)
+// Last modified: 9 September 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides basic constants for handling BAM files.
 // ***************************************************************************
@@ -27,8 +26,8 @@ const char* const  BAM_HEADER_MAGIC = "BAM\1";
 const unsigned int BAM_HEADER_MAGIC_LENGTH = 4;
 
 // BAM alignment core size
-const int BAM_CORE_SIZE = 32;
-const int BAM_CORE_BUFFER_SIZE = 8;
+const unsigned int BAM_CORE_SIZE = 32;
+const unsigned int BAM_CORE_BUFFER_SIZE = 8;
 
 // BAM alignment flags
 const int BAM_ALIGNMENT_PAIRED              = 0x0001;
@@ -119,8 +118,8 @@ const int Z_DEFAULT_MEM_LEVEL = 8;
 // BZGF constants
 const int BGZF_BLOCK_HEADER_LENGTH = 18;
 const int BGZF_BLOCK_FOOTER_LENGTH = 8;
-const int BGZF_MAX_BLOCK_SIZE      = 65536;
-const int BGZF_DEFAULT_BLOCK_SIZE  = 65536;
+const unsigned int BGZF_MAX_BLOCK_SIZE      = 65536;
+const unsigned int BGZF_DEFAULT_BLOCK_SIZE  = 65536;
 
 } // namespace Constants
 } // namespace BamTools

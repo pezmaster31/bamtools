@@ -2,9 +2,9 @@
 // BamFile_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 8 September 2011 (DB)
+// Last modified: 9 September 2011 (DB)
 // ---------------------------------------------------------------------------
-// Provides reading of local BAM files
+// Provides BAM file-specific IO behavior
 // ***************************************************************************
 
 #include <api/internal/BamFile_p.h>
@@ -12,32 +12,21 @@ using namespace BamTools;
 using namespace BamTools::Internal;
 
 #include <cstdio>
+#include <iostream>
 using namespace std;
 
 BamFile::BamFile(const string& filename)
-    : IBamIODevice()
-    , m_stream(0)
+    : ILocalIODevice()
     , m_filename(filename)
 { }
 
-BamFile::~BamFile(void) {
-    Close();
-}
+BamFile::~BamFile(void) { }
 
 void BamFile::Close(void) {
-
-    // skip if not open
-    if ( !IsOpen() )
-        return;
-
-    // flush & close FILE*
-    fflush(m_stream);
-    fclose(m_stream);
-
-    // reset internals
-    m_mode = IBamIODevice::NotOpen;
-    m_stream = 0;
-    m_filename.clear();
+    if ( IsOpen() ) {
+        m_filename.clear();
+        ILocalIODevice::Close();
+    }
 }
 
 bool BamFile::IsRandomAccess(void) const {
@@ -72,24 +61,8 @@ bool BamFile::Open(const IBamIODevice::OpenMode mode) {
     return true;
 }
 
-size_t BamFile::Read(char* data, const unsigned int numBytes) {
-    BT_ASSERT_X( m_stream, "BamFile::Read() - null stream" );
-    BT_ASSERT_X( (m_mode == IBamIODevice::ReadOnly), "BamFile::Read() - device not in read-only mode");
-    return fread(data, sizeof(char), numBytes, m_stream);
-}
-
 bool BamFile::Seek(const int64_t& position) {
     BT_ASSERT_X( m_stream, "BamFile::Seek() - null stream" );
+    cerr << "BamFile::Seek() - about to attempt seek" << endl;
     return ( fseek64(m_stream, position, SEEK_SET) == 0);
-}
-
-int64_t BamFile::Tell(void) const {
-    BT_ASSERT_X( m_stream, "BamFile::Tell() - null stream" );
-    return ftell64(m_stream);
-}
-
-size_t BamFile::Write(const char* data, const unsigned int numBytes) {
-    BT_ASSERT_X( m_stream, "BamFile::Write() - null stream" );
-    BT_ASSERT_X( (m_mode == IBamIODevice::WriteOnly), "BamFile::Write() - device not in write-only mode" );
-    return fwrite(data, sizeof(char), numBytes, m_stream);
 }

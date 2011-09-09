@@ -39,6 +39,8 @@ set( BamToolsAPISources
         internal/BamToolsIndex_p.cpp
         internal/BamWriter_p.cpp
         internal/BgzfStream_p.cpp
+        internal/ILocalIODevice_p.cpp
+        internal/IRemoteIODevice_p.cpp
         internal/SamFormatParser_p.cpp
         internal/SamFormatPrinter_p.cpp
         internal/SamHeaderValidator_p.cpp

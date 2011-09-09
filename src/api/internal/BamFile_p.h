@@ -2,9 +2,9 @@
 // BamFile_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 8 September 2011 (DB)
+// Last modified: 9 September 2011 (DB)
 // ---------------------------------------------------------------------------
-// Provides reading/writing of local BAM files
+// Provides BAM file-specific IO behavior
 // ***************************************************************************
 
 #ifndef BAMFILE_P_H
@@ -20,35 +20,28 @@
 //
 // We mean it.
 
-#include <api/IBamIODevice.h>
+#include <api/internal/ILocalIODevice_p.h>
 #include <string>
 
 namespace BamTools {
 namespace Internal {
 
-class BamFile : public IBamIODevice {
+class BamFile : public ILocalIODevice {
 
     // ctor & dtor
     public:
         BamFile(const std::string& filename);
         ~BamFile(void);
 
-    // IBamIODevice implementation
+    // ILocalIODevice implementation
     public:
         void Close(void);
         bool IsRandomAccess(void) const;
         bool Open(const IBamIODevice::OpenMode mode);
-        size_t Read(char* data, const unsigned int numBytes);
         bool Seek(const int64_t& position);
-        int64_t Tell(void) const;
-        size_t Write(const char* data, const unsigned int numBytes);
-
-    // internal methods
-    private:
 
     // data members
     private:
-        FILE* m_stream;
         std::string m_filename;
 };
 

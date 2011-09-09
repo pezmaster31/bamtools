@@ -344,17 +344,23 @@ bool BamReaderPrivate::OpenIndex(const std::string& indexFilename) {
 // returns BAM file pointer to beginning of alignment data
 bool BamReaderPrivate::Rewind(void) {
 
-    if ( !m_stream.IsOpen() )
+    if ( !m_stream.IsOpen() ) {
+        cerr << "BRP::Rewind() - stream not open" << endl;
         return false;
+    }
 
     // attempt rewind to first alignment
-    if ( !m_stream.Seek(m_alignmentsBeginOffset) )
+    if ( !m_stream.Seek(m_alignmentsBeginOffset) ) {
+        cerr << "BRP::Rewind() - could not seek to ABO (1st time)" << endl;
         return false;
+    }
 
     // verify that we can read first alignment
     BamAlignment al;
-    if ( !LoadNextAlignment(al) )
+    if ( !LoadNextAlignment(al) ) {
+        cerr << "BRP::Rewind() - could not read first alignment" << endl;
         return false;
+    }
 
     // reset region
     m_randomAccessController.ClearRegion();

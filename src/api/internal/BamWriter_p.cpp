@@ -10,6 +10,7 @@
 
 #include <api/BamAlignment.h>
 #include <api/BamConstants.h>
+#include <api/IBamIODevice.h>
 #include <api/internal/BamWriter_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
@@ -134,7 +135,7 @@ bool BamWriterPrivate::Open(const string& filename,
                             const RefVector& referenceSequences)
 {
     // open the BGZF file for writing, return failure if error
-    if ( !m_stream.Open(filename, "wb") )
+    if ( !m_stream.Open(filename, IBamIODevice::WriteOnly) )
         return false;
 
     // write BAM file 'metadata' components

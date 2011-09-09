@@ -1,14 +1,14 @@
 // ***************************************************************************
-// BamPipe_p.h (c) 2011 Derek Barnett
+// ILocalIODevice_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
 // Last modified: 8 September 2011 (DB)
 // ---------------------------------------------------------------------------
-// Provides BAM pipe-specific IO behavior
+// Provides shared behavior for files & pipes
 // ***************************************************************************
 
-#ifndef BAMPIPE_P_H
-#define BAMPIPE_P_H
+#ifndef ILOCALIODEVICE_P_H
+#define ILOCALIODEVICE_P_H
 
 //  -------------
 //  W A R N I N G
@@ -20,27 +20,31 @@
 //
 // We mean it.
 
-#include <api/internal/ILocalIODevice_p.h>
-#include <string>
+#include <api/IBamIODevice.h>
 
 namespace BamTools {
 namespace Internal {
 
-class BamPipe : public ILocalIODevice {
+class ILocalIODevice : public IBamIODevice {
 
     // ctor & dtor
     public:
-        BamPipe(void);
-        ~BamPipe(void);
+        ILocalIODevice(void);
+        virtual ~ILocalIODevice(void);
 
     // IBamIODevice implementation
     public:
-        bool IsRandomAccess(void) const;
-        bool Open(const IBamIODevice::OpenMode mode);
-        bool Seek(const int64_t& position);
+        virtual void Close(void);
+        virtual size_t Read(char* data, const unsigned int numBytes);
+        virtual int64_t Tell(void) const;
+        virtual size_t Write(const char* data, const unsigned int numBytes);
+
+    // data members
+    protected:
+        FILE* m_stream;
 };
 
 } // namespace Internal
 } // namespace BamTools
 
-#endif // BAMPIPE_P_H
+#endif // ILOCALIODEVICE_P_H

@@ -428,8 +428,10 @@ bool BgzfStream::Seek(const int64_t& position) {
     BT_ASSERT_X( m_device, "BgzfStream::Seek() - trying to seek on null IO device");
 
     // skip if not open or not seek-able
-    if ( !IsOpen() || !m_device->IsRandomAccess() )
+    if ( !IsOpen() /*|| !m_device->IsRandomAccess()*/ ) {
+        cerr << "BgzfStream::Seek() - device not open" << endl;
         return false;
+    }
 
     // determine adjusted offset & address
     int     blockOffset  = (position & 0xFFFF);
@@ -437,7 +439,7 @@ bool BgzfStream::Seek(const int64_t& position) {
 
     // attempt seek in file
     if ( !m_device->Seek(blockAddress) ) {
-        fprintf(stderr, "BgzfStream ERROR: unable to seek in file\n");
+        cerr << "BgzfStream ERROR: unable to seek in file" << endl;
         return false;
     }
 

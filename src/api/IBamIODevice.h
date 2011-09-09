@@ -21,6 +21,8 @@ class API_EXPORT IBamIODevice {
 
     // IBamIODevice interface
     public:
+
+        // pure virtuals
         virtual void Close(void) =0;
         virtual bool IsRandomAccess(void) const =0;
         virtual bool Open(const OpenMode mode) =0;
@@ -28,7 +30,8 @@ class API_EXPORT IBamIODevice {
         virtual bool Seek(const int64_t& position) =0;
         virtual int64_t Tell(void) const =0;
         virtual size_t Write(const char* data, const unsigned int numBytes) =0;
-    public:
+
+        // default implementation provided
         virtual std::string ErrorString(void);
         virtual bool IsOpen(void) const;
         virtual OpenMode Mode(void) const;

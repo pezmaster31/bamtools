@@ -33,6 +33,10 @@ class IBamMultiMerger;
 
 class BamMultiReaderPrivate {
 
+    // typedefs
+    public:
+        typedef std::pair<BamReader*, BamAlignment*> ReaderAlignment;
+
     // constructor / destructor
     public:
         BamMultiReaderPrivate(void);
@@ -79,7 +83,7 @@ class BamMultiReaderPrivate {
         const std::string ExtractReadGroup(const std::string& headerLine) const;
         bool HasAlignmentData(void) const;
         bool LoadNextAlignment(BamReader* reader, BamAlignment* alignment);
-        BamReader* OpenReader(const std::string& filename);
+        ReaderAlignment OpenReader(const std::string& filename, bool* ok);
         bool PopNextCachedAlignment(BamAlignment& al, const bool needCharData);
         bool RewindReaders(void);
         void SaveNextAlignment(BamReader* reader, BamAlignment* alignment);
@@ -88,10 +92,8 @@ class BamMultiReaderPrivate {
         void ValidateReaders(void) const;
 
     // data members
-    public:
-        typedef std::pair<BamReader*, BamAlignment*> ReaderAlignment;
+    public:        
         std::vector<ReaderAlignment> m_readers;
-
         IBamMultiMerger* m_alignments;
         BamMultiReader::SortOrder m_sortOrder;
 };

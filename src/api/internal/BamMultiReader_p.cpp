@@ -438,6 +438,9 @@ bool BamMultiReaderPrivate::Open(const vector<string>& filenames) {
         if ( m_alignments == 0 ) return false;
     }
 
+    // put all current readers back at beginning (refreshes alignment cache)
+    Rewind();
+
     // iterate over filenames
     vector<string>::const_iterator filenameIter = filenames.begin();
     vector<string>::const_iterator filenameEnd  = filenames.end();
@@ -446,18 +449,17 @@ bool BamMultiReaderPrivate::Open(const vector<string>& filenames) {
         if ( filename.empty() ) continue;
 
         // attempt to open BamReader on filename
-        BamReader* reader = OpenReader(filename);
-        if ( reader == 0 ) continue;
-
-        // store reader with new alignment
-        m_readers.push_back( make_pair(reader, new BamAlignment) );
+        bool openedOk = false;
+        ReaderAlignment ra = OpenReader(filename, &openedOk);
+        if ( openedOk ) {
+            m_readers.push_back(ra); // store reader/alignment in local list
+            m_alignments->Add(ra);   // add reader/alignment to sorting cache
+        }
     }
 
-    // validate & rewind any opened readers, also refreshes alignment cache
-    if ( !m_readers.empty() ) {
+    // if more than one reader open, check for reference consistency
+    if ( m_readers.size() > 1 )
         ValidateReaders();
-        Rewind();
-    }
 
     // return success
     return true;
@@ -506,19 +508,23 @@ bool BamMultiReaderPrivate::OpenIndexes(const vector<string>& indexFilenames) {
     return result;
 }
 
-BamReader* BamMultiReaderPrivate::OpenReader(const std::string& filename) {
+ReaderAlignment BamMultiReaderPrivate::OpenReader(const string& filename, bool* ok) {
 
-    // create new BamReader
+    // clear status flag
+    *ok = false;
+
+    // create new BamReader & BamAlignment
     BamReader* reader = new BamReader;
+    BamAlignment* alignment = new BamAlignment;
 
     // if reader opens OK
     if ( reader->Open(filename) ) {
 
-        // attempt to read first alignment (sanity check)
-        // if ok, then return BamReader pointer
-        BamAlignment al;
-        if ( reader->GetNextAlignmentCore(al) )
-            return reader;
+        // if first alignment reads OK
+        if ( LoadNextAlignment(reader, alignment) ) {
+            *ok = true;
+            return make_pair(reader, alignment);
+        }
 
         // could not read alignment
         else {
@@ -536,7 +542,8 @@ BamReader* BamMultiReaderPrivate::OpenReader(const std::string& filename) {
     // if we get here, there was a problem with this BAM file (opening or reading)
     // clean up memory allocation & return null pointer
     delete reader;
-    return 0;
+    delete alignment;
+    return ReaderAlignment();
 }
 
 // print associated filenames to stdout
@@ -554,9 +561,9 @@ bool BamMultiReaderPrivate::PopNextCachedAlignment(BamAlignment& al, const bool 
     if ( !HasAlignmentData() )
         return false;
 
-    // "pop" next alignment and reader
+    // pop next reader/alignment pair
     ReaderAlignment nextReaderAlignment = m_alignments->TakeFirst();
-    BamReader* reader = nextReaderAlignment.first;
+    BamReader*    reader    = nextReaderAlignment.first;
     BamAlignment* alignment = nextReaderAlignment.second;
 
     // store cached alignment into destination parameter (by copy)
@@ -568,7 +575,7 @@ bool BamMultiReaderPrivate::PopNextCachedAlignment(BamAlignment& al, const bool 
         al.Filename = reader->GetFilename();
     }
 
-    // peek to next alignment & store in cache
+    // load next alignment from reader & store in cache
     SaveNextAlignment(reader, alignment);
 
     // return success

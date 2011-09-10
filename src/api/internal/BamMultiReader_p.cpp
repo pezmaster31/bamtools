@@ -1,7 +1,6 @@
 // ***************************************************************************
 // BamMultiReader_p.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
 // Last modified: 9 September 2011 (DB)
 // ---------------------------------------------------------------------------

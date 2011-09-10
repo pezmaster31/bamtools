@@ -1,9 +1,8 @@
 // ***************************************************************************
 // BamMultiMerger_p.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 18 March 2011 (DB)
+// Last modified: 9 September 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides merging functionality for BamMultiReader.  At this point, supports
 // sorting results by (refId, position) or by read name.
@@ -42,7 +41,7 @@ class IBamMultiMerger {
         virtual ~IBamMultiMerger(void) { }
 
     public:
-        virtual void Add(const ReaderAlignment& value) =0;
+        virtual void Add(ReaderAlignment value) =0;
         virtual void Clear(void) =0;
         virtual const ReaderAlignment& First(void) const =0;
         virtual bool IsEmpty(void) const =0;
@@ -59,7 +58,7 @@ class PositionMultiMerger : public IBamMultiMerger {
         ~PositionMultiMerger(void) { }
 
     public:
-        void Add(const ReaderAlignment& value);
+        void Add(ReaderAlignment value);
         void Clear(void);
         const ReaderAlignment& First(void) const;
         bool IsEmpty(void) const;
@@ -87,7 +86,7 @@ class ReadNameMultiMerger : public IBamMultiMerger {
         ~ReadNameMultiMerger(void) { }
 
     public:
-        void Add(const ReaderAlignment& value);
+        void Add(ReaderAlignment value);
         void Clear(void);
         const ReaderAlignment& First(void) const;
         bool IsEmpty(void) const;
@@ -115,7 +114,7 @@ class UnsortedMultiMerger : public IBamMultiMerger {
         ~UnsortedMultiMerger(void) { }
 
     public:
-        void Add(const ReaderAlignment& value);
+        void Add(ReaderAlignment value);
         void Clear(void);
         const ReaderAlignment& First(void) const;
         bool IsEmpty(void) const;
@@ -135,7 +134,7 @@ class UnsortedMultiMerger : public IBamMultiMerger {
 // ------------------------------------------
 // PositionMultiMerger implementation
 
-inline void PositionMultiMerger::Add(const ReaderAlignment& value) {
+inline void PositionMultiMerger::Add(ReaderAlignment value) {
     const KeyType key( value.second->RefID, value.second->Position );
     m_data.insert( ElementType(key, value) );
 }
@@ -188,9 +187,12 @@ inline ReaderAlignment PositionMultiMerger::TakeFirst(void) {
 // ------------------------------------------
 // ReadNameMultiMerger implementation
 
-inline void ReadNameMultiMerger::Add(const ReaderAlignment& value) {
-    const KeyType key(value.second->Name);
-    m_data.insert( ElementType(key, value) );
+inline void ReadNameMultiMerger::Add(ReaderAlignment value) {
+    BamAlignment* al = value.second;
+    if ( al->BuildCharData() ) {
+        const KeyType key(al->Name);
+        m_data.insert( ElementType(key, value) );
+    }
 }
 
 inline void ReadNameMultiMerger::Clear(void) {
@@ -242,7 +244,7 @@ inline ReaderAlignment ReadNameMultiMerger::TakeFirst(void) {
 // ------------------------------------------
 // UnsortedMultiMerger implementation
 
-inline void UnsortedMultiMerger::Add(const ReaderAlignment& value) {
+inline void UnsortedMultiMerger::Add(ReaderAlignment value) {
     m_data.push_back(value);
 }
 

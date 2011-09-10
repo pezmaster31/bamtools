@@ -1,7 +1,6 @@
 // ***************************************************************************
 // bamtools_pileup_engine.h (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
 // Last modified: 18 September 2010
 // ---------------------------------------------------------------------------

@@ -1,9 +1,8 @@
 // ***************************************************************************
 // BamMultiReader_p.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 13 March 2011 (DB)
+// Last modified: 9 September 2011 (DB)
 // ---------------------------------------------------------------------------
 // Functionality for simultaneously reading multiple BAM files
 // *************************************************************************
@@ -32,6 +31,10 @@ namespace Internal {
 class IBamMultiMerger;
 
 class BamMultiReaderPrivate {
+
+    // typedefs
+    public:
+        typedef std::pair<BamReader*, BamAlignment*> ReaderAlignment;
 
     // constructor / destructor
     public:
@@ -78,21 +81,19 @@ class BamMultiReaderPrivate {
         IBamMultiMerger* CreateMergerForCurrentSortOrder(void) const;
         const std::string ExtractReadGroup(const std::string& headerLine) const;
         bool HasAlignmentData(void) const;
-        bool LoadNextAlignment(BamAlignment& al);
-        BamTools::BamReader* OpenReader(const std::string& filename);
+        bool LoadNextAlignment(BamReader* reader, BamAlignment* alignment);
+        ReaderAlignment OpenReader(const std::string& filename, bool* ok);
+        bool PopNextCachedAlignment(BamAlignment& al, const bool needCharData);
         bool RewindReaders(void);
-        void SaveNextAlignment(BamTools::BamReader* reader, BamTools::BamAlignment* alignment);
+        void SaveNextAlignment(BamReader* reader, BamAlignment* alignment);
         const std::vector<std::string> SplitHeaderText(const std::string& headerText) const;
         void UpdateAlignmentCache(void);
         void ValidateReaders(void) const;
 
     // data members
-    public:
-        typedef std::pair<BamReader*, BamAlignment*> ReaderAlignment;
+    public:        
         std::vector<ReaderAlignment> m_readers;
-
         IBamMultiMerger* m_alignments;
-        bool m_isCoreMode;
         BamMultiReader::SortOrder m_sortOrder;
 };
 

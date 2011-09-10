@@ -1,7 +1,6 @@
 // ***************************************************************************
 // bamtools_coverage.h (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
 // Last modified: 1 August 2010
 // ---------------------------------------------------------------------------

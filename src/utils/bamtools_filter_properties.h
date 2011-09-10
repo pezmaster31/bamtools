@@ -1,7 +1,6 @@
 // ***************************************************************************
 // bamtools_filter_properties.h (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
 // Last modified: 19 November 2010
 // ---------------------------------------------------------------------------

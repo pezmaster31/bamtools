@@ -1,7 +1,6 @@
 // ***************************************************************************
 // BamRandomAccessController_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
 // Last modified: 24 February 2011(DB)
 // ---------------------------------------------------------------------------

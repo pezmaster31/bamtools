@@ -434,6 +434,12 @@ bool BamStandardIndex::GetOffset(const BamRegion& region, int64_t& offset, bool*
         return false;
     }
 
+    // if not candidate offsets are present in the indexed (most likely sparce coverage)
+    // then silently bail
+    if( offsets.size() == 0 ) {
+        return false;
+    }
+    
     // ensure that offsets are sorted before processing
     sort( offsets.begin(), offsets.end() );
 

@@ -263,7 +263,7 @@ bool BamStandardIndex::Create(void) {
     // open new index file (read & write)
     string indexFilename = m_reader->Filename() + Extension();
     if ( !OpenFile(indexFilename, "w+b") ) {
-        cerr << "BamStandardIndex ERROR: could not open ouput index file: " << indexFilename
+        cerr << "BamStandardIndex ERROR: could not open output index file: " << indexFilename
              << ", aborting index creation" << endl;
         return false;
     }

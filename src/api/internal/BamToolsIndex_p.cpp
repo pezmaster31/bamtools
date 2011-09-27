@@ -144,7 +144,7 @@ bool BamToolsIndex::Create(void) {
     // open new index file (read & write)
     string indexFilename = m_reader->Filename() + Extension();
     if ( !OpenFile(indexFilename, "w+b") ) {
-        cerr << "BamToolsIndex ERROR: could not open ouput index file " << indexFilename
+        cerr << "BamToolsIndex ERROR: could not open output index file " << indexFilename
              << ", aborting index creation" << endl;
         return false;
     }

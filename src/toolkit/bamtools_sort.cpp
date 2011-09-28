@@ -2,7 +2,7 @@
 // bamtools_sort.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 14 June 2011 (DB)
+// Last modified: 28 September 2011 (DB)
 // ---------------------------------------------------------------------------
 // Sorts an input BAM file
 // ***************************************************************************
@@ -40,6 +40,12 @@ const unsigned int SORT_DEFAULT_MAX_BUFFER_MEMORY = 1024;    // Mb
 
 struct SortLessThanPosition {
     bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
+
+        // force unmapped alignments to end
+        if ( lhs.RefID == -1 ) return false;
+        if ( rhs.RefID == -1 ) return true;
+
+        // sort first on RefID, then by Position
         if ( lhs.RefID != rhs.RefID )
             return lhs.RefID < rhs.RefID;
         else

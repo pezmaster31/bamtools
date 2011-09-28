@@ -2,7 +2,7 @@
 // BamMultiMerger_p.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 9 September 2011 (DB)
+// Last modified: 28 September 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides merging functionality for BamMultiReader.  At this point, supports
 // sorting results by (refId, position) or by read name.
@@ -71,7 +71,24 @@ class PositionMultiMerger : public IBamMultiMerger {
         typedef ReaderAlignment               ValueType;
         typedef std::pair<KeyType, ValueType> ElementType;
 
-        typedef std::multimap<KeyType, ValueType> ContainerType;
+        struct SortLessThanPosition {
+            bool operator() (const KeyType& lhs, const KeyType& rhs) {
+
+                // force unmapped alignments to end
+                if ( lhs.first == -1 ) return false;
+                if ( rhs.first == -1 ) return true;
+
+                // sort first on RefID, then by Position
+                if ( lhs.first != rhs.first )
+                    return lhs.first < rhs.first;
+                else
+                    return lhs.second < rhs.second;
+            }
+        };
+
+        typedef SortLessThanPosition Compare;
+
+        typedef std::multimap<KeyType, ValueType, Compare> ContainerType;
         typedef ContainerType::iterator           DataIterator;
         typedef ContainerType::const_iterator     DataConstIterator;
 

@@ -2,14 +2,15 @@
 // BamMultiReader_p.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 9 September 2011 (DB)
+// Last modified: 3 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Functionality for simultaneously reading multiple BAM files
 // *************************************************************************
 
 #include <api/BamAlignment.h>
 #include <api/BamMultiReader.h>
-#include <api/internal/BamMultiMerger_p.h>
+#include <api/SamConstants.h>
+#include <api/algorithms/Sort.h>
 #include <api/internal/BamMultiReader_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
@@ -23,19 +24,14 @@ using namespace std;
 
 // ctor
 BamMultiReaderPrivate::BamMultiReaderPrivate(void)
-    : m_alignments(0)
-    , m_sortOrder(BamMultiReader::SortedByPosition)
+    : m_alignmentCache(0)
 { }
 
 // dtor
 BamMultiReaderPrivate::~BamMultiReaderPrivate(void) {
 
-    // close all open BAM readers
+    // close all open BAM readers (& clean up cache)
     Close();
-
-    // clean up alignment cache
-    delete m_alignments;
-    m_alignments = 0;
 }
 
 // close all BAM files
@@ -44,7 +40,7 @@ void BamMultiReaderPrivate::Close(void) {
 }
 
 // close requested BAM file
-void BamMultiReaderPrivate::CloseFile(const string& filename) {    
+void BamMultiReaderPrivate::CloseFile(const string& filename) {
     vector<string> filenames(1, filename);
     CloseFiles(filenames);
 }
@@ -60,41 +56,45 @@ void BamMultiReaderPrivate::CloseFiles(const vector<string>& filenames) {
         if ( filename.empty() ) continue;
 
         // iterate over readers
-        vector<ReaderAlignment>::iterator readerIter = m_readers.begin();
-        vector<ReaderAlignment>::iterator readerEnd  = m_readers.end();
+        vector<MergeItem>::iterator readerIter = m_readers.begin();
+        vector<MergeItem>::iterator readerEnd  = m_readers.end();
         for ( ; readerIter != readerEnd; ++readerIter ) {
-            BamReader* reader = (*readerIter).first;
+            MergeItem& item = (*readerIter);
+            BamReader* reader = item.Reader;
             if ( reader == 0 ) continue;
 
             // if reader matches requested filename
             if ( reader->GetFilename() == filename ) {
 
-                // remove reader/alignment from alignment cache
-                m_alignments->Remove(reader);
+                // remove reader's entry from alignment cache
+                m_alignmentCache->Remove(reader);
 
-                // close & delete reader
+                // clean up reader & its alignment
                 reader->Close();
                 delete reader;
                 reader = 0;
 
                 // delete reader's alignment entry
-                BamAlignment* alignment = (*readerIter).second;
+                BamAlignment* alignment = item.Alignment;
                 delete alignment;
                 alignment = 0;
 
-                // remove reader from container
+                // remove reader from reader list
                 m_readers.erase(readerIter);
 
                 // on match, just go on to next filename
-                // (no need to keep looking and iterator is invalid now anyway)
+                // (no need to keep looking and item iterator is invalid now anyway)
                 break;
             }
         }
     }
 
-    // make sure alignment cache is cleared if all readers are now closed
-    if ( m_readers.empty() && m_alignments != 0 )
-        m_alignments->Clear();
+    // make sure alignment cache is cleaned up if all readers closed
+    if ( m_readers.empty() && m_alignmentCache ) {
+        m_alignmentCache->Clear();
+        delete m_alignmentCache;
+        m_alignmentCache = 0;
+    }
 }
 
 // creates index files for BAM files that don't have them
@@ -103,10 +103,11 @@ bool BamMultiReaderPrivate::CreateIndexes(const BamIndex::IndexType& type) {
     bool result = true;
 
     // iterate over readers
-    vector<ReaderAlignment>::iterator readerIter = m_readers.begin();
-    vector<ReaderAlignment>::iterator readerEnd  = m_readers.end();
-    for ( ; readerIter != readerEnd; ++readerIter ) {
-        BamReader* reader = (*readerIter).first;
+    vector<MergeItem>::iterator itemIter = m_readers.begin();
+    vector<MergeItem>::iterator itemEnd  = m_readers.end();
+    for ( ; itemIter != itemEnd; ++itemIter ) {
+        MergeItem& item = (*itemIter);
+        BamReader* reader = item.Reader;
         if ( reader == 0 ) continue;
 
         // if reader doesn't have an index, create one
@@ -117,34 +118,21 @@ bool BamMultiReaderPrivate::CreateIndexes(const BamIndex::IndexType& type) {
     return result;
 }
 
-IBamMultiMerger* BamMultiReaderPrivate::CreateMergerForCurrentSortOrder(void) const {
-    switch ( m_sortOrder ) {
-        case ( BamMultiReader::SortedByPosition ) : return new PositionMultiMerger;
-        case ( BamMultiReader::SortedByReadName ) : return new ReadNameMultiMerger;
-        case ( BamMultiReader::Unsorted )         : return new UnsortedMultiMerger;
-        default :
-            cerr << "BamMultiReader ERROR: requested sort order is unknown" << endl;
-            return 0;
-    }
-}
+IMultiMerger* BamMultiReaderPrivate::CreateAlignmentCache(void) const {
 
-const string BamMultiReaderPrivate::ExtractReadGroup(const string& headerLine) const {
+    // fetch SamHeader
+    SamHeader header = GetHeader();
 
-    string readGroup("");
-    stringstream headerLineSs(headerLine);
-    string part;
+    // if BAM files are sorted by position
+    if ( header.SortOrder == Constants::SAM_HD_SORTORDER_COORDINATE )
+        return new MultiMerger<Algorithms::Sort::ByPosition>();
 
-    // parse @RG header line, looking for the ID: tag
-    while( getline(headerLineSs, part, '\t') ) {
-        stringstream partSs(part);
-        string subtag;
-        getline(partSs, subtag, ':');
-        if ( subtag == "ID" ) {
-            getline(partSs, readGroup, ':');
-            break;
-        }
-    }
-    return readGroup;
+    // if BAM files are sorted by read name
+    if ( header.SortOrder == Constants::SAM_HD_SORTORDER_QUERYNAME )
+        return new MultiMerger<Algorithms::Sort::ByName>();
+
+    // otherwise "unknown" or "unsorted", use unsorted merger and just read in
+    return new MultiMerger<Algorithms::Sort::Unsorted>();
 }
 
 const vector<string> BamMultiReaderPrivate::Filenames(void) const {
@@ -154,16 +142,17 @@ const vector<string> BamMultiReaderPrivate::Filenames(void) const {
     filenames.reserve( m_readers.size() );
 
     // iterate over readers
-    vector<ReaderAlignment>::const_iterator readerIter = m_readers.begin();
-    vector<ReaderAlignment>::const_iterator readerEnd  = m_readers.end();
-    for ( ; readerIter != readerEnd; ++readerIter ) {
-        const BamReader* reader = (*readerIter).first;
+    vector<MergeItem>::const_iterator itemIter = m_readers.begin();
+    vector<MergeItem>::const_iterator itemEnd  = m_readers.end();
+    for ( ; itemIter != itemEnd; ++itemIter ) {
+        const MergeItem& item = (*itemIter);
+        const BamReader* reader = item.Reader;
         if ( reader == 0 ) continue;
 
         // store filename if not empty
-        const string filename = reader->GetFilename();
+        const string& filename = reader->GetFilename();
         if ( !filename.empty() )
-            filenames.push_back( reader->GetFilename() );
+            filenames.push_back(filename);
     }
 
     // return result
@@ -171,90 +160,45 @@ const vector<string> BamMultiReaderPrivate::Filenames(void) const {
 }
 
 SamHeader BamMultiReaderPrivate::GetHeader(void) const {
-    string text = GetHeaderText();
+    const string& text = GetHeaderText();
     return SamHeader(text);
 }
 
 // makes a virtual, unified header for all the bam files in the multireader
 string BamMultiReaderPrivate::GetHeaderText(void) const {
 
-    // TODO: merge SamHeader objects instead of parsing string data (again)
+    // N.B. - right now, simply copies all header data from first BAM,
+    //        and then appends RG's from other BAM files
+    // TODO: make this more intelligent wrt other header lines/fields
 
-    // if only one reader is open
-    if ( m_readers.size() == 1 ) {
+    // if no readers open
+    const size_t numReaders = m_readers.size();
+    if ( numReaders == 0 ) return string();
 
-        // just return reader's header text
-        const ReaderAlignment& ra = m_readers.front();
-        const BamReader* reader = ra.first;
-        if ( reader ) return reader->GetHeaderText();
+    // retrieve first reader's header
+    const MergeItem& firstItem = m_readers.front();
+    const BamReader* reader = firstItem.Reader;
+    if ( reader == 0 ) return string();
+    SamHeader mergedHeader = reader->GetHeader();
 
-        // invalid reader
-        return string();
-    }
-
-    string mergedHeader("");
-    map<string, bool> readGroups;
-
-    // foreach extraction entry (each BAM file)
-    vector<ReaderAlignment>::const_iterator readerBegin = m_readers.begin();
-    vector<ReaderAlignment>::const_iterator readerIter  = readerBegin;
-    vector<ReaderAlignment>::const_iterator readerEnd   = m_readers.end();
-    for ( ; readerIter != readerEnd; ++readerIter ) {
-        const BamReader* reader = (*readerIter).first;
+    // iterate over any remaining readers (skipping the first)
+    for ( size_t i = 1; i < numReaders; ++i ) {
+        const MergeItem& item = m_readers.at(i);
+        const BamReader* reader = item.Reader;
         if ( reader == 0 ) continue;
 
-        // get header from reader
-        string headerText = reader->GetHeaderText();
-        if ( headerText.empty() ) continue;
+        // retrieve current reader's header
+        const SamHeader currentHeader = reader->GetHeader();
 
-        // store header text in lines
-        map<string, bool> currentFileReadGroups;
-        const vector<string> lines = SplitHeaderText(headerText);
+        // append current reader's RG entries to merged header
+        // N.B. - SamReadGroupDictionary handles duplicate-checking
+        mergedHeader.ReadGroups.Add(currentHeader.ReadGroups);
 
-        // iterate over header lines
-        vector<string>::const_iterator linesIter = lines.begin();
-        vector<string>::const_iterator linesEnd  = lines.end();
-        for ( ; linesIter != linesEnd; ++linesIter ) {
-
-            // get next line from header, skip if empty
-            const string headerLine = (*linesIter);
-            if ( headerLine.empty() ) continue;
-
-            // if first file, save HD & SQ entries
-            // TODO: what if first file has empty header, should just check for empty 'mergedHeader' instead ?
-            if ( readerIter == readerBegin ) {
-                if ( headerLine.find("@HD") == 0 || headerLine.find("@SQ") == 0) {
-                    mergedHeader.append(headerLine.c_str());
-                    mergedHeader.append(1, '\n');
-                }
-            }
-
-            // (for all files) append RG entries if they are unique
-            if ( headerLine.find("@RG") == 0 ) {
-
-                // extract read group name from line
-                const string readGroup = ExtractReadGroup(headerLine);
-
-                // make sure not to duplicate @RG entries
-                if ( readGroups.find(readGroup) == readGroups.end() ) {
-                    mergedHeader.append(headerLine.c_str() );
-                    mergedHeader.append(1, '\n');
-                    readGroups[readGroup] = true;
-                    currentFileReadGroups[readGroup] = true;
-                } else {
-                    // warn iff we are reading one file and discover duplicated @RG tags in the header
-                    // otherwise, we emit no warning, as we might be merging multiple BAM files with identical @RG tags
-                    if ( currentFileReadGroups.find(readGroup) != currentFileReadGroups.end() ) {
-                        cerr << "BamMultiReader WARNING: duplicate @RG tag " << readGroup
-                             << " entry in header of " << reader->GetFilename() << endl;
-                    }
-                }
-            }
-        }
+        // TODO: merge anything else??
     }
 
-    // return merged header text
-    return mergedHeader;
+    // return stringified header
+    return mergedHeader.ToString();
 }
 
 // get next alignment among all files
@@ -285,8 +229,8 @@ int BamMultiReaderPrivate::GetReferenceCount(void) const {
         return 0;
 
     // return reference count from first reader
-    const ReaderAlignment& ra = m_readers.front();
-    const BamReader* reader = ra.first;
+    const MergeItem& item = m_readers.front();
+    const BamReader* reader = item.Reader;
     if ( reader ) return reader->GetReferenceCount();
 
     // invalid reader
@@ -301,8 +245,8 @@ const RefVector BamMultiReaderPrivate::GetReferenceData(void) const {
         return RefVector();
 
     // return reference data from first BamReader
-    const ReaderAlignment& ra = m_readers.front();
-    const BamReader* reader = ra.first;
+    const MergeItem& item = m_readers.front();
+    const BamReader* reader = item.Reader;
     if ( reader ) return reader->GetReferenceData();
 
     // invalid reader
@@ -317,21 +261,14 @@ int BamMultiReaderPrivate::GetReferenceID(const string& refName) const {
         return -1;
 
     // return reference ID from first BamReader
-    const ReaderAlignment& ra = m_readers.front();
-    const BamReader* reader = ra.first;
+    const MergeItem& item = m_readers.front();
+    const BamReader* reader = item.Reader;
     if ( reader ) return reader->GetReferenceID(refName);
 
     // invalid reader
     return -1;
 }
 // ---------------------------------------------------------------------------------------
-
-// checks if any readers still have alignments
-bool BamMultiReaderPrivate::HasAlignmentData(void) const {
-    if ( m_alignments == 0 )
-        return false;
-    return !m_alignments->IsEmpty();
-}
 
 // returns true if all readers have index data available
 // this is useful to indicate whether Jump() or SetRegion() are possible
@@ -344,10 +281,11 @@ bool BamMultiReaderPrivate::HasIndexes(void) const {
     bool result = true;
 
     // iterate over readers
-    vector<ReaderAlignment>::const_iterator readerIter = m_readers.begin();
-    vector<ReaderAlignment>::const_iterator readerEnd  = m_readers.end();
+    vector<MergeItem>::const_iterator readerIter = m_readers.begin();
+    vector<MergeItem>::const_iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
-        const BamReader* reader = (*readerIter).first;
+        const MergeItem& item = (*readerIter);
+        const BamReader* reader = item.Reader;
         if ( reader  == 0 ) continue;
 
         // see if current reader has index data
@@ -361,10 +299,11 @@ bool BamMultiReaderPrivate::HasIndexes(void) const {
 bool BamMultiReaderPrivate::HasOpenReaders(void) {
 
     // iterate over readers
-    vector<ReaderAlignment>::const_iterator readerIter = m_readers.begin();
-    vector<ReaderAlignment>::const_iterator readerEnd  = m_readers.end();
+    vector<MergeItem>::const_iterator readerIter = m_readers.begin();
+    vector<MergeItem>::const_iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
-        const BamReader* reader = (*readerIter).first;
+        const MergeItem& item = (*readerIter);
+        const BamReader* reader = item.Reader;
         if ( reader == 0 ) continue;
 
         // return true whenever an open reader is found
@@ -384,10 +323,11 @@ bool BamMultiReaderPrivate::Jump(int refID, int position) {
     // UpdateAlignments(), and continue.
 
     // iterate over readers
-    vector<ReaderAlignment>::iterator readerIter = m_readers.begin();
-    vector<ReaderAlignment>::iterator readerEnd  = m_readers.end();
+    vector<MergeItem>::iterator readerIter = m_readers.begin();
+    vector<MergeItem>::iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
-        BamReader* reader = (*readerIter).first;
+        MergeItem& item = (*readerIter);
+        BamReader* reader = item.Reader;
         if ( reader == 0 ) continue;
 
         // attempt jump() on each
@@ -397,15 +337,8 @@ bool BamMultiReaderPrivate::Jump(int refID, int position) {
         }
     }
 
-    // update alignment cache & return success
-    UpdateAlignmentCache();
-    return true;
-}
-
-bool BamMultiReaderPrivate::LoadNextAlignment(BamReader* reader, BamAlignment* alignment) {
-    // lazy building of alignment's char data,
-    // only populated on demand by sorting merger or client call to GetNextAlignment()
-    return reader->GetNextAlignmentCore(*alignment);
+    // returns status of cache update
+    return UpdateAlignmentCache();
 }
 
 // locate (& load) index files for BAM readers that don't already have one loaded
@@ -414,10 +347,11 @@ bool BamMultiReaderPrivate::LocateIndexes(const BamIndex::IndexType& preferredTy
     bool result = true;
 
     // iterate over readers
-    vector<ReaderAlignment>::iterator readerIter = m_readers.begin();
-    vector<ReaderAlignment>::iterator readerEnd  = m_readers.end();
+    vector<MergeItem>::iterator readerIter = m_readers.begin();
+    vector<MergeItem>::iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
-        BamReader* reader = (*readerIter).first;
+        MergeItem& item = (*readerIter);
+        BamReader* reader = item.Reader;
         if ( reader == 0 ) continue;
 
         // if reader has no index, try to locate one
@@ -431,11 +365,10 @@ bool BamMultiReaderPrivate::LocateIndexes(const BamIndex::IndexType& preferredTy
 // opens BAM files
 bool BamMultiReaderPrivate::Open(const vector<string>& filenames) {
 
-    // create alignment cache if neccessary
-    if ( m_alignments == 0 ) {
-        m_alignments = CreateMergerForCurrentSortOrder();
-        if ( m_alignments == 0 ) return false;
-    }
+    bool openedOk = true;
+
+    // put all current readers back at beginning
+    openedOk &= Rewind();
 
     // put all current readers back at beginning (refreshes alignment cache)
     Rewind();
@@ -447,21 +380,30 @@ bool BamMultiReaderPrivate::Open(const vector<string>& filenames) {
         const string& filename = (*filenameIter);
         if ( filename.empty() ) continue;
 
-        // attempt to open BamReader on filename
-        bool openedOk = false;
-        ReaderAlignment ra = OpenReader(filename, &openedOk);
-        if ( openedOk ) {
-            m_readers.push_back(ra); // store reader/alignment in local list
-            m_alignments->Add(ra);   // add reader/alignment to sorting cache
-        }
+        // attempt to open BamReader
+        BamReader* reader = new BamReader;
+        const bool readerOpened = reader->Open(filename);
+
+        // if opened OK, store it
+        if ( readerOpened )
+            m_readers.push_back( MergeItem(reader, new BamAlignment) );
+
+        // otherwise clean up invalid reader
+        else delete reader;
+
+        // update method return status
+        openedOk &= readerOpened;
     }
 
-    // if more than one reader open, check for reference consistency
+    // if more than one reader open, check for consistency
     if ( m_readers.size() > 1 )
-        ValidateReaders();
+        openedOk &= ValidateReaders();
+
+    // update alignment cache
+    openedOk &= UpdateAlignmentCache();
 
     // return success
-    return true;
+    return openedOk;
 }
 
 bool BamMultiReaderPrivate::OpenFile(const std::string& filename) {
@@ -476,7 +418,7 @@ bool BamMultiReaderPrivate::OpenIndexes(const vector<string>& indexFilenames) {
     //       first reader without an index?
 
     // make sure same number of index filenames as readers
-    if ( m_readers.size() != indexFilenames.size() || !indexFilenames.empty() )
+    if ( m_readers.size() != indexFilenames.size() )
         return false;
 
     // init result flag
@@ -485,10 +427,11 @@ bool BamMultiReaderPrivate::OpenIndexes(const vector<string>& indexFilenames) {
     // iterate over BamReaders
     vector<string>::const_iterator indexFilenameIter = indexFilenames.begin();
     vector<string>::const_iterator indexFilenameEnd  = indexFilenames.end();
-    vector<ReaderAlignment>::iterator readerIter = m_readers.begin();
-    vector<ReaderAlignment>::iterator readerEnd  = m_readers.end();
+    vector<MergeItem>::iterator readerIter = m_readers.begin();
+    vector<MergeItem>::iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
-        BamReader* reader = (*readerIter).first;
+        MergeItem& item = (*readerIter);
+        BamReader* reader = item.Reader;
 
         // open index filename on reader
         if ( reader ) {
@@ -501,57 +444,40 @@ bool BamMultiReaderPrivate::OpenIndexes(const vector<string>& indexFilenames) {
             break;
     }
 
-    // TODO: validation ??
+    // TODO: any validation needed here??
 
     // return success/fail
     return result;
 }
 
-ReaderAlignment BamMultiReaderPrivate::OpenReader(const string& filename, bool* ok) {
 
-    // clear status flag
-    *ok = false;
+bool BamMultiReaderPrivate::PopNextCachedAlignment(BamAlignment& al, const bool needCharData) {
 
-    // create new BamReader & BamAlignment
-    BamReader* reader = new BamReader;
-    BamAlignment* alignment = new BamAlignment;
+    // skip if no alignments available
+    if ( m_alignmentCache == 0 || m_alignmentCache->IsEmpty() )
+        return false;
 
-    // if reader opens OK
-    if ( reader->Open(filename) ) {
+    // pop next merge item entry from cache
+    MergeItem item = m_alignmentCache->TakeFirst();
+    BamReader* reader = item.Reader;
+    BamAlignment* alignment = item.Alignment;
+    if ( reader == 0 || alignment == 0 )
+        return false;
 
-        // if first alignment reads OK
-        if ( LoadNextAlignment(reader, alignment) ) {
-            *ok = true;
-            return make_pair(reader, alignment);
-        }
-
-        // could not read alignment
-        else {
-            cerr << "BamMultiReader WARNING: Could not read first alignment from "
-                 << filename << ", ignoring file" << endl;
-        }
+    // set char data if requested
+    if ( needCharData ) {
+        alignment->BuildCharData();
+        alignment->Filename = reader->GetFilename();
     }
 
-    // reader could not open
-    else {
-        cerr << "BamMultiReader WARNING: Could not open "
-              << filename << ", ignoring file" << endl;
-    }
+    // store cached alignment into destination parameter (by copy)
+    al = *alignment;
 
-    // if we get here, there was a problem with this BAM file (opening or reading)
-    // clean up memory allocation & return null pointer
-    delete reader;
-    delete alignment;
-    return ReaderAlignment();
-}
+    // load next alignment from reader & store in cache
+    SaveNextAlignment(reader, alignment);
 
-// print associated filenames to stdout
-void BamMultiReaderPrivate::PrintFilenames(void) const {
-    const vector<string>& filenames = Filenames();
-    vector<string>::const_iterator filenameIter = filenames.begin();
-    vector<string>::const_iterator filenameEnd  = filenames.end();
-    for ( ; filenameIter != filenameEnd; ++filenameIter )
-        cout << (*filenameIter) << endl;
+    // return success
+    return true;
 }
 
 bool BamMultiReaderPrivate::PopNextCachedAlignment(BamAlignment& al, const bool needCharData) {
@@ -584,18 +510,14 @@ bool BamMultiReaderPrivate::PopNextCachedAlignment(BamAlignment& al, const bool 
 // returns BAM file pointers to beginning of alignment data & resets alignment cache
 bool BamMultiReaderPrivate::Rewind(void) {
 
-    // clear out alignment cache
-    m_alignments->Clear();
-
     // attempt to rewind files
     if ( !RewindReaders() ) {
         cerr << "BamMultiReader ERROR: could not rewind file(s) successfully";
         return false;
     }
 
-    // reset cache & return success
-    UpdateAlignmentCache();
-    return true;
+    // return status of cache update
+    return UpdateAlignmentCache();
 }
 
 // returns BAM file pointers to beginning of alignment data
@@ -604,10 +526,11 @@ bool BamMultiReaderPrivate::RewindReaders(void) {
     bool result = true;
 
     // iterate over readers
-    vector<ReaderAlignment>::iterator readerIter = m_readers.begin();
-    vector<ReaderAlignment>::iterator readerEnd  = m_readers.end();
+    vector<MergeItem>::iterator readerIter = m_readers.begin();
+    vector<MergeItem>::iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
-        BamReader* reader = (*readerIter).first;
+        MergeItem& item = (*readerIter);
+        BamReader* reader = item.Reader;
         if ( reader == 0 ) continue;
 
         // attempt rewind on BamReader
@@ -620,18 +543,21 @@ bool BamMultiReaderPrivate::RewindReaders(void) {
 void BamMultiReaderPrivate::SaveNextAlignment(BamReader* reader, BamAlignment* alignment) {
 
     // if can read alignment from reader, store in cache
-    if ( LoadNextAlignment(reader, alignment) )
-        m_alignments->Add( make_pair(reader, alignment) );
+    // N.B. - lazy building of alignment's char data,
+    // only populated on demand by sorting merger or client call to GetNextAlignment()
+    if ( reader->GetNextAlignmentCore(*alignment) )
+        m_alignmentCache->Add(MergeItem(reader, alignment));
 }
 
 // sets the index caching mode on the readers
 void BamMultiReaderPrivate::SetIndexCacheMode(const BamIndex::IndexCacheMode mode) {
 
     // iterate over readers
-    vector<ReaderAlignment>::iterator readerIter = m_readers.begin();
-    vector<ReaderAlignment>::iterator readerEnd  = m_readers.end();
+    vector<MergeItem>::iterator readerIter = m_readers.begin();
+    vector<MergeItem>::iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
-        BamReader* reader = (*readerIter).first;
+        MergeItem& item = (*readerIter);
+        BamReader* reader = item.Reader;
         if ( reader == 0 ) continue;
 
         // set reader's index cache mode
@@ -647,10 +573,11 @@ bool BamMultiReaderPrivate::SetRegion(const BamRegion& region) {
     // UpdateAlignments(), and continue.
 
     // iterate over alignments
-    vector<ReaderAlignment>::iterator readerIter = m_readers.begin();
-    vector<ReaderAlignment>::iterator readerEnd  = m_readers.end();
+    vector<MergeItem>::iterator readerIter = m_readers.begin();
+    vector<MergeItem>::iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
-        BamReader* reader = (*readerIter).first;
+        MergeItem& item = (*readerIter);
+        BamReader* reader = item.Reader;
         if ( reader == 0 ) continue;
 
         // attempt to set BamReader's region of interest
@@ -661,94 +588,93 @@ bool BamMultiReaderPrivate::SetRegion(const BamRegion& region) {
         }
     }
 
-    // update alignment cache & return success
-    UpdateAlignmentCache();
-    return true;
-}
-
-void BamMultiReaderPrivate::SetSortOrder(const BamMultiReader::SortOrder& order) {
-
-    // skip if no change needed
-    if ( m_sortOrder == order ) return;
-
-    // set new sort order
-    m_sortOrder = order;
-
-    // create new alignment cache based on sort order
-    IBamMultiMerger* newAlignmentCache = CreateMergerForCurrentSortOrder();
-    if ( newAlignmentCache == 0 ) return; // print error?
-
-    // copy old cache contents to new cache
-    while ( m_alignments->Size() > 0 ) {
-        ReaderAlignment value = m_alignments->TakeFirst(); // retrieves & 'pops'
-        newAlignmentCache->Add(value);
-    }
-
-    // remove old cache structure & point to new cache
-    delete m_alignments;
-    m_alignments = newAlignmentCache;
-}
-
-// splits the entire header into a list of strings
-const vector<string> BamMultiReaderPrivate::SplitHeaderText(const string& headerText) const {
-
-    stringstream header(headerText);
-    string item;
-
-    vector<string> lines;
-    while ( getline(header, item) )
-        lines.push_back(item);
-    return lines;
+    // return status of cache update
+    return UpdateAlignmentCache();
 }
 
 // updates our alignment cache
-void BamMultiReaderPrivate::UpdateAlignmentCache(void) {
+bool BamMultiReaderPrivate::UpdateAlignmentCache(void) {
 
-    // skip if invalid alignment cache
-    if ( m_alignments == 0 ) return;
+    // create alignment cache if not created yet
+    if ( m_alignmentCache == 0 ) {
+        m_alignmentCache = CreateAlignmentCache();
+        if ( m_alignmentCache == 0 ) {
+            // set error string
+            return false;
+        }
+    }
 
-    // clear the cache
-    m_alignments->Clear();
+    // clear any prior cache data
+    m_alignmentCache->Clear();
 
     // iterate over readers
-    vector<ReaderAlignment>::iterator readerIter = m_readers.begin();
-    vector<ReaderAlignment>::iterator readerEnd  = m_readers.end();
+    vector<MergeItem>::iterator readerIter = m_readers.begin();
+    vector<MergeItem>::iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
-        BamReader* reader = (*readerIter).first;
-        BamAlignment* alignment = (*readerIter).second;
+        MergeItem& item = (*readerIter);
+        BamReader* reader = item.Reader;
+        BamAlignment* alignment = item.Alignment;
         if ( reader == 0 || alignment == 0 ) continue;
 
         // save next alignment from each reader in cache
         SaveNextAlignment(reader, alignment);
     }
+
+    // if we get here, ok
+    return true;
 }
 
 // ValidateReaders checks that all the readers point to BAM files representing
 // alignments against the same set of reference sequences, and that the
 // sequences are identically ordered.  If these checks fail the operation of
 // the multireader is undefined, so we force program exit.
-void BamMultiReaderPrivate::ValidateReaders(void) const {
+bool BamMultiReaderPrivate::ValidateReaders(void) const {
 
-    // retrieve first reader data
-    const BamReader* firstReader = m_readers.front().first;
-    if ( firstReader == 0 ) return;
-    const RefVector firstReaderRefData = firstReader->GetReferenceData();
+    // skip if no readers opened
+    if ( m_readers.empty() )
+        return true;
+
+    // retrieve first reader
+    const MergeItem& firstItem = m_readers.front();
+    const BamReader* firstReader = firstItem.Reader;
+    if ( firstReader == 0 ) return false;
+
+    // retrieve first reader's header data
+    const SamHeader& firstReaderHeader = firstReader->GetHeader();
+    const string& firstReaderSortOrder = firstReaderHeader.SortOrder;
+
+    // retrieve first reader's reference data
+    const RefVector& firstReaderRefData = firstReader->GetReferenceData();
     const int firstReaderRefCount = firstReader->GetReferenceCount();
     const int firstReaderRefSize = firstReaderRefData.size();
 
     // iterate over all readers
-    vector<ReaderAlignment>::const_iterator readerIter = m_readers.begin();
-    vector<ReaderAlignment>::const_iterator readerEnd  = m_readers.end();
+    vector<MergeItem>::const_iterator readerIter = m_readers.begin();
+    vector<MergeItem>::const_iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
-
-        // get current reader data
-        BamReader* reader = (*readerIter).first;
+        const MergeItem& item = (*readerIter);
+        BamReader* reader = item.Reader;
         if ( reader == 0 ) continue;
+
+        // get current reader's header data
+        const SamHeader& currentReaderHeader = reader->GetHeader();
+        const string& currentReaderSortOrder = currentReaderHeader.SortOrder;
+
+        // check compatible sort order
+        if ( currentReaderSortOrder != firstReaderSortOrder ) {
+            // error string
+            cerr << "BamMultiReader ERROR: mismatched sort order in " << reader->GetFilename()
+                 << ", expected "  << firstReaderSortOrder
+                 << ", but found " << currentReaderSortOrder << endl;
+            return false;
+        }
+
+        // get current reader's reference data
         const RefVector currentReaderRefData = reader->GetReferenceData();
         const int currentReaderRefCount = reader->GetReferenceCount();
         const int currentReaderRefSize  = currentReaderRefData.size();
 
-        // init container iterators
+        // init reference data iterators
         RefVector::const_iterator firstRefIter   = firstReaderRefData.begin();
         RefVector::const_iterator firstRefEnd    = firstReaderRefData.end();
         RefVector::const_iterator currentRefIter = currentReaderRefData.begin();
@@ -760,7 +686,7 @@ void BamMultiReaderPrivate::ValidateReaders(void) const {
             cerr << "BamMultiReader ERROR: mismatched number of references in " << reader->GetFilename()
                  << " expected " << firstReaderRefCount
                  << " reference sequences but only found " << currentReaderRefCount << endl;
-            exit(1);
+            return false;
         }
 
         // this will be ok; we just checked above that we have identically-sized sets of references
@@ -794,7 +720,7 @@ void BamMultiReaderPrivate::ValidateReaders(void) const {
                     cerr << entry.RefName << " " << entry.RefLength << endl;
                 }
 
-                exit(1);
+                return false;
             }
 
             // update iterators
@@ -802,4 +728,7 @@ void BamMultiReaderPrivate::ValidateReaders(void) const {
             ++currentRefIter;
         }
     }
+
+    // if we get here, everything checks out
+    return true;
 }

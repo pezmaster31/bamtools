@@ -2,7 +2,7 @@
 // BamMultiMerger_p.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 28 September 2011 (DB)
+// Last modified: 3 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides merging functionality for BamMultiReader.  At this point, supports
 // sorting results by (refId, position) or by read name.
@@ -23,262 +23,207 @@
 
 #include <api/BamAlignment.h>
 #include <api/BamReader.h>
-#include <map>
-#include <queue>
+#include <api/algorithms/Sort.h>
+#include <deque>
+#include <functional>
+#include <set>
 #include <string>
-#include <utility>
 
 namespace BamTools {
 namespace Internal {
 
-typedef std::pair<BamReader*, BamAlignment*> ReaderAlignment;
+struct MergeItem {
 
-// generic MultiMerger interface
-class IBamMultiMerger {
+    // data members
+    BamReader*    Reader;
+    BamAlignment* Alignment;
+
+    // ctors & dtor
+    MergeItem(BamReader* reader = 0,
+              BamAlignment* alignment = 0)
+        : Reader(reader)
+        , Alignment(alignment)
+    { }
+
+    MergeItem(const MergeItem& other)
+        : Reader(other.Reader)
+        , Alignment(other.Alignment)
+    { }
+
+    ~MergeItem(void) { }
+};
+
+template<typename Compare>
+struct MergeItemSorter : public std::binary_function<MergeItem, MergeItem, bool> {
 
     public:
-        IBamMultiMerger(void) { }
-        virtual ~IBamMultiMerger(void) { }
+        MergeItemSorter(const Compare& comp = Compare())
+            : m_comp(comp)
+        { }
+
+        bool operator()(const MergeItem& lhs, const MergeItem& rhs) {
+            const BamAlignment& l = *lhs.Alignment;
+            const BamAlignment& r = *rhs.Alignment;
+            return m_comp(l,r);
+        }
+
+    private:
+        Compare m_comp;
+};
+
+// pure ABC so we can just work polymorphically with any specific merger implementation
+class IMultiMerger {
 
     public:
-        virtual void Add(ReaderAlignment value) =0;
+        IMultiMerger(void) { }
+        virtual ~IMultiMerger(void) { }
+    public:
+        virtual void Add(MergeItem item) =0;
         virtual void Clear(void) =0;
-        virtual const ReaderAlignment& First(void) const =0;
+        virtual const MergeItem& First(void) const =0;
         virtual bool IsEmpty(void) const =0;
         virtual void Remove(BamReader* reader) =0;
         virtual int Size(void) const =0;
-        virtual ReaderAlignment TakeFirst(void) =0;
+        virtual MergeItem TakeFirst(void) =0;
 };
 
-// IBamMultiMerger implementation - sorted on BamAlignment: (RefId, Position)
-class PositionMultiMerger : public IBamMultiMerger {
+// general merger
+template<typename Compare>
+class MultiMerger : public IMultiMerger {
 
     public:
-        PositionMultiMerger(void) : IBamMultiMerger() { }
-        ~PositionMultiMerger(void) { }
+        typedef Compare                      CompareType;
+        typedef MergeItemSorter<CompareType> MergeType;
 
     public:
-        void Add(ReaderAlignment value);
+        explicit MultiMerger(const Compare& comp = Compare())
+            : IMultiMerger()
+            , m_data( MergeType(comp) )
+        { }
+        ~MultiMerger(void) { }
+
+    public:
+        void Add(MergeItem item);
         void Clear(void);
-        const ReaderAlignment& First(void) const;
+        const MergeItem& First(void) const;
         bool IsEmpty(void) const;
         void Remove(BamReader* reader);
         int Size(void) const;
-        ReaderAlignment TakeFirst(void);
+        MergeItem TakeFirst(void);
 
     private:
-        typedef std::pair<int, int>           KeyType;
-        typedef ReaderAlignment               ValueType;
-        typedef std::pair<KeyType, ValueType> ElementType;
-
-        struct SortLessThanPosition {
-            bool operator() (const KeyType& lhs, const KeyType& rhs) {
-
-                // force unmapped alignments to end
-                if ( lhs.first == -1 ) return false;
-                if ( rhs.first == -1 ) return true;
-
-                // sort first on RefID, then by Position
-                if ( lhs.first != rhs.first )
-                    return lhs.first < rhs.first;
-                else
-                    return lhs.second < rhs.second;
-            }
-        };
-
-        typedef SortLessThanPosition Compare;
-
-        typedef std::multimap<KeyType, ValueType, Compare> ContainerType;
-        typedef ContainerType::iterator           DataIterator;
-        typedef ContainerType::const_iterator     DataConstIterator;
-
+        typedef MergeItem                              ValueType;
+        typedef std::multiset<ValueType, MergeType>    ContainerType;
+        typedef typename ContainerType::iterator       DataIterator;
+        typedef typename ContainerType::const_iterator DataConstIterator;
         ContainerType m_data;
 };
 
-// IBamMultiMerger implementation - sorted on BamAlignment: Name
-class ReadNameMultiMerger : public IBamMultiMerger {
+template <typename Compare>
+inline void MultiMerger<Compare>::Add(MergeItem item) {
+    if ( CompareType::UsesCharData() )
+        item.Alignment->BuildCharData();
+    m_data.insert(item);
+}
+
+template <typename Compare>
+inline void MultiMerger<Compare>::Clear(void) {
+    m_data.clear();
+}
+
+template <typename Compare>
+inline const MergeItem& MultiMerger<Compare>::First(void) const {
+    const ValueType& entry = (*m_data.begin());
+    return entry;
+}
+
+template <typename Compare>
+inline bool MultiMerger<Compare>::IsEmpty(void) const {
+    return m_data.empty();
+}
+template <typename Compare>
+inline void MultiMerger<Compare>::Remove(BamReader* reader) {
+
+    if ( reader == 0 ) return;
+    const std::string& filenameToRemove = reader->GetFilename();
+
+    // iterate over readers in cache
+    DataIterator dataIter = m_data.begin();
+    DataIterator dataEnd  = m_data.end();
+    for ( ; dataIter != dataEnd; ++dataIter ) {
+        const MergeItem& item = (*dataIter);
+        const BamReader* itemReader = item.Reader;
+        if ( itemReader == 0 ) continue;
+
+        // remove iterator on match
+        if ( itemReader->GetFilename() == filenameToRemove ) {
+            m_data.erase(dataIter);
+            return;
+        }
+    }
+}
+template <typename Compare>
+inline int MultiMerger<Compare>::Size(void) const {
+    return m_data.size();
+}
+
+template <typename Compare>
+inline MergeItem MultiMerger<Compare>::TakeFirst(void) {
+    DataIterator firstIter = m_data.begin();
+    MergeItem    firstItem = (*firstIter);
+    m_data.erase(firstIter);
+    return firstItem;
+}
+
+// unsorted "merger"
+template<>
+class MultiMerger<Algorithms::Sort::Unsorted> : public IMultiMerger {
 
     public:
-        ReadNameMultiMerger(void) : IBamMultiMerger() { }
-        ~ReadNameMultiMerger(void) { }
+        explicit MultiMerger(const Algorithms::Sort::Unsorted& comp = Algorithms::Sort::Unsorted())
+            : IMultiMerger()
+        { }
+        ~MultiMerger(void) { }
 
     public:
-        void Add(ReaderAlignment value);
+        void Add(MergeItem item);
         void Clear(void);
-        const ReaderAlignment& First(void) const;
+        const MergeItem& First(void) const;
         bool IsEmpty(void) const;
         void Remove(BamReader* reader);
         int Size(void) const;
-        ReaderAlignment TakeFirst(void);
+        MergeItem TakeFirst(void);
 
     private:
-        typedef std::string                   KeyType;
-        typedef ReaderAlignment               ValueType;
-        typedef std::pair<KeyType, ValueType> ElementType;
-
-        typedef std::multimap<KeyType, ValueType> ContainerType;
-        typedef ContainerType::iterator           DataIterator;
-        typedef ContainerType::const_iterator     DataConstIterator;
-
-        ContainerType m_data;
-};
-
-// IBamMultiMerger implementation - unsorted BAM file(s)
-class UnsortedMultiMerger : public IBamMultiMerger {
-
-    public:
-        UnsortedMultiMerger(void) : IBamMultiMerger() { }
-        ~UnsortedMultiMerger(void) { }
-
-    public:
-        void Add(ReaderAlignment value);
-        void Clear(void);
-        const ReaderAlignment& First(void) const;
-        bool IsEmpty(void) const;
-        void Remove(BamReader* reader);
-        int Size(void) const;
-        ReaderAlignment TakeFirst(void);
-
-    private:
-        typedef ReaderAlignment ElementType;
-        typedef std::vector<ReaderAlignment>  ContainerType;
+        typedef MergeItem                     ValueType;
+        typedef std::deque<ValueType>         ContainerType;
         typedef ContainerType::iterator       DataIterator;
         typedef ContainerType::const_iterator DataConstIterator;
-
         ContainerType m_data;
 };
 
-// ------------------------------------------
-// PositionMultiMerger implementation
-
-inline void PositionMultiMerger::Add(ReaderAlignment value) {
-    const KeyType key( value.second->RefID, value.second->Position );
-    m_data.insert( ElementType(key, value) );
+inline
+void MultiMerger<Algorithms::Sort::Unsorted>::Add(MergeItem item) {
+    m_data.push_back(item);
 }
 
-inline void PositionMultiMerger::Clear(void) {
+inline
+void MultiMerger<Algorithms::Sort::Unsorted>::Clear(void) {
     m_data.clear();
 }
 
-inline const ReaderAlignment& PositionMultiMerger::First(void) const {
-    const ElementType& entry = (*m_data.begin());
-    return entry.second;
-}
-
-inline bool PositionMultiMerger::IsEmpty(void) const {
-    return m_data.empty();
-}
-
-inline void PositionMultiMerger::Remove(BamReader* reader) {
-
-    if ( reader == 0 ) return;
-    const std::string filenameToRemove = reader->GetFilename();
-
-    // iterate over readers in cache
-    DataIterator dataIter = m_data.begin();
-    DataIterator dataEnd  = m_data.end();
-    for ( ; dataIter != dataEnd; ++dataIter ) {
-        const ValueType& entry = (*dataIter).second;
-        const BamReader* entryReader = entry.first;
-        if ( entryReader == 0 ) continue;
-
-        // remove iterator on match
-        if ( entryReader->GetFilename() == filenameToRemove ) {
-            m_data.erase(dataIter);
-            return;
-        }
-    }
-}
-
-inline int PositionMultiMerger::Size(void) const {
-    return m_data.size();
-}
-
-inline ReaderAlignment PositionMultiMerger::TakeFirst(void) {
-    DataIterator first = m_data.begin();
-    ReaderAlignment next = (*first).second;
-    m_data.erase(first);
-    return next;
-}
-
-// ------------------------------------------
-// ReadNameMultiMerger implementation
-
-inline void ReadNameMultiMerger::Add(ReaderAlignment value) {
-    BamAlignment* al = value.second;
-    if ( al->BuildCharData() ) {
-        const KeyType key(al->Name);
-        m_data.insert( ElementType(key, value) );
-    }
-}
-
-inline void ReadNameMultiMerger::Clear(void) {
-    m_data.clear();
-}
-
-inline const ReaderAlignment& ReadNameMultiMerger::First(void) const {
-    const ElementType& entry = (*m_data.begin());
-    return entry.second;
-}
-
-inline bool ReadNameMultiMerger::IsEmpty(void) const {
-    return m_data.empty();
-}
-
-inline void ReadNameMultiMerger::Remove(BamReader* reader) {
-
-    if ( reader == 0 ) return;
-    const std::string filenameToRemove = reader->GetFilename();
-
-    // iterate over readers in cache
-    DataIterator dataIter = m_data.begin();
-    DataIterator dataEnd  = m_data.end();
-    for ( ; dataIter != dataEnd; ++dataIter ) {
-        const ValueType& entry = (*dataIter).second;
-        const BamReader* entryReader = entry.first;
-        if ( entryReader == 0 ) continue;
-
-        // remove iterator on match
-        if ( entryReader->GetFilename() == filenameToRemove ) {
-            m_data.erase(dataIter);
-            return;
-        }
-    }
-
-}
-
-inline int ReadNameMultiMerger::Size(void) const {
-    return m_data.size();
-}
-
-inline ReaderAlignment ReadNameMultiMerger::TakeFirst(void) {
-    DataIterator first = m_data.begin();
-    ReaderAlignment next = (*first).second;
-    m_data.erase(first);
-    return next;
-}
-
-// ------------------------------------------
-// UnsortedMultiMerger implementation
-
-inline void UnsortedMultiMerger::Add(ReaderAlignment value) {
-    m_data.push_back(value);
-}
-
-inline void UnsortedMultiMerger::Clear(void) {
-    for (size_t i = 0; i < m_data.size(); ++i )
-        m_data.pop_back();
-}
-
-inline const ReaderAlignment& UnsortedMultiMerger::First(void) const {
+inline
+const MergeItem& MultiMerger<Algorithms::Sort::Unsorted>::First(void) const {
     return m_data.front();
 }
 
-inline bool UnsortedMultiMerger::IsEmpty(void) const {
+inline
+bool MultiMerger<Algorithms::Sort::Unsorted>::IsEmpty(void) const {
     return m_data.empty();
 }
 
-inline void UnsortedMultiMerger::Remove(BamReader* reader) {
+inline
+void MultiMerger<Algorithms::Sort::Unsorted>::Remove(BamReader* reader) {
 
     if ( reader == 0 ) return;
     const std::string filenameToRemove = reader->GetFilename();
@@ -287,25 +232,28 @@ inline void UnsortedMultiMerger::Remove(BamReader* reader) {
     DataIterator dataIter = m_data.begin();
     DataIterator dataEnd  = m_data.end();
     for ( ; dataIter != dataEnd; ++dataIter ) {
-        const BamReader* entryReader = (*dataIter).first;
-        if ( entryReader == 0 ) continue;
+        const MergeItem& item = (*dataIter);
+        const BamReader* itemReader = item.Reader;
+        if ( itemReader == 0 ) continue;
 
         // remove iterator on match
-        if ( entryReader->GetFilename() == filenameToRemove ) {
+        if ( itemReader->GetFilename() == filenameToRemove ) {
             m_data.erase(dataIter);
             return;
         }
     }
 }
 
-inline int UnsortedMultiMerger::Size(void) const {
+inline
+int MultiMerger<Algorithms::Sort::Unsorted>::Size(void) const {
     return m_data.size();
 }
 
-inline ReaderAlignment UnsortedMultiMerger::TakeFirst(void) {
-    ReaderAlignment first = m_data.front();
-    m_data.erase( m_data.begin() );
-    return first;
+inline
+MergeItem MultiMerger<Algorithms::Sort::Unsorted>::TakeFirst(void) {
+    MergeItem firstItem = m_data.front();
+    m_data.pop_front();
+    return firstItem;
 }
 
 } // namespace Internal

@@ -2,7 +2,7 @@
 // SamReadGroupDictionary.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 18 April 2011 (DB)
+// Last modified: 1 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamReadGroup entries.
 // ***************************************************************************
@@ -36,6 +36,7 @@ class API_EXPORT SamReadGroupDictionary {
         void Add(const std::string& readGroupId);
 
         // adds multiple read groups
+        void Add(const SamReadGroupDictionary& readGroups);
         void Add(const std::vector<SamReadGroup>& readGroups);
         void Add(const std::vector<std::string>& readGroupIds);
 

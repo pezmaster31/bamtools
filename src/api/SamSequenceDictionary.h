@@ -2,7 +2,7 @@
 // SamSequenceDictionary.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 18 April 2011
+// Last modified: 1 October 2011
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamSequence entries.
 // ***************************************************************************
@@ -37,6 +37,7 @@ class API_EXPORT SamSequenceDictionary {
         void Add(const std::string& name, const int& length);
 
         // adds multiple sequences
+        void Add(const SamSequenceDictionary& sequences);
         void Add(const std::vector<SamSequence>& sequences);
         void Add(const std::map<std::string, int>& sequenceMap);
 

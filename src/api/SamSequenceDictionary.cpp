@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 18 April 2011 (DB)
+// Last modified: 1 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamSequence entries.
 // *************************************************************************
@@ -63,6 +63,13 @@ void SamSequenceDictionary::Add(const SamSequence& sequence) {
 */
 void SamSequenceDictionary::Add(const std::string& name, const int& length) {
     Add( SamSequence(name, length) );
+}
+
+void SamSequenceDictionary::Add(const SamSequenceDictionary& sequences) {
+    SamSequenceConstIterator seqIter = sequences.ConstBegin();
+    SamSequenceConstIterator seqEnd  = sequences.ConstEnd();
+    for ( ; seqIter != seqEnd; ++seqIter )
+        Add(*seqIter);
 }
 
 /*! \fn void SamSequenceDictionary::Add(const std::vector<SamSequence>& sequences)

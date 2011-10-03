@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 14 June 2011 (DB)
+// Last modified: 3 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Sorts an input BAM file
 // ***************************************************************************
@@ -161,7 +161,7 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
     vector<BamAlignment> buffer;
     buffer.reserve( (size_t)(m_settings->MaxBufferCount*1.1) );
     bool bufferFull = false;
-    
+
     // if sorting by name, we need to generate full char data
     // so can't use GetNextAlignmentCore()
     if ( m_settings->IsSortingByName ) {
@@ -268,12 +268,6 @@ bool SortTool::SortToolPrivate::MergeSortedRuns(void) {
         return false;
     }
 
-    // set sort order for merge
-    if ( m_settings->IsSortingByName )
-        multiReader.SetSortOrder(BamMultiReader::SortedByReadName);
-    else
-        multiReader.SetSortOrder(BamMultiReader::SortedByPosition);
-    
     // open writer for our completely sorted output BAM file
     BamWriter mergedWriter;
     if ( !mergedWriter.Open(m_settings->OutputBamFilename, m_headerText, m_references) ) {
@@ -288,7 +282,7 @@ bool SortTool::SortToolPrivate::MergeSortedRuns(void) {
     while ( multiReader.GetNextAlignmentCore(al) )
         mergedWriter.SaveAlignment(al);
   
-    // close readers
+    // close files
     multiReader.Close();
     mergedWriter.Close();
     
@@ -300,6 +294,7 @@ bool SortTool::SortToolPrivate::MergeSortedRuns(void) {
         remove(tempFilename.c_str());
     }
   
+    // return success
     return true;
 }
 

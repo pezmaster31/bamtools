@@ -112,12 +112,14 @@ bool CountTool::CountToolPrivate::Run(void) {
                 alignments.push_back(al);
         }
 
+        using namespace BamTools::Algorithms;
+
         cerr << endl
              << "------------------------------" << endl
              << "Unsorted Alignments" << endl
              << "------------------------------" << endl
              << endl;
-        std::stable_sort(alignments.begin(), alignments.end(), Algorithms::Unsorted());
+        std::stable_sort(alignments.begin(), alignments.end(), Sort::Unsorted());
         printAlignments(alignments);
         cerr << "------------------------------" << endl
              << endl;
@@ -127,7 +129,8 @@ bool CountTool::CountToolPrivate::Run(void) {
              << "Sorted Alignments (by name)" << endl
              << "------------------------------" << endl
              << endl;
-        std::sort(alignments.begin(), alignments.end(), Algorithms::SortByName<>());
+//        std::sort(alignments.begin(), alignments.end(), Sort::ByName());
+        Algorithms::SortAlignments(alignments, Sort::ByName());
         printAlignments(alignments);
         cerr << endl
              << "------------------------------" << endl
@@ -138,7 +141,8 @@ bool CountTool::CountToolPrivate::Run(void) {
              << "Sorted Alignments (by tag Aq)" << endl
              << "------------------------------" << endl
              << endl;
-        std::sort(alignments.begin(), alignments.end(), Algorithms::SortByTag<int>("Aq"));
+//        std::sort(alignments.begin(), alignments.end(), Sort::ByTag<int>("Aq"));
+        Algorithms::SortAlignments(alignments, Sort::ByTag<int>("Aq"));
         printAlignments(alignments);
         cerr << endl
              << "------------------------------" << endl
@@ -149,7 +153,7 @@ bool CountTool::CountToolPrivate::Run(void) {
              << "Sorted Alignments (by tag Aq) desc" << endl
              << "------------------------------" << endl
              << endl;
-        std::sort(alignments.begin(), alignments.end(), Algorithms::SortByTag<int, std::greater>("Aq"));
+        std::sort(alignments.begin(), alignments.end(), Sort::ByTag<int>("Aq", Sort::DescendingOrder));
         printAlignments(alignments);
         cerr << endl
              << "------------------------------" << endl
@@ -179,16 +183,17 @@ bool CountTool::CountToolPrivate::Run(void) {
             reader.LocateIndexes();
 
             // if index data available for all BAM files, we can use SetRegion
-            if ( reader.IsIndexLoaded() ) {
+            if ( reader.HasIndexes() ) {
 
                 vector<BamAlignment> alignments;
+                using namespace BamTools::Algorithms;
 
-                alignments = Algorithms::SortReaderRegion(reader, region, Algorithms::SortByName<>() );
+                alignments = GetSortedRegion(reader, region, Sort::ByName() );
                 printAlignments(alignments);
 
                 cerr << "################################" << endl;
 
-                alignments = Algorithms::SortReaderRegion(reader, region, Algorithms::SortByTag<int>("Aq"));
+                alignments = GetSortedRegion(reader, region, Sort::ByTag<int>("Aq"));
                 printAlignments(alignments);
 
 //                // attempt to set region on reader

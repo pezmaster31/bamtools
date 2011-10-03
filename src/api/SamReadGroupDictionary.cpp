@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 18 April 2011 (DB)
+// Last modified: 1 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamReadGroup entries.
 // ***************************************************************************
@@ -63,6 +63,13 @@ void SamReadGroupDictionary::Add(const SamReadGroup& readGroup) {
 */
 void SamReadGroupDictionary::Add(const std::string& readGroupId) {
     Add( SamReadGroup(readGroupId) );
+}
+
+void SamReadGroupDictionary::Add(const SamReadGroupDictionary& readGroups) {
+    SamReadGroupConstIterator rgIter = readGroups.ConstBegin();
+    SamReadGroupConstIterator rgEnd  = readGroups.ConstEnd();
+    for ( ; rgIter != rgEnd; ++rgIter )
+        Add(*rgIter);
 }
 
 /*! \fn void SamReadGroupDictionary::Add(const std::vector<SamReadGroup>& readGroups)

@@ -1,9 +1,8 @@
 // ***************************************************************************
 // BamMultiReader_p.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 13 March 2011 (DB)
+// Last modified: 3 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Functionality for simultaneously reading multiple BAM files
 // *************************************************************************
@@ -23,13 +22,12 @@
 
 #include <api/SamHeader.h>
 #include <api/BamMultiReader.h>
+#include <api/internal/BamMultiMerger_p.h>
 #include <string>
 #include <vector>
 
 namespace BamTools {
 namespace Internal {
-
-class IBamMultiMerger;
 
 class BamMultiReaderPrivate {
 
@@ -49,7 +47,6 @@ class BamMultiReaderPrivate {
         bool Jump(int refID, int position = 0);
         bool Open(const std::vector<std::string>& filenames);
         bool OpenFile(const std::string& filename);
-        void PrintFilenames(void) const;
         bool Rewind(void);
         bool SetRegion(const BamRegion& region);
 
@@ -57,7 +54,6 @@ class BamMultiReaderPrivate {
         bool GetNextAlignment(BamAlignment& al);
         bool GetNextAlignmentCore(BamAlignment& al);
         bool HasOpenReaders(void);
-        void SetSortOrder(const BamMultiReader::SortOrder& order);
 
         // access auxiliary data
         SamHeader GetHeader(void) const;
@@ -75,25 +71,17 @@ class BamMultiReaderPrivate {
 
     // 'internal' methods
     public:
-        IBamMultiMerger* CreateMergerForCurrentSortOrder(void) const;
-        const std::string ExtractReadGroup(const std::string& headerLine) const;
-        bool HasAlignmentData(void) const;
-        bool LoadNextAlignment(BamAlignment& al);
-        BamTools::BamReader* OpenReader(const std::string& filename);
+        IMultiMerger* CreateAlignmentCache(void) const;
+        bool PopNextCachedAlignment(BamAlignment& al, const bool needCharData);
         bool RewindReaders(void);
-        void SaveNextAlignment(BamTools::BamReader* reader, BamTools::BamAlignment* alignment);
-        const std::vector<std::string> SplitHeaderText(const std::string& headerText) const;
-        void UpdateAlignmentCache(void);
-        void ValidateReaders(void) const;
+        void SaveNextAlignment(BamReader* reader, BamAlignment* alignment);
+        bool UpdateAlignmentCache(void);
+        bool ValidateReaders(void) const;
 
     // data members
     public:
-        typedef std::pair<BamReader*, BamAlignment*> ReaderAlignment;
-        std::vector<ReaderAlignment> m_readers;
-
-        IBamMultiMerger* m_alignments;
-        bool m_isCoreMode;
-        BamMultiReader::SortOrder m_sortOrder;
+        std::vector<MergeItem> m_readers;
+        IMultiMerger* m_alignmentCache;
 };
 
 } // namespace Internal

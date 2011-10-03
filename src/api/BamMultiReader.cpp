@@ -3,13 +3,13 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 15 March 2011 (DB)
+// Last modified: 1 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Convenience class for reading multiple BAM files.
 //
 // This functionality allows applications to work on very large sets of files
 // without requiring intermediate merge, sort, and index steps for each file
-// subset.  It also improves the performance of our merge system as it
+// subset. It also improves the performance of our merge system as it
 // precludes the need to sort merged files.
 // ***************************************************************************
 
@@ -193,19 +193,6 @@ bool BamMultiReader::HasOpenReaders(void) const {
     return d->HasOpenReaders();
 }
 
-/*! \fn bool BamMultiReader::IsIndexLoaded(void) const
-    \brief Returns \c true if all BAM files have index data available.
-
-    \deprecated Instead use HasIndexes()
-    \cond
-    See explanation in BamReader.cpp for more details on the deprecation decision.
-    \endcond
-*/
-
-bool BamMultiReader::IsIndexLoaded(void) const {
-    return d->HasIndexes();
-}
-
 /*! \fn bool BamMultiReader::Jump(int refID, int position)
     \brief Performs a random-access jump within current BAM files.
 
@@ -305,16 +292,6 @@ bool BamMultiReader::OpenIndexes(const std::vector<std::string>& indexFilenames)
     return d->OpenIndexes(indexFilenames);
 }
 
-/*! \fn void BamMultiReader::PrintFilenames(void) const
-    \brief Convenience method for printing filenames to stdout.
-    \deprecated Doesn't really belong as an API function. Clients should
-                determine how the data is reported.
-    \sa Filenames(), BamReader::GetFilename()
-*/
-void BamMultiReader::PrintFilenames(void) const {
-    d->PrintFilenames();
-}
-
 /*! \fn bool BamMultiReader::Rewind(void)
     \brief Returns the internal file pointers to the beginning of alignment records.
 
@@ -379,18 +356,4 @@ bool BamMultiReader::SetRegion(const int& leftRefID,
 {
     BamRegion region(leftRefID, leftPosition, rightRefID, rightPosition);
     return d->SetRegion(region);
-}
-
-/*! \fn void BamMultiReader::SetSortOrder(const SortOrder& order)
-    \brief Sets the expected sorting order for reading across multiple BAM files.
-
-    Default is BamMultiReader::SortedByPosition.
-
-    The SortOrder determines how the reader determines which alignment is "next"
-    from among its open readers.
-
-    \param order expected sort order
-*/
-void BamMultiReader::SetSortOrder(const SortOrder& order) {
-    d->SetSortOrder(order);
 }

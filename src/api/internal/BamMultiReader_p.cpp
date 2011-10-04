@@ -480,33 +480,6 @@ bool BamMultiReaderPrivate::PopNextCachedAlignment(BamAlignment& al, const bool 
     return true;
 }
 
-bool BamMultiReaderPrivate::PopNextCachedAlignment(BamAlignment& al, const bool needCharData) {
-
-    // bail out if no more data to process
-    if ( !HasAlignmentData() )
-        return false;
-
-    // pop next reader/alignment pair
-    ReaderAlignment nextReaderAlignment = m_alignments->TakeFirst();
-    BamReader*    reader    = nextReaderAlignment.first;
-    BamAlignment* alignment = nextReaderAlignment.second;
-
-    // store cached alignment into destination parameter (by copy)
-    al = *alignment;
-
-    // set char data if requested
-    if ( needCharData ) {
-        al.BuildCharData();
-        al.Filename = reader->GetFilename();
-    }
-
-    // load next alignment from reader & store in cache
-    SaveNextAlignment(reader, alignment);
-
-    // return success
-    return true;
-}
-
 // returns BAM file pointers to beginning of alignment data & resets alignment cache
 bool BamMultiReaderPrivate::Rewind(void) {
 

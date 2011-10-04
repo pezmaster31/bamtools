@@ -2,7 +2,7 @@
 // BamConstants.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 19 April 2011 (DB)
+// Last modified: 4 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides basic constants for handling BAM files.
 // ***************************************************************************
@@ -10,6 +10,8 @@
 #ifndef BAM_CONSTANTS_H
 #define BAM_CONSTANTS_H
 
+#include <api/api_global.h>
+#include <cassert>
 #include <string>
 
 /*! \namespace BamTools::Constants
@@ -122,6 +124,137 @@ const int BGZF_MAX_BLOCK_SIZE      = 65536;
 const int BGZF_DEFAULT_BLOCK_SIZE  = 65536;
 
 } // namespace Constants
+
+// -------------------------
+// tag-type helper structs
+// -------------------------
+
+// fail on any types not specified below
+template<typename T>
+struct TagTypeHelper {
+    static bool CanConvertFrom(const char) { assert(false); return false; }
+    static bool CanConvertTo(const char) { assert(false); return false; }
+    static char TypeCode(void) { assert(false); return 0; }
+};
+
+template<>
+struct TagTypeHelper<uint8_t> {
+    static bool CanConvertFrom(const char c) {
+        return ( c == Constants::BAM_TAG_TYPE_ASCII ||
+                 c == Constants::BAM_TAG_TYPE_UINT8 );
+    }
+    static bool CanConvertTo(const char c) {
+        return ( c == Constants::BAM_TAG_TYPE_ASCII  ||
+                 c == Constants::BAM_TAG_TYPE_UINT8  ||
+                 c == Constants::BAM_TAG_TYPE_UINT16 ||
+                 c == Constants::BAM_TAG_TYPE_UINT32 );
+    }
+
+    static char TypeCode(void) { return Constants::BAM_TAG_TYPE_UINT8; }
+};
+
+template<>
+struct TagTypeHelper<int8_t> {
+    static bool CanConvertFrom(const char c) {
+        return ( c == Constants::BAM_TAG_TYPE_ASCII ||
+                 c == Constants::BAM_TAG_TYPE_INT8 );
+    }
+    static bool CanConvertTo(const char c) {
+        return ( c == Constants::BAM_TAG_TYPE_ASCII ||
+                 c == Constants::BAM_TAG_TYPE_INT8  ||
+                 c == Constants::BAM_TAG_TYPE_INT16 ||
+                 c == Constants::BAM_TAG_TYPE_INT32 );
+    }
+    static char TypeCode(void) { return Constants::BAM_TAG_TYPE_INT8; }
+};
+
+template<>
+struct TagTypeHelper<uint16_t> {
+    static bool CanCovnertFrom(const char c) {
+        return ( c == Constants::BAM_TAG_TYPE_ASCII ||
+                 c == Constants::BAM_TAG_TYPE_UINT8 ||
+                 c == Constants::BAM_TAG_TYPE_UINT16 );
+    }
+    static bool CanConvertTo(const char c) {
+        return ( c == Constants::BAM_TAG_TYPE_UINT16 ||
+                 c == Constants::BAM_TAG_TYPE_UINT32);
+    }
+    static char TypeCode(void) { return Constants::BAM_TAG_TYPE_UINT16; }
+};
+
+template<>
+struct TagTypeHelper<int16_t> {
+    static bool CanConvertFrom(const char c) {
+        return ( c == Constants::BAM_TAG_TYPE_ASCII ||
+                 c == Constants::BAM_TAG_TYPE_INT8 ||
+                 c == Constants::BAM_TAG_TYPE_INT16 );
+    }
+    static bool CanConvertTo(const char c) {
+        return ( c == Constants::BAM_TAG_TYPE_INT16 ||
+                 c == Constants::BAM_TAG_TYPE_INT32);
+    }
+    static char TypeCode(void) { return Constants::BAM_TAG_TYPE_INT16; }
+};
+
+template<>
+struct TagTypeHelper<uint32_t> {
+    static bool CanConvertFrom(const char c) {
+        return ( c == Constants::BAM_TAG_TYPE_ASCII  ||
+                 c == Constants::BAM_TAG_TYPE_UINT8  ||
+                 c == Constants::BAM_TAG_TYPE_UINT16 ||
+                 c == Constants::BAM_TAG_TYPE_UINT32 );
+    }
+    static bool CanConvertTo(const char c) {
+        return ( c == Constants::BAM_TAG_TYPE_UINT32 );
+    }
+    static char TypeCode(void) { return Constants::BAM_TAG_TYPE_UINT32; }
+};
+
+template<>
+struct TagTypeHelper<int32_t> {
+    static bool CanConvertFrom(const char c) {
+        return ( c == Constants::BAM_TAG_TYPE_ASCII  ||
+                 c == Constants::BAM_TAG_TYPE_INT8  ||
+                 c == Constants::BAM_TAG_TYPE_INT16 ||
+                 c == Constants::BAM_TAG_TYPE_INT32 );
+    }
+    static bool CanConvertTo(const char c) {
+        return ( c == Constants::BAM_TAG_TYPE_INT32 );
+    }
+    static char TypeCode(void) { return Constants::BAM_TAG_TYPE_INT32; }
+};
+
+template<>
+struct TagTypeHelper<float> {
+    static bool CanConvertFrom(const char c) {
+        return ( c == Constants::BAM_TAG_TYPE_ASCII  ||
+                 c == Constants::BAM_TAG_TYPE_UINT8  ||
+                 c == Constants::BAM_TAG_TYPE_INT8   ||
+                 c == Constants::BAM_TAG_TYPE_UINT16 ||
+                 c == Constants::BAM_TAG_TYPE_INT16  ||
+                 c == Constants::BAM_TAG_TYPE_UINT32 ||
+                 c == Constants::BAM_TAG_TYPE_INT32  ||
+                 c == Constants::BAM_TAG_TYPE_FLOAT);
+    }
+    static bool CanConvertTo(const char c) {
+        return ( c == Constants::BAM_TAG_TYPE_FLOAT );
+    }
+    static char TypeCode(void) { return Constants::BAM_TAG_TYPE_FLOAT; }
+};
+
+template<>
+struct TagTypeHelper<std::string> {
+    static bool CanConvertFrom(const char c) {
+        return ( c == Constants::BAM_TAG_TYPE_HEX ||
+                 c == Constants::BAM_TAG_TYPE_STRING );
+    }
+    static bool CanConvertTo(const char c) {
+        return ( c == Constants::BAM_TAG_TYPE_HEX ||
+                 c == Constants::BAM_TAG_TYPE_STRING );
+    }
+    static char TypeCode(void) { return Constants::BAM_TAG_TYPE_STRING; }
+};
+
 } // namespace BamTools
 
 #endif // BAM_CONSTANTS_H

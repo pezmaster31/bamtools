@@ -2,19 +2,21 @@
 // BamRandomAccessController_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 5 April 2011(DB)
+// Last modified: 6 October 2011(DB)
 // ---------------------------------------------------------------------------
 // Manages random access operations in a BAM file
 // **************************************************************************
 
 #include <api/BamIndex.h>
+#include <api/internal/BamException_p.h>
 #include <api/internal/BamRandomAccessController_p.h>
 #include <api/internal/BamReader_p.h>
 #include <api/internal/BamIndexFactory_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
 
-#include <iostream>
+#include <cassert>
+#include <sstream>
 using namespace std;
 
 BamRandomAccessController::BamRandomAccessController(void)
@@ -133,8 +135,10 @@ void BamRandomAccessController::Close(void) {
 }
 
 void BamRandomAccessController::ClearIndex(void) {
-    delete m_index;
-    m_index = 0;
+    if ( m_index ) {
+        delete m_index;
+        m_index = 0;
+    }
 }
 
 void BamRandomAccessController::ClearRegion(void) {
@@ -143,23 +147,30 @@ void BamRandomAccessController::ClearRegion(void) {
 }
 
 bool BamRandomAccessController::CreateIndex(BamReaderPrivate* reader,
-                                            const BamIndex::IndexType& type) {
-
+                                            const BamIndex::IndexType& type)
+{
     // skip if reader is invalid
-    if ( reader == 0 )
+    assert(reader);
+    if ( !reader->IsOpen() ) {
+        SetErrorString("BamRandomAccessController::CreateIndex",
+                       "cannot create index for unopened reader");
         return false;
+    }
 
     // create new index of requested type
     BamIndex* newIndex = BamIndexFactory::CreateIndexOfType(type, reader);
     if ( newIndex == 0 ) {
-        cerr << "BamRandomAccessController ERROR: could not create index of type " << type << endl;
+        stringstream s("");
+        s << "could not create index of type: " << type;
+        SetErrorString("BamRandomAccessController::CreateIndex", s.str());
         return false;
     }
 
     // attempt to build index from current BamReader file
     if ( !newIndex->Create() ) {
-        cerr << "BamRandomAccessController ERROR: could not create index for BAM file: "
-             << reader->Filename() << endl;
+        const string indexError = newIndex->GetErrorString();
+        const string message = "could not create index: \n\t" + indexError;
+        SetErrorString("BamRandomAccessController::CreateIndex", message);
         return false;
     }
 
@@ -169,6 +180,10 @@ bool BamRandomAccessController::CreateIndex(BamReaderPrivate* reader,
     // set new index's cache mode & return success
     newIndex->SetCacheMode(m_indexCacheMode);
     return true;
+}
+
+string BamRandomAccessController::GetErrorString(void) const {
+    return m_errorString;
 }
 
 bool BamRandomAccessController::HasIndex(void) const {
@@ -187,13 +202,13 @@ bool BamRandomAccessController::LocateIndex(BamReaderPrivate* reader,
                                             const BamIndex::IndexType& preferredType)
 {
     // look up index filename, deferring to preferredType if possible
+    assert(reader);
     const string& indexFilename = BamIndexFactory::FindIndexFilename(reader->Filename(), preferredType);
 
     // if no index file found (of any type)
     if ( indexFilename.empty() ) {
-        cerr << "BamRandomAccessController WARNING: "
-             << "could not find index file for BAM: "
-             << reader->Filename() << endl;
+        const string message = string("could not find index file for:") + reader->Filename();
+        SetErrorString("BamRandomAccessController::LocateIndex", message);
         return false;
     }
 
@@ -206,7 +221,8 @@ bool BamRandomAccessController::OpenIndex(const string& indexFilename, BamReader
     // attempt create new index of type based on filename
     BamIndex* index = BamIndexFactory::CreateIndexFromFilename(indexFilename, reader);
     if ( index == 0 ) {
-        cerr << "BamRandomAccessController ERROR: could not create index for file: " << indexFilename << endl;
+        const string message = string("could not open index file: ") + indexFilename;
+        SetErrorString("BamRandomAccessController::OpenIndex", message);
         return false;
     }
 
@@ -215,7 +231,10 @@ bool BamRandomAccessController::OpenIndex(const string& indexFilename, BamReader
 
     // attempt to load data from index file
     if ( !index->Load(indexFilename) ) {
-        cerr << "BamRandomAccessController ERROR: could not load index data from file: " << indexFilename << endl;
+        const string indexError = index->GetErrorString();
+        const string message = string("could not load index data from file: ") + indexFilename +
+                               "\n\t" + indexError;
+        SetErrorString("BamRandomAccessController::OpenIndex", message);
         return false;
     }
 
@@ -226,6 +245,10 @@ bool BamRandomAccessController::OpenIndex(const string& indexFilename, BamReader
 
 bool BamRandomAccessController::RegionHasAlignments(void) const {
     return m_hasAlignmentsInRegion;
+}
+
+void BamRandomAccessController::SetErrorString(const string& where, const string& what) {
+    m_errorString = where + ": " + what;
 }
 
 void BamRandomAccessController::SetIndex(BamIndex* index) {
@@ -240,16 +263,16 @@ void BamRandomAccessController::SetIndexCacheMode(const BamIndex::IndexCacheMode
         m_index->SetCacheMode(mode);
 }
 
-bool BamRandomAccessController::SetRegion(BamReaderPrivate* reader,
-                                          const BamRegion& region,
-                                          const int& referenceCount)
-{
+bool BamRandomAccessController::SetRegion(const BamRegion& region, const int& referenceCount) {
+
     // store region
     m_region = region;
 
     // cannot jump when no index is available
-    if ( !HasIndex() )
+    if ( !HasIndex() ) {
+        SetErrorString("BamRandomAccessController", "cannot jump if no index data available");
         return false;
+    }
 
     // adjust region as necessary to reflect where data actually begins
     AdjustRegion(referenceCount);
@@ -257,7 +280,7 @@ bool BamRandomAccessController::SetRegion(BamReaderPrivate* reader,
     // if no data present, return true
     //   * Not an error, but future attempts to access alignments in this region will not return data
     //     Returning true is useful in a BamMultiReader setting where some BAM files may
-    //     lack alignments in regions where other BAMs do have data.
+    //     lack alignments in regions where other files still have data available.
     if ( !m_hasAlignmentsInRegion )
         return true;
 
@@ -267,6 +290,13 @@ bool BamRandomAccessController::SetRegion(BamReaderPrivate* reader,
     //    This covers 'corner case' where a region is requested that lies beyond the last
     //    alignment on a reference. If this occurs, any subsequent calls to GetNextAlignment[Core]
     //    will not return data. BamMultiReader will still be able to successfully pull alignments
-    //    from a region from multiple files even if one or more have no data.
-    return m_index->Jump(m_region, &m_hasAlignmentsInRegion);
+    //    from a region from other files even if this one has no data.
+    if ( !m_index->Jump(m_region, &m_hasAlignmentsInRegion) ) {
+        const string indexError = m_index->GetErrorString();
+        const string message = string("could not set region\n\t") + indexError;
+        SetErrorString("BamRandomAccessController::OpenIndex", message);
+        return false;
+    }
+    else
+        return true;
 }

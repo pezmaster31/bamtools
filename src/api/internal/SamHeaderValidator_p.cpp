@@ -2,7 +2,7 @@
 // SamHeaderValidator.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 18 April 2011 (DB)
+// Last modified: 6 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for validating SamHeader data
 // ***************************************************************************
@@ -15,14 +15,15 @@ using namespace BamTools;
 using namespace BamTools::Internal;
 
 #include <cctype>
-#include <iostream>
 #include <set>
 #include <sstream>
 using namespace std;
 
-namespace BamTools {
-namespace Internal {
+// ------------------------
+// static utility methods
+// -------------------------
 
+static
 bool caseInsensitiveCompare(const string& lhs, const string& rhs) {
 
     // can omit checking chars if lengths not equal
@@ -40,9 +41,6 @@ bool caseInsensitiveCompare(const string& lhs, const string& rhs) {
     // otherwise OK
     return true;
 }
-
-} // namespace Internal
-} // namespace BamTools
 
 // ------------------------------------------------------------------------
 // Allow validation rules to vary, as needed, between SAM header versions
@@ -76,25 +74,62 @@ SamHeaderValidator::SamHeaderValidator(const SamHeader& header)
 
 SamHeaderValidator::~SamHeaderValidator(void) { }
 
-bool SamHeaderValidator::Validate(bool verbose) {
+void SamHeaderValidator::AddError(const string& message) {
+    m_errorMessages.push_back(ERROR_PREFIX + message + NEWLINE);
+}
 
-    // validate header components
+void SamHeaderValidator::AddWarning(const string& message) {
+    m_warningMessages.push_back(WARN_PREFIX + message + NEWLINE);
+}
+
+void SamHeaderValidator::PrintErrorMessages(ostream& stream) {
+
+    // skip if no error messages
+    if ( m_errorMessages.empty() )
+        return;
+
+    // print error header line
+    stream << "* SAM header has " << m_errorMessages.size() << " errors:" << endl;
+
+    // print each error message
+    vector<string>::const_iterator errorIter = m_errorMessages.begin();
+    vector<string>::const_iterator errorEnd  = m_errorMessages.end();
+    for ( ; errorIter != errorEnd; ++errorIter )
+        stream << (*errorIter);
+}
+
+void SamHeaderValidator::PrintMessages(ostream& stream) {
+    PrintErrorMessages(stream);
+    PrintWarningMessages(stream);
+}
+
+void SamHeaderValidator::PrintWarningMessages(ostream& stream) {
+
+    // skip if no warning messages
+    if ( m_warningMessages.empty() )
+        return;
+
+    // print warning header line
+    stream << "* SAM header has " << m_warningMessages.size() << " warnings:" << endl;
+
+    // print each warning message
+    vector<string>::const_iterator warnIter = m_warningMessages.begin();
+    vector<string>::const_iterator warnEnd  = m_warningMessages.end();
+    for ( ; warnIter != warnEnd; ++warnIter )
+        stream << (*warnIter);
+}
+
+// entry point for validation
+bool SamHeaderValidator::Validate(void) {
     bool isValid = true;
     isValid &= ValidateMetadata();
     isValid &= ValidateSequenceDictionary();
     isValid &= ValidateReadGroupDictionary();
     isValid &= ValidateProgramChain();
-
-    // report errors if desired
-    if ( verbose ) {
-        PrintErrorMessages();
-        PrintWarningMessages();
-    }
-
-    // return validation status
     return isValid;
 }
 
+// check all SAM header 'metadata'
 bool SamHeaderValidator::ValidateMetadata(void) {
     bool isValid = true;
     isValid &= ValidateVersion();
@@ -103,6 +138,7 @@ bool SamHeaderValidator::ValidateMetadata(void) {
     return isValid;
 }
 
+// check SAM header version tag
 bool SamHeaderValidator::ValidateVersion(void) {
 
     const string& version = m_header.Version;
@@ -147,6 +183,7 @@ bool SamHeaderValidator::ContainsOnlyDigits(const string& s) {
     return ( nonDigitPosition == string::npos ) ;
 }
 
+// validate SAM header sort order tag
 bool SamHeaderValidator::ValidateSortOrder(void) {
 
     const string& sortOrder = m_header.SortOrder;
@@ -171,6 +208,7 @@ bool SamHeaderValidator::ValidateSortOrder(void) {
     return false;
 }
 
+// validate SAM header group order tag
 bool SamHeaderValidator::ValidateGroupOrder(void) {
 
     const string& groupOrder = m_header.GroupOrder;
@@ -193,6 +231,7 @@ bool SamHeaderValidator::ValidateGroupOrder(void) {
     return false;
 }
 
+// validate SAM header sequence dictionary
 bool SamHeaderValidator::ValidateSequenceDictionary(void) {
 
     bool isValid = true;
@@ -213,6 +252,7 @@ bool SamHeaderValidator::ValidateSequenceDictionary(void) {
     return isValid;
 }
 
+// make sure all SQ names are unique
 bool SamHeaderValidator::ContainsUniqueSequenceNames(void) {
 
     bool isValid = true;
@@ -244,6 +284,7 @@ bool SamHeaderValidator::ContainsUniqueSequenceNames(void) {
     return isValid;
 }
 
+// validate SAM header sequence entry
 bool SamHeaderValidator::ValidateSequence(const SamSequence& seq) {
     bool isValid = true;
     isValid &= CheckNameFormat(seq.Name);
@@ -251,6 +292,7 @@ bool SamHeaderValidator::ValidateSequence(const SamSequence& seq) {
     return isValid;
 }
 
+// check sequence name is valid format
 bool SamHeaderValidator::CheckNameFormat(const string& name) {
 
     // invalid if name is empty
@@ -269,6 +311,7 @@ bool SamHeaderValidator::CheckNameFormat(const string& name) {
     return true;
 }
 
+// check that sequence length is within accepted range
 bool SamHeaderValidator::CheckLengthInRange(const string& length) {
 
     // invalid if empty
@@ -292,6 +335,7 @@ bool SamHeaderValidator::CheckLengthInRange(const string& length) {
     return true;
 }
 
+// validate SAM header read group dictionary
 bool SamHeaderValidator::ValidateReadGroupDictionary(void) {
 
     bool isValid = true;
@@ -312,6 +356,7 @@ bool SamHeaderValidator::ValidateReadGroupDictionary(void) {
     return isValid;
 }
 
+// make sure RG IDs and platform units are unique
 bool SamHeaderValidator::ContainsUniqueIDsAndPlatformUnits(void) {
 
     bool isValid = true;
@@ -364,6 +409,7 @@ bool SamHeaderValidator::ContainsUniqueIDsAndPlatformUnits(void) {
     return isValid;
 }
 
+// validate SAM header read group entry
 bool SamHeaderValidator::ValidateReadGroup(const SamReadGroup& rg) {
     bool isValid = true;
     isValid &= CheckReadGroupID(rg.ID);
@@ -371,6 +417,7 @@ bool SamHeaderValidator::ValidateReadGroup(const SamReadGroup& rg) {
     return isValid;
 }
 
+// make sure RG ID exists
 bool SamHeaderValidator::CheckReadGroupID(const string& id) {
 
     // invalid if empty
@@ -383,6 +430,7 @@ bool SamHeaderValidator::CheckReadGroupID(const string& id) {
     return true;
 }
 
+// make sure RG sequencing tech is one of the accepted keywords
 bool SamHeaderValidator::CheckSequencingTechnology(const string& technology) {
 
     // if no technology provided, no problem, just return OK
@@ -407,6 +455,7 @@ bool SamHeaderValidator::CheckSequencingTechnology(const string& technology) {
     return false;
 }
 
+// validate the SAM header "program chain"
 bool SamHeaderValidator::ValidateProgramChain(void) {
     bool isValid = true;
     isValid &= ContainsUniqueProgramIds();
@@ -414,6 +463,7 @@ bool SamHeaderValidator::ValidateProgramChain(void) {
     return isValid;
 }
 
+// make sure all PG IDs are unique
 bool SamHeaderValidator::ContainsUniqueProgramIds(void) {
 
     bool isValid = true;
@@ -445,6 +495,7 @@ bool SamHeaderValidator::ContainsUniqueProgramIds(void) {
     return isValid;
 }
 
+// make sure that any PP tags present point to existing @PG IDs
 bool SamHeaderValidator::ValidatePreviousProgramIds(void) {
 
     bool isValid = true;
@@ -470,41 +521,4 @@ bool SamHeaderValidator::ValidatePreviousProgramIds(void) {
 
     // return validation state
     return isValid;
-}
-void SamHeaderValidator::AddError(const string& message) {
-    m_errorMessages.push_back(ERROR_PREFIX + message + NEWLINE);
-}
-
-void SamHeaderValidator::AddWarning(const string& message) {
-    m_warningMessages.push_back(WARN_PREFIX + message + NEWLINE);
-}
-
-void SamHeaderValidator::PrintErrorMessages(void) {
-
-    // skip if no error messages
-    if ( m_errorMessages.empty() ) return;
-
-    // print error header line
-    cerr << "* SAM header has " << m_errorMessages.size() << " errors:" << endl;
-
-    // print each error message
-    vector<string>::const_iterator errorIter = m_errorMessages.begin();
-    vector<string>::const_iterator errorEnd  = m_errorMessages.end();
-    for ( ; errorIter != errorEnd; ++errorIter )
-        cerr << (*errorIter);
-}
-
-void SamHeaderValidator::PrintWarningMessages(void) {
-
-    // skip if no warning messages
-    if ( m_warningMessages.empty() ) return;
-
-    // print warning header line
-    cerr << "* SAM header has " << m_warningMessages.size() << " warnings:" << endl;
-
-    // print each warning message
-    vector<string>::const_iterator warnIter = m_warningMessages.begin();
-    vector<string>::const_iterator warnEnd  = m_warningMessages.end();
-    for ( ; warnIter != warnEnd; ++warnIter )
-        cerr << (*warnIter);
 }

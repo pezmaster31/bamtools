@@ -2,7 +2,7 @@
 // BamReader.cpp (c) 2009 Derek Barnett, Michael Str�mberg
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 4 March 2011 (DB)
+// Last modified: 7 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides read access to BAM files.
 // ***************************************************************************
@@ -38,15 +38,16 @@ BamReader::~BamReader(void) {
     d = 0;
 }
 
-/*! \fn void BamReader::Close(void)
+/*! \fn bool BamReader::Close(void)
     \brief Closes the current BAM file.
 
     Also clears out all header and reference data.
 
+    \return \c true if file closed OK
     \sa IsOpen(), Open()
 */
-void BamReader::Close(void) {
-    d->Close();
+bool BamReader::Close(void) {
+    return d->Close();
 }
 
 /*! \fn bool BamReader::CreateIndex(const BamIndex::IndexType& type)
@@ -58,6 +59,10 @@ void BamReader::Close(void) {
 */
 bool BamReader::CreateIndex(const BamIndex::IndexType& type) {
     return d->CreateIndex(type);
+}
+
+string BamReader::GetErrorString(void) const {
+    return d->GetErrorString();
 }
 
 /*! \fn const std::string BamReader::GetFilename(void) const

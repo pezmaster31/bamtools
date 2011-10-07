@@ -2,7 +2,7 @@
 // BamMultiReader.h (c) 2010 Erik Garrison, Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 1 October 2011 (DB)
+// Last modified: 7 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Convenience class for reading multiple BAM files.
 // ***************************************************************************
@@ -38,9 +38,9 @@ class API_EXPORT BamMultiReader {
         // ----------------------
 
         // closes all open BAM files
-        void Close(void);
+        bool Close(void);
         // close only the requested BAM file
-        void CloseFile(const std::string& filename);
+        bool CloseFile(const std::string& filename);
         // returns list of filenames for all open BAM files
         const std::vector<std::string> Filenames(void) const;
         // returns true if multireader has any open BAM files
@@ -99,6 +99,13 @@ class API_EXPORT BamMultiReader {
         bool OpenIndexes(const std::vector<std::string>& indexFilenames);
         // changes the caching behavior of the index data
         void SetIndexCacheMode(const BamIndex::IndexCacheMode& mode);
+
+        // ----------------------
+        // error handling
+        // ----------------------
+
+        // returns a human-readable description of the last error that occurred
+        std::string GetErrorString(void) const;
 
     // private implementation
     private:

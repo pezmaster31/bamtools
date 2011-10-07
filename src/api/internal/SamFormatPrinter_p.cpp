@@ -2,7 +2,7 @@
 // SamFormatPrinter.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 19 April 2011 (DB)
+// Last modified: 6 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for printing formatted SAM header to string
 // ***************************************************************************
@@ -18,15 +18,24 @@ using namespace BamTools::Internal;
 #include <vector>
 using namespace std;
 
+// ------------------------
+// static utility methods
+// ------------------------
+
+static inline
+const string FormatTag(const string& tag, const string& value) {
+    return string(Constants::SAM_TAB + tag + Constants::SAM_COLON + value);
+}
+
+// ---------------------------------
+// SamFormatPrinter implementation
+// ---------------------------------
+
 SamFormatPrinter::SamFormatPrinter(const SamHeader& header)
     : m_header(header)
 { }
 
 SamFormatPrinter::~SamFormatPrinter(void) { }
-
-const string SamFormatPrinter::FormatTag(const string &tag, const string &value) const {
-    return string(Constants::SAM_TAB + tag + Constants::SAM_COLON + value);
-}
 
 const string SamFormatPrinter::ToString(void) const {
 

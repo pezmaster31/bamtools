@@ -25,6 +25,7 @@ set( BamToolsAPISources
         SamReadGroupDictionary.cpp
         SamSequence.cpp
         SamSequenceDictionary.cpp
+        internal/BamException_p.cpp
         internal/BamHeader_p.cpp
         internal/BamIndexFactory_p.cpp
         internal/BamMultiReader_p.cpp

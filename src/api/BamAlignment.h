@@ -2,7 +2,7 @@
 // BamAlignment.h (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 4 October 2011 (DB)
+// Last modified: 7 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -13,11 +13,8 @@
 #include <api/api_global.h>
 #include <api/BamAux.h>
 #include <api/BamConstants.h>
-#include <cctype>
-#include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -75,24 +72,16 @@ struct API_EXPORT BamAlignment {
     public:
 
         // add a new tag
-        template<typename T> bool AddTag(const std::string& tag,
-                                         const std::string& type,
-                                         const T& value);
-        template<typename T> bool AddTag(const std::string& tag,
-                                         const std::vector<T>& values);
+        template<typename T> bool AddTag(const std::string& tag, const std::string& type, const T& value);
+        template<typename T> bool AddTag(const std::string& tag, const std::vector<T>& values);
 
         // edit (or append) tag
-        template<typename T> bool EditTag(const std::string& tag,
-                                          const std::string& type,
-                                          const T& value);
-        template<typename T> bool EditTag(const std::string& tag,
-                                          const std::vector<T>& values);
+        template<typename T> bool EditTag(const std::string& tag, const std::string& type, const T& value);
+        template<typename T> bool EditTag(const std::string& tag, const std::vector<T>& values);
 
         // retrieves tag data
-        template<typename T> bool GetTag(const std::string& tag,
-                                         T& destination) const;
-        template<typename T> bool GetTag(const std::string& tag,
-                                         std::vector<T>& destination) const;
+        template<typename T> bool GetTag(const std::string& tag, T& destination) const;
+        template<typename T> bool GetTag(const std::string& tag, std::vector<T>& destination) const;
 
         // retrieves the BAM type-code for requested tag
         // (returns whether or not tag exists, and type-code is valid)
@@ -101,12 +90,12 @@ struct API_EXPORT BamAlignment {
         // legacy methods (consider deprecated, but still available)
         bool GetEditDistance(uint32_t& editDistance) const;         // retrieves value of "NM" tag
         bool GetReadGroup(std::string& readGroup) const;            // retrieves value of "RG" tag
-        
+
         // returns true if alignment has a record for this tag name
         bool HasTag(const std::string& tag) const;
 
         // removes a tag
-        bool RemoveTag(const std::string& tag);
+        void RemoveTag(const std::string& tag);
 
     // additional methods
     public:
@@ -115,6 +104,9 @@ struct API_EXPORT BamAlignment {
 
         // calculates alignment end position
         int GetEndPosition(bool usePadded = false, bool zeroBased = true) const;  
+
+        // returns a description of the last error that occurred
+        std::string GetErrorString(void) const;
 
     // public data fields
     public:
@@ -138,15 +130,17 @@ struct API_EXPORT BamAlignment {
     //! \cond
     // internal utility methods
     private:
-        static bool FindTag(const std::string& tag,
-                            char*& pTagData,
-                            const unsigned int& tagDataLength,
-                            unsigned int& numBytesParsed);
-        static bool IsValidSize(const std::string& tag,
-                                const std::string& type);
-        static bool SkipToNextTag(const char storageType,
+        bool FindTag(const std::string& tag,
+                     char*& pTagData,
+                     const unsigned int& tagDataLength,
+                     unsigned int& numBytesParsed) const;
+        bool IsValidSize(const std::string& tag,
+                         const std::string& type) const;
+        void SetErrorString(const std::string& where,
+                            const std::string& what) const;
+        bool SkipToNextTag(const char storageType,
                            char*& pTagData,
-                           unsigned int& numBytesParsed);
+                           unsigned int& numBytesParsed) const;
 
     // internal data
     private:
@@ -173,6 +167,8 @@ struct API_EXPORT BamAlignment {
         BamAlignmentSupportData SupportData;
         friend class Internal::BamReaderPrivate;
         friend class Internal::BamWriterPrivate;
+
+        mutable std::string ErrorString; // mutable to allow updates even in logically const methods
     //! \endcond
 };
 
@@ -188,10 +184,17 @@ inline bool BamAlignment::AddTag(const std::string& tag,
     if ( SupportData.HasCoreOnly )
         BuildCharData();
 
-    // validate tag/type size & that storage type code is OK for T
-    if ( !IsValidSize(tag, type) ) return false;
-    if ( !TagTypeHelper<T>::CanConvertTo(type.at(0)) )
+    // check tag/type size
+    if ( !IsValidSize(tag, type) ) {
+        // TODO: set error string?
         return false;
+    }
+
+    // check that storage type code is OK for T
+    if ( !TagTypeHelper<T>::CanConvertTo(type.at(0)) ) {
+        // TODO: set error string?
+        return false;
+    }
 
     // localize the tag data
     char* pTagData = (char*)TagData.data();
@@ -200,8 +203,10 @@ inline bool BamAlignment::AddTag(const std::string& tag,
 
     // if tag already exists, return false
     // use EditTag explicitly instead
-    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
+        // TODO: set error string?
         return false;
+    }
 
     // otherwise, convert value to string
     union { T value; char valueBuffer[sizeof(T)]; } un;
@@ -209,20 +214,17 @@ inline bool BamAlignment::AddTag(const std::string& tag,
 
     // copy original tag data to temp buffer
     const std::string newTag = tag + type;
-    const int newTagDataLength = tagDataLength + newTag.size() + sizeof(T); // leave room for new T
-    char* originalTagData = new char[newTagDataLength];
-    memcpy(originalTagData, TagData.c_str(), tagDataLength + 1);    // '+1' for TagData null-term
+    const size_t newTagDataLength = tagDataLength + newTag.size() + sizeof(T); // leave room for new T
+    RaiiBuffer originalTagData(newTagDataLength);
+    memcpy(originalTagData.Buffer, TagData.c_str(), tagDataLength + 1);    // '+1' for TagData null-term
 
     // append newTag
-    strcat(originalTagData + tagDataLength, newTag.data());
-    memcpy(originalTagData + tagDataLength + newTag.size(), un.valueBuffer, sizeof(T));
+    strcat(originalTagData.Buffer + tagDataLength, newTag.data());
+    memcpy(originalTagData.Buffer + tagDataLength + newTag.size(), un.valueBuffer, sizeof(T));
 
     // store temp buffer back in TagData
-    const char* newTagData = (const char*)originalTagData;
+    const char* newTagData = (const char*)originalTagData.Buffer;
     TagData.assign(newTagData, newTagDataLength);
-
-    // clean up & return success
-    delete[] originalTagData;
     return true;
 }
 
@@ -235,10 +237,17 @@ inline bool BamAlignment::AddTag<std::string>(const std::string& tag,
     if ( SupportData.HasCoreOnly )
         BuildCharData();
 
-    // validate tag/type size & that storage type code is OK for string
-    if ( !IsValidSize(tag, type) ) return false;
-    if ( !TagTypeHelper<std::string>::CanConvertTo(type.at(0)) )
+    // check tag/type size
+    if ( !IsValidSize(tag, type) ) {
+        // TODO: set error string?
         return false;
+    }
+
+    // check that storage type code is OK for string
+    if ( !TagTypeHelper<std::string>::CanConvertTo(type.at(0)) ) {
+        // TODO: set error string?
+        return false;
+    }
 
     // localize the tag data
     char* pTagData = (char*)TagData.data();
@@ -247,24 +256,23 @@ inline bool BamAlignment::AddTag<std::string>(const std::string& tag,
 
     // if tag already exists, return false
     // use EditTag explicitly instead
-    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
+        // TODO: set error string?
         return false;
+    }
 
     // otherwise, copy tag data to temp buffer
     const std::string newTag = tag + type + value;
-    const int newTagDataLength = tagDataLength + newTag.size() + 1; // leave room for null-term
-    char* originalTagData = new char[newTagDataLength];
-    memcpy(originalTagData, TagData.c_str(), tagDataLength + 1);    // '+1' for TagData null-term
+    const size_t newTagDataLength = tagDataLength + newTag.size() + 1; // leave room for null-term
+    RaiiBuffer originalTagData(newTagDataLength);
+    memcpy(originalTagData.Buffer, TagData.c_str(), tagDataLength + 1);    // '+1' for TagData null-term
 
-    // append newTag
-    strcat(originalTagData + tagDataLength, newTag.data());  // removes original null-term, appends newTag + null-term
+    // append newTag (removes original null-term, then appends newTag + null-term)
+    strcat(originalTagData.Buffer + tagDataLength, newTag.data());
 
     // store temp buffer back in TagData
-    const char* newTagData = (const char*)originalTagData;
+    const char* newTagData = (const char*)originalTagData.Buffer;
     TagData.assign(newTagData, newTagDataLength);
-
-    // clean up & return success
-    delete[] originalTagData;
     return true;
 }
 
@@ -287,8 +295,10 @@ inline bool BamAlignment::AddTag(const std::string& tag,
 
     // if tag already exists, return false
     // use EditTag explicitly instead
-    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
+        // TODO: set error string?
         return false;
+    }
 
     // build new tag's base information
     char newTagBase[Constants::BAM_TAG_ARRAYBASE_SIZE];
@@ -301,28 +311,25 @@ inline bool BamAlignment::AddTag(const std::string& tag,
     memcpy(newTagBase + 4, &numElements, sizeof(int32_t));
 
     // copy current TagData string to temp buffer, leaving room for new tag's contents
-    const int newTagDataLength = tagDataLength +
-                                 Constants::BAM_TAG_ARRAYBASE_SIZE +
-                                 numElements*sizeof(T);
-    char* originalTagData = new char[newTagDataLength];
-    memcpy(originalTagData, TagData.c_str(), tagDataLength+1); // '+1' for TagData's null-term
+    const size_t newTagDataLength = tagDataLength +
+                                    Constants::BAM_TAG_ARRAYBASE_SIZE +
+                                    numElements*sizeof(T);
+    RaiiBuffer originalTagData(newTagDataLength);
+    memcpy(originalTagData.Buffer, TagData.c_str(), tagDataLength+1); // '+1' for TagData's null-term
 
     // write newTagBase (removes old null term)
-    strcat(originalTagData + tagDataLength, (const char*)newTagBase);
+    strcat(originalTagData.Buffer + tagDataLength, (const char*)newTagBase);
 
     // add vector elements to tag
     int elementsBeginOffset = tagDataLength + Constants::BAM_TAG_ARRAYBASE_SIZE;
     for ( int i = 0 ; i < numElements; ++i ) {
         const T& value = values.at(i);
-        memcpy(originalTagData + elementsBeginOffset + i*sizeof(T), &value, sizeof(T));
+        memcpy(originalTagData.Buffer + elementsBeginOffset + i*sizeof(T), &value, sizeof(T));
     }
 
     // store temp buffer back in TagData
-    const char* newTagData = (const char*)originalTagData;
+    const char* newTagData = (const char*)originalTagData.Buffer;
     TagData.assign(newTagData, newTagDataLength);
-
-    // cleanup & return success
-    delete[] originalTagData;
     return true;
 }
 
@@ -359,9 +366,17 @@ template<typename T>
 inline bool BamAlignment::GetTag(const std::string& tag,
                                  T& destination) const
 {
-    // skip if core-only or no tags present
-    if ( SupportData.HasCoreOnly || TagData.empty() )
+    // skip if alignment is core-only
+    if ( SupportData.HasCoreOnly ) {
+        // TODO: set error string?
         return false;
+    }
+
+    // skip if no tags present
+    if ( TagData.empty() ) {
+        // TODO: set error string?
+        return false;
+    }
 
     // localize the tag data
     char* pTagData = (char*)TagData.data();
@@ -369,13 +384,19 @@ inline bool BamAlignment::GetTag(const std::string& tag,
     unsigned int numBytesParsed = 0;
 
     // return failure if tag not found
-    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
+        // TODO: set error string?
         return false;
+    }
 
-    // otherwise try to copy data into destination
+    // fetch data type
     const char type = *(pTagData - 1);
-    if ( !TagTypeHelper<T>::CanConvertFrom(type) )
+    if ( !TagTypeHelper<T>::CanConvertFrom(type) ) {
+        // TODO: set error string ?
         return false;
+    }
+
+    // determine data length
     int destinationLength = 0;
     switch ( type ) {
 
@@ -403,18 +424,18 @@ inline bool BamAlignment::GetTag(const std::string& tag,
         case (Constants::BAM_TAG_TYPE_STRING) :
         case (Constants::BAM_TAG_TYPE_HEX)    :
         case (Constants::BAM_TAG_TYPE_ARRAY)  :
-            std::cerr << "BamAlignment ERROR: cannot store tag of type " << type
-                 << " in integer destination" << std::endl;
+            SetErrorString("BamAlignment::GetTag",
+                           "cannot store variable length tag data into a numeric destination");
             return false;
 
         // unrecognized tag type
         default:
-            std::cerr << "BamAlignment ERROR: unknown tag type encountered: "
-                 << type << std::endl;
+            const std::string message = std::string("invalid tag type: ") + type;
+            SetErrorString("BamAlignment::GetTag", message);
             return false;
     }
 
-    // store in destination
+    // store data in destination
     destination = 0;
     memcpy(&destination, pTagData, destinationLength);
 
@@ -426,9 +447,17 @@ template<>
 inline bool BamAlignment::GetTag<std::string>(const std::string& tag,
                                               std::string& destination) const
 {
-    // skip if core-only or no tags present
-    if ( SupportData.HasCoreOnly || TagData.empty() )
+    // skip if alignment is core-only
+    if ( SupportData.HasCoreOnly ) {
+        // TODO: set error string?
         return false;
+    }
+
+    // skip if no tags present
+    if ( TagData.empty() ) {
+        // TODO: set error string?
+        return false;
+    }
 
     // localize the tag data
     char* pTagData = (char*)TagData.data();
@@ -436,8 +465,10 @@ inline bool BamAlignment::GetTag<std::string>(const std::string& tag,
     unsigned int numBytesParsed = 0;
 
     // return failure if tag not found
-    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
+        // TODO: set error string?
         return false;
+    }
 
     // otherwise copy data into destination
     const unsigned int dataLength = strlen(pTagData);
@@ -454,9 +485,17 @@ template<typename T>
 inline bool BamAlignment::GetTag(const std::string& tag,
                                  std::vector<T>& destination) const
 {
-    // skip if core-only or no tags present
-    if ( SupportData.HasCoreOnly || TagData.empty() )
+    // skip if alignment is core-only
+    if ( SupportData.HasCoreOnly ) {
+        // TODO: set error string?
         return false;
+    }
+
+    // skip if no tags present
+    if ( TagData.empty() ) {
+        // TODO: set error string?
+        return false;
+    }
 
     // localize the tag data
     char* pTagData = (char*)TagData.data();
@@ -464,22 +503,27 @@ inline bool BamAlignment::GetTag(const std::string& tag,
     unsigned int numBytesParsed = 0;
 
     // return false if tag not found
-    if ( !FindTag(tag, pTagData, tagDataLength, numBytesParsed) )
+    if ( !FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
+        // TODO: set error string?
         return false;
+    }
 
     // check that tag is array type
     const char tagType = *(pTagData - 1);
     if ( tagType != Constants::BAM_TAG_TYPE_ARRAY ) {
-        std::cerr << "BamAlignment ERROR: Cannot store non-array data from tag: "
-             << tag << " in array destination" << std::endl;
+        SetErrorString("BamAlignment::GetTag", "cannot store a non-array tag in array destination");
         return false;
     }
 
-    // calculate length of each element in tag's array
+    // fetch element type
     const char elementType = *pTagData;
-    if ( !TagTypeHelper<T>::CanConvertFrom(elementType) )
+    if ( !TagTypeHelper<T>::CanConvertFrom(elementType) ) {
+        // TODO: set error string ?
         return false;
+    }
     ++pTagData;
+
+    // calculate length of each element in tag's array
     int elementLength = 0;
     switch ( elementType ) {
         case (Constants::BAM_TAG_TYPE_ASCII) :
@@ -503,14 +547,14 @@ inline bool BamAlignment::GetTag(const std::string& tag,
         case (Constants::BAM_TAG_TYPE_STRING) :
         case (Constants::BAM_TAG_TYPE_HEX)    :
         case (Constants::BAM_TAG_TYPE_ARRAY)  :
-            std::cerr << "BamAlignment ERROR: array element type: " << elementType
-                 << " cannot be stored in integer value" << std::endl;
+            SetErrorString("BamAlignment::GetTag",
+                           "invalid array data, variable-length elements are not allowed");
             return false;
 
         // unknown tag type
         default:
-            std::cerr << "BamAlignment ERROR: unknown element type encountered: "
-                 << elementType << std::endl;
+            const std::string message = std::string("invalid array element type: ") + elementType;
+            SetErrorString("BamAlignment::GetTag", message);
             return false;
     }
 

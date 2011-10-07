@@ -2,7 +2,7 @@
 // BamWriter.h (c) 2009 Michael Str�mberg, Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 4 March 2011 (DB)
+// Last modified: 5 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -25,9 +25,11 @@ namespace Internal {
 
 class API_EXPORT BamWriter {
 
-    public: enum CompressionMode { Compressed = 0
-                                 , Uncompressed
-                                 };
+    // enums
+    public:
+        enum CompressionMode { Compressed = 0
+                             , Uncompressed
+                             };
 
     // ctor & dtor
     public:
@@ -38,6 +40,8 @@ class API_EXPORT BamWriter {
     public:
         //  closes the current BAM file
         void Close(void);
+        // returns a human-readable description of the last error that occurred
+        std::string GetErrorString(void) const;
         // returns true if BAM file is open for writing
         bool IsOpen(void) const;
         // opens a BAM file for writing
@@ -49,9 +53,9 @@ class API_EXPORT BamWriter {
                   const SamHeader& samHeader,
                   const RefVector& referenceSequences);
         // saves the alignment to the alignment archive
-        void SaveAlignment(const BamAlignment& alignment);
+        bool SaveAlignment(const BamAlignment& alignment);
         // sets the output compression mode
-        void SetCompressionMode(const CompressionMode& compressionMode);
+        void SetCompressionMode(const BamWriter::CompressionMode& compressionMode);
 
     // private implementation
     private:

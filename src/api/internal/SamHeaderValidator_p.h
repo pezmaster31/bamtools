@@ -2,7 +2,7 @@
 // SamHeaderValidator.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 13 January 2011 (DB)
+// Last modified: 6 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for validating SamHeader data
 // ***************************************************************************
@@ -20,6 +20,7 @@
 //
 // We mean it.
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -40,9 +41,12 @@ class SamHeaderValidator {
 
     // SamHeaderValidator interface
     public:
+
+        // prints error & warning messages
+        void PrintMessages(std::ostream& stream);
+
         // validates SamHeader data, returns true/false accordingly
-        // prints error & warning messages to stderr when @verbose is true
-        bool Validate(bool verbose = false);
+        bool Validate(void);
 
     // internal methods
     private:
@@ -76,8 +80,8 @@ class SamHeaderValidator {
         // error reporting
         void AddError(const std::string& message);
         void AddWarning(const std::string& message);
-        void PrintErrorMessages(void);
-        void PrintWarningMessages(void);
+        void PrintErrorMessages(std::ostream& stream);
+        void PrintWarningMessages(std::ostream& stream);
 
     // data members
     private:

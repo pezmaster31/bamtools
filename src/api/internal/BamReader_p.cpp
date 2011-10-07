@@ -2,13 +2,14 @@
 // BamReader_p.cpp (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 May 2011 (DB)
+// Last modified: 7 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
 
 #include <api/BamConstants.h>
 #include <api/BamReader.h>
+#include <api/internal/BamException_p.h>
 #include <api/internal/BamHeader_p.h>
 #include <api/internal/BamRandomAccessController_p.h>
 #include <api/internal/BamReader_p.h>
@@ -19,6 +20,7 @@ using namespace BamTools;
 using namespace BamTools::Internal;
 
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <iterator>
 #include <vector>
@@ -38,29 +40,61 @@ BamReaderPrivate::~BamReaderPrivate(void) {
 }
 
 // closes the BAM file
-void BamReaderPrivate::Close(void) {
+bool BamReaderPrivate::Close(void) {
 
-    // clear header & reference data
+    // clear BAM metadata
     m_references.clear();
     m_header.Clear();
 
-    // close internal
-    m_randomAccessController.Close();
-    m_stream.Close();
-
     // clear filename
     m_filename.clear();
+
+    // close random access controller
+    m_randomAccessController.Close();
+
+    // if stream is open, attempt close
+    if ( IsOpen() ) {
+        try {
+            m_stream.Close();
+        } catch ( BamException& e ) {
+            const string streamError = e.what();
+            const string message = string("encountered error closing BAM file: \n\t") + streamError;
+            SetErrorString("BamReader::Close", message);
+            return false;
+        }
+    }
+
+    // return success
+    return true;
 }
 
 // creates an index file of requested type on current BAM file
 bool BamReaderPrivate::CreateIndex(const BamIndex::IndexType& type) {
-    if ( !IsOpen() ) return false;
-    return m_randomAccessController.CreateIndex(this, type);
+
+    // skip if BAM file not open
+    if ( !IsOpen() ) {
+        SetErrorString("BamReader::CreateIndex", "cannot create index on unopened BAM file");
+        return false;
+    }
+
+    // attempt to create index
+    if ( m_randomAccessController.CreateIndex(this, type) )
+        return true;
+    else {
+        const string bracError = m_randomAccessController.GetErrorString();
+        const string message = string("could not create index: \n\t") + bracError;
+        SetErrorString("BamReader::CreateIndex", message);
+        return false;
+    }
 }
 
 // return path & filename of current BAM file
 const string BamReaderPrivate::Filename(void) const {
     return m_filename;
+}
+
+string BamReaderPrivate::GetErrorString(void) const {
+    return m_errorString;
 }
 
 // return header data as std::string
@@ -83,7 +117,14 @@ bool BamReaderPrivate::GetNextAlignment(BamAlignment& alignment) {
         alignment.Filename = m_filename;
 
         // return success/failure of parsing char data
-        return alignment.BuildCharData();
+        if ( alignment.BuildCharData() )
+            return true;
+        else {
+            const string alError = alignment.GetErrorString();
+            const string message = string("could not populate alignment data: \n\t") + alError;
+            SetErrorString("BamReader::GetNextAlignment", message);
+            return false;
+        }
     }
 
     // no valid alignment found
@@ -96,43 +137,52 @@ bool BamReaderPrivate::GetNextAlignment(BamAlignment& alignment) {
 // useful for operations requiring ONLY positional or other alignment-related information
 bool BamReaderPrivate::GetNextAlignmentCore(BamAlignment& alignment) {
 
-    // skip if region is set but has no alignments
-    if ( m_randomAccessController.HasRegion() &&
-         !m_randomAccessController.RegionHasAlignments() )
-    {
-        return false;
-    }
+    try {
 
-    // if can't read next alignment
-    if ( !LoadNextAlignment(alignment) )
-        return false;
-
-    // check alignment's region-overlap state
-    BamRandomAccessController::RegionState state = m_randomAccessController.AlignmentState(alignment);
-
-    // if alignment starts after region, no need to keep reading
-    if ( state == BamRandomAccessController::AfterRegion )
-        return false;
-
-    // read until overlap is found
-    while ( state != BamRandomAccessController::OverlapsRegion ) {
+        // skip if region is set but has no alignments
+        if ( m_randomAccessController.HasRegion() &&
+             !m_randomAccessController.RegionHasAlignments() )
+        {
+            return false;
+        }
 
         // if can't read next alignment
         if ( !LoadNextAlignment(alignment) )
             return false;
 
         // check alignment's region-overlap state
-        state = m_randomAccessController.AlignmentState(alignment);
+        BamRandomAccessController::RegionState state = m_randomAccessController.AlignmentState(alignment);
 
         // if alignment starts after region, no need to keep reading
         if ( state == BamRandomAccessController::AfterRegion )
             return false;
-    }
 
-    // if we get here, we found the next 'valid' alignment
-    // (e.g. overlaps current region if one was set, simply the next alignment if not)
-    alignment.SupportData.HasCoreOnly = true;
-    return true;
+        // read until overlap is found
+        while ( state != BamRandomAccessController::OverlapsRegion ) {
+
+            // if can't read next alignment
+            if ( !LoadNextAlignment(alignment) )
+                return false;
+
+            // check alignment's region-overlap state
+            state = m_randomAccessController.AlignmentState(alignment);
+
+            // if alignment starts after region, no need to keep reading
+            if ( state == BamRandomAccessController::AfterRegion )
+                return false;
+        }
+
+        // if we get here, we found the next 'valid' alignment
+        // (e.g. overlaps current region if one was set, simply the next alignment if not)
+        alignment.SupportData.HasCoreOnly = true;
+        return true;
+
+    } catch ( BamException& e ) {
+        const string streamError = e.what();
+        const string message = string("encountered error reading BAM alignment: \n\t") + streamError;
+        SetErrorString("BamReader::GetNextAlignmentCore", message);
+        return false;
+    }
 }
 
 int BamReaderPrivate::GetReferenceCount(void) const {
@@ -168,8 +218,8 @@ bool BamReaderPrivate::IsOpen(void) const {
 }
 
 // load BAM header data
-bool BamReaderPrivate::LoadHeaderData(void) {
-     return m_header.Load(&m_stream);
+void BamReaderPrivate::LoadHeaderData(void) {
+    m_header.Load(&m_stream);
 }
 
 // populates BamAlignment with alignment data under file pointer, returns success/fail
@@ -180,7 +230,8 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment) {
     m_stream.Read(buffer, sizeof(uint32_t));
     alignment.SupportData.BlockLength = BamTools::UnpackUnsignedInt(buffer);
     if ( m_isBigEndian ) BamTools::SwapEndian_32(alignment.SupportData.BlockLength);
-    if ( alignment.SupportData.BlockLength == 0 ) return false;
+    if ( alignment.SupportData.BlockLength == 0 )
+        return false;
 
     // read in core alignment data, make sure the right size of data was read
     char x[Constants::BAM_CORE_SIZE];
@@ -217,12 +268,12 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment) {
     // read in character data - make sure proper data size was read
     bool readCharDataOK = false;
     const unsigned int dataLength = alignment.SupportData.BlockLength - Constants::BAM_CORE_SIZE;
-    char* allCharData = (char*)calloc(sizeof(char), dataLength);
+    RaiiBuffer allCharData(dataLength);
 
-    if ( m_stream.Read(allCharData, dataLength) == (signed int)dataLength ) {
+    if ( m_stream.Read(allCharData.Buffer, dataLength) == dataLength ) {
 
         // store 'allCharData' in supportData structure
-        alignment.SupportData.AllCharData.assign((const char*)allCharData, dataLength);
+        alignment.SupportData.AllCharData.assign((const char*)allCharData.Buffer, dataLength);
 
         // set success flag
         readCharDataOK = true;
@@ -231,7 +282,7 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment) {
         // need to calculate this here so that  BamAlignment::GetEndPosition() performs correctly,
         // even when GetNextAlignmentCore() is called
         const unsigned int cigarDataOffset = alignment.SupportData.QueryNameLength;
-        uint32_t* cigarData = (uint32_t*)(allCharData + cigarDataOffset);
+        uint32_t* cigarData = (uint32_t*)(allCharData.Buffer + cigarDataOffset);
         CigarOp op;
         alignment.CigarData.clear();
         alignment.CigarData.reserve(alignment.SupportData.NumCigarOperations);
@@ -249,8 +300,7 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment) {
         }
     }
 
-    // clean up & return parsing success/failure
-    free(allCharData);
+    // return success/failure
     return readCharDataOK;
 }
 
@@ -271,22 +321,19 @@ bool BamReaderPrivate::LoadReferenceData(void) {
         m_stream.Read(buffer, sizeof(uint32_t));
         uint32_t refNameLength = BamTools::UnpackUnsignedInt(buffer);
         if ( m_isBigEndian ) BamTools::SwapEndian_32(refNameLength);
-        char* refName = (char*)calloc(refNameLength, 1);
+        RaiiBuffer refName(refNameLength);
 
         // get reference name and reference sequence length
-        m_stream.Read(refName, refNameLength);
+        m_stream.Read(refName.Buffer, refNameLength);
         m_stream.Read(buffer, sizeof(int32_t));
         int32_t refLength = BamTools::UnpackSignedInt(buffer);
         if ( m_isBigEndian ) BamTools::SwapEndian_32(refLength);
 
         // store data for reference
         RefData aReference;
-        aReference.RefName   = (string)((const char*)refName);
+        aReference.RefName   = (string)((const char*)refName.Buffer);
         aReference.RefLength = refLength;
         m_references.push_back(aReference);
-
-        // clean up calloc-ed temp variable
-        free(refName);
     }
 
     // return success
@@ -294,70 +341,106 @@ bool BamReaderPrivate::LoadReferenceData(void) {
 }
 
 bool BamReaderPrivate::LocateIndex(const BamIndex::IndexType& preferredType) {
-    return m_randomAccessController.LocateIndex(this, preferredType);
+
+    if ( m_randomAccessController.LocateIndex(this, preferredType) )
+        return true;
+    else {
+        const string bracError = m_randomAccessController.GetErrorString();
+        const string message = string("could not locate index: \n\t") + bracError;
+        SetErrorString("BamReader::LocateIndex", message);
+        return false;
+    }
 }
 
 // opens BAM file (and index)
 bool BamReaderPrivate::Open(const string& filename) {
 
-    // close current BAM file if open
-    if ( m_stream.IsOpen )
+    bool result;
+
+    try {
+
+        // make sure we're starting with fresh state
         Close();
 
-    // attempt to open BgzfStream for reading
-    if ( !m_stream.Open(filename, "rb") ) {
-        cerr << "BamReader ERROR: Could not open BGZF stream for " << filename << endl;
+        // open BgzfStream
+        m_stream.Open(filename, "rb");
+        assert(m_stream);
+
+        // load BAM metadata
+        LoadHeaderData();
+        LoadReferenceData();
+
+        // store filename & offset of first alignment
+        m_filename = filename;
+        m_alignmentsBeginOffset = m_stream.Tell();
+
+        // set flag
+        result = true;
+
+    } catch ( BamException& e ) {
+        const string error = e.what();
+        const string message = string("could not open file: ") + filename +
+                               "\n\t" + error;
+        SetErrorString("BamReader::Open", message);
         return false;
     }
 
-    // attempt to load header data
-    if ( !LoadHeaderData() ) {
-        cerr << "BamReader ERROR: Could not load header data for " << filename << endl;
-        Close();
-        return false;
-    }
-
-    // attempt to load reference data
-    if ( !LoadReferenceData() ) {
-        cerr << "BamReader ERROR: Could not load reference data for " << filename << endl;
-        Close();
-        return false;
-    }
-
-    // if all OK, store filename & offset of first alignment
-    m_filename = filename;
-    m_alignmentsBeginOffset = m_stream.Tell();
-
-    // return success
-    return true;
+    // return success/failure
+    return result;
 }
 
 bool BamReaderPrivate::OpenIndex(const std::string& indexFilename) {
-    return m_randomAccessController.OpenIndex(indexFilename, this);
+
+    if ( m_randomAccessController.OpenIndex(indexFilename, this) )
+        return true;
+    else {
+        const string bracError = m_randomAccessController.GetErrorString();
+        const string message = string("could not open index: \n\t") + bracError;
+        SetErrorString("BamReader::OpenIndex", message);
+        return false;
+    }
 }
 
 // returns BAM file pointer to beginning of alignment data
 bool BamReaderPrivate::Rewind(void) {
 
-    // attempt rewind to first alignment
-    if ( !m_stream.Seek(m_alignmentsBeginOffset) )
-        return false;
-
-    // verify that we can read first alignment
-    BamAlignment al;
-    if ( !LoadNextAlignment(al) )
-        return false;
-
     // reset region
     m_randomAccessController.ClearRegion();
 
-    // rewind back to beginning of first alignment
-    // return success/fail of seek
-    return m_stream.Seek(m_alignmentsBeginOffset);
+    // return status of seeking back to first alignment
+    if ( Seek(m_alignmentsBeginOffset) )
+        return true;
+    else {
+        const string currentError = m_errorString;
+        const string message = string("could not rewind: \n\t") + currentError;
+        SetErrorString("BamReader::Rewind", message);
+        return false;
+    }
 }
 
 bool BamReaderPrivate::Seek(const int64_t& position) {
-    return m_stream.Seek(position);
+
+    // skip if BAM file not open
+    if ( !IsOpen() ) {
+        SetErrorString("BamReader::Seek", "cannot seek on unopened BAM file");
+        return false;
+    }
+
+    try {
+        m_stream.Seek(position);
+        return true;
+    }
+    catch ( BamException& e ) {
+        const string streamError = e.what();
+        const string message = string("could not seek in BAM file: \n\t") + streamError;
+        SetErrorString("BamReader::Seek", message);
+        return false;
+    }
+}
+
+void BamReaderPrivate::SetErrorString(const string& where, const string& what) {
+    static const string SEPARATOR = ": ";
+    m_errorString = where + SEPARATOR + what;
 }
 
 void BamReaderPrivate::SetIndex(BamIndex* index) {
@@ -372,7 +455,15 @@ void BamReaderPrivate::SetIndexCacheMode(const BamIndex::IndexCacheMode& mode) {
 // sets current region & attempts to jump to it
 // returns success/failure
 bool BamReaderPrivate::SetRegion(const BamRegion& region) {
-    return m_randomAccessController.SetRegion(this, region, m_references.size());
+
+    if ( m_randomAccessController.SetRegion(region, m_references.size()) )
+        return true;
+    else {
+        const string bracError = m_randomAccessController.GetErrorString();
+        const string message = string("could not set region: \n\t") + bracError;
+        SetErrorString("BamReader::SetRegion", message);
+        return false;
+    }
 }
 
 int64_t BamReaderPrivate::Tell(void) const {

@@ -2,7 +2,7 @@
 // BamStandardIndex.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 24 June 2011 (DB)
+// Last modified: 6 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the standardized BAM index format (".bai")
 // ***************************************************************************
@@ -128,17 +128,18 @@ class BamStandardIndex : public BamIndex {
         // returns format's file extension
         static const std::string Extension(void);
 
-    // internal file ops
+    // internal methods
     private:
-        bool CheckMagicNumber(void);
+
+        // index file ops
+        void CheckMagicNumber(void);
         void CloseFile(void);
         bool IsFileOpen(void) const;
-        bool OpenFile(const std::string& filename, const char* mode);
-        bool Seek(const int64_t& position, const int& origin);
+        void OpenFile(const std::string& filename, const char* mode);
+        void Seek(const int64_t& position, const int& origin);
         int64_t Tell(void) const;
 
-    // internal BAI index building methods
-    private:
+        // BAI index building methods
         void ClearReferenceEntry(BaiReferenceEntry& refEntry);
         void SaveAlignmentChunkToBin(BaiBinMap& binMap,
                                      const uint32_t& currentBin,
@@ -149,65 +150,67 @@ class BamStandardIndex : public BamIndex {
                                    const int& alignmentStopPosition,
                                    const uint64_t& lastOffset);
 
-    // internal random-access methods
-    private:
-        bool AdjustRegion(const BamRegion& region, uint32_t& begin, uint32_t& end);
+        // random-access methods
+        void AdjustRegion(const BamRegion& region, uint32_t& begin, uint32_t& end);
         void CalculateCandidateBins(const uint32_t& begin,
                                     const uint32_t& end,
                                     std::set<uint16_t>& candidateBins);
-        bool CalculateCandidateOffsets(const BaiReferenceSummary& refSummary,
+        void CalculateCandidateOffsets(const BaiReferenceSummary& refSummary,
                                        const uint64_t& minOffset,
                                        std::set<uint16_t>& candidateBins,
                                        std::vector<int64_t>& offsets);
         uint64_t CalculateMinOffset(const BaiReferenceSummary& refSummary, const uint32_t& begin);
-        bool GetOffset(const BamRegion& region, int64_t& offset, bool* hasAlignmentsInRegion);
+        void GetOffset(const BamRegion& region, int64_t& offset, bool* hasAlignmentsInRegion);
         uint64_t LookupLinearOffset(const BaiReferenceSummary& refSummary, const int& index);
 
-    // internal BAI summary (create/load) methods
-    private:
+        // BAI summary (create/load) methods
         void ReserveForSummary(const int& numReferences);
         void SaveBinsSummary(const int& refId, const int& numBins);
         void SaveLinearOffsetsSummary(const int& refId, const int& numLinearOffsets);
-        bool SkipBins(const int& numBins);
-        bool SkipLinearOffsets(const int& numLinearOffsets);
-        bool SummarizeBins(BaiReferenceSummary& refSummary);
-        bool SummarizeIndexFile(void);
-        bool SummarizeLinearOffsets(BaiReferenceSummary& refSummary);
-        bool SummarizeReference(BaiReferenceSummary& refSummary);
+        void SkipBins(const int& numBins);
+        void SkipLinearOffsets(const int& numLinearOffsets);
+        void SummarizeBins(BaiReferenceSummary& refSummary);
+        void SummarizeIndexFile(void);
+        void SummarizeLinearOffsets(BaiReferenceSummary& refSummary);
+        void SummarizeReference(BaiReferenceSummary& refSummary);
 
-    // internal BAI full index input methods
-    private:
-        bool ReadBinID(uint32_t& binId);
-        bool ReadBinIntoBuffer(uint32_t& binId, int32_t& numAlignmentChunks);
-        bool ReadIntoBuffer(const unsigned int& bytesRequested);
-        bool ReadLinearOffset(uint64_t& linearOffset);
-        bool ReadNumAlignmentChunks(int& numAlignmentChunks);
-        bool ReadNumBins(int& numBins);
-        bool ReadNumLinearOffsets(int& numLinearOffsets);
-        bool ReadNumReferences(int& numReferences);
+        // BAI full index input methods
+        void ReadBinID(uint32_t& binId);
+        void ReadBinIntoBuffer(uint32_t& binId, int32_t& numAlignmentChunks);
+        void ReadIntoBuffer(const unsigned int& bytesRequested);
+        void ReadLinearOffset(uint64_t& linearOffset);
+        void ReadNumAlignmentChunks(int& numAlignmentChunks);
+        void ReadNumBins(int& numBins);
+        void ReadNumLinearOffsets(int& numLinearOffsets);
+        void ReadNumReferences(int& numReferences);
 
-    // internal BAI full index output methods
-    private:
+        // BAI full index output methods
         void MergeAlignmentChunks(BaiAlignmentChunkVector& chunks);
         void SortLinearOffsets(BaiLinearOffsetVector& linearOffsets);
-        bool WriteAlignmentChunk(const BaiAlignmentChunk& chunk);
-        bool WriteAlignmentChunks(BaiAlignmentChunkVector& chunks);
-        bool WriteBin(const uint32_t& binId, BaiAlignmentChunkVector& chunks);
-        bool WriteBins(const int& refId, BaiBinMap& bins);
-        bool WriteHeader(void);
-        bool WriteLinearOffsets(const int& refId, BaiLinearOffsetVector& linearOffsets);
-        bool WriteReferenceEntry(BaiReferenceEntry& refEntry);
+        void WriteAlignmentChunk(const BaiAlignmentChunk& chunk);
+        void WriteAlignmentChunks(BaiAlignmentChunkVector& chunks);
+        void WriteBin(const uint32_t& binId, BaiAlignmentChunkVector& chunks);
+        void WriteBins(const int& refId, BaiBinMap& bins);
+        void WriteHeader(void);
+        void WriteLinearOffsets(const int& refId, BaiLinearOffsetVector& linearOffsets);
+        void WriteReferenceEntry(BaiReferenceEntry& refEntry);
 
     // data members
     private:
-        FILE* m_indexStream;
-        bool  m_isBigEndian;
+        bool m_isBigEndian;
         BamIndex::IndexCacheMode m_cacheMode;
         BaiFileSummary m_indexFileSummary;
 
         // our input buffer
-        char* m_buffer;
         unsigned int m_bufferLength;
+
+        struct RaiiWrapper {
+            FILE* IndexStream;
+            char* Buffer;
+            RaiiWrapper(void);
+            ~RaiiWrapper(void);
+        };
+        RaiiWrapper Resources;
 
     // static methods
     private:

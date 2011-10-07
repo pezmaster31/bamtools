@@ -2,7 +2,7 @@
 // BamAux.h (c) 2009 Derek Barnett, Michael Str�mberg
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 4 March 2011 (DB)
+// Last modified: 7 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides data structures & utility methods that are used throughout the API.
 // ***************************************************************************
@@ -450,6 +450,19 @@ API_EXPORT inline unsigned short UnpackUnsignedShort(const char* buffer) {
 API_EXPORT inline unsigned short UnpackUnsignedShort(char* buffer) {
     return UnpackUnsignedShort( (const char*)buffer );
 }
+
+// ----------------------------------------------------------------
+// 'internal' helper structs
+
+struct RaiiBuffer {
+    RaiiBuffer(const unsigned int n)
+        : Buffer( new char[n]() )
+    { }
+    ~RaiiBuffer(void) {
+        delete[] Buffer;
+    }
+    char* Buffer;
+};
 
 } // namespace BamTools
 

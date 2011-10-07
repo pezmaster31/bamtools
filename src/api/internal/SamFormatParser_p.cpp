@@ -2,13 +2,14 @@
 // SamFormatParser.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 19 April 2011 (DB)
+// Last modified: 6 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for parsing SAM header text into SamHeader object
 // ***************************************************************************
 
 #include <api/SamConstants.h>
 #include <api/SamHeader.h>
+#include <api/internal/BamException_p.h>
 #include <api/internal/SamFormatParser_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
@@ -43,7 +44,7 @@ void SamFormatParser::Parse(const string& headerText) {
 void SamFormatParser::ParseSamLine(const string& line) {
 
     // skip if line is not long enough to contain true values
-    if (line.length() < 5 ) return;
+    if ( line.length() < 5 ) return;
 
     // determine token at beginning of line
     const string firstToken = line.substr(0,3);
@@ -53,8 +54,10 @@ void SamFormatParser::ParseSamLine(const string& line) {
     else if ( firstToken == Constants::SAM_RG_BEGIN_TOKEN) ParseRGLine(restOfLine);
     else if ( firstToken == Constants::SAM_PG_BEGIN_TOKEN) ParsePGLine(restOfLine);
     else if ( firstToken == Constants::SAM_CO_BEGIN_TOKEN) ParseCOLine(restOfLine);
-    else
-        cerr << "SamFormatParser ERROR: unknown token: " << firstToken << endl;
+    else {
+        const string message = string("unknown token: ") + firstToken;
+        throw BamException("SamFormatParser::ParseSamLine", message);
+    }
 }
 
 void SamFormatParser::ParseHDLine(const string& line) {
@@ -75,13 +78,15 @@ void SamFormatParser::ParseHDLine(const string& line) {
         if      ( tokenTag == Constants::SAM_HD_VERSION_TAG    ) m_header.Version    = tokenValue;
         else if ( tokenTag == Constants::SAM_HD_SORTORDER_TAG  ) m_header.SortOrder  = tokenValue;
         else if ( tokenTag == Constants::SAM_HD_GROUPORDER_TAG ) m_header.GroupOrder = tokenValue;
-        else
-            cerr << "SamFormatParser ERROR: unknown HD tag: " << tokenTag << endl;
+        else {
+            const string message = string("unknown HD tag: ") + tokenTag;
+            throw BamException("SamFormatParser::ParseHDLine", message);
+        }
     }
 
-    // if @HD line exists, VN must be provided
+    // check for required tags
     if ( !m_header.HasVersion() )
-        cerr << "SamFormatParser ERROR: @HD line is missing VN tag" << endl;
+        throw BamException("SamFormatParser::ParseHDLine", "@HD line is missing VN tag");
 }
 
 void SamFormatParser::ParseSQLine(const string& line) {
@@ -107,27 +112,20 @@ void SamFormatParser::ParseSQLine(const string& line) {
         else if ( tokenTag == Constants::SAM_SQ_CHECKSUM_TAG   ) seq.Checksum = tokenValue;
         else if ( tokenTag == Constants::SAM_SQ_SPECIES_TAG    ) seq.Species = tokenValue;
         else if ( tokenTag == Constants::SAM_SQ_URI_TAG        ) seq.URI = tokenValue;
-        else
-            cerr << "SamFormatParser ERROR: unknown SQ tag: " << tokenTag << endl;
+        else {
+            const string message = string("unknown SQ tag: ") + tokenTag;
+            throw BamException("SamFormatParser::ParseSQLine", message);
+        }
     }
 
-    bool isMissingRequiredFields = false;
-
-    // if @SQ line exists, SN must be provided
-    if ( !seq.HasName() ) {
-        isMissingRequiredFields = true;
-        cerr << "SamFormatParser ERROR: @SQ line is missing SN tag" << endl;
-    }
-
-    // if @SQ line exists, LN must be provided
-    if ( !seq.HasLength() ) {
-        isMissingRequiredFields = true;
-        cerr << "SamFormatParser ERROR: @SQ line is missing LN tag" << endl;
-    }
+    // check for required tags
+    if ( !seq.HasName() )
+        throw BamException("SamFormatParser::ParseSQLine", "@SQ line is missing SN tag");
+    if ( !seq.HasLength() )
+        throw BamException("SamFormatParser::ParseSQLine", "@SQ line is missing LN tag");
 
     // store SAM sequence entry
-    if ( !isMissingRequiredFields )
-        m_header.Sequences.Add(seq);
+    m_header.Sequences.Add(seq);
 }
 
 void SamFormatParser::ParseRGLine(const string& line) {
@@ -159,21 +157,18 @@ void SamFormatParser::ParseRGLine(const string& line) {
         else if ( tokenTag == Constants::SAM_RG_SAMPLE_TAG              ) rg.Sample = tokenValue;
         else if ( tokenTag == Constants::SAM_RG_SEQCENTER_TAG           ) rg.SequencingCenter = tokenValue;
         else if ( tokenTag == Constants::SAM_RG_SEQTECHNOLOGY_TAG       ) rg.SequencingTechnology = tokenValue;
-        else
-            cerr << "SamFormatParser ERROR: unknown RG tag: " << tokenTag << endl;
+        else {
+            const string message = string("unknown RG tag: ") + tokenTag;
+            throw BamException("SamFormatParser::ParseRGLine", message);
+        }
     }
 
-    bool isMissingRequiredFields = false;
-
-    // if @RG line exists, ID must be provided
-    if ( !rg.HasID() ) {
-        isMissingRequiredFields = true;
-        cerr << "SamFormatParser ERROR: @RG line is missing ID tag" << endl;
-    }
+    // check for required tags
+    if ( !rg.HasID() )
+        throw BamException("SamFormatParser::ParseRGLine", "@RG line is missing ID tag");
 
     // store SAM read group entry
-    if ( !isMissingRequiredFields )
-        m_header.ReadGroups.Add(rg);
+    m_header.ReadGroups.Add(rg);
 }
 
 void SamFormatParser::ParsePGLine(const string& line) {
@@ -198,21 +193,18 @@ void SamFormatParser::ParsePGLine(const string& line) {
         else if ( tokenTag == Constants::SAM_PG_COMMANDLINE_TAG     ) pg.CommandLine = tokenValue;
         else if ( tokenTag == Constants::SAM_PG_PREVIOUSPROGRAM_TAG ) pg.PreviousProgramID = tokenValue;
         else if ( tokenTag == Constants::SAM_PG_VERSION_TAG         ) pg.Version = tokenValue;
-        else
-            cerr << "SamFormatParser ERROR: unknown PG tag: " << tokenTag << endl;
+        else {
+            const string message = string("unknown PG tag: ") + tokenTag;
+            throw BamException("SamFormatParser::ParsePGLine", message);
+        }
     }
 
-    bool isMissingRequiredFields = false;
+    // check for required tags
+    if ( !pg.HasID() )
+        throw BamException("SamFormatParser::ParsePGLine", "@PG line is missing ID tag");
 
-    // if @PG line exists, ID must be provided
-    if ( !pg.HasID() ) {
-        isMissingRequiredFields = true;
-        cerr << "SamFormatParser ERROR: @PG line is missing ID tag" << endl;
-    }
-
-    // store SAM program record
-    if ( !isMissingRequiredFields )
-        m_header.Programs.Add(pg);
+    // store SAM program entry
+    m_header.Programs.Add(pg);
 }
 
 void SamFormatParser::ParseCOLine(const string& line) {

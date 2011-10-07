@@ -2,7 +2,7 @@
 // BamIndexFactory_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 5 April 2011 (DB)
+// Last modified: 6 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides interface for generating BamIndex implementations
 // ***************************************************************************
@@ -13,8 +13,6 @@
 #include <api/internal/BamToolsIndex_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
-
-#include <cstdio>
 using namespace std;
 
 // generates index filename from BAM filename (depending on requested type)
@@ -26,7 +24,6 @@ const string BamIndexFactory::CreateIndexFilename(const string& bamFilename,
         case ( BamIndex::STANDARD ) : return ( bamFilename + BamStandardIndex::Extension() );
         case ( BamIndex::BAMTOOLS ) : return ( bamFilename + BamToolsIndex::Extension() );
         default :
-            cerr << "BamIndexFactory ERROR: unknown index type" << type << endl;
             return string();
     }
 }
@@ -59,7 +56,6 @@ BamIndex* BamIndexFactory::CreateIndexOfType(const BamIndex::IndexType& type,
         case ( BamIndex::STANDARD ) : return new BamStandardIndex(reader);
         case ( BamIndex::BAMTOOLS ) : return new BamToolsIndex(reader);
         default :
-            cerr << "BamIndexFactory ERROR: unknown index type " << type << endl;
             return 0;
     }
 }
@@ -72,7 +68,7 @@ const string BamIndexFactory::FileExtension(const string& filename) {
         return string();
 
     // look for last dot in filename
-    size_t lastDotPosition = filename.find_last_of('.');
+    const size_t lastDotPosition = filename.find_last_of('.');
 
     // if none found, return empty string
     if ( lastDotPosition == string::npos )
@@ -88,6 +84,10 @@ const string BamIndexFactory::FileExtension(const string& filename) {
 const string BamIndexFactory::FindIndexFilename(const string& bamFilename,
                                                 const BamIndex::IndexType& preferredType)
 {
+    // skip if BAM filename provided is empty
+    if ( bamFilename.empty() )
+        return string();
+
     // try to find index of preferred type first
     // return index filename if found
     string indexFilename = CreateIndexFilename(bamFilename, preferredType);

@@ -2,7 +2,7 @@
 // BamMultiReader_p.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 3 October 2011 (DB)
+// Last modified: 7 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Functionality for simultaneously reading multiple BAM files
 // *************************************************************************
@@ -44,9 +44,8 @@ class BamMultiReaderPrivate {
     public:
 
         // file operations
-        void Close(void);
-        void CloseFile(const std::string& filename);
-        void CloseFiles(const std::vector<std::string>& filenames);
+        bool Close(void);
+        bool CloseFile(const std::string& filename);
         const std::vector<std::string> Filenames(void) const;
         bool Jump(int refID, int position = 0);
         bool Open(const std::vector<std::string>& filenames);
@@ -73,13 +72,18 @@ class BamMultiReaderPrivate {
         bool OpenIndexes(const std::vector<std::string>& indexFilenames);
         void SetIndexCacheMode(const BamIndex::IndexCacheMode mode);
 
+        // error handling
+        std::string GetErrorString(void) const;
+
     // 'internal' methods
     public:
 
+        bool CloseFiles(const std::vector<std::string>& filenames);
         IMultiMerger* CreateAlignmentCache(void) const;
         bool PopNextCachedAlignment(BamAlignment& al, const bool needCharData);
         bool RewindReaders(void);
         void SaveNextAlignment(BamReader* reader, BamAlignment* alignment);
+        void SetErrorString(const std::string& where, const std::string& what) const; //
         bool UpdateAlignmentCache(void);
         bool ValidateReaders(void) const;
 
@@ -87,6 +91,7 @@ class BamMultiReaderPrivate {
     public:
         std::vector<MergeItem> m_readers;
         IMultiMerger* m_alignmentCache;
+        mutable std::string m_errorString;
 };
 
 } // namespace Internal

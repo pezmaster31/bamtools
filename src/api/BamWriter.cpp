@@ -2,7 +2,7 @@
 // BamWriter.cpp (c) 2009 Michael Str�mberg, Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 4 March 2011 (DB)
+// Last modified: 4 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -13,8 +13,6 @@
 #include <api/internal/BamWriter_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
-
-#include <iostream>
 using namespace std;
 
 /*! \class BamTools::BamWriter
@@ -55,6 +53,11 @@ BamWriter::~BamWriter(void) {
 */
 void BamWriter::Close(void) {
     d->Close();
+}
+
+// returns a human-readable description of the last error that occurred
+std::string BamWriter::GetErrorString(void) const {
+    return d->GetErrorString();
 }
 
 /*! \fn bool BamWriter::IsOpen(void) const
@@ -115,11 +118,11 @@ bool BamWriter::Open(const std::string& filename,
     \param alignment BamAlignment record to save
     \sa BamReader::GetNextAlignment(), BamReader::GetNextAlignmentCore()
 */
-void BamWriter::SaveAlignment(const BamAlignment& alignment) {
-    d->SaveAlignment(alignment);
+bool BamWriter::SaveAlignment(const BamAlignment& alignment) {
+    return d->SaveAlignment(alignment);
 }
 
-/*! \fn void BamWriter::SetCompressionMode(const CompressionMode& compressionMode)
+/*! \fn void BamWriter::SetCompressionMode(const BamWriter::CompressionMode& compressionMode)
     \brief Sets the output compression mode.
 
     Default mode is BamWriter::Compressed.
@@ -137,6 +140,6 @@ void BamWriter::SaveAlignment(const BamAlignment& alignment) {
     \param compressionMode desired output compression behavior
     \sa IsOpen(), Open()
 */
-void BamWriter::SetCompressionMode(const CompressionMode& compressionMode) {
+void BamWriter::SetCompressionMode(const BamWriter::CompressionMode& compressionMode) {
     d->SetWriteCompressed( compressionMode == BamWriter::Compressed );
 }

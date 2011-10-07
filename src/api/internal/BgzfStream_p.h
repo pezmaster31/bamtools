@@ -26,6 +26,7 @@
 #include <api/BamConstants.h>
 #include "zlib.h"
 #include <cstdio>
+#include <memory>
 #include <string>
 
 namespace BamTools {
@@ -43,64 +44,53 @@ class BgzfStream {
         // closes BGZF file
         void Close(void);
         // opens the BGZF file (mode is either "rb" for reading, or "wb" for writing)
-        bool Open(const std::string& filename, const char* mode);
+        void Open(const std::string& filename, const char* mode);
         // reads BGZF data into a byte buffer
-        int Read(char* data, const unsigned int dataLength);
+        size_t Read(char* data, const size_t dataLength);
         // seek to position in BGZF file
-        bool Seek(const int64_t& position);
+        void Seek(const int64_t& position);
         // enable/disable compressed output
         void SetWriteCompressed(bool ok);
         // get file position in BGZF file
         int64_t Tell(void) const;
         // writes the supplied data into the BGZF buffer
-        unsigned int Write(const char* data, const unsigned int dataLen);
+        size_t Write(const char* data, const size_t dataLength);
 
     // internal methods
     private:
         // compresses the current block
-        int DeflateBlock(void);
+        size_t DeflateBlock(void);
         // flushes the data in the BGZF block
         void FlushBlock(void);
         // de-compresses the current block
-        int InflateBlock(const int& blockLength);
+        size_t InflateBlock(const size_t& blockLength);
         // reads a BGZF block
-        bool ReadBlock(void);
+        void ReadBlock(void);
 
     // static 'utility' methods
     public:
         // checks BGZF block header
-        static inline bool CheckBlockHeader(char* header);
+        static bool CheckBlockHeader(char* header);
 
     // data members
     public:
-        unsigned int UncompressedBlockSize;
-        unsigned int CompressedBlockSize;
         unsigned int BlockLength;
         unsigned int BlockOffset;
-        uint64_t BlockAddress;
+        int64_t BlockAddress;
         bool IsOpen;
         bool IsWriteOnly;
         bool IsWriteCompressed;
-        FILE* Stream;
-        char* UncompressedBlock;
-        char* CompressedBlock;
+
+        struct RaiiWrapper {
+            RaiiWrapper(void);
+            ~RaiiWrapper(void);
+            char* UncompressedBlock;
+            char* CompressedBlock;
+            FILE* Stream;
+        };
+        RaiiWrapper Resources;
+
 };
-
-// -------------------------------------------------------------
-// static 'utility' method implementations
-
-// checks BGZF block header
-inline
-bool BgzfStream::CheckBlockHeader(char* header) {
-    return (header[0] == Constants::GZIP_ID1 &&
-            header[1] == (char)Constants::GZIP_ID2 &&
-            header[2] == Z_DEFLATED &&
-            (header[3] & Constants::FLG_FEXTRA) != 0 &&
-            BamTools::UnpackUnsignedShort(&header[10]) == Constants::BGZF_XLEN &&
-            header[12] == Constants::BGZF_ID1 &&
-            header[13] == Constants::BGZF_ID2 &&
-            BamTools::UnpackUnsignedShort(&header[14]) == Constants::BGZF_LEN );
-}
 
 } // namespace Internal
 } // namespace BamTools

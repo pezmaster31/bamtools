@@ -2,7 +2,7 @@
 // BamMultiReader.cpp (c) 2010 Erik Garrison, Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 1 October 2011 (DB)
+// Last modified: 7 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Convenience class for reading multiple BAM files.
 //
@@ -46,8 +46,8 @@ BamMultiReader::~BamMultiReader(void) {
 
     \sa CloseFile(), IsOpen(), Open(), BamReader::Close()
 */
-void BamMultiReader::Close(void) {
-    d->Close();
+bool BamMultiReader::Close(void) {
+    return d->Close();
 }
 
 /*! \fn void BamMultiReader::CloseFile(const std::string& filename)
@@ -57,8 +57,8 @@ void BamMultiReader::Close(void) {
 
     \sa Close(), IsOpen(), Open(), BamReader::Close()
 */
-void BamMultiReader::CloseFile(const std::string& filename) {
-    d->CloseFile(filename);
+bool BamMultiReader::CloseFile(const std::string& filename) {
+    return d->CloseFile(filename);
 }
 
 /*! \fn bool BamMultiReader::CreateIndexes(const BamIndex::IndexType& type)
@@ -84,6 +84,11 @@ bool BamMultiReader::CreateIndexes(const BamIndex::IndexType& type) {
 */
 const std::vector<std::string> BamMultiReader::Filenames(void) const {
     return d->Filenames();
+}
+
+// returns a description of the last error that occurred
+std::string BamMultiReader::GetErrorString(void) const {
+    return d->GetErrorString();
 }
 
 /*! \fn SamHeader BamMultiReader::GetHeader(void) const

@@ -2,7 +2,7 @@
 // BamReader.h (c) 2009 Derek Barnett, Michael Str�mberg
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 4 March 2011 (DB)
+// Last modified: 7 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides read access to BAM files.
 // ***************************************************************************
@@ -37,7 +37,7 @@ class API_EXPORT BamReader {
         // ----------------------
 
         // closes the current BAM file
-        void Close(void);
+        bool Close(void);
         // returns filename of current BAM file
         const std::string GetFilename(void) const;
         // returns true if a BAM file is open for reading
@@ -101,6 +101,13 @@ class API_EXPORT BamReader {
         void SetIndex(BamIndex* index);
         // changes the caching behavior of the index data
         void SetIndexCacheMode(const BamIndex::IndexCacheMode& mode);
+
+        // ----------------------
+        // error handling
+        // ----------------------
+
+        // returns a human-readable description of the last error that occurred
+        std::string GetErrorString(void) const;
 
     // deprecated methods
     public:

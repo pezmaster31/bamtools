@@ -2,7 +2,7 @@
 // BamHeader_p.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 26 January 2011 (DB)
+// Last modified: 6 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for handling BAM headers.
 // ***************************************************************************
@@ -43,7 +43,7 @@ class BamHeader {
         bool IsValid(void) const;
         // load BAM header ('magic number' and SAM header text) from BGZF stream
         // returns true if all OK
-        bool Load(BgzfStream* stream);
+        void Load(BgzfStream* stream);
         // returns (editable) copy of SamHeader data object
         SamHeader ToSamHeader(void) const;
         // returns SAM-formatted string of header data
@@ -51,14 +51,12 @@ class BamHeader {
 
     // internal methods
     private:
-        // reads magic number from BGZF stream, returns true if valid
-        bool CheckMagicNumber(BgzfStream* stream);
+        // reads magic number from BGZF stream
+        void CheckMagicNumber(BgzfStream* stream);
         // reads SAM header length from BGZF stream, stores it in @length
-        // returns read success/fail status
-        bool ReadHeaderLength(BgzfStream* stream, uint32_t& length);
+        void ReadHeaderLength(BgzfStream* stream, uint32_t& length);
         // reads SAM header text from BGZF stream, stores in SamHeader object
-        // returns read success/fail status
-        bool ReadHeaderText(BgzfStream* stream, const uint32_t& length);
+        void ReadHeaderText(BgzfStream* stream, const uint32_t& length);
 
     // data members
     private:

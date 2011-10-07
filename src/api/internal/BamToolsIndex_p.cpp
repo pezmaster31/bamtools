@@ -2,12 +2,13 @@
 // BamToolsIndex.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 27 April 2011 (DB)
+// Last modified: 6 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the BamTools index format (".bti")
 // ***************************************************************************
 
 #include <api/BamAlignment.h>
+#include <api/internal/BamException_p.h>
 #include <api/internal/BamReader_p.h>
 #include <api/internal/BamToolsIndex_p.h>
 #include <api/internal/BgzfStream_p.h>
@@ -23,16 +24,35 @@ using namespace BamTools::Internal;
 #include <map>
 using namespace std;
 
+// --------------------------------
 // static BamToolsIndex constants
-const int BamToolsIndex::DEFAULT_BLOCK_LENGTH = 1000;
+// --------------------------------
+
+const uint32_t BamToolsIndex::DEFAULT_BLOCK_LENGTH = 1000;
 const string BamToolsIndex::BTI_EXTENSION     = ".bti";
 const char* const BamToolsIndex::BTI_MAGIC    = "BTI\1";
 const int BamToolsIndex::SIZEOF_BLOCK         = sizeof(int32_t)*2 + sizeof(int64_t);
 
+// ----------------------------
+// RaiiWrapper implementation
+// ----------------------------
+
+BamToolsIndex::RaiiWrapper::RaiiWrapper(void)
+    : IndexStream(0)
+{ }
+
+BamToolsIndex::RaiiWrapper::~RaiiWrapper(void) {
+    if ( IndexStream )
+        fclose(IndexStream);
+}
+
+// ------------------------------
+// BamToolsIndex implementation
+// ------------------------------
+
 // ctor
 BamToolsIndex::BamToolsIndex(Internal::BamReaderPrivate* reader)
     : BamIndex(reader)
-    , m_indexStream(0)
     , m_cacheMode(BamIndex::LimitedIndexCaching)
     , m_blockSize(BamToolsIndex::DEFAULT_BLOCK_LENGTH)
     , m_inputVersion(0)
@@ -46,71 +66,56 @@ BamToolsIndex::~BamToolsIndex(void) {
     CloseFile();
 }
 
-bool BamToolsIndex::CheckMagicNumber(void) {
+void BamToolsIndex::CheckMagicNumber(void) {
 
-    // check 'magic number' to see if file is BTI index
+    // read magic number
     char magic[4];
-    size_t elementsRead = fread(magic, sizeof(char), 4, m_indexStream);
-    if ( elementsRead != 4 ) {
-        cerr << "BamToolsIndex ERROR: could not read format 'magic' number" << endl;
-        return false;
-    }
+    size_t elementsRead = fread(magic, sizeof(char), 4, Resources.IndexStream);
+    if ( elementsRead != 4 )
+        throw BamException("BamToolsIndex::CheckMagicNumber", "could not read BTI magic number");
 
-    if ( strncmp(magic, BamToolsIndex::BTI_MAGIC, 4) != 0 ) {
-        cerr << "BamToolsIndex ERROR: invalid format" << endl;
-        return false;
-    }
-
-    // otherwise ok
-    return true;
+    // validate expected magic number
+    if ( strncmp(magic, BamToolsIndex::BTI_MAGIC, 4) != 0 )
+        throw BamException("BamToolsIndex::CheckMagicNumber", "invalid BTI magic number");
 }
 
 // check index file version, return true if OK
-bool BamToolsIndex::CheckVersion(void) {
+void BamToolsIndex::CheckVersion(void) {
 
     // read version from file
-    size_t elementsRead = fread(&m_inputVersion, sizeof(m_inputVersion), 1, m_indexStream);
-    if ( elementsRead != 1 ) return false;
+    size_t elementsRead = fread(&m_inputVersion, sizeof(m_inputVersion), 1, Resources.IndexStream);
+    if ( elementsRead != 1 )
+        throw BamException("BamToolsIndex::CheckVersion", "could not read format version");
     if ( m_isBigEndian ) SwapEndian_32(m_inputVersion);
 
     // if version is negative, or zero
-    if ( m_inputVersion <= 0 ) {
-        cerr << "BamToolsIndex ERROR: could not load index file: invalid version."
-             << endl;
-        return false;
-    }
+    if ( m_inputVersion <= 0 )
+        throw BamException("BamToolsIndex::CheckVersion", "invalid format version");
 
     // if version is newer than can be supported by this version of bamtools
     else if ( m_inputVersion > m_outputVersion ) {
-        cerr << "BamToolsIndex ERROR: could not load index file. This version of BamTools does not recognize new index file version"
-             << endl
-             << "Please update BamTools to a more recent version to support this index file."
-             << endl;
-        return false;
+        const string message = "unsupported format: this index was created by a newer version of BamTools. "
+                               "Update your local version of BamTools to use the index file.";
+        throw BamException("BamToolsIndex::CheckVersion", message);
     }
 
     // ------------------------------------------------------------------
     // check for deprecated, unsupported versions
-    // (typically whose format did not accomodate a particular bug fix)
+    // (the format had to be modified to accomodate a particular bug fix)
 
     else if ( (Version)m_inputVersion == BamToolsIndex::BTI_1_0 ) {
-        cerr << "BamToolsIndex ERROR: could not load index file. This version of the index contains a bug related to accessing data near reference ends."
-             << endl << endl
-             << "Please run 'bamtools index -bti -in yourData.bam' to generate an up-to-date, fixed BTI file."
-             << endl << endl;
-        return false;
+        const string message = "unsupported format: this version of the index may not properly handle "
+                               "reference ends. Please run 'bamtools index -bti -in yourData.bam' to "
+                               "generate an up-to-date, fixed BTI file.";
+        throw BamException("BamToolsIndex::CheckVersion", message);
     }
 
     else if ( (Version)m_inputVersion == BamToolsIndex::BTI_1_1 ) {
-        cerr << "BamToolsIndex ERROR: could not load index file. This version of the index contains a bug related to handling empty references."
-             << endl << endl
-             << "Please run 'bamtools index -bti -in yourData.bam' to generate an up-to-date, fixed BTI file."
-             << endl << endl;
-        return false;
+        const string message = "unsupported format: this version of the index may not properly handle "
+                               "empty references. Please run 'bamtools index -bti -in yourData.bam to "
+                               "generate an up-to-date, fixed BTI file.";
+        throw BamException("BamToolsIndex::CheckVersion", message);
     }
-
-    // otherwise ok
-    else return true;
 }
 
 void BamToolsIndex::ClearReferenceEntry(BtiReferenceEntry& refEntry) {
@@ -119,151 +124,155 @@ void BamToolsIndex::ClearReferenceEntry(BtiReferenceEntry& refEntry) {
 }
 
 void BamToolsIndex::CloseFile(void) {
-    if ( IsFileOpen() )
-        fclose(m_indexStream);
+    if ( IsFileOpen() ) {
+        fclose(Resources.IndexStream);
+        Resources.IndexStream = 0;
+    }
     m_indexFileSummary.clear();
 }
 
 // builds index from associated BAM file & writes out to index file
 bool BamToolsIndex::Create(void) {
 
-    // return false if BamReader is invalid or not open
+    // skip if BamReader is invalid or not open
     if ( m_reader == 0 || !m_reader->IsOpen() ) {
-        cerr << "BamToolsIndex ERROR: BamReader is not open"
-             << ", aborting index creation" << endl;
+        SetErrorString("BamToolsIndex::Create", "could not create index: reader is not open");
         return false;
     }
 
     // rewind BamReader
     if ( !m_reader->Rewind() ) {
-        cerr << "BamToolsIndex ERROR: could not rewind BamReader to create index"
-             << ", aborting index creation" << endl;
+        const string readerError = m_reader->GetErrorString();
+        const string message = "could not create index: \n\t" + readerError;
+        SetErrorString("BamToolsIndex::Create", message);
         return false;
     }
 
-    // open new index file (read & write)
-    string indexFilename = m_reader->Filename() + Extension();
-    if ( !OpenFile(indexFilename, "w+b") ) {
-        cerr << "BamToolsIndex ERROR: could not open output index file " << indexFilename
-             << ", aborting index creation" << endl;
-        return false;
-    }
+    try {
+        // open new index file (read & write)
+        string indexFilename = m_reader->Filename() + Extension();
+        OpenFile(indexFilename, "w+b");
 
-    // initialize BtiFileSummary with number of references
-    const int& numReferences = m_reader->GetReferenceCount();
-    InitializeFileSummary(numReferences);
+        // initialize BtiFileSummary with number of references
+        const int& numReferences = m_reader->GetReferenceCount();
+        InitializeFileSummary(numReferences);
 
-    // initialize output file
-    bool createdOk = true;
-    createdOk &= WriteHeader();
+        // intialize output file header
+        WriteHeader();
 
-    // index building markers
-    int32_t currentBlockCount      = 0;
-    int64_t currentAlignmentOffset = m_reader->Tell();
-    int32_t blockRefId             = -1;
-    int32_t blockMaxEndPosition    = -1;
-    int64_t blockStartOffset       = currentAlignmentOffset;
-    int32_t blockStartPosition     = -1;
+        // index building markers
+        uint32_t currentBlockCount      = 0;
+        int64_t currentAlignmentOffset  = m_reader->Tell();
+        int32_t blockRefId              = -1;
+        int32_t blockMaxEndPosition     = -1;
+        int64_t blockStartOffset        = currentAlignmentOffset;
+        int32_t blockStartPosition      = -1;
 
-    // plow through alignments, storing index entries
-    BamAlignment al;
-    BtiReferenceEntry refEntry;
-    while ( m_reader->LoadNextAlignment(al) ) {
+        // plow through alignments, storing index entries
+        BamAlignment al;
+        BtiReferenceEntry refEntry;
+        while ( m_reader->LoadNextAlignment(al) ) {
 
-        // if moved to new reference
-        if ( al.RefID != blockRefId ) {
+            // if moved to new reference
+            if ( al.RefID != blockRefId ) {
 
-            // if first pass, check:
-            if ( currentBlockCount == 0 ) {
+                // if first pass, check:
+                if ( currentBlockCount == 0 ) {
 
-                // write any empty references up to (but not including) al.RefID
-                for ( int i = 0; i < al.RefID; ++i ) {
-                    BtiReferenceEntry emptyEntry(i);
-                    createdOk &= WriteReferenceEntry(emptyEntry);
+                    // write any empty references up to (but not including) al.RefID
+                    for ( int i = 0; i < al.RefID; ++i )
+                        WriteReferenceEntry( BtiReferenceEntry(i) );
                 }
+
+                // not first pass:
+                else {
+
+                    // store previous BTI block data in reference entry
+                    BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
+                    refEntry.Blocks.push_back(block);
+
+                    // write reference entry, then clear
+                    WriteReferenceEntry(refEntry);
+                    ClearReferenceEntry(refEntry);
+
+                    // write any empty references between (but not including)
+                    // the last blockRefID and current al.RefID
+                    for ( int i = blockRefId+1; i < al.RefID; ++i )
+                        WriteReferenceEntry( BtiReferenceEntry(i) );
+
+                    // reset block count
+                    currentBlockCount = 0;
+                }
+
+                // set ID for new reference entry
+                refEntry.ID = al.RefID;
             }
 
-            // not first pass:
-            else {
+            // if beginning of block, update counters
+            if ( currentBlockCount == 0 ) {
+                blockRefId          = al.RefID;
+                blockStartOffset    = currentAlignmentOffset;
+                blockStartPosition  = al.Position;
+                blockMaxEndPosition = al.GetEndPosition();
+            }
 
-                // store previous BTI block data in reference entry
+            // increment block counter
+            ++currentBlockCount;
+
+            // check end position
+            int32_t alignmentEndPosition = al.GetEndPosition();
+            if ( alignmentEndPosition > blockMaxEndPosition )
+                blockMaxEndPosition = alignmentEndPosition;
+
+            // if block is full, get offset for next block, reset currentBlockCount
+            if ( currentBlockCount == m_blockSize ) {
+
+                // store previous block data in reference entry
                 BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
                 refEntry.Blocks.push_back(block);
 
-                // write reference entry, then clear
-                createdOk &= WriteReferenceEntry(refEntry);
-                ClearReferenceEntry(refEntry);
-
-                // write any empty references between (but not including) the last blockRefID and current al.RefID
-                for ( int i = blockRefId+1; i < al.RefID; ++i ) {
-                    BtiReferenceEntry emptyEntry(i);
-                    createdOk &= WriteReferenceEntry(emptyEntry);
-                }
-
-                // reset block count
+                // update markers
+                blockStartOffset  = m_reader->Tell();
                 currentBlockCount = 0;
             }
 
-            // set ID for new reference entry
-            refEntry.ID = al.RefID;
+            // not the best name, but for the next iteration, this value will be the offset of the
+            // *current* alignment. this is necessary because we won't know if this next alignment
+            // is on a new reference until we actually read it
+            currentAlignmentOffset = m_reader->Tell();
         }
 
-        // if beginning of block, update counters
-        if ( currentBlockCount == 0 ) {
-            blockRefId          = al.RefID;
-            blockStartOffset    = currentAlignmentOffset;
-            blockStartPosition  = al.Position;
-            blockMaxEndPosition = al.GetEndPosition();
-        }
+        // after finishing alignments, if any data was read, check:
+        if ( blockRefId >= 0 ) {
 
-        // increment block counter
-        ++currentBlockCount;
-
-        // check end position
-        int32_t alignmentEndPosition = al.GetEndPosition();
-        if ( alignmentEndPosition > blockMaxEndPosition )
-            blockMaxEndPosition = alignmentEndPosition;
-
-        // if block is full, get offset for next block, reset currentBlockCount
-        if ( currentBlockCount == m_blockSize ) {
-
-            // store previous block data in reference entry
+            // store last BTI block data in reference entry
             BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
             refEntry.Blocks.push_back(block);
 
-            // update markers
-            blockStartOffset  = m_reader->Tell();
-            currentBlockCount = 0;
+            // write last reference entry, then clear
+            WriteReferenceEntry(refEntry);
+            ClearReferenceEntry(refEntry);
+
+            // then write any empty references remaining at end of file
+            for ( int i = blockRefId+1; i < numReferences; ++i )
+                WriteReferenceEntry( BtiReferenceEntry(i) );
         }
 
-        // not the best name, but for the next iteration, this value will be the offset of the *current* alignment
-        // necessary because we won't know if this next alignment is on a new reference until we actually read it
-        currentAlignmentOffset = m_reader->Tell();
+    } catch ( BamException& e ) {
+        m_errorString = e.what();
+        return false;
     }
 
-    // after finishing alignments, if any data was read, check:
-    if ( blockRefId >= 0 ) {
-
-        // store last BTI block data in reference entry
-        BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
-        refEntry.Blocks.push_back(block);
-
-        // write last reference entry, then clear
-        createdOk &= WriteReferenceEntry(refEntry);
-        ClearReferenceEntry(refEntry);
-
-        // then write any empty references remaining at end of file
-        for ( int i = blockRefId+1; i < numReferences; ++i ) {
-            BtiReferenceEntry emptyEntry(i);
-            createdOk &= WriteReferenceEntry(emptyEntry);
-        }
+    // rewind BamReader
+    if ( !m_reader->Rewind() ) {
+        const string readerError = m_reader->GetErrorString();
+        const string message = "could not create index: \n\t" + readerError;
+        SetErrorString("BamToolsIndex::Create", message);
+        return false;
     }
 
-    // rewind reader & return result
-    createdOk &= m_reader->Rewind();
-
-    // return result
-    return createdOk;
+    // return success
+    return true;
 }
 
 // returns format's file extension
@@ -271,18 +280,15 @@ const std::string BamToolsIndex::Extension(void) {
     return BamToolsIndex::BTI_EXTENSION;
 }
 
-bool BamToolsIndex::GetOffset(const BamRegion& region, int64_t& offset, bool* hasAlignmentsInRegion) {
+void BamToolsIndex::GetOffset(const BamRegion& region, int64_t& offset, bool* hasAlignmentsInRegion) {
 
     // return false ref ID is not a valid index in file summary data
     if ( region.LeftRefID < 0 || region.LeftRefID >= (int)m_indexFileSummary.size() )
-        return false;
+        throw BamException("BamToolsIndex::GetOffset", "invalid region requested");
 
     // retrieve reference index data for left bound reference
     BtiReferenceEntry refEntry(region.LeftRefID);
-    if ( !ReadReferenceEntry(refEntry) ) {
-        cerr << "BamToolsIndex ERROR: could not retrieve index data from BTI file" << endl;
-        return false;
-    }
+    ReadReferenceEntry(refEntry);
 
     // binary search for an overlapping block (may not be first one though)
     bool found = false;
@@ -337,9 +343,6 @@ bool BamToolsIndex::GetOffset(const BamRegion& region, int64_t& offset, bool* ha
 
     // sets to false if blocks container is empty, or if no matching block could be found
     *hasAlignmentsInRegion = found;
-
-    // return success
-    return true;
 }
 
 // returns whether reference has alignments or no
@@ -350,14 +353,16 @@ bool BamToolsIndex::HasAlignments(const int& referenceID) const {
     return ( refSummary.NumBlocks > 0 );
 }
 
+// pre-allocates space for each reference's summary data
 void BamToolsIndex::InitializeFileSummary(const int& numReferences) {
     m_indexFileSummary.clear();
     for ( int i = 0; i < numReferences; ++i )
         m_indexFileSummary.push_back( BtiReferenceSummary() );
 }
 
+// returns true if the index stream is open
 bool BamToolsIndex::IsFileOpen(void) const {
-    return ( m_indexStream != 0 );
+    return ( Resources.IndexStream != 0 );
 }
 
 // attempts to use index data to jump to @region, returns success/fail
@@ -370,19 +375,24 @@ bool BamToolsIndex::Jump(const BamTools::BamRegion& region, bool* hasAlignmentsI
     *hasAlignmentsInRegion = false;
 
     // skip if invalid reader or not open
-    if ( m_reader == 0 || !m_reader->IsOpen() )
+    if ( m_reader == 0 || !m_reader->IsOpen() ) {
+        SetErrorString("BamToolsIndex::Jump", "could not jump: reader is not open");
         return false;
+    }
 
     // make sure left-bound position is valid
     const RefVector& references = m_reader->GetReferenceData();
-    if ( region.LeftPosition > references.at(region.LeftRefID).RefLength )
+    if ( region.LeftPosition > references.at(region.LeftRefID).RefLength ) {
+        SetErrorString("BamToolsIndex::Jump", "could not create index: invalid region requested");
         return false;
+    }
 
     // calculate nearest offset to jump to
     int64_t offset;
-    if ( !GetOffset(region, offset, hasAlignmentsInRegion) ) {
-        cerr << "BamToolsIndex ERROR: could not jump"
-             << ", unable to calculate offset for specified region" << endl;
+    try {
+        GetOffset(region, offset, hasAlignmentsInRegion);
+    } catch ( BamException& e ) {
+        m_errorString = e.what();
         return false;
     }
 
@@ -393,116 +403,101 @@ bool BamToolsIndex::Jump(const BamTools::BamRegion& region, bool* hasAlignmentsI
 // loads existing data from file into memory
 bool BamToolsIndex::Load(const std::string& filename) {
 
-    // attempt open index file (read-only)
-    if ( !OpenFile(filename, "rb") ) {
-        cerr << "BamToolsIndex ERROR: could not open input index file " << filename
-             << ", aborting index load" << endl;
+    try {
+
+        // attempt to open file (read-only)
+        OpenFile(filename, "rb");
+
+        // load metadata & generate in-memory summary
+        LoadHeader();
+        LoadFileSummary();
+
+        // return success
+        return true;
+
+    } catch ( BamException& e ) {
+        m_errorString = e.what();
         return false;
     }
-
-    // attempt to load & validate BTI header data
-    if ( !LoadHeader() ) {
-        cerr << "BamToolsIndex ERROR: could load header from index file " << filename
-             << ", aborting index load" << endl;
-        CloseFile();
-        return false;
-    }
-
-    // attempt to load index file summary
-    if ( !LoadFileSummary() ) {
-        cerr << "BamToolsIndex ERROR: could not generate a summary of index file " << filename
-             << ", aborting index load" << endl;
-        CloseFile();
-        return false;
-    }
-
-    // if we get here, index summary is loaded OK
-    return true;
 }
 
-bool BamToolsIndex::LoadFileSummary(void) {
+void BamToolsIndex::LoadFileSummary(void) {
 
     // load number of reference sequences
     int numReferences;
-    if ( !LoadNumReferences(numReferences) )
-        return false;
+    LoadNumReferences(numReferences);
 
     // initialize file summary data
     InitializeFileSummary(numReferences);
 
-    // iterate over reference entries
-    bool loadedOk = true;
+    // load summary for each reference
     BtiFileSummary::iterator summaryIter = m_indexFileSummary.begin();
     BtiFileSummary::iterator summaryEnd  = m_indexFileSummary.end();
     for ( ; summaryIter != summaryEnd; ++summaryIter )
-        loadedOk &= LoadReferenceSummary(*summaryIter);
-
-    // return result
-    return loadedOk;
+        LoadReferenceSummary(*summaryIter);
 }
 
-bool BamToolsIndex::LoadHeader(void) {
+void BamToolsIndex::LoadHeader(void) {
 
-    // if invalid format 'magic number'
-    if ( !CheckMagicNumber() )
-        return false;
-
-    // if invalid BTI version
-    if ( !CheckVersion() )
-        return false;
+    // check BTI file metadata
+    CheckMagicNumber();
+    CheckVersion();
 
     // use file's BTI block size to set member variable
-    size_t elementsRead = fread(&m_blockSize, sizeof(m_blockSize), 1, m_indexStream);
+    const size_t elementsRead = fread(&m_blockSize, sizeof(m_blockSize), 1, Resources.IndexStream);
     if ( m_isBigEndian ) SwapEndian_32(m_blockSize);
-    return ( elementsRead == 1 );
+    if ( elementsRead != 1 )
+        throw BamException("BamToolsIndex::LoadHeader", "could not read BTI block size");
 }
 
-bool BamToolsIndex::LoadNumBlocks(int& numBlocks) {
-    size_t elementsRead = 0;
-    elementsRead += fread(&numBlocks, sizeof(numBlocks), 1, m_indexStream);
+void BamToolsIndex::LoadNumBlocks(int& numBlocks) {
+    const size_t elementsRead = fread(&numBlocks, sizeof(numBlocks), 1, Resources.IndexStream);
     if ( m_isBigEndian ) SwapEndian_32(numBlocks);
-    return ( elementsRead == 1 );
+    if ( elementsRead != 1 )
+        throw BamException("BamToolsIndex::LoadNumBlocks", "could not read number of BTI blocks");
 }
 
-bool BamToolsIndex::LoadNumReferences(int& numReferences) {
-    size_t elementsRead = 0;
-    elementsRead += fread(&numReferences, sizeof(numReferences), 1, m_indexStream);
+void BamToolsIndex::LoadNumReferences(int& numReferences) {
+    const size_t elementsRead = fread(&numReferences, sizeof(numReferences), 1, Resources.IndexStream);
     if ( m_isBigEndian ) SwapEndian_32(numReferences);
-    return ( elementsRead == 1 );
+    if ( elementsRead != 1 )
+        throw BamException("BamToolsIndex::LoadNumReferences", "could not read number of references");
 }
 
-bool BamToolsIndex::LoadReferenceSummary(BtiReferenceSummary& refSummary) {
+void BamToolsIndex::LoadReferenceSummary(BtiReferenceSummary& refSummary) {
 
     // load number of blocks
     int numBlocks;
-    if ( !LoadNumBlocks(numBlocks) )
-        return false;
+    LoadNumBlocks(numBlocks);
 
     // store block summary data for this reference
     refSummary.NumBlocks = numBlocks;
     refSummary.FirstBlockFilePosition = Tell();
 
-    // skip blocks in index file (and return status)
-    return SkipBlocks(numBlocks);
+    // skip reference's blocks
+    SkipBlocks(numBlocks);
 }
 
-bool BamToolsIndex::OpenFile(const std::string& filename, const char* mode) {
+void BamToolsIndex::OpenFile(const std::string& filename, const char* mode) {
 
     // make sure any previous index file is closed
     CloseFile();
 
     // attempt to open file
-    m_indexStream = fopen(filename.c_str(), mode);
-    return IsFileOpen();
+    Resources.IndexStream = fopen(filename.c_str(), mode);
+    if ( !IsFileOpen() ) {
+        const string message = string("could not open file: ") + filename;
+        throw BamException("BamToolsIndex::OpenFile", message);
+    }
 }
 
-bool BamToolsIndex::ReadBlock(BtiBlock& block) {
+void BamToolsIndex::ReadBlock(BtiBlock& block) {
 
     // read in block data members
     size_t elementsRead = 0;
-    elementsRead += fread(&block.MaxEndPosition, sizeof(block.MaxEndPosition), 1, m_indexStream);
-    elementsRead += fread(&block.StartOffset,    sizeof(block.StartOffset),    1, m_indexStream);
-    elementsRead += fread(&block.StartPosition,  sizeof(block.StartPosition),  1, m_indexStream);
+    elementsRead += fread(&block.MaxEndPosition, sizeof(block.MaxEndPosition), 1, Resources.IndexStream);
+    elementsRead += fread(&block.StartOffset,    sizeof(block.StartOffset),    1, Resources.IndexStream);
+    elementsRead += fread(&block.StartPosition,  sizeof(block.StartPosition),  1, Resources.IndexStream);
 
     // swap endian-ness if necessary
     if ( m_isBigEndian ) {
@@ -511,46 +506,41 @@ bool BamToolsIndex::ReadBlock(BtiBlock& block) {
         SwapEndian_32(block.StartPosition);
     }
 
-    // return success/failure
-    return ( elementsRead == 3 );
+    if ( elementsRead != 3 )
+        throw BamException("BamToolsIndex::ReadBlock", "could not read block");
 }
 
-bool BamToolsIndex::ReadBlocks(const BtiReferenceSummary& refSummary, BtiBlockVector& blocks) {
+void BamToolsIndex::ReadBlocks(const BtiReferenceSummary& refSummary, BtiBlockVector& blocks) {
 
     // prep blocks container
     blocks.clear();
     blocks.reserve(refSummary.NumBlocks);
 
     // skip to first block entry
-    if ( !Seek( refSummary.FirstBlockFilePosition, SEEK_SET ) ) {
-        cerr << "BamToolsIndex ERROR: could not seek to position "
-             << refSummary.FirstBlockFilePosition << endl;
-        return false;
-    }
+    Seek( refSummary.FirstBlockFilePosition, SEEK_SET );
 
     // read & store block entries
-    bool readOk = true;
     BtiBlock block;
     for ( int i = 0; i < refSummary.NumBlocks; ++i ) {
-        readOk &= ReadBlock(block);
+        ReadBlock(block);
         blocks.push_back(block);
     }
-    return readOk;
 }
 
-bool BamToolsIndex::ReadReferenceEntry(BtiReferenceEntry& refEntry) {
+void BamToolsIndex::ReadReferenceEntry(BtiReferenceEntry& refEntry) {
 
     // return false if refId not valid index in file summary structure
     if ( refEntry.ID < 0 || refEntry.ID >= (int)m_indexFileSummary.size() )
-        return false;
+        throw BamException("BamToolsIndex::ReadReferenceEntry", "invalid reference requested");
 
     // use index summary to assist reading the reference's BTI blocks
     const BtiReferenceSummary& refSummary = m_indexFileSummary.at(refEntry.ID);
-    return ReadBlocks(refSummary, refEntry.Blocks);
+    ReadBlocks(refSummary, refEntry.Blocks);
 }
 
-bool BamToolsIndex::Seek(const int64_t& position, const int& origin) {
-    return ( fseek64(m_indexStream, position, origin) == 0 );
+void BamToolsIndex::Seek(const int64_t& position, const int& origin) {
+    if ( fseek64(Resources.IndexStream, position, origin) != 0 )
+        throw BamException("BamToolsIndex::Seek", "could not seek in BAI file");
 }
 
 // change the index caching behavior
@@ -559,15 +549,15 @@ void BamToolsIndex::SetCacheMode(const BamIndex::IndexCacheMode& mode) {
     // do nothing else here ? cache mode will be ignored from now on, most likely
 }
 
-bool BamToolsIndex::SkipBlocks(const int& numBlocks) {
-    return Seek( numBlocks*BamToolsIndex::SIZEOF_BLOCK, SEEK_CUR );
+void BamToolsIndex::SkipBlocks(const int& numBlocks) {
+    Seek( numBlocks*BamToolsIndex::SIZEOF_BLOCK, SEEK_CUR );
 }
 
 int64_t BamToolsIndex::Tell(void) const {
-    return ftell64(m_indexStream);
+    return ftell64(Resources.IndexStream);
 }
 
-bool BamToolsIndex::WriteBlock(const BtiBlock& block) {
+void BamToolsIndex::WriteBlock(const BtiBlock& block) {
 
     // copy entry data
     int32_t maxEndPosition = block.MaxEndPosition;
@@ -583,59 +573,55 @@ bool BamToolsIndex::WriteBlock(const BtiBlock& block) {
 
     // write the reference index entry
     size_t elementsWritten = 0;
-    elementsWritten += fwrite(&maxEndPosition, sizeof(maxEndPosition), 1, m_indexStream);
-    elementsWritten += fwrite(&startOffset,    sizeof(startOffset),    1, m_indexStream);
-    elementsWritten += fwrite(&startPosition,  sizeof(startPosition),  1, m_indexStream);
-    return ( elementsWritten == 3 );
+    elementsWritten += fwrite(&maxEndPosition, sizeof(maxEndPosition), 1, Resources.IndexStream);
+    elementsWritten += fwrite(&startOffset,    sizeof(startOffset),    1, Resources.IndexStream);
+    elementsWritten += fwrite(&startPosition,  sizeof(startPosition),  1, Resources.IndexStream);
+    if ( elementsWritten != 3 )
+        throw BamException("BamToolsIndex::WriteBlock", "could not write BTI block");
 }
 
-bool BamToolsIndex::WriteBlocks(const BtiBlockVector& blocks) {
-    bool writtenOk = true;
+void BamToolsIndex::WriteBlocks(const BtiBlockVector& blocks) {
     BtiBlockVector::const_iterator blockIter = blocks.begin();
     BtiBlockVector::const_iterator blockEnd  = blocks.end();
     for ( ; blockIter != blockEnd; ++blockIter )
-        writtenOk &= WriteBlock(*blockIter);
-    return writtenOk;
+        WriteBlock(*blockIter);
 }
 
-bool BamToolsIndex::WriteHeader(void) {
+void BamToolsIndex::WriteHeader(void) {
 
     size_t elementsWritten = 0;
 
     // write BTI index format 'magic number'
-    elementsWritten += fwrite(BamToolsIndex::BTI_MAGIC, 1, 4, m_indexStream);
+    elementsWritten += fwrite(BamToolsIndex::BTI_MAGIC, 1, 4, Resources.IndexStream);
 
     // write BTI index format version
     int32_t currentVersion = (int32_t)m_outputVersion;
     if ( m_isBigEndian ) SwapEndian_32(currentVersion);
-    elementsWritten += fwrite(&currentVersion, sizeof(currentVersion), 1, m_indexStream);
+    elementsWritten += fwrite(&currentVersion, sizeof(currentVersion), 1, Resources.IndexStream);
 
     // write block size
-    int32_t blockSize = m_blockSize;
+    uint32_t blockSize = m_blockSize;
     if ( m_isBigEndian ) SwapEndian_32(blockSize);
-    elementsWritten += fwrite(&blockSize, sizeof(blockSize), 1, m_indexStream);
+    elementsWritten += fwrite(&blockSize, sizeof(blockSize), 1, Resources.IndexStream);
 
     // write number of references
     int32_t numReferences = m_indexFileSummary.size();
     if ( m_isBigEndian ) SwapEndian_32(numReferences);
-    elementsWritten += fwrite(&numReferences, sizeof(numReferences), 1, m_indexStream);
+    elementsWritten += fwrite(&numReferences, sizeof(numReferences), 1, Resources.IndexStream);
 
-    // return success/failure of write
-    return ( elementsWritten == 7 );
+    if ( elementsWritten != 7 )
+        throw BamException("BamToolsIndex::WriteHeader", "could not write BTI header");
 }
 
-bool BamToolsIndex::WriteReferenceEntry(const BtiReferenceEntry& refEntry) {
-
-    size_t elementsWritten = 0;
+void BamToolsIndex::WriteReferenceEntry(const BtiReferenceEntry& refEntry) {
 
     // write number of blocks this reference
     uint32_t numBlocks = refEntry.Blocks.size();
     if ( m_isBigEndian ) SwapEndian_32(numBlocks);
-    elementsWritten += fwrite(&numBlocks, sizeof(numBlocks), 1, m_indexStream);
+    const size_t elementsWritten = fwrite(&numBlocks, sizeof(numBlocks), 1, Resources.IndexStream);
+    if ( elementsWritten != 1 )
+        throw BamException("BamToolsIndex::WriteReferenceEntry", "could not write number of blocks");
 
     // write actual block entries
-    const bool blocksOk = WriteBlocks(refEntry.Blocks);
-
-    // return success/fail
-    return ( elementsWritten == 1) && blocksOk;
+    WriteBlocks(refEntry.Blocks);
 }

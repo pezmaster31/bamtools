@@ -2,7 +2,7 @@
 // BamWriter_p.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 24 February 2011 (DB)
+// Last modified: 6 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -26,6 +26,9 @@
 #include <vector>
 
 namespace BamTools {
+
+class BamAlignment;
+
 namespace Internal {
 
 class BamWriterPrivate {
@@ -38,18 +41,21 @@ class BamWriterPrivate {
     // interface methods
     public:
         void Close(void);
+        std::string GetErrorString(void) const;
         bool IsOpen(void) const;
         bool Open(const std::string& filename,
                   const std::string& samHeaderText,
                   const BamTools::RefVector& referenceSequences);
-        void SaveAlignment(const BamAlignment& al);
+        bool SaveAlignment(const BamAlignment& al);
         void SetWriteCompressed(bool ok);
 
     // 'internal' methods
     public:
-        unsigned int CalculateMinimumBin(const int begin, int end) const;
+        uint32_t CalculateMinimumBin(const int begin, int end) const;
         void CreatePackedCigar(const std::vector<BamTools::CigarOp>& cigarOperations, std::string& packedCigar);
         void EncodeQuerySequence(const std::string& query, std::string& encodedQuery);
+        void WriteAlignment(const BamAlignment& al);
+        void WriteCoreAlignment(const BamAlignment& al);
         void WriteMagicNumber(void);
         void WriteReferences(const BamTools::RefVector& referenceSequences);
         void WriteSamHeaderText(const std::string& samHeaderText);
@@ -58,6 +64,7 @@ class BamWriterPrivate {
     private:
         BgzfStream m_stream;
         bool m_isBigEndian;
+        std::string m_errorString;
 };
 
 } // namespace Internal

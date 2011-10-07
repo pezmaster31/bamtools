@@ -2,12 +2,13 @@
 // BamStandardIndex.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 24 June 2011 (DB)
+// Last modified: 6 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the standardized BAM index format (".bai")
 // ***************************************************************************
 
 #include <api/BamAlignment.h>
+#include <api/internal/BamException_p.h>
 #include <api/internal/BamReader_p.h>
 #include <api/internal/BamStandardIndex_p.h>
 using namespace BamTools;
@@ -17,10 +18,13 @@ using namespace BamTools::Internal;
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
-#include <iostream>
+#include <sstream>
 using namespace std;
 
+// -----------------------------------
 // static BamStandardIndex constants
+// -----------------------------------
+
 const int BamStandardIndex::MAX_BIN               = 37450;  // =(8^6-1)/7+1
 const int BamStandardIndex::BAM_LIDX_SHIFT        = 14;
 const string BamStandardIndex::BAI_EXTENSION      = ".bai";
@@ -29,12 +33,36 @@ const int BamStandardIndex::SIZEOF_ALIGNMENTCHUNK = sizeof(uint64_t)*2;
 const int BamStandardIndex::SIZEOF_BINCORE        = sizeof(uint32_t) + sizeof(int32_t);
 const int BamStandardIndex::SIZEOF_LINEAROFFSET   = sizeof(uint64_t);
 
+// ----------------------------
+// RaiiWrapper implementation
+// ----------------------------
+
+BamStandardIndex::RaiiWrapper::RaiiWrapper(void)
+    : IndexStream(0)
+    , Buffer(0)
+{ }
+
+BamStandardIndex::RaiiWrapper::~RaiiWrapper(void) {
+
+    if ( IndexStream ) {
+        fclose(IndexStream);
+        IndexStream = 0;
+    }
+
+    if ( Buffer ) {
+        delete[] Buffer;
+        Buffer = 0;
+    }
+}
+
+// ---------------------------------
+// BamStandardIndex implementation
+// ---------------------------------
+
 // ctor
 BamStandardIndex::BamStandardIndex(Internal::BamReaderPrivate* reader)
     : BamIndex(reader)
-    , m_indexStream(0)
     , m_cacheMode(BamIndex::LimitedIndexCaching)
-    , m_buffer(0)
     , m_bufferLength(0)
 {
      m_isBigEndian = BamTools::SystemIsBigEndian();
@@ -45,14 +73,14 @@ BamStandardIndex::~BamStandardIndex(void) {
     CloseFile();
 }
 
-bool BamStandardIndex::AdjustRegion(const BamRegion& region, uint32_t& begin, uint32_t& end) {
+void BamStandardIndex::AdjustRegion(const BamRegion& region, uint32_t& begin, uint32_t& end) {
 
     // retrieve references from reader
     const RefVector& references = m_reader->GetReferenceData();
 
     // make sure left-bound position is valid
     if ( region.LeftPosition > references.at(region.LeftRefID).RefLength )
-        return false;
+        throw BamException("BamStandardIndex::AdjustRegion", "invalid region requested");
 
     // set region 'begin'
     begin = (unsigned int)region.LeftPosition;
@@ -64,9 +92,6 @@ bool BamStandardIndex::AdjustRegion(const BamRegion& region, uint32_t& begin, ui
 
     // otherwise, set region 'end' to last reference base
     else end = (unsigned int)references.at(region.LeftRefID).RefLength - 1;
-
-    // return success
-    return true;
 }
 
 void BamStandardIndex::CalculateCandidateBins(const uint32_t& begin,
@@ -85,14 +110,13 @@ void BamStandardIndex::CalculateCandidateBins(const uint32_t& begin,
     for (k = 4681 + (begin>>14); k <= 4681 + (end>>14); ++k) { candidateBins.insert(k); }
 }
 
-bool BamStandardIndex::CalculateCandidateOffsets(const BaiReferenceSummary& refSummary,
+void BamStandardIndex::CalculateCandidateOffsets(const BaiReferenceSummary& refSummary,
                                                  const uint64_t& minOffset,
                                                  set<uint16_t>& candidateBins,
                                                  vector<int64_t>& offsets)
 {
-    // attempt seek to first bin
-    if ( !Seek(refSummary.FirstBinFilePosition, SEEK_SET) )
-        return false;
+    // seek to first bin
+    Seek(refSummary.FirstBinFilePosition, SEEK_SET);
 
     // iterate over reference bins
     uint32_t binId;
@@ -101,8 +125,7 @@ bool BamStandardIndex::CalculateCandidateOffsets(const BaiReferenceSummary& refS
     for ( int i = 0; i < refSummary.NumBins; ++i ) {
 
         // read bin contents (if successful, alignment chunks are now in m_buffer)
-        if ( !ReadBinIntoBuffer(binId, numAlignmentChunks) )
-            return false;
+        ReadBinIntoBuffer(binId, numAlignmentChunks);
 
         // see if bin is a 'candidate bin'
         candidateBinIter = candidateBins.find(binId);
@@ -114,17 +137,17 @@ bool BamStandardIndex::CalculateCandidateOffsets(const BaiReferenceSummary& refS
         // otherwise, check bin's contents against for overlap
         else {
 
-            unsigned int offset = 0;
+            size_t offset = 0;
             uint64_t chunkStart;
             uint64_t chunkStop;
 
             // iterate over alignment chunks
-            for (int j = 0; j < numAlignmentChunks; ++j ) {
+            for ( int j = 0; j < numAlignmentChunks; ++j ) {
 
                 // read chunk start & stop from buffer
-                memcpy((char*)&chunkStart, m_buffer+offset, sizeof(uint64_t));
+                memcpy((char*)&chunkStart, Resources.Buffer+offset, sizeof(uint64_t));
                 offset += sizeof(uint64_t);
-                memcpy((char*)&chunkStop, m_buffer+offset, sizeof(uint64_t));
+                memcpy((char*)&chunkStop, Resources.Buffer+offset, sizeof(uint64_t));
                 offset += sizeof(uint64_t);
 
                 // swap endian-ness if necessary
@@ -147,9 +170,6 @@ bool BamStandardIndex::CalculateCandidateOffsets(const BaiReferenceSummary& refS
                 break;
         }
     }
-
-    // return success
-    return true;
 }
 
 uint64_t BamStandardIndex::CalculateMinOffset(const BaiReferenceSummary& refSummary,
@@ -178,10 +198,10 @@ void BamStandardIndex::CheckBufferSize(char*& buffer,
             delete[] buffer;
             buffer = new char[bufferLength];
         }
-    } catch ( std::bad_alloc ) {
-        cerr << "BamStandardIndex ERROR: out of memory when allocating "
-             << requestedBytes << " byes" << endl;
-        exit(1);
+    } catch ( std::bad_alloc&  ) {
+        stringstream s("");
+        s << "out of memory when allocating " << requestedBytes << " bytes";
+        throw BamException("BamStandardIndex::CheckBufferSize", s.str());
     }
 }
 
@@ -195,31 +215,24 @@ void BamStandardIndex::CheckBufferSize(unsigned char*& buffer,
             delete[] buffer;
             buffer = new unsigned char[bufferLength];
         }
-    } catch ( std::bad_alloc ) {
-        cerr << "BamStandardIndex ERROR: out of memory when allocating "
-             << requestedBytes << " byes" << endl;
-        exit(1);
+    } catch ( std::bad_alloc& ) {
+        stringstream s("");
+        s << "out of memory when allocating " << requestedBytes << " bytes";
+        throw BamException("BamStandardIndex::CheckBufferSize", s.str());
     }
 }
 
-bool BamStandardIndex::CheckMagicNumber(void) {
+void BamStandardIndex::CheckMagicNumber(void) {
 
     // check 'magic number' to see if file is BAI index
     char magic[4];
-    size_t elementsRead = fread(magic, sizeof(char), 4, m_indexStream);
-    if ( elementsRead != 4 ) {
-        cerr << "BamStandardIndex ERROR: could not read format 'magic number'" << endl;
-        return false;
-    }
+    const size_t elementsRead = fread(magic, sizeof(char), 4, Resources.IndexStream);
+    if ( elementsRead != 4 )
+        throw BamException("BamStandardIndex::CheckMagicNumber", "could not read BAI magic number");
 
     // compare to expected value
-    if ( strncmp(magic, BamStandardIndex::BAI_MAGIC, 4) != 0 ) {
-        cerr << "BamStandardIndex ERROR: invalid format" << endl;
-        return false;
-    }
-
-    // otherwise OK
-    return true;
+    if ( strncmp(magic, BamStandardIndex::BAI_MAGIC, 4) != 0 )
+        throw BamException("BamStandardIndex::CheckMagicNumber", "invalid BAI magic number");
 }
 
 void BamStandardIndex::ClearReferenceEntry(BaiReferenceEntry& refEntry) {
@@ -231,169 +244,176 @@ void BamStandardIndex::ClearReferenceEntry(BaiReferenceEntry& refEntry) {
 void BamStandardIndex::CloseFile(void) {
 
     // close file stream
-    if ( IsFileOpen() )
-        fclose(m_indexStream);
+    if ( IsFileOpen() ) {
+        fclose(Resources.IndexStream);
+        Resources.IndexStream = 0;
+    }
 
     // clear index file summary data
     m_indexFileSummary.clear();
 
     // clean up I/O buffer
-    delete[] m_buffer;
-    m_buffer = 0;
+    delete[] Resources.Buffer;
+    Resources.Buffer = 0;
     m_bufferLength = 0;
 }
 
 // builds index from associated BAM file & writes out to index file
 bool BamStandardIndex::Create(void) {
 
-    // return false if BamReader is invalid or not open
+    // skip if BamReader is invalid or not open
     if ( m_reader == 0 || !m_reader->IsOpen() ) {
-        cerr << "BamStandardIndex ERROR: BamReader is not open"
-             << ", aborting index creation" << endl;
+        SetErrorString("BamStandardIndex::Create", "could not create index: reader is not open");
         return false;
     }
 
     // rewind BamReader
     if ( !m_reader->Rewind() ) {
-        cerr << "BamStandardIndex ERROR: could not rewind BamReader to create index"
-             << ", aborting index creation" << endl;
+        const string readerError = m_reader->GetErrorString();
+        const string message = "could not create index: \n\t" + readerError;
+        SetErrorString("BamStandardIndex::Create", message);
         return false;
     }
 
-    // open new index file (read & write)
-    string indexFilename = m_reader->Filename() + Extension();
-    if ( !OpenFile(indexFilename, "w+b") ) {
-        cerr << "BamStandardIndex ERROR: could not open output index file: " << indexFilename
-             << ", aborting index creation" << endl;
-        return false;
-    }
+    try {
 
-    // initialize BaiFileSummary with number of references
-    const int& numReferences = m_reader->GetReferenceCount();
-    ReserveForSummary(numReferences);
+        // open new index file (read & write)
+        string indexFilename = m_reader->Filename() + Extension();
+        OpenFile(indexFilename, "w+b");
 
-    // initialize output file
-    bool createdOk = true;
-    createdOk &= WriteHeader();
+        // initialize BaiFileSummary with number of references
+        const int& numReferences = m_reader->GetReferenceCount();
+        ReserveForSummary(numReferences);
 
-    // set up bin, ID, offset, & coordinate markers
-    const uint32_t defaultValue = 0xffffffffu;
-    uint32_t currentBin    = defaultValue;
-    uint32_t lastBin       = defaultValue;
-    int32_t  currentRefID  = defaultValue;
-    int32_t  lastRefID     = defaultValue;
-    uint64_t currentOffset = (uint64_t)m_reader->Tell();
-    uint64_t lastOffset    = currentOffset;
-    int32_t  lastPosition  = defaultValue;
+        // initialize output file
+        WriteHeader();
 
-    // iterate through alignments in BAM file
-    BamAlignment al;
-    BaiReferenceEntry refEntry;
-    while ( m_reader->LoadNextAlignment(al) ) {
+        // set up bin, ID, offset, & coordinate markers
+        const uint32_t defaultValue = 0xffffffffu;
+        uint32_t currentBin    = defaultValue;
+        uint32_t lastBin       = defaultValue;
+        int32_t  currentRefID  = defaultValue;
+        int32_t  lastRefID     = defaultValue;
+        uint64_t currentOffset = (uint64_t)m_reader->Tell();
+        uint64_t lastOffset    = currentOffset;
+        int32_t  lastPosition  = defaultValue;
 
-        // changed to new reference
-        if ( lastRefID != al.RefID ) {
+        // iterate through alignments in BAM file
+        BamAlignment al;
+        BaiReferenceEntry refEntry;
+        while ( m_reader->LoadNextAlignment(al) ) {
 
-            // if not first reference, save previous reference data
-            if ( lastRefID != (int32_t)defaultValue ) {
+            // changed to new reference
+            if ( lastRefID != al.RefID ) {
 
-                SaveAlignmentChunkToBin(refEntry.Bins, currentBin, currentOffset, lastOffset);
-                createdOk &= WriteReferenceEntry(refEntry);
-                ClearReferenceEntry(refEntry);
+                // if not first reference, save previous reference data
+                if ( lastRefID != (int32_t)defaultValue ) {
 
-                // write any empty references between (but *NOT* including) lastRefID & al.RefID
-                for ( int i = lastRefID+1; i < al.RefID; ++i ) {
-                    BaiReferenceEntry emptyEntry(i);
-                    createdOk &= WriteReferenceEntry(emptyEntry);
+                    SaveAlignmentChunkToBin(refEntry.Bins, currentBin, currentOffset, lastOffset);
+                    WriteReferenceEntry(refEntry);
+                    ClearReferenceEntry(refEntry);
+
+                    // write any empty references between (but *NOT* including) lastRefID & al.RefID
+                    for ( int i = lastRefID+1; i < al.RefID; ++i ) {
+                        BaiReferenceEntry emptyEntry(i);
+                        WriteReferenceEntry(emptyEntry);
+                    }
+
+                    // update bin markers
+                    currentOffset = lastOffset;
+                    currentBin    = al.Bin;
+                    lastBin       = al.Bin;
+                    currentRefID  = al.RefID;
                 }
 
-                // update bin markers
+                // otherwise, this is first pass
+                // be sure to write any empty references up to (but *NOT* including) current RefID
+                else {
+                    for ( int i = 0; i < al.RefID; ++i ) {
+                        BaiReferenceEntry emptyEntry(i);
+                        WriteReferenceEntry(emptyEntry);
+                    }
+                }
+
+                // update reference markers
+                refEntry.ID = al.RefID;
+                lastRefID   = al.RefID;
+                lastBin     = defaultValue;
+            }
+
+            // if lastPosition greater than current alignment position - file not sorted properly
+            else if ( lastPosition > al.Position ) {
+                stringstream s("");
+                s << "BAM file is not properly sorted by coordinate" << endl
+                  << "Current alignment position: " << al.Position
+                  << " < previous alignment position: " << lastPosition
+                  << " on reference ID: " << al.RefID << endl;
+                SetErrorString("BamStandardIndex::Create", s.str());
+                return false;
+            }
+
+            // if alignment's ref ID is valid & its bin is not a 'leaf'
+            if ( (al.RefID >= 0) && (al.Bin < 4681) )
+                SaveLinearOffsetEntry(refEntry.LinearOffsets, al.Position, al.GetEndPosition(), lastOffset);
+
+            // changed to new BAI bin
+            if ( al.Bin != lastBin ) {
+
+                // if not first bin on reference, save previous bin data
+                if ( currentBin != defaultValue )
+                    SaveAlignmentChunkToBin(refEntry.Bins, currentBin, currentOffset, lastOffset);
+
+                // update markers
                 currentOffset = lastOffset;
                 currentBin    = al.Bin;
                 lastBin       = al.Bin;
                 currentRefID  = al.RefID;
+
+                // if invalid RefID, break out
+                if ( currentRefID < 0 )
+                    break;
             }
 
-            // first pass
-            // write any empty references up to (but *NOT* including) al.RefID
-            else {
-                for ( int i = 0; i < al.RefID; ++i ) {
-                    BaiReferenceEntry emptyEntry(i);
-                    createdOk &= WriteReferenceEntry(emptyEntry);
-                }
+            // make sure that current file pointer is beyond lastOffset
+            if ( m_reader->Tell() <= (int64_t)lastOffset ) {
+                SetErrorString("BamStandardIndex::Create", "calculating offsets failed");
+                return false;
             }
 
-            // update reference markers
-            refEntry.ID = al.RefID;
-            lastRefID   = al.RefID;
-            lastBin     = defaultValue;
+            // update lastOffset & lastPosition
+            lastOffset   = m_reader->Tell();
+            lastPosition = al.Position;
         }
 
-        // if lastPosition greater than current alignment position - file not sorted properly
-        else if ( lastPosition > al.Position ) {
-            cerr << "BamStandardIndex ERROR: BAM file is not properly sorted by coordinate"
-                 << ", aborting index creation"
-                 << endl
-                 << "At alignment: " << al.Name
-                 << " : previous position " << lastPosition
-                 << " > this alignment position " << al.Position
-                 << " on reference id: " << al.RefID << endl;
-            return false;
+        // after finishing alignments, if any data was read, check:
+        if ( currentRefID >= 0 ) {
+
+            // store last alignment chunk to its bin, then write last reference entry with data
+            SaveAlignmentChunkToBin(refEntry.Bins, currentBin, currentOffset, lastOffset);
+            WriteReferenceEntry(refEntry);
+
+            // then write any empty references remaining at end of file
+            for ( int i = currentRefID+1; i < numReferences; ++i ) {
+                BaiReferenceEntry emptyEntry(i);
+                WriteReferenceEntry(emptyEntry);
+            }
         }
 
-        // if alignment's ref ID is valid & its bin is not a 'leaf'
-        if ( (al.RefID >= 0) && (al.Bin < 4681) )
-            SaveLinearOffsetEntry(refEntry.LinearOffsets, al.Position, al.GetEndPosition(), lastOffset);
-
-        // changed to new BAI bin
-        if ( al.Bin != lastBin ) {
-
-            // if not first bin on reference, save previous bin data
-            if ( currentBin != defaultValue )
-                SaveAlignmentChunkToBin(refEntry.Bins, currentBin, currentOffset, lastOffset);
-
-            // update markers
-            currentOffset = lastOffset;
-            currentBin    = al.Bin;
-            lastBin       = al.Bin;
-            currentRefID  = al.RefID;
-
-            // if invalid RefID, break out
-            if ( currentRefID < 0 )
-                break;
-        }
-
-        // make sure that current file pointer is beyond lastOffset
-        if ( m_reader->Tell() <= (int64_t)lastOffset ) {
-            cerr << "BamStandardIndex ERROR: calculating offsets failed"
-                 << ", aborting index creation" << endl;
-            return false;
-        }
-
-        // update lastOffset & lastPosition
-        lastOffset   = m_reader->Tell();
-        lastPosition = al.Position;
+    } catch ( BamException& e) {
+        m_errorString = e.what();
+        return false;
     }
 
-    // after finishing alignments, if any data was read, check:
-    if ( currentRefID >= 0 ) {
-
-        // store last alignment chunk to its bin, then write last reference entry with data
-        SaveAlignmentChunkToBin(refEntry.Bins, currentBin, currentOffset, lastOffset);
-        createdOk &= WriteReferenceEntry(refEntry);
-
-        // then write any empty references remaining at end of file
-        for ( int i = currentRefID+1; i < numReferences; ++i ) {
-            BaiReferenceEntry emptyEntry(i);
-            createdOk &= WriteReferenceEntry(emptyEntry);
-        }
+    // rewind BamReader
+    if ( !m_reader->Rewind() ) {
+        const string readerError = m_reader->GetErrorString();
+        const string message = "could not create index: \n\t" + readerError;
+        SetErrorString("BamStandardIndex::Create", message);
+        return false;
     }
 
-    // rewind reader now that we're done building
-    createdOk &= m_reader->Rewind();
-
-    // return result
-    return createdOk;
+    // return success
+    return true;
 }
 
 // returns format's file extension
@@ -401,11 +421,11 @@ const string BamStandardIndex::Extension(void) {
     return BamStandardIndex::BAI_EXTENSION;
 }
 
-bool BamStandardIndex::GetOffset(const BamRegion& region, int64_t& offset, bool* hasAlignmentsInRegion) {
+void BamStandardIndex::GetOffset(const BamRegion& region, int64_t& offset, bool* hasAlignmentsInRegion) {
 
     // cannot calculate offsets if unknown/invalid reference ID requested
     if ( region.LeftRefID < 0 || region.LeftRefID >= (int)m_indexFileSummary.size() )
-        return false;
+        throw BamException("BamStandardIndex::GetOffset", "invalid reference ID requested");
 
     // retrieve index summary for left bound reference
     const BaiReferenceSummary& refSummary = m_indexFileSummary.at(region.LeftRefID);
@@ -413,10 +433,7 @@ bool BamStandardIndex::GetOffset(const BamRegion& region, int64_t& offset, bool*
     // set up region boundaries based on actual BamReader data
     uint32_t begin;
     uint32_t end;
-    if ( !AdjustRegion(region, begin, end) ) {
-        cerr << "BamStandardIndex ERROR: cannot calculate offsets on invalid region" << endl;
-        return false;
-    }
+    AdjustRegion(region, begin, end);
 
     // retrieve all candidate bin IDs for region
     set<uint16_t> candidateBins;
@@ -427,18 +444,11 @@ bool BamStandardIndex::GetOffset(const BamRegion& region, int64_t& offset, bool*
     const uint64_t& minOffset = CalculateMinOffset(refSummary, begin);
 
     // attempt to use reference summary, minOffset, & candidateBins to calculate offsets
-    // no data should not be error
+    // no data should not be error, just bail
     vector<int64_t> offsets;
-    if ( !CalculateCandidateOffsets(refSummary, minOffset, candidateBins, offsets) ) {
-        cerr << "BamStandardIndex ERROR: could not calculate candidate offsets for requested region" << endl;
-        return false;
-    }
-
-    // if not candidate offsets are present in the indexed (most likely sparce coverage)
-    // then silently bail
-    if( offsets.size() == 0 ) {
-        return false;
-    }
+    CalculateCandidateOffsets(refSummary, minOffset, candidateBins, offsets);
+    if ( offsets.empty() )
+        return;
     
     // ensure that offsets are sorted before processing
     sort( offsets.begin(), offsets.end() );
@@ -459,9 +469,9 @@ bool BamStandardIndex::GetOffset(const BamRegion& region, int64_t& offset, bool*
         // attempt seek to candidate offset
         const int64_t& candidateOffset = (*offsetIter);
         if ( !m_reader->Seek(candidateOffset) ) {
-            cerr << "BamStandardIndex ERROR: could not jump"
-                 << ", there was a problem seeking in BAM file" << endl;
-            return false;
+            const string readerError = m_reader->GetErrorString();
+            const string message = "could not seek in BAM file: \n\t" + readerError;
+            throw BamException("BamToolsIndex::GetOffset", message);
         }
 
         // load first available alignment, setting flag to true if data exists
@@ -474,13 +484,10 @@ bool BamStandardIndex::GetOffset(const BamRegion& region, int64_t& offset, bool*
         } else count = step;
     }
 
-    // seek back to the offset before the 'current offset' (to cover overlaps)
+    // step back to the offset before the 'current offset' (to make sure we cover overlaps)
     if ( offsetIter != offsets.begin() )
         --offsetIter;
     offset = (*offsetIter);
-
-    // return succes
-    return true;
 }
 
 // returns whether reference has alignments or no
@@ -492,7 +499,7 @@ bool BamStandardIndex::HasAlignments(const int& referenceID) const {
 }
 
 bool BamStandardIndex::IsFileOpen(void) const {
-    return ( m_indexStream != 0 );
+    return ( Resources.IndexStream != 0 );
 }
 
 // attempts to use index data to jump to @region, returns success/fail
@@ -504,15 +511,18 @@ bool BamStandardIndex::Jump(const BamRegion& region, bool* hasAlignmentsInRegion
     // clear out flag
     *hasAlignmentsInRegion = false;
 
-    // skip if reader is not valid or is not open
-    if ( m_reader == 0 || !m_reader->IsOpen() )
+    // skip if invalid reader or not open
+    if ( m_reader == 0 || !m_reader->IsOpen() ) {
+        SetErrorString("BamStandardIndex::Jump", "could not jump: reader is not open");
         return false;
+    }
 
     // calculate nearest offset to jump to
     int64_t offset;
-    if ( !GetOffset(region, offset, hasAlignmentsInRegion) ) {
-        cerr << "BamStandardIndex ERROR: could not jump"
-             << ", unable to calculate offset for specified region" << endl;
+    try {
+        GetOffset(region, offset, hasAlignmentsInRegion);
+    } catch ( BamException& e ) {
+        m_errorString = e.what();
         return false;
     }
 
@@ -528,31 +538,24 @@ bool BamStandardIndex::Jump(const BamRegion& region, bool* hasAlignmentsInRegion
 // loads existing data from file into memory
 bool BamStandardIndex::Load(const std::string& filename) {
 
-    // attempt open index file (read-only)
-    if ( !OpenFile(filename, "rb") ) {
-        cerr << "BamStandardIndex ERROR: could not open input index file: " << filename
-             << ", aborting index load" << endl;
+    try {
+
+        // attempt to open file (read-only)
+        OpenFile(filename, "rb");
+
+        // validate format
+        CheckMagicNumber();
+
+        // load in-memory summary of index data
+        SummarizeIndexFile();
+
+        // return success
+        return true;
+
+    } catch ( BamException& e ) {
+        m_errorString = e.what();
         return false;
     }
-
-    // if invalid format 'magic number', close & return failure
-    if ( !CheckMagicNumber() ) {
-        cerr << "BamStandardIndex ERROR: unexpected format for index file: " << filename
-             << ", aborting index load" << endl;
-        CloseFile();
-        return false;
-    }
-
-    // attempt to load index file summary, return success/failure
-    if ( !SummarizeIndexFile() ) {
-        cerr << "BamStandardIndex ERROR: could not generate a summary of index file " << filename
-             << ", aborting index load" << endl;
-        CloseFile();
-        return false;
-    }
-
-    // if we get here, index summary is loaded OK
-    return true;
 }
 
 uint64_t BamStandardIndex::LookupLinearOffset(const BaiReferenceSummary& refSummary, const int& index) {
@@ -560,13 +563,11 @@ uint64_t BamStandardIndex::LookupLinearOffset(const BaiReferenceSummary& refSumm
     // attempt seek to proper index file position
     const int64_t linearOffsetFilePosition = (int64_t)refSummary.FirstLinearOffsetFilePosition +
                                              index*BamStandardIndex::SIZEOF_LINEAROFFSET;
-    if ( !Seek(linearOffsetFilePosition, SEEK_SET) )
-        return 0;
+    Seek(linearOffsetFilePosition, SEEK_SET);
 
     // read linear offset from BAI file
-    uint64_t linearOffset(0);
-    if ( !ReadLinearOffset(linearOffset) )
-        return 0;
+    uint64_t linearOffset;
+    ReadLinearOffset(linearOffset);
     return linearOffset;
 }
 
@@ -611,82 +612,85 @@ void BamStandardIndex::MergeAlignmentChunks(BaiAlignmentChunkVector& chunks) {
     chunks = mergedChunks;
 }
 
-bool BamStandardIndex::OpenFile(const std::string& filename, const char* mode) {
+void BamStandardIndex::OpenFile(const std::string& filename, const char* mode) {
 
     // make sure any previous index file is closed
     CloseFile();
 
     // attempt to open file
-    m_indexStream = fopen(filename.c_str(), mode);
-    return IsFileOpen();
+    Resources.IndexStream = fopen(filename.c_str(), mode);
+    if ( !IsFileOpen() ) {
+        const string message = string("could not open file: ") + filename;
+        throw BamException("BamStandardIndex::OpenFile", message);
+    }
 }
 
-bool BamStandardIndex::ReadBinID(uint32_t& binId) {
-    size_t elementsRead = 0;
-    elementsRead += fread(&binId, sizeof(binId), 1, m_indexStream);
+void BamStandardIndex::ReadBinID(uint32_t& binId) {
+    const size_t elementsRead = fread(&binId, sizeof(binId), 1, Resources.IndexStream);
     if ( m_isBigEndian ) SwapEndian_32(binId);
-    return ( elementsRead == 1 );
+    if ( elementsRead != 1 )
+        throw BamException("BamStandardIndex::ReadBinID", "could not read BAI bin ID");
 }
 
-bool BamStandardIndex::ReadBinIntoBuffer(uint32_t& binId, int32_t& numAlignmentChunks) {
-
-    bool readOk = true;
+void BamStandardIndex::ReadBinIntoBuffer(uint32_t& binId, int32_t& numAlignmentChunks) {
 
     // read bin header
-    readOk &= ReadBinID(binId);
-    readOk &= ReadNumAlignmentChunks(numAlignmentChunks);
+    ReadBinID(binId);
+    ReadNumAlignmentChunks(numAlignmentChunks);
 
     // read bin contents
     const unsigned int bytesRequested = numAlignmentChunks*BamStandardIndex::SIZEOF_ALIGNMENTCHUNK;
-    readOk &= ReadIntoBuffer(bytesRequested);
-
-    // return success/failure
-    return readOk;
+    ReadIntoBuffer(bytesRequested);
 }
 
-bool BamStandardIndex::ReadIntoBuffer(const unsigned int& bytesRequested) {
+void BamStandardIndex::ReadIntoBuffer(const unsigned int& bytesRequested) {
 
     // ensure that our buffer is big enough for request
-    BamStandardIndex::CheckBufferSize(m_buffer, m_bufferLength, bytesRequested);
+    BamStandardIndex::CheckBufferSize(Resources.Buffer, m_bufferLength, bytesRequested);
 
     // read from BAI file stream
-    size_t bytesRead = fread( m_buffer, sizeof(char), bytesRequested, m_indexStream );
-    return ( bytesRead == (size_t)bytesRequested );
+    const size_t bytesRead = fread( Resources.Buffer, sizeof(char), bytesRequested, Resources.IndexStream );
+    if ( bytesRead != (size_t)bytesRequested ) {
+        stringstream s("");
+        s << "expected to read: " << bytesRequested << " bytes, "
+          << "but instead read: " << bytesRead;
+        throw BamException("BamStandardIndex::ReadIntoBuffer", s.str());
+    }
 }
 
-bool BamStandardIndex::ReadLinearOffset(uint64_t& linearOffset) {
-    size_t elementsRead = 0;
-    elementsRead += fread(&linearOffset, sizeof(linearOffset), 1, m_indexStream);
+void BamStandardIndex::ReadLinearOffset(uint64_t& linearOffset) {
+    const size_t elementsRead = fread(&linearOffset, sizeof(linearOffset), 1, Resources.IndexStream);
     if ( m_isBigEndian ) SwapEndian_64(linearOffset);
-    return ( elementsRead == 1 );
+    if ( elementsRead != 1 )
+        throw BamException("BamStandardIndex::ReadLinearOffset", "could not read BAI linear offset");
 }
 
-bool BamStandardIndex::ReadNumAlignmentChunks(int& numAlignmentChunks) {
-    size_t elementsRead = 0;
-    elementsRead += fread(&numAlignmentChunks, sizeof(numAlignmentChunks), 1, m_indexStream);
+void BamStandardIndex::ReadNumAlignmentChunks(int& numAlignmentChunks) {
+    const size_t elementsRead = fread(&numAlignmentChunks, sizeof(numAlignmentChunks), 1, Resources.IndexStream);
     if ( m_isBigEndian ) SwapEndian_32(numAlignmentChunks);
-    return ( elementsRead == 1 );
+    if ( elementsRead != 1 )
+        throw BamException("BamStandardIndex::ReadNumAlignmentChunks", "could not read BAI chunk count");
 }
 
-bool BamStandardIndex::ReadNumBins(int& numBins) {
-    size_t elementsRead = 0;
-    elementsRead += fread(&numBins, sizeof(numBins), 1, m_indexStream);
+void BamStandardIndex::ReadNumBins(int& numBins) {
+    const size_t elementsRead = fread(&numBins, sizeof(numBins), 1, Resources.IndexStream);
     if ( m_isBigEndian ) SwapEndian_32(numBins);
-    return ( elementsRead == 1 );
+    if ( elementsRead != 1 )
+        throw BamException("BamStandardIndex::ReadNumBins", "could not read BAI bin count");
 }
 
-bool BamStandardIndex::ReadNumLinearOffsets(int& numLinearOffsets) {
-    size_t elementsRead = 0;
-    elementsRead += fread(&numLinearOffsets, sizeof(numLinearOffsets), 1, m_indexStream);
+void BamStandardIndex::ReadNumLinearOffsets(int& numLinearOffsets) {
+    const size_t elementsRead = fread(&numLinearOffsets, sizeof(numLinearOffsets), 1, Resources.IndexStream);
     if ( m_isBigEndian ) SwapEndian_32(numLinearOffsets);
-    return ( elementsRead == 1 );
+    if ( elementsRead != 1 )
+        throw BamException("BamStandardIndex::ReadNumAlignmentChunks", "could not read BAI linear offset count");
 }
 
-bool BamStandardIndex::ReadNumReferences(int& numReferences) {
-    size_t elementsRead = 0;
-    elementsRead += fread(&numReferences, sizeof(numReferences), 1, m_indexStream);
+void BamStandardIndex::ReadNumReferences(int& numReferences) {
+    const size_t elementsRead = fread(&numReferences, sizeof(numReferences), 1, Resources.IndexStream);
     if ( m_isBigEndian ) SwapEndian_32(numReferences);
-    return ( elementsRead == 1 );
+    if ( elementsRead != 1 )
+        throw BamException("BamStandardIndex::ReadNumReferences", "could not read reference count");
 }
 
 void BamStandardIndex::ReserveForSummary(const int& numReferences) {
@@ -695,14 +699,12 @@ void BamStandardIndex::ReserveForSummary(const int& numReferences) {
 }
 
 void BamStandardIndex::SaveAlignmentChunkToBin(BaiBinMap& binMap,
-                                    const uint32_t& currentBin,
-                                    const uint64_t& currentOffset,
-                                    const uint64_t& lastOffset)
+                                               const uint32_t& currentBin,
+                                               const uint64_t& currentOffset,
+                                               const uint64_t& lastOffset)
 {
     // create new alignment chunk
     BaiAlignmentChunk newChunk(currentOffset, lastOffset);
-
-
 
     // if no entry exists yet for this bin, create one and store alignment chunk
     BaiBinMap::iterator binIter = binMap.find(currentBin);
@@ -754,8 +756,9 @@ void BamStandardIndex::SaveLinearOffsetsSummary(const int& refId, const int& num
 }
 
 // seek to position in index file stream
-bool BamStandardIndex::Seek(const int64_t& position, const int& origin) {
-    return ( fseek64(m_indexStream, position, origin) == 0 );
+void BamStandardIndex::Seek(const int64_t& position, const int& origin) {
+    if ( fseek64(Resources.IndexStream, position, origin) != 0 )
+        throw BamException("BamStandardIndex::Seek", "could not seek in BAI file");
 }
 
 // change the index caching behavior
@@ -764,99 +767,77 @@ void BamStandardIndex::SetCacheMode(const BamIndex::IndexCacheMode& mode) {
     // do nothing else here ? cache mode will be ignored from now on, most likely
 }
 
-bool BamStandardIndex::SkipBins(const int& numBins) {
+void BamStandardIndex::SkipBins(const int& numBins) {
     uint32_t binId;
     int32_t numAlignmentChunks;
-    bool skippedOk = true;
     for (int i = 0; i < numBins; ++i)
-        skippedOk &= ReadBinIntoBuffer(binId, numAlignmentChunks); // results & buffer ignored
-    return skippedOk;
+        ReadBinIntoBuffer(binId, numAlignmentChunks); // results & buffer ignored
 }
 
-bool BamStandardIndex::SkipLinearOffsets(const int& numLinearOffsets) {
+void BamStandardIndex::SkipLinearOffsets(const int& numLinearOffsets) {
     const unsigned int bytesRequested = numLinearOffsets*BamStandardIndex::SIZEOF_LINEAROFFSET;
-    return ReadIntoBuffer(bytesRequested);
+    ReadIntoBuffer(bytesRequested);
 }
 
 void BamStandardIndex::SortLinearOffsets(BaiLinearOffsetVector& linearOffsets) {
     sort( linearOffsets.begin(), linearOffsets.end() );
 }
 
-bool BamStandardIndex::SummarizeBins(BaiReferenceSummary& refSummary) {
+void BamStandardIndex::SummarizeBins(BaiReferenceSummary& refSummary) {
 
     // load number of bins
     int numBins;
-    if ( !ReadNumBins(numBins) )
-        return false;
+    ReadNumBins(numBins);
 
     // store bins summary for this reference
     refSummary.NumBins = numBins;
     refSummary.FirstBinFilePosition = Tell();
 
-    // attempt skip reference bins, return success/failure
-    if ( !SkipBins(numBins) )
-        return false;
-
-    // if we get here, bin summarized OK
-    return true;
+    // skip this reference's bins
+    SkipBins(numBins);
 }
 
-bool BamStandardIndex::SummarizeIndexFile(void) {
+void BamStandardIndex::SummarizeIndexFile(void) {
 
     // load number of reference sequences
     int numReferences;
-    if ( !ReadNumReferences(numReferences) )
-        return false;
+    ReadNumReferences(numReferences);
 
     // initialize file summary data
     ReserveForSummary(numReferences);
 
     // iterate over reference entries
-    bool loadedOk = true;
     BaiFileSummary::iterator summaryIter = m_indexFileSummary.begin();
     BaiFileSummary::iterator summaryEnd  = m_indexFileSummary.end();
     for ( int i = 0; summaryIter != summaryEnd; ++summaryIter, ++i )
-        loadedOk &= SummarizeReference(*summaryIter);
-
-    // return result
-    return loadedOk;
+        SummarizeReference(*summaryIter);
 }
 
-bool BamStandardIndex::SummarizeLinearOffsets(BaiReferenceSummary& refSummary) {
+void BamStandardIndex::SummarizeLinearOffsets(BaiReferenceSummary& refSummary) {
 
     // load number of linear offsets
     int numLinearOffsets;
-    if ( !ReadNumLinearOffsets(numLinearOffsets) )
-        return false;
+    ReadNumLinearOffsets(numLinearOffsets);
 
     // store bin summary data for this reference
     refSummary.NumLinearOffsets = numLinearOffsets;
     refSummary.FirstLinearOffsetFilePosition = Tell();
 
     // skip linear offsets in index file
-    if ( !SkipLinearOffsets(numLinearOffsets) )
-        return false;
-
-    // if get here, linear offsets summarized OK
-    return true;
+    SkipLinearOffsets(numLinearOffsets);
 }
 
-bool BamStandardIndex::SummarizeReference(BaiReferenceSummary& refSummary) {
-
-    bool loadedOk = true;
-    loadedOk &= SummarizeBins(refSummary);
-    loadedOk &= SummarizeLinearOffsets(refSummary);
-    return loadedOk;
+void BamStandardIndex::SummarizeReference(BaiReferenceSummary& refSummary) {
+    SummarizeBins(refSummary);
+    SummarizeLinearOffsets(refSummary);
 }
 
 // return position of file pointer in index file stream
 int64_t BamStandardIndex::Tell(void) const {
-    return ftell64(m_indexStream);
+    return ftell64(Resources.IndexStream);
 }
 
-bool BamStandardIndex::WriteAlignmentChunk(const BaiAlignmentChunk& chunk) {
-
-    size_t elementsWritten = 0;
+void BamStandardIndex::WriteAlignmentChunk(const BaiAlignmentChunk& chunk) {
 
     // localize alignment chunk offsets
     uint64_t start = chunk.Start;
@@ -869,92 +850,81 @@ bool BamStandardIndex::WriteAlignmentChunk(const BaiAlignmentChunk& chunk) {
     }
 
     // write to index file
-    elementsWritten += fwrite(&start, sizeof(start), 1, m_indexStream);
-    elementsWritten += fwrite(&stop,  sizeof(stop),  1, m_indexStream);
-
-    // return success/failure of write
-    return ( elementsWritten == 2 );
+    size_t elementsWritten = 0;
+    elementsWritten += fwrite(&start, sizeof(start), 1, Resources.IndexStream);
+    elementsWritten += fwrite(&stop,  sizeof(stop),  1, Resources.IndexStream);
+    if ( elementsWritten != 2 )
+        throw BamException("BamStandardIndex::WriteAlignmentChunk", "could not write BAI alignment chunk");
 }
 
-bool BamStandardIndex::WriteAlignmentChunks(BaiAlignmentChunkVector& chunks) {
+void BamStandardIndex::WriteAlignmentChunks(BaiAlignmentChunkVector& chunks) {
 
     // make sure chunks are merged (simplified) before writing & saving summary
     MergeAlignmentChunks(chunks);
 
-    size_t elementsWritten = 0;
-
     // write chunks
     int32_t chunkCount = chunks.size();
     if ( m_isBigEndian ) SwapEndian_32(chunkCount);
-    elementsWritten += fwrite(&chunkCount, sizeof(chunkCount), 1, m_indexStream);
+    const size_t elementsWritten = fwrite(&chunkCount, sizeof(chunkCount), 1, Resources.IndexStream);
+    if ( elementsWritten != 1 )
+        throw BamException("BamStandardIndex::WriteAlignmentChunks", "could not write BAI chunk count");
 
     // iterate over chunks
-    bool chunksOk = true;
     BaiAlignmentChunkVector::const_iterator chunkIter = chunks.begin();
     BaiAlignmentChunkVector::const_iterator chunkEnd  = chunks.end();
     for ( ; chunkIter != chunkEnd; ++chunkIter )
-        chunksOk &= WriteAlignmentChunk( (*chunkIter) );
-
-    // return success/failure of write
-    return ( (elementsWritten == 1) && chunksOk );
+        WriteAlignmentChunk( (*chunkIter) );
 }
 
-bool BamStandardIndex::WriteBin(const uint32_t& binId, BaiAlignmentChunkVector& chunks) {
-
-    size_t elementsWritten = 0;
+void BamStandardIndex::WriteBin(const uint32_t& binId, BaiAlignmentChunkVector& chunks) {
 
     // write BAM bin ID
     uint32_t binKey = binId;
     if ( m_isBigEndian ) SwapEndian_32(binKey);
-    elementsWritten += fwrite(&binKey, sizeof(binKey), 1, m_indexStream);
+    const size_t elementsWritten = fwrite(&binKey, sizeof(binKey), 1, Resources.IndexStream);
+    if ( elementsWritten != 1 )
+        throw BamException("BamStandardIndex::WriteBin", "could not write bin ID");
 
     // write bin's alignment chunks
-    bool chunksOk = WriteAlignmentChunks(chunks);
-
-    // return success/failure of write
-    return ( (elementsWritten == 1) && chunksOk );
+    WriteAlignmentChunks(chunks);
 }
 
-bool BamStandardIndex::WriteBins(const int& refId, BaiBinMap& bins) {
-
-    size_t elementsWritten = 0;
+void BamStandardIndex::WriteBins(const int& refId, BaiBinMap& bins) {
 
     // write number of bins
     int32_t binCount = bins.size();
     if ( m_isBigEndian ) SwapEndian_32(binCount);
-    elementsWritten += fwrite(&binCount, sizeof(binCount), 1, m_indexStream);
+    const size_t elementsWritten = fwrite(&binCount, sizeof(binCount), 1, Resources.IndexStream);
+    if ( elementsWritten != 1 )
+        throw BamException("BamStandardIndex::WriteBins", "could not write bin count");
 
     // save summary for reference's bins
     SaveBinsSummary(refId, bins.size());
 
     // iterate over bins
-    bool binsOk = true;
     BaiBinMap::iterator binIter = bins.begin();
     BaiBinMap::iterator binEnd  = bins.end();
     for ( ; binIter != binEnd; ++binIter )
-        binsOk &= WriteBin( (*binIter).first, (*binIter).second );
-
-    // return success/failure of write
-    return ( (elementsWritten == 1) && binsOk );
+        WriteBin( (*binIter).first, (*binIter).second );
 }
 
-bool BamStandardIndex::WriteHeader(void) {
+void BamStandardIndex::WriteHeader(void) {
 
     size_t elementsWritten = 0;
 
     // write magic number
-    elementsWritten += fwrite(BamStandardIndex::BAI_MAGIC, sizeof(char), 4, m_indexStream);
+    elementsWritten += fwrite(BamStandardIndex::BAI_MAGIC, sizeof(char), 4, Resources.IndexStream);
 
     // write number of reference sequences
     int32_t numReferences = m_indexFileSummary.size();
     if ( m_isBigEndian ) SwapEndian_32(numReferences);
-    elementsWritten += fwrite(&numReferences, sizeof(numReferences), 1, m_indexStream);
+    elementsWritten += fwrite(&numReferences, sizeof(numReferences), 1, Resources.IndexStream);
 
-    // return success/failure of write
-    return (elementsWritten == 5);
+    if ( elementsWritten != 5 )
+        throw BamException("BamStandardIndex::WriteHeader", "could not write BAI header");
 }
 
-bool BamStandardIndex::WriteLinearOffsets(const int& refId, BaiLinearOffsetVector& linearOffsets) {
+void BamStandardIndex::WriteLinearOffsets(const int& refId, BaiLinearOffsetVector& linearOffsets) {
 
     // make sure linear offsets are sorted before writing & saving summary
     SortLinearOffsets(linearOffsets);
@@ -964,7 +934,7 @@ bool BamStandardIndex::WriteLinearOffsets(const int& refId, BaiLinearOffsetVecto
     // write number of linear offsets
     int32_t offsetCount = linearOffsets.size();
     if ( m_isBigEndian ) SwapEndian_32(offsetCount);
-    elementsWritten += fwrite(&offsetCount, sizeof(offsetCount), 1, m_indexStream);
+    elementsWritten += fwrite(&offsetCount, sizeof(offsetCount), 1, Resources.IndexStream);
 
     // save summary for reference's linear offsets
     SaveLinearOffsetsSummary(refId, linearOffsets.size());
@@ -977,16 +947,14 @@ bool BamStandardIndex::WriteLinearOffsets(const int& refId, BaiLinearOffsetVecto
         // write linear offset
         uint64_t linearOffset = (*offsetIter);
         if ( m_isBigEndian ) SwapEndian_64(linearOffset);
-        elementsWritten += fwrite(&linearOffset, sizeof(linearOffset), 1, m_indexStream);
+        elementsWritten += fwrite(&linearOffset, sizeof(linearOffset), 1, Resources.IndexStream);
     }
 
-    // return success/failure of write
-    return ( elementsWritten == (size_t)(linearOffsets.size() + 1) );
+    if ( elementsWritten != (linearOffsets.size() + 1) )
+        throw BamException("BamStandardIndex::WriteLinearOffsets", "could not write BAI linear offsets");
 }
 
-bool BamStandardIndex::WriteReferenceEntry(BaiReferenceEntry& refEntry) {
-    bool refOk = true;
-    refOk &= WriteBins(refEntry.ID, refEntry.Bins);
-    refOk &= WriteLinearOffsets(refEntry.ID, refEntry.LinearOffsets);
-    return refOk;
+void BamStandardIndex::WriteReferenceEntry(BaiReferenceEntry& refEntry) {
+    WriteBins(refEntry.ID, refEntry.Bins);
+    WriteLinearOffsets(refEntry.ID, refEntry.LinearOffsets);
 }

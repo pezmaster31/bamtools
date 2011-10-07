@@ -2,7 +2,7 @@
 // SamFormatPrinter.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 23 December 2010 (DB)
+// Last modified: 6 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for printing formatted SAM header to string
 // ***************************************************************************
@@ -42,7 +42,6 @@ class SamFormatPrinter {
 
     // internal methods
     private:
-        const std::string FormatTag(const std::string& tag, const std::string& value) const;
         void PrintHD(std::stringstream& out) const;
         void PrintSQ(std::stringstream& out) const;
         void PrintRG(std::stringstream& out) const;

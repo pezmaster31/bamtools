@@ -2,84 +2,120 @@
 // BgzfStream_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 2 September 2011(DB)
+// Last modified: 6 October 2011(DB)
 // ---------------------------------------------------------------------------
 // Based on BGZF routines developed at the Broad Institute.
 // Provides the basic functionality for reading & writing BGZF files
 // Replaces the old BGZF.* files to avoid clashing with other toolkits
 // ***************************************************************************
 
+#include <api/internal/BamException_p.h>
 #include <api/internal/BgzfStream_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
 
 #include <cstring>
 #include <algorithm>
+#include <sstream>
 using namespace std;
+
+// ----------------------------
+// RaiiWrapper implementation
+// ----------------------------
+
+BgzfStream::RaiiWrapper::RaiiWrapper(void)
+    : Stream(0)
+{
+    CompressedBlock   = new char[Constants::BGZF_MAX_BLOCK_SIZE];
+    UncompressedBlock = new char[Constants::BGZF_DEFAULT_BLOCK_SIZE];
+}
+
+BgzfStream::RaiiWrapper::~RaiiWrapper(void) {
+
+    // clean up buffers
+    delete[] CompressedBlock;
+    delete[] UncompressedBlock;
+    CompressedBlock = 0;
+    UncompressedBlock = 0;
+
+    if ( Stream ) {
+        fflush(Stream);
+        fclose(Stream);
+        Stream = 0;
+    }
+}
+
+// ---------------------------
+// BgzfStream implementation
+// ---------------------------
 
 // constructor
 BgzfStream::BgzfStream(void)
-    : UncompressedBlockSize(Constants::BGZF_DEFAULT_BLOCK_SIZE)
-    , CompressedBlockSize(Constants::BGZF_MAX_BLOCK_SIZE)
-    , BlockLength(0)
+    : BlockLength(0)
     , BlockOffset(0)
     , BlockAddress(0)
     , IsOpen(false)
     , IsWriteOnly(false)
     , IsWriteCompressed(true)
-    , Stream(NULL)
-    , UncompressedBlock(NULL)
-    , CompressedBlock(NULL)
-{
-    try {
-        CompressedBlock   = new char[CompressedBlockSize];
-        UncompressedBlock = new char[UncompressedBlockSize];
-    } catch( std::bad_alloc& ba ) {
-        fprintf(stderr, "BgzfStream ERROR: unable to allocate memory\n");
-        exit(1);
-    }
-}
+{ }
 
 // destructor
 BgzfStream::~BgzfStream(void) {
-    if( CompressedBlock   ) delete[] CompressedBlock;
-    if( UncompressedBlock ) delete[] UncompressedBlock;
+    Close();
+}
+
+// checks BGZF block header
+bool BgzfStream::CheckBlockHeader(char* header) {
+    return (header[0] == Constants::GZIP_ID1 &&
+            header[1] == Constants::GZIP_ID2 &&
+            header[2] == Z_DEFLATED &&
+            (header[3] & Constants::FLG_FEXTRA) != 0 &&
+            BamTools::UnpackUnsignedShort(&header[10]) == Constants::BGZF_XLEN &&
+            header[12] == Constants::BGZF_ID1 &&
+            header[13] == Constants::BGZF_ID2 &&
+            BamTools::UnpackUnsignedShort(&header[14]) == Constants::BGZF_LEN );
 }
 
 // closes BGZF file
 void BgzfStream::Close(void) {
 
     // skip if file not open
-    if ( !IsOpen ) return;
+    if ( !IsOpen )
+        return;
 
     // if writing to file, flush the current BGZF block,
     // then write an empty block (as EOF marker)
     if ( IsWriteOnly ) {
         FlushBlock();
-        int blockLength = DeflateBlock();
-        fwrite(CompressedBlock, 1, blockLength, Stream);
+        const size_t blockLength = DeflateBlock();
+        fwrite(Resources.CompressedBlock, 1, blockLength, Resources.Stream);
     }
 
     // flush and close stream
-    fflush(Stream);
-    fclose(Stream);
+    fflush(Resources.Stream);
+    fclose(Resources.Stream);
+    Resources.Stream = 0;
 
-    // reset flags
-    IsWriteCompressed = true;
+    // reset initial state
+    BlockLength = 0;
+    BlockOffset = 0;
+    BlockAddress = 0;
     IsOpen = false;
+    IsWriteOnly = false;
+    IsWriteCompressed = true;
 }
 
 // compresses the current block
-int BgzfStream::DeflateBlock(void) {
+size_t BgzfStream::DeflateBlock(void) {
 
     // initialize the gzip header
-    char* buffer = CompressedBlock;
+    char* buffer = Resources.CompressedBlock;
     memset(buffer, 0, 18);
     buffer[0]  = Constants::GZIP_ID1;
-    buffer[1]  = (char)Constants::GZIP_ID2;
+    buffer[1]  = Constants::GZIP_ID2;
     buffer[2]  = Constants::CM_DEFLATE;
     buffer[3]  = Constants::FLG_FEXTRA;
-    buffer[9]  = (char)Constants::OS_UNKNOWN;
+    buffer[9]  = Constants::OS_UNKNOWN;
     buffer[10] = Constants::BGZF_XLEN;
     buffer[12] = Constants::BGZF_ID1;
     buffer[13] = Constants::BGZF_ID2;
@@ -90,8 +126,8 @@ int BgzfStream::DeflateBlock(void) {
 
     // loop to retry for blocks that do not compress enough
     int inputLength = BlockOffset;
-    int compressedLength = 0;
-    unsigned int bufferSize = CompressedBlockSize;
+    size_t compressedLength = 0;
+    const unsigned int bufferSize = Constants::BGZF_MAX_BLOCK_SIZE;
 
     while ( true ) {
 
@@ -99,82 +135,78 @@ int BgzfStream::DeflateBlock(void) {
         z_stream zs;
         zs.zalloc    = NULL;
         zs.zfree     = NULL;
-        zs.next_in   = (Bytef*)UncompressedBlock;
+        zs.next_in   = (Bytef*)Resources.UncompressedBlock;
         zs.avail_in  = inputLength;
         zs.next_out  = (Bytef*)&buffer[Constants::BGZF_BLOCK_HEADER_LENGTH];
-        zs.avail_out = bufferSize - Constants::BGZF_BLOCK_HEADER_LENGTH - Constants::BGZF_BLOCK_FOOTER_LENGTH;
+        zs.avail_out = bufferSize -
+                       Constants::BGZF_BLOCK_HEADER_LENGTH -
+                       Constants::BGZF_BLOCK_FOOTER_LENGTH;
 
         // initialize the zlib compression algorithm
-        if ( deflateInit2(&zs,
-                          compressionLevel,
-                          Z_DEFLATED,
-                          Constants::GZIP_WINDOW_BITS,
-                          Constants::Z_DEFAULT_MEM_LEVEL,
-                          Z_DEFAULT_STRATEGY) != Z_OK )
-        {
-            fprintf(stderr, "BgzfStream ERROR: zlib deflate initialization failed\n");
-            exit(1);
-        }
+        int status = deflateInit2(&zs,
+                                  compressionLevel,
+                                  Z_DEFLATED,
+                                  Constants::GZIP_WINDOW_BITS,
+                                  Constants::Z_DEFAULT_MEM_LEVEL,
+                                  Z_DEFAULT_STRATEGY);
+        if ( status != Z_OK )
+            throw BamException("BgzfStream::DeflateBlock", "zlib deflateInit2 failed");
 
         // compress the data
-        int status = deflate(&zs, Z_FINISH);
+        status = deflate(&zs, Z_FINISH);
+
+        // if not at stream end
         if ( status != Z_STREAM_END ) {
 
             deflateEnd(&zs);
 
-            // reduce the input length and try again
-            if ( status == Z_OK ) {
-                inputLength -= 1024;
-                if ( inputLength < 0 ) {
-                    fprintf(stderr, "BgzfStream ERROR: input reduction failed\n");
-                    exit(1);
-                }
-                continue;
-            }
+            // if error status
+            if ( status != Z_OK )
+                throw BamException("BgzfStream::DeflateBlock", "zlib deflate failed");
 
-            fprintf(stderr, "BgzfStream ERROR: zlib::deflateEnd() failed\n");
-            exit(1);
+            // not enough space available in buffer
+            // try to reduce the input length & re-start loop
+            inputLength -= 1024;
+            if ( inputLength <= 0 )
+                throw BamException("BgzfStream::DeflateBlock", "input reduction failed");
+            continue;
         }
 
         // finalize the compression routine
-        if ( deflateEnd(&zs) != Z_OK ) {
-            fprintf(stderr, "BgzfStream ERROR: zlib::deflateEnd() failed\n");
-            exit(1);
-        }
+        status = deflateEnd(&zs);
+        if ( status != Z_OK )
+            throw BamException("BgzfStream::DeflateBlock", "zlib deflateEnd failed");
 
-        compressedLength = zs.total_out;
-        compressedLength += Constants::BGZF_BLOCK_HEADER_LENGTH + Constants::BGZF_BLOCK_FOOTER_LENGTH;
-        if ( compressedLength > Constants::BGZF_MAX_BLOCK_SIZE ) {
-            fprintf(stderr, "BgzfStream ERROR: deflate overflow\n");
-            exit(1);
-        }
+        // update compressedLength
+        compressedLength = zs.total_out +
+                           Constants::BGZF_BLOCK_HEADER_LENGTH +
+                           Constants::BGZF_BLOCK_FOOTER_LENGTH;
+        if ( compressedLength > Constants::BGZF_MAX_BLOCK_SIZE )
+            throw BamException("BgzfStream::DeflateBlock", "deflate overflow");
 
+        // quit while loop
         break;
     }
 
     // store the compressed length
-    BamTools::PackUnsignedShort(&buffer[16], (unsigned short)(compressedLength - 1));
+    BamTools::PackUnsignedShort(&buffer[16], static_cast<uint16_t>(compressedLength - 1));
 
     // store the CRC32 checksum
-    unsigned int crc = crc32(0, NULL, 0);
-    crc = crc32(crc, (Bytef*)UncompressedBlock, inputLength);
+    uint32_t crc = crc32(0, NULL, 0);
+    crc = crc32(crc, (Bytef*)Resources.UncompressedBlock, inputLength);
     BamTools::PackUnsignedInt(&buffer[compressedLength - 8], crc);
     BamTools::PackUnsignedInt(&buffer[compressedLength - 4], inputLength);
 
     // ensure that we have less than a block of data left
     int remaining = BlockOffset - inputLength;
     if ( remaining > 0 ) {
-        if ( remaining > inputLength ) {
-            fprintf(stderr, "BgzfStream ERROR: after deflate, remainder too large\n");
-            exit(1);
-        }
-        memcpy(UncompressedBlock, UncompressedBlock + inputLength, remaining);
+        if ( remaining > inputLength )
+            throw BamException("BgzfStream::DeflateBlock", "after deflate, remainder too large");
+        memcpy(Resources.UncompressedBlock, Resources.UncompressedBlock + inputLength, remaining);
     }
 
-    // update block data
+    // update block data & return compressedlength
     BlockOffset = remaining;
-
-    // return result
     return compressedLength;
 }
 
@@ -185,14 +217,15 @@ void BgzfStream::FlushBlock(void) {
     while ( BlockOffset > 0 ) {
 
         // compress the data block
-        int blockLength = DeflateBlock();
+        const size_t blockLength = DeflateBlock();
 
         // flush the data to our output stream
-        int numBytesWritten = fwrite(CompressedBlock, 1, blockLength, Stream);
+        const size_t numBytesWritten = fwrite(Resources.CompressedBlock, 1, blockLength, Resources.Stream);
         if ( numBytesWritten != blockLength ) {
-            fprintf(stderr, "BgzfStream ERROR: expected to write %u bytes during flushing, but wrote %u bytes\n",
-                    blockLength, numBytesWritten);
-            exit(1);
+            stringstream s("");
+            s << "expected to write " << blockLength
+              << " bytes during flushing, but wrote " << numBytesWritten;
+            throw BamException("BgzfStream::FlushBlock", s.str());
         }
 
         // update block data
@@ -201,34 +234,34 @@ void BgzfStream::FlushBlock(void) {
 }
 
 // decompresses the current block
-int BgzfStream::InflateBlock(const int& blockLength) {
+size_t BgzfStream::InflateBlock(const size_t& blockLength) {
 
-    // inflate the data from compressed buffer into uncompressed buffer
+    // setup zlib stream object
     z_stream zs;
     zs.zalloc    = NULL;
     zs.zfree     = NULL;
-    zs.next_in   = (Bytef*)CompressedBlock + 18;
+    zs.next_in   = (Bytef*)Resources.CompressedBlock + 18;
     zs.avail_in  = blockLength - 16;
-    zs.next_out  = (Bytef*)UncompressedBlock;
-    zs.avail_out = UncompressedBlockSize;
+    zs.next_out  = (Bytef*)Resources.UncompressedBlock;
+    zs.avail_out = Constants::BGZF_DEFAULT_BLOCK_SIZE;
 
+    // initialize
     int status = inflateInit2(&zs, Constants::GZIP_WINDOW_BITS);
-    if ( status != Z_OK ) {
-        fprintf(stderr, "BgzfStream ERROR: could not decompress block - zlib::inflateInit() failed\n");
-        return -1;
-    }
+    if ( status != Z_OK )
+        throw BamException("BgzfStream::InflateBlock", "zlib inflateInit failed");
 
+    // decompress
     status = inflate(&zs, Z_FINISH);
     if ( status != Z_STREAM_END ) {
         inflateEnd(&zs);
-        fprintf(stderr, "BgzfStream ERROR: could not decompress block - zlib::inflate() failed\n");
-        return -1;
+        throw BamException("BgzfStream::InflateBlock", "zlib inflate failed");
     }
 
+    // finalize
     status = inflateEnd(&zs);
     if ( status != Z_OK ) {
-        fprintf(stderr, "BgzfStream ERROR: could not decompress block - zlib::inflateEnd() failed\n");
-        return -1;
+        inflateEnd(&zs);
+        throw BamException("BgzfStream::InflateBlock", "zlib inflateEnd failed");
     }
 
     // return result
@@ -236,10 +269,11 @@ int BgzfStream::InflateBlock(const int& blockLength) {
 }
 
 // opens the BGZF file for reading (mode is either "rb" for reading, or "wb" for writing)
-bool BgzfStream::Open(const string& filename, const char* mode) {
+void BgzfStream::Open(const string& filename, const char* mode) {
 
-    // close current stream, if necessary, before opening next
-    if ( IsOpen ) Close();
+    // make sure we're starting with fresh state
+    if ( IsOpen )
+        Close();
 
     // determine open mode
     if ( strcmp(mode, "rb") == 0 )
@@ -247,42 +281,41 @@ bool BgzfStream::Open(const string& filename, const char* mode) {
     else if ( strcmp(mode, "wb") == 0)
         IsWriteOnly = true;
     else {
-        fprintf(stderr, "BgzfStream ERROR: unknown file mode: %s\n", mode);
-        return false;
+        const string message = string("unknown file mode: ") + mode;
+        throw BamException("BgzfStream::Open", message);
     }
 
     // open BGZF stream on a file
     if ( (filename != "stdin") && (filename != "stdout") && (filename != "-"))
-        Stream = fopen(filename.c_str(), mode);
+        Resources.Stream = fopen(filename.c_str(), mode);
 
     // open BGZF stream on stdin
     else if ( (filename == "stdin" || filename == "-") && (strcmp(mode, "rb") == 0 ) )
-        Stream = freopen(NULL, mode, stdin);
+        Resources.Stream = freopen(NULL, mode, stdin);
 
     // open BGZF stream on stdout
     else if ( (filename == "stdout" || filename == "-") && (strcmp(mode, "wb") == 0) )
-        Stream = freopen(NULL, mode, stdout);
+        Resources.Stream = freopen(NULL, mode, stdout);
 
-    if ( !Stream ) {
-        fprintf(stderr, "BgzfStream ERROR: unable to open file %s\n", filename.c_str() );
-        return false;
+    // ensure valid Stream
+    if ( !Resources.Stream ) {
+        const string message = string("unable to open file: ") + filename;
+        throw BamException("BgzfStream::Open", message);
     }
 
-    // set flag & return success
+    // set flag
     IsOpen = true;
-    return true;
 }
 
 // reads BGZF data into a byte buffer
-int BgzfStream::Read(char* data, const unsigned int dataLength) {
+size_t BgzfStream::Read(char* data, const size_t dataLength) {
 
     // if stream not open for reading (or empty request)
     if ( !IsOpen || IsWriteOnly || dataLength == 0 )
         return 0;
 
     // read blocks as needed until desired data length is retrieved
-    char* output = data;
-    unsigned int numBytesRead = 0;
+    size_t numBytesRead = 0;
     while ( numBytesRead < dataLength ) {
 
         // determine bytes available in current block
@@ -290,110 +323,95 @@ int BgzfStream::Read(char* data, const unsigned int dataLength) {
 
         // read (and decompress) next block if needed
         if ( bytesAvailable <= 0 ) {
-            if ( !ReadBlock() ) return -1;
+            ReadBlock();
             bytesAvailable = BlockLength - BlockOffset;
-            if ( bytesAvailable <= 0 ) break;
+            if ( bytesAvailable <= 0 )
+                break;
         }
 
         // copy data from uncompressed source buffer into data destination buffer
-        char* buffer   = UncompressedBlock;
-        int copyLength = min( (int)(dataLength-numBytesRead), bytesAvailable );
-        memcpy(output, buffer + BlockOffset, copyLength);
+        const size_t copyLength = min( (dataLength-numBytesRead), (size_t)bytesAvailable );
+        memcpy(data, Resources.UncompressedBlock + BlockOffset, copyLength);
 
         // update counters
         BlockOffset  += copyLength;
-        output       += copyLength;
+        data         += copyLength;
         numBytesRead += copyLength;
     }
 
     // update block data
     if ( BlockOffset == BlockLength ) {
-        BlockAddress = ftell64(Stream);
+        BlockAddress = ftell64(Resources.Stream);
         BlockOffset  = 0;
         BlockLength  = 0;
     }
 
+    // return actual number of bytes read
     return numBytesRead;
 }
 
 // reads a BGZF block
-bool BgzfStream::ReadBlock(void) {
+void BgzfStream::ReadBlock(void) {
 
-    char header[Constants::BGZF_BLOCK_HEADER_LENGTH];
-    int64_t blockAddress = ftell64(Stream);
+    // store block start
+    int64_t blockAddress = ftell64(Resources.Stream);
 
     // read block header from file
-    int count = fread(header, 1, sizeof(header), Stream);
+    char header[Constants::BGZF_BLOCK_HEADER_LENGTH];
+    size_t count = fread(header, 1, Constants::BGZF_BLOCK_HEADER_LENGTH, Resources.Stream);
 
-    // if block header empty
+    // if block header empty, set marker & skip rest of method
     if ( count == 0 ) {
         BlockLength = 0;
-        return true;
+        return;
     }
 
     // if block header invalid size
-    if ( count != sizeof(header) ) {
-        fprintf(stderr, "BgzfStream ERROR: read block failed - could not read block header\n");
-        return false;
-    }
+    if ( count != sizeof(header) )
+        throw BamException("BgzfStream::ReadBlock", "invalid block header size");
 
     // validate block header contents
-    if ( !BgzfStream::CheckBlockHeader(header) ) {
-        fprintf(stderr, "BgzfStream ERROR: read block failed - invalid block header\n");
-        return false;
-    }
+    if ( !BgzfStream::CheckBlockHeader(header) )
+        throw BamException("BgzfStream::ReadBlock", "invalid block header contents");
 
     // copy header contents to compressed buffer
-    int blockLength = BamTools::UnpackUnsignedShort(&header[16]) + 1;
-    char* compressedBlock = CompressedBlock;
-    memcpy(compressedBlock, header, Constants::BGZF_BLOCK_HEADER_LENGTH);
-    int remaining = blockLength - Constants::BGZF_BLOCK_HEADER_LENGTH;
+    const size_t blockLength = BamTools::UnpackUnsignedShort(&header[16]) + 1;
+    memcpy(Resources.CompressedBlock, header, Constants::BGZF_BLOCK_HEADER_LENGTH);
 
     // read remainder of block
-    count = fread(&compressedBlock[Constants::BGZF_BLOCK_HEADER_LENGTH], 1, remaining, Stream);
-    if ( count != remaining ) {
-        fprintf(stderr, "BgzfStream ERROR: read block failed - could not read data from block\n");
-        return false;
-    }
+    const size_t remaining = blockLength - Constants::BGZF_BLOCK_HEADER_LENGTH;
+    count = fread(&Resources.CompressedBlock[Constants::BGZF_BLOCK_HEADER_LENGTH], 1, remaining, Resources.Stream);
+    if ( count != remaining )
+        throw BamException("BgzfStream::ReadBlock", "could not read data from block");
 
     // decompress block data
     count = InflateBlock(blockLength);
-    if ( count < 0 ) {
-        fprintf(stderr, "BgzfStream ERROR: read block failed - could not decompress block data\n");
-        return false;
-    }
 
-    // update block data
+    // update block metadata
     if ( BlockLength != 0 )
         BlockOffset = 0;
     BlockAddress = blockAddress;
     BlockLength  = count;
-
-    // return success
-    return true;
 }
 
 // seek to position in BGZF file
-bool BgzfStream::Seek(const int64_t& position) {
-
-    // skip if not open
-    if ( !IsOpen ) return false;
+void BgzfStream::Seek(const int64_t& position) {
 
     // determine adjusted offset & address
     int     blockOffset  = (position & 0xFFFF);
     int64_t blockAddress = (position >> 16) & 0xFFFFFFFFFFFFLL;
 
     // attempt seek in file
-    if ( fseek64(Stream, blockAddress, SEEK_SET) != 0 ) {
-        fprintf(stderr, "BgzfStream ERROR: unable to seek in file\n");
-        return false;
+    if ( fseek64(Resources.Stream, blockAddress, SEEK_SET) != 0 ) {
+        stringstream s("");
+        s << "unable to seek to position: " << position;
+        throw BamException("BgzfStream::Seek", s.str());
     }
 
-    // update block data & return success
+    // if successful, update block metadata
     BlockLength  = 0;
     BlockAddress = blockAddress;
     BlockOffset  = blockOffset;
-    return true;
 }
 
 void BgzfStream::SetWriteCompressed(bool ok) {
@@ -408,31 +426,33 @@ int64_t BgzfStream::Tell(void) const {
 }
 
 // writes the supplied data into the BGZF buffer
-unsigned int BgzfStream::Write(const char* data, const unsigned int dataLen) {
+size_t BgzfStream::Write(const char* data, const size_t dataLength) {
 
     // skip if file not open for writing
-    if ( !IsOpen || !IsWriteOnly ) return false;
+    if ( !IsOpen || !IsWriteOnly )
+        return false;
 
     // write blocks as needed til all data is written
-    unsigned int numBytesWritten = 0;
+    size_t numBytesWritten = 0;
     const char* input = data;
-    unsigned int blockLength = UncompressedBlockSize;
-    while ( numBytesWritten < dataLen ) {
+    const size_t blockLength = Constants::BGZF_DEFAULT_BLOCK_SIZE;
+    while ( numBytesWritten < dataLength ) {
 
         // copy data contents to uncompressed output buffer
-        unsigned int copyLength = min(blockLength - BlockOffset, dataLen - numBytesWritten);
-        char* buffer = UncompressedBlock;
+        const size_t copyLength = min(blockLength - BlockOffset, dataLength - numBytesWritten);
+        char* buffer = Resources.UncompressedBlock;
         memcpy(buffer + BlockOffset, input, copyLength);
 
-        // update counter
+        // update counters
         BlockOffset     += copyLength;
         input           += copyLength;
         numBytesWritten += copyLength;
 
         // flush (& compress) output buffer when full
-        if ( BlockOffset == blockLength ) FlushBlock();
+        if ( BlockOffset == blockLength )
+            FlushBlock();
     }
 
-    // return result
+    // return actual number of bytes written
     return numBytesWritten;
 }

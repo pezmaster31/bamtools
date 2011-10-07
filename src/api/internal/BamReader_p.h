@@ -2,7 +2,7 @@
 // BamReader_p.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 5 April 2011 (DB)
+// Last modified: 7 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
@@ -43,7 +43,7 @@ class BamReaderPrivate {
     public:
 
         // file operations
-        void Close(void);
+        bool Close(void);
         const std::string Filename(void) const;
         bool IsOpen(void) const;
         bool Open(const std::string& filename);
@@ -69,13 +69,17 @@ class BamReaderPrivate {
         void SetIndex(BamIndex* index);
         void SetIndexCacheMode(const BamIndex::IndexCacheMode& mode);
 
+        // error handling
+        std::string GetErrorString(void) const;
+        void SetErrorString(const std::string& where, const std::string& what);
+
     // internal methods, but available as a BamReaderPrivate 'interface'
     //
     // these methods should only be used by BamTools::Internal classes
     // (currently only used by the BamIndex subclasses)
     public:
         // retrieves header text from BAM file
-        bool LoadHeaderData(void);
+        void LoadHeaderData(void);
         // retrieves BAM alignment under file pointer
         // (does no overlap checking or character data parsing)
         bool LoadNextAlignment(BamAlignment& alignment);
@@ -104,6 +108,9 @@ class BamReaderPrivate {
         BamHeader m_header;
         BamRandomAccessController m_randomAccessController;
         BgzfStream m_stream;
+
+        // error handling
+        std::string m_errorString;
 };
 
 } // namespace Internal

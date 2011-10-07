@@ -2,7 +2,7 @@
 // BamRandomAccessController_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 24 February 2011(DB)
+// Last modified: 6 October 2011(DB)
 // ---------------------------------------------------------------------------
 // Manages random access operations in a BAM file
 // ***************************************************************************
@@ -44,13 +44,10 @@ class BamRandomAccessController {
         BamRandomAccessController(void);
         ~BamRandomAccessController(void);
 
-    // general interface
+    // BamRandomAccessController interface
     public:
-        void Close(void);
 
-    // index operations
-    public:
-        //
+        // index methods
         void ClearIndex(void);
         bool CreateIndex(BamReaderPrivate* reader, const BamIndex::IndexType& type);
         bool HasIndex(void) const;
@@ -60,31 +57,37 @@ class BamRandomAccessController {
         void SetIndex(BamIndex* index);
         void SetIndexCacheMode(const BamIndex::IndexCacheMode& mode);
 
-    // region operations
-    public:
+        // region methods
         void ClearRegion(void);
         bool HasRegion(void) const;
         RegionState AlignmentState(const BamAlignment& alignment) const;
         bool RegionHasAlignments(void) const;
-        bool SetRegion(BamReaderPrivate* reader,
-                       const BamRegion& region,
-                       const int& referenceCount);
+        bool SetRegion(const BamRegion& region, const int& referenceCount);
 
-    // 'internal' methods
-    public:
+        // general methods
+        void Close(void);
+        std::string GetErrorString(void) const;
+
+    // internal methods
+    private:
         // adjusts requested region if necessary (depending on where data actually begins)
         void AdjustRegion(const int& referenceCount);
+        // error-string handling
+        void SetErrorString(const std::string& where, const std::string& what);
 
     // data members
     private:
 
         // index data
-        BamIndex* m_index;  // owns index, not a copy - responsible for deleting
+        BamIndex* m_index;  // owns the index, not a copy - responsible for deleting
         BamIndex::IndexCacheMode m_indexCacheMode;
 
         // region data
         BamRegion m_region;
         bool m_hasAlignmentsInRegion;
+
+        // general data
+        std::string m_errorString;
 };
 
 } // namespace Internal

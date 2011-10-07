@@ -2,7 +2,7 @@
 // BamToolsIndex.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 5 April 2011 (DB)
+// Last modified: 6 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the BamTools index format (".bti")
 // ***************************************************************************
@@ -122,60 +122,59 @@ class BamToolsIndex : public BamIndex {
         // returns format's file extension
         static const std::string Extension(void);
 
-    // internal file ops
+    // internal methods
     private:
-        bool CheckMagicNumber(void);
-        bool CheckVersion(void);
+
+        // index file ops
+        void CheckMagicNumber(void);
+        void CheckVersion(void);
         void CloseFile(void);
         bool IsFileOpen(void) const;
-        bool OpenFile(const std::string& filename, const char* mode);
-        bool Seek(const int64_t& position, const int& origin);
+        void OpenFile(const std::string& filename, const char* mode);
+        void Seek(const int64_t& position, const int& origin);
         int64_t Tell(void) const;
 
-    // internal BTI index building methods
-    private:
+        // index-creation methods
         void ClearReferenceEntry(BtiReferenceEntry& refEntry);
+        void WriteBlock(const BtiBlock& block);
+        void WriteBlocks(const BtiBlockVector& blocks);
+        void WriteHeader(void);
+        void WriteReferenceEntry(const BtiReferenceEntry& refEntry);
 
-    // internal random-access methods
-    private:
-        bool GetOffset(const BamRegion& region, int64_t& offset, bool* hasAlignmentsInRegion);
+        // random-access methods
+        void GetOffset(const BamRegion& region, int64_t& offset, bool* hasAlignmentsInRegion);
+        void ReadBlock(BtiBlock& block);
+        void ReadBlocks(const BtiReferenceSummary& refSummary, BtiBlockVector& blocks);
+        void ReadReferenceEntry(BtiReferenceEntry& refEntry);
 
-    // internal BTI summary data methods
-    private:
+        // BTI summary data methods
         void InitializeFileSummary(const int& numReferences);
-        bool LoadFileSummary(void);
-        bool LoadHeader(void);
-        bool LoadNumBlocks(int& numBlocks);
-        bool LoadNumReferences(int& numReferences);
-        bool LoadReferenceSummary(BtiReferenceSummary& refSummary);
-        bool SkipBlocks(const int& numBlocks);
-
-    // internal BTI full index input methods
-    private:
-        bool ReadBlock(BtiBlock& block);
-        bool ReadBlocks(const BtiReferenceSummary& refSummary, BtiBlockVector& blocks);
-        bool ReadReferenceEntry(BtiReferenceEntry& refEntry);
-
-    // internal BTI full index output methods
-    private:
-        bool WriteBlock(const BtiBlock& block);
-        bool WriteBlocks(const BtiBlockVector& blocks);
-        bool WriteHeader(void);
-        bool WriteReferenceEntry(const BtiReferenceEntry& refEntry);
+        void LoadFileSummary(void);
+        void LoadHeader(void);
+        void LoadNumBlocks(int& numBlocks);
+        void LoadNumReferences(int& numReferences);
+        void LoadReferenceSummary(BtiReferenceSummary& refSummary);
+        void SkipBlocks(const int& numBlocks);
 
     // data members
     private:
-        FILE* m_indexStream;
         bool  m_isBigEndian;
         BamIndex::IndexCacheMode m_cacheMode;
         BtiFileSummary m_indexFileSummary;
-        int m_blockSize;
+        uint32_t m_blockSize;
         int32_t m_inputVersion; // Version is serialized as int
         Version m_outputVersion;
 
+        struct RaiiWrapper {
+            FILE* IndexStream;
+            RaiiWrapper(void);
+            ~RaiiWrapper(void);
+        };
+        RaiiWrapper Resources;
+
     // static constants
     private:
-        static const int DEFAULT_BLOCK_LENGTH;
+        static const uint32_t DEFAULT_BLOCK_LENGTH;
         static const std::string BTI_EXTENSION;
         static const char* const BTI_MAGIC;
         static const int SIZEOF_BLOCK;

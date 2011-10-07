@@ -46,8 +46,7 @@ class BgzfStream {
         void Close(void);
         // returns true if BgzfStream open for IO
         bool IsOpen(void) const;
-        // opens the BGZF file (mode is either "rb" for reading, or "wb" for writing)
-        void Open(const std::string& filename, const char* mode);
+        // opens the BGZF file
         void Open(const std::string& filename, const IBamIODevice::OpenMode mode);
         // reads BGZF data into a byte buffer
         size_t Read(char* data, const size_t dataLength);
@@ -84,10 +83,7 @@ class BgzfStream {
         unsigned int m_blockOffset;
         uint64_t     m_blockAddress;
 
-        bool m_isOpen;
-        bool m_isWriteOnly;
         bool m_isWriteCompressed;
-
         IBamIODevice* m_device;
 
         struct RaiiWrapper {
@@ -95,7 +91,6 @@ class BgzfStream {
             ~RaiiWrapper(void);
             char* UncompressedBlock;
             char* CompressedBlock;
-            FILE* Stream;
         };
         RaiiWrapper Resources;
 };

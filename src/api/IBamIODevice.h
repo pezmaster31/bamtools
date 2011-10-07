@@ -1,3 +1,20 @@
+// ***************************************************************************
+// IBamIODevice.h (c) 2011 Derek Barnett
+// Marth Lab, Department of Biology, Boston College
+// ---------------------------------------------------------------------------
+// Last modified: 7 October 2011 (DB)
+// ---------------------------------------------------------------------------
+// Base class for all BAM I/O devices (e.g. local file, pipe, HTTP, FTP, etc.)
+//
+// Derived classes should provide protocol-specific implementations for
+// reading/writing plain bytes, as well as other I/O-related behaviors.
+//
+// Since IBamIODevices may be defined in client code, the internal
+// BamExceptions are NOT allowed to be thrown from devices, including the
+// built-in ones. This keeps a consistent interface at the BgzfStream for
+// handling any device type. Use the error string for relaying error messages.
+// ***************************************************************************
+
 #ifndef IBAMIODEVICE_H
 #define IBAMIODEVICE_H
 
@@ -16,8 +33,7 @@ class API_EXPORT IBamIODevice {
 
     // ctor & dtor
     public:
-        IBamIODevice(void);
-        virtual ~IBamIODevice(void);
+        virtual ~IBamIODevice(void) { }
 
     // IBamIODevice interface
     public:
@@ -32,13 +48,14 @@ class API_EXPORT IBamIODevice {
         virtual size_t Write(const char* data, const unsigned int numBytes) =0;
 
         // default implementation provided
-        virtual std::string ErrorString(void);
+        virtual std::string GetErrorString(void);
         virtual bool IsOpen(void) const;
         virtual OpenMode Mode(void) const;
 
     // internal methods
     protected:
-        void SetErrorString(const std::string& errorString);
+        IBamIODevice(void); // hidden ctor
+        void SetErrorString(const std::string& where, const std::string& what);
 
     // data members
     protected:
@@ -52,13 +69,8 @@ IBamIODevice::IBamIODevice(void)
 { }
 
 inline
-IBamIODevice::~IBamIODevice(void) { }
-
-inline
-std::string IBamIODevice::ErrorString(void) {
-    std::string e = m_errorString;
-    m_errorString.clear();
-    return e;
+std::string IBamIODevice::GetErrorString(void) {
+    return m_errorString;
 }
 
 inline
@@ -72,8 +84,9 @@ IBamIODevice::OpenMode IBamIODevice::Mode(void) const {
 }
 
 inline
-void IBamIODevice::SetErrorString(const std::string& errorString) {
-    m_errorString = errorString;
+void IBamIODevice::SetErrorString(const std::string& where, const std::string& what) {
+    static const std::string SEPARATOR = ": ";
+    m_errorString = where + SEPARATOR + what;
 }
 
 } // namespace BamTools

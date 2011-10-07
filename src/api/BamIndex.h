@@ -78,14 +78,14 @@ class API_EXPORT BamIndex {
 
     // internal methods
     protected:
-        void SetErrorString(const std::string& where, const std::string& what) {
+        void SetErrorString(const std::string& where, const std::string& what) const {
             m_errorString = where + ": " + what;
         }
 
     // data members
     protected:
         Internal::BamReaderPrivate* m_reader; // copy, not owned
-        std::string m_errorString;
+        mutable std::string m_errorString;
 };
 
 } // namespace BamTools

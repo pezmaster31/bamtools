@@ -2,7 +2,7 @@
 // BamPipe_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 9 September 2011 (DB)
+// Last modified: 7 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides BAM pipe-specific IO behavior
 // ***************************************************************************
@@ -34,15 +34,15 @@ bool BamPipe::Open(const IBamIODevice::OpenMode mode) {
     else if ( mode == IBamIODevice::WriteOnly )
         m_stream = freopen(0, "wb", stdout);
     else {
-        SetErrorString("BamPipe ERROR - unsupported device mode");
+        SetErrorString("BamPipe::Open", "unknown open mode requested");
         return false;
     }
 
     // check that we obtained a valid FILE*
     if ( m_stream == 0 ) {
-        string error = "BamPipe ERROR - could not open handle on ";
-        error += ( (mode == IBamIODevice::ReadOnly) ? "stdin" : "stdout" );
-        SetErrorString(error);
+        const string message_base = string("could not open handle on ");
+        const string message = message_base + ( (mode == IBamIODevice::ReadOnly) ? "stdin" : "stdout" );
+        SetErrorString("BamPipe::Open", message);
         return false;
     }
 
@@ -51,18 +51,7 @@ bool BamPipe::Open(const IBamIODevice::OpenMode mode) {
     return true;
 }
 
-bool BamPipe::Seek(const int64_t& position) {
-//    (void)position; // suppress compiler warning about unused variable
-//    return false;   // seeking not allowed in pipe
-
-    BT_ASSERT_X( m_stream, "BamFile::Seek() - null stream" );
-    cerr << "BamPipe::Seek() - about to attempt seek" << endl;
-    bool result = ( fseek64(m_stream, position, SEEK_SET) == 0);
-    if ( !result ) {
-        cerr << "BamPipe can't be seeked in" << endl;
-    }
-    return result;
-
-//    return ( fseek64(m_stream, position, SEEK_SET) == 0);
-
+bool BamPipe::Seek(const int64_t& ) {
+    SetErrorString("BamPipe::Seek", "random access not allowed in FIFO pipe");
+    return false;
 }

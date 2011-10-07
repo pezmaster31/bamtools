@@ -2,18 +2,15 @@
 // BamWriter_p.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 6 October 2011 (DB)
+// Last modified: 7 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
 
 #include <api/BamAlignment.h>
 #include <api/BamConstants.h>
-<<<<<<< HEAD
-#include <api/internal/BamException_p.h>
-=======
 #include <api/IBamIODevice.h>
->>>>>>> iodevice
+#include <api/internal/BamException_p.h>
 #include <api/internal/BamWriter_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
@@ -160,16 +157,10 @@ bool BamWriterPrivate::Open(const string& filename,
                             const string& samHeaderText,
                             const RefVector& referenceSequences)
 {
-<<<<<<< HEAD
     try {
-=======
-    // open the BGZF file for writing, return failure if error
-    if ( !m_stream.Open(filename, IBamIODevice::WriteOnly) )
-        return false;
->>>>>>> iodevice
 
-        // open the BGZF file for writing, return failure if error
-        m_stream.Open(filename, "wb");
+        // open the BGZF file for writing
+        m_stream.Open(filename,  IBamIODevice::WriteOnly);
 
         // write BAM file 'metadata' components
         WriteMagicNumber();

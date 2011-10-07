@@ -367,7 +367,7 @@ bool BamReaderPrivate::Open(const string& filename) {
         Close();
 
         // open BgzfStream
-        m_stream.Open(filename, "rb");
+        m_stream.Open(filename, IBamIODevice::ReadOnly);
         assert(m_stream);
 
         // load BAM metadata

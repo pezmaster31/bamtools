@@ -2,7 +2,7 @@
 // bamtools_global.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 3 March 2011 (DB)
+// Last modified: 7 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic definitions for exporting & importing library symbols.
 // Also provides some platform-specific rules for definitions.
@@ -38,13 +38,13 @@
 */
 #ifndef BAMTOOLS_LFS
 #define BAMTOOLS_LFS
-    #ifdef WIN32
-        #define ftell64(a)     _ftelli64(a)
-        #define fseek64(a,b,c) _fseeki64(a,b,c)
-    #else
-        #define ftell64(a)     ftello(a)
-        #define fseek64(a,b,c) fseeko(a,b,c)
-    #endif
+#  ifdef WIN32
+#    define ftell64(a)     _ftelli64(a)
+#    define fseek64(a,b,c) _fseeki64(a,b,c)
+#  else
+#    define ftell64(a)     ftello(a)
+#    define fseek64(a,b,c) fseeko(a,b,c)
+#  endif
 #endif // BAMTOOLS_LFS
 
 /*! \def ftell64(a)
@@ -61,25 +61,33 @@
 */
 #ifndef BAMTOOLS_TYPES
 #define BAMTOOLS_TYPES
-    #ifdef _MSC_VER
-        typedef char                 int8_t;
-        typedef unsigned char       uint8_t;
-        typedef short               int16_t;
-        typedef unsigned short     uint16_t;
-        typedef int                 int32_t;
-        typedef unsigned int       uint32_t;
-        typedef long long           int64_t;
-        typedef unsigned long long uint64_t;
-    #else
-        #include <stdint.h>
-    #endif
+#  ifdef _MSC_VER
+     typedef char                 int8_t;
+     typedef unsigned char       uint8_t;
+     typedef short               int16_t;
+     typedef unsigned short     uint16_t;
+     typedef int                 int32_t;
+     typedef unsigned int       uint32_t;
+     typedef long long           int64_t;
+     typedef unsigned long long uint64_t;
+#  else
+#    include <stdint.h>
+#  endif
 #endif // BAMTOOLS_TYPES
 
-#include <cassert>
-#include <stdexcept>
+inline void bamtools_noop(void) { }
+
 #ifndef BAMTOOLS_ASSERTS
-#define BT_ASSERT_UNREACHABLE assert( false )
-#define BT_ASSERT_X( condition, message ) if (!( condition )) throw std::runtime_error( message );
+#define BAMTOOLS_ASSERTS
+#  include <cassert>
+#  include <stdexcept>
+#  ifdef NDEBUG
+#    define BT_ASSERT_UNREACHABLE bamtools_noop()
+#    define BT_ASSERT_X( condition, message ) bamtools_noop()
+#  else
+#    define BT_ASSERT_UNREACHABLE assert( false )
+#    define BT_ASSERT_X( condition, message ) if (!( condition )) { throw std::runtime_error( message ); }
+#  endif
 #endif // BAMTOOLS_ASSERTS
 
 #endif // BAMTOOLS_GLOBAL_H

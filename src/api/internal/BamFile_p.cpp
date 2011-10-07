@@ -2,7 +2,7 @@
 // BamFile_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 9 September 2011 (DB)
+// Last modified: 7 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides BAM file-specific IO behavior
 // ***************************************************************************
@@ -44,15 +44,15 @@ bool BamFile::Open(const IBamIODevice::OpenMode mode) {
     else if ( mode == IBamIODevice::WriteOnly )
         m_stream = fopen(m_filename.c_str(), "wb");
     else {
-        SetErrorString("BamFile ERROR - unknown device open mode");
+        SetErrorString("BamFile::Open", "unknown open mode requested");
         return false;
     }
 
     // check that we obtained a valid FILE*
     if ( m_stream == 0 ) {
-        string error = "BamFile ERROR - could not open handle on ";
-        error += ( (m_filename.empty()) ? "empty filename" : m_filename );
-        SetErrorString(error);
+        const string message_base = string("could not open file handle for ");
+        const string message = message_base + ( (m_filename.empty()) ? "empty filename" : m_filename );
+        SetErrorString("BamFile::Open", message);
         return false;
     }
 
@@ -63,6 +63,5 @@ bool BamFile::Open(const IBamIODevice::OpenMode mode) {
 
 bool BamFile::Seek(const int64_t& position) {
     BT_ASSERT_X( m_stream, "BamFile::Seek() - null stream" );
-    cerr << "BamFile::Seek() - about to attempt seek" << endl;
-    return ( fseek64(m_stream, position, SEEK_SET) == 0);
+    return ( fseek64(m_stream, position, SEEK_SET) == 0 );
 }

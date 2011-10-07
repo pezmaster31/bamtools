@@ -2,7 +2,7 @@
 // BgzfStream_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 5 April 2011(DB)
+// Last modified: 7 October 2011(DB)
 // ---------------------------------------------------------------------------
 // Based on BGZF routines developed at the Broad Institute.
 // Provides the basic functionality for reading & writing BGZF files
@@ -24,6 +24,7 @@
 
 #include <api/BamAux.h>
 #include <api/BamConstants.h>
+#include <api/IBamIODevice.h>
 #include "zlib.h"
 #include <cstdio>
 #include <memory>
@@ -43,12 +44,17 @@ class BgzfStream {
     public:
         // closes BGZF file
         void Close(void);
+        // returns true if BgzfStream open for IO
+        bool IsOpen(void) const;
         // opens the BGZF file (mode is either "rb" for reading, or "wb" for writing)
         void Open(const std::string& filename, const char* mode);
+        void Open(const std::string& filename, const IBamIODevice::OpenMode mode);
         // reads BGZF data into a byte buffer
         size_t Read(char* data, const size_t dataLength);
         // seek to position in BGZF file
         void Seek(const int64_t& position);
+        // sets IO device (closes previous, if any, but does not attempt to open)
+        void SetIODevice(IBamIODevice* device);
         // enable/disable compressed output
         void SetWriteCompressed(bool ok);
         // get file position in BGZF file
@@ -74,12 +80,15 @@ class BgzfStream {
 
     // data members
     public:
-        unsigned int BlockLength;
-        unsigned int BlockOffset;
-        int64_t BlockAddress;
-        bool IsOpen;
-        bool IsWriteOnly;
-        bool IsWriteCompressed;
+        unsigned int m_blockLength;
+        unsigned int m_blockOffset;
+        uint64_t     m_blockAddress;
+
+        bool m_isOpen;
+        bool m_isWriteOnly;
+        bool m_isWriteCompressed;
+
+        IBamIODevice* m_device;
 
         struct RaiiWrapper {
             RaiiWrapper(void);
@@ -89,7 +98,6 @@ class BgzfStream {
             FILE* Stream;
         };
         RaiiWrapper Resources;
-
 };
 
 } // namespace Internal

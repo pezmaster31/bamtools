@@ -9,6 +9,8 @@
 
 #include <api/BamConstants.h>
 #include <api/BamReader.h>
+#include <api/IBamIODevice.h>
+#include <api/internal/BamDeviceFactory_p.h>
 #include <api/internal/BamException_p.h>
 #include <api/internal/BamHeader_p.h>
 #include <api/internal/BamRandomAccessController_p.h>
@@ -137,6 +139,10 @@ bool BamReaderPrivate::GetNextAlignment(BamAlignment& alignment) {
 // useful for operations requiring ONLY positional or other alignment-related information
 bool BamReaderPrivate::GetNextAlignmentCore(BamAlignment& alignment) {
 
+    // skip if stream not opened
+    if ( !m_stream.IsOpen() )
+        return false;
+
     try {
 
         // skip if region is set but has no alignments
@@ -214,7 +220,7 @@ bool BamReaderPrivate::HasIndex(void) const {
 }
 
 bool BamReaderPrivate::IsOpen(void) const {
-    return m_stream.IsOpen;
+    return m_stream.IsOpen();
 }
 
 // load BAM header data
@@ -240,7 +246,7 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment) {
 
     // swap core endian-ness if necessary
     if ( m_isBigEndian ) {
-        for ( int i = 0; i < Constants::BAM_CORE_SIZE; i+=sizeof(uint32_t) )
+        for ( unsigned int i = 0; i < Constants::BAM_CORE_SIZE; i+=sizeof(uint32_t) )
             BamTools::SwapEndian_32p(&x[i]);
     }
 
@@ -355,8 +361,6 @@ bool BamReaderPrivate::LocateIndex(const BamIndex::IndexType& preferredType) {
 // opens BAM file (and index)
 bool BamReaderPrivate::Open(const string& filename) {
 
-    bool result;
-
     try {
 
         // make sure we're starting with fresh state
@@ -374,8 +378,8 @@ bool BamReaderPrivate::Open(const string& filename) {
         m_filename = filename;
         m_alignmentsBeginOffset = m_stream.Tell();
 
-        // set flag
-        result = true;
+        // return success
+        return true;
 
     } catch ( BamException& e ) {
         const string error = e.what();
@@ -384,9 +388,6 @@ bool BamReaderPrivate::Open(const string& filename) {
         SetErrorString("BamReader::Open", message);
         return false;
     }
-
-    // return success/failure
-    return result;
 }
 
 bool BamReaderPrivate::OpenIndex(const std::string& indexFilename) {

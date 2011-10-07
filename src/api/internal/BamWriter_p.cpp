@@ -9,7 +9,11 @@
 
 #include <api/BamAlignment.h>
 #include <api/BamConstants.h>
+<<<<<<< HEAD
 #include <api/internal/BamException_p.h>
+=======
+#include <api/IBamIODevice.h>
+>>>>>>> iodevice
 #include <api/internal/BamWriter_p.h>
 using namespace BamTools;
 using namespace BamTools::Internal;
@@ -148,7 +152,7 @@ std::string BamWriterPrivate::GetErrorString(void) const {
 
 // returns whether BAM file is open for writing or not
 bool BamWriterPrivate::IsOpen(void) const {
-    return m_stream.IsOpen;
+    return m_stream.IsOpen();
 }
 
 // opens the alignment archive
@@ -156,7 +160,13 @@ bool BamWriterPrivate::Open(const string& filename,
                             const string& samHeaderText,
                             const RefVector& referenceSequences)
 {
+<<<<<<< HEAD
     try {
+=======
+    // open the BGZF file for writing, return failure if error
+    if ( !m_stream.Open(filename, IBamIODevice::WriteOnly) )
+        return false;
+>>>>>>> iodevice
 
         // open the BGZF file for writing, return failure if error
         m_stream.Open(filename, "wb");

@@ -103,7 +103,7 @@ struct API_EXPORT BamAlignment {
         bool BuildCharData(void);
 
         // calculates alignment end position
-        int GetEndPosition(bool usePadded = false, bool zeroBased = true) const;  
+        int GetEndPosition(bool usePadded = false, bool closedInterval = false) const;
 
         // returns a description of the last error that occurred
         std::string GetErrorString(void) const;

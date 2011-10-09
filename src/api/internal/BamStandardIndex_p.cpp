@@ -2,7 +2,7 @@
 // BamStandardIndex.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 6 October 2011 (DB)
+// Last modified: 8 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the standardized BAM index format (".bai")
 // ***************************************************************************
@@ -78,8 +78,8 @@ void BamStandardIndex::AdjustRegion(const BamRegion& region, uint32_t& begin, ui
     // retrieve references from reader
     const RefVector& references = m_reader->GetReferenceData();
 
-    // make sure left-bound position is valid
-    if ( region.LeftPosition > references.at(region.LeftRefID).RefLength )
+    // LeftPosition cannot be greater than or equal to reference length
+    if ( region.LeftPosition >= references.at(region.LeftRefID).RefLength )
         throw BamException("BamStandardIndex::AdjustRegion", "invalid region requested");
 
     // set region 'begin'
@@ -91,9 +91,10 @@ void BamStandardIndex::AdjustRegion(const BamRegion& region, uint32_t& begin, ui
         end = (unsigned int)region.RightPosition;
 
     // otherwise, set region 'end' to last reference base
-    else end = (unsigned int)references.at(region.LeftRefID).RefLength - 1;
+    else end = (unsigned int)references.at(region.LeftRefID).RefLength;
 }
 
+// [begin, end)
 void BamStandardIndex::CalculateCandidateBins(const uint32_t& begin,
                                               const uint32_t& end,
                                               set<uint16_t>& candidateBins)
@@ -478,7 +479,7 @@ void BamStandardIndex::GetOffset(const BamRegion& region, int64_t& offset, bool*
         *hasAlignmentsInRegion = m_reader->LoadNextAlignment(al);
 
         // check alignment against region
-        if ( al.GetEndPosition() < region.LeftPosition ) {
+        if ( al.GetEndPosition() <= region.LeftPosition ) {
             offsetFirst = ++offsetIter;
             count -= step+1;
         } else count = step;

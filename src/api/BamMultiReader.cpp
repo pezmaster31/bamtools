@@ -2,7 +2,7 @@
 // BamMultiReader.cpp (c) 2010 Erik Garrison, Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 October 2011 (DB)
+// Last modified: 8 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Convenience class for reading multiple BAM files.
 //
@@ -358,6 +358,5 @@ bool BamMultiReader::SetRegion(const int& leftRefID,
                                const int& rightRefID,
                                const int& rightPosition)
 {
-    BamRegion region(leftRefID, leftPosition, rightRefID, rightPosition);
-    return d->SetRegion(region);
+    return d->SetRegion( BamRegion(leftRefID, leftPosition, rightRefID, rightPosition) );
 }

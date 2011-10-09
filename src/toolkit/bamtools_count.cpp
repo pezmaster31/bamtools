@@ -62,26 +62,6 @@ struct CountTool::CountToolPrivate {
         CountTool::CountSettings* m_settings;
 };
 
-static
-void printAlignments(const vector<BamAlignment>& alignments) {
-
-    vector<BamAlignment>::const_iterator alIter = alignments.begin();
-    vector<BamAlignment>::const_iterator alEnd  = alignments.end();
-    for ( ; alIter != alEnd; ++alIter ) {
-        const BamAlignment& a = (*alIter);
-
-        cerr << a.Name
-             << "\t" << a.RefID << ":" << a.Position;
-
-        int aqValue;
-        bool hasTag = a.GetTag("Aq", aqValue);
-        cerr << "\tAq=";
-        if ( hasTag ) cerr << aqValue;
-        else cerr << "?";
-        cerr << endl;
-    }
-}
-
 bool CountTool::CountToolPrivate::Run(void) {
 
     // if no '-in' args supplied, default to stdin
@@ -101,74 +81,8 @@ bool CountTool::CountToolPrivate::Run(void) {
 
     // if no region specified, count entire file
     if ( !m_settings->HasRegion ) {
-
-
-        vector<BamAlignment> alignments;
-        while ( reader.GetNextAlignment(al) ) {
+        while ( reader.GetNextAlignmentCore(al) )
             ++alignmentCount;
-
-            if ( alignments.size() < 100 )
-                alignments.push_back(al);
-        }
-
-        using namespace BamTools::Algorithms;
-
-        cerr << endl
-             << "------------------------------" << endl
-             << "Unsorted Alignments" << endl
-             << "------------------------------" << endl
-             << endl;
-        std::stable_sort(alignments.begin(), alignments.end(), Sort::Unsorted());
-        printAlignments(alignments);
-        cerr << "------------------------------" << endl
-             << endl;
-
-        cerr << endl
-             << "------------------------------" << endl
-             << "Sorted Alignments (by name)" << endl
-             << "------------------------------" << endl
-             << endl;
-//        std::sort(alignments.begin(), alignments.end(), Sort::ByName());
-        Algorithms::SortAlignments(alignments, Sort::ByName());
-        printAlignments(alignments);
-        cerr << endl
-             << "------------------------------" << endl
-             << endl;
-
-        cerr << endl
-             << "------------------------------" << endl
-             << "Sorted Alignments (by tag Aq)" << endl
-             << "------------------------------" << endl
-             << endl;
-//        std::sort(alignments.begin(), alignments.end(), Sort::ByTag<int>("Aq"));
-        Algorithms::SortAlignments(alignments, Sort::ByTag<int>("Aq"));
-        printAlignments(alignments);
-        cerr << endl
-             << "------------------------------" << endl
-             << endl;
-
-        cerr << endl
-             << "------------------------------" << endl
-             << "Sorted Alignments (by tag Aq) desc" << endl
-             << "------------------------------" << endl
-             << endl;
-        std::sort(alignments.begin(), alignments.end(), Sort::ByTag<int>("Aq", Sort::DescendingOrder));
-        printAlignments(alignments);
-        cerr << endl
-             << "------------------------------" << endl
-             << endl;
-
-
-
-
-//        // ########################################
-//        // original
-//        // ########################################
-//
-//        while ( reader.GetNextAlignmentCore(al) )
-//            ++alignmentCount;
-//
-//        //#########################################
     }
 
     // otherwise attempt to use region as constraint
@@ -184,27 +98,16 @@ bool CountTool::CountToolPrivate::Run(void) {
             // if index data available for all BAM files, we can use SetRegion
             if ( reader.HasIndexes() ) {
 
-                vector<BamAlignment> alignments;
-                using namespace BamTools::Algorithms;
+                // attempt to set region on reader
+                if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {
+                    cerr << "bamtools count ERROR: set region failed. Check that REGION describes a valid range" << endl;
+                    reader.Close();
+                    return false;
+                }
 
-                alignments = GetSortedRegion(reader, region, Sort::ByName() );
-                printAlignments(alignments);
-
-                cerr << "################################" << endl;
-
-                alignments = GetSortedRegion(reader, region, Sort::ByTag<int>("Aq"));
-                printAlignments(alignments);
-
-//                // attempt to set region on reader
-//                if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {
-//                    cerr << "bamtools count ERROR: set region failed. Check that REGION describes a valid range" << endl;
-//                    reader.Close();
-//                    return false;
-//                }
-
-//                // everything checks out, just iterate through specified region, counting alignments
-//                while ( reader.GetNextAlignmentCore(al) )
-//                    ++alignmentCount;
+                // everything checks out, just iterate through specified region, counting alignments
+                while ( reader.GetNextAlignmentCore(al) )
+                    ++alignmentCount;
             }
 
             // no index data available, we have to iterate through until we

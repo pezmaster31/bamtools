@@ -2,7 +2,7 @@
 // BamAlignment.cpp (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 October 2011 (DB)
+// Last modified: 8 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -446,19 +446,25 @@ bool BamAlignment::GetEditDistance(uint32_t& editDistance) const {
     return GetTag("NM", (uint32_t&)editDistance);
 }
 
-/*! \fn int BamAlignment::GetEndPosition(bool usePadded = false, bool zeroBased = true) const
+/*! \fn int BamAlignment::GetEndPosition(bool usePadded = false, bool closedInterval = USE_CLOSED_DEFAULT) const
     \brief Calculates alignment end position, based on starting position and CIGAR data.
 
-    \param usePadded Inserted bases affect reported position. Default is false, so that reported
-                     position stays 'sync-ed' with reference coordinates.
-    \param zeroBased Return (BAM standard) 0-based coordinate. Setting this to false can be useful
-                     when using BAM data with half-open formats (e.g. BED).
+    \warning The position returned now represents a zero-based, HALF-OPEN interval.
+    In previous versions of BamTools (0.x & 1.x) all intervals were treated
+    as zero-based, CLOSED. I whole-heartedly apologize for any inconsistencies this
+    may have caused if you assumed that BT was always half-open; full aplogies also
+    to those who recognized that BamTools originally used a closed interval, but may
+    need to update their code to reflect this new change.
+
+    \param usePadded Allow inserted bases to affect the reported position. Default is false, so that
+                     reported position stays synced with reference coordinates.
+
+    \param closedInterval Setting this to true will return a 0-based end coordinate. Default is false,
+                          so that his value represents a standard, half-open interval.
 
     \return alignment end position
 */
-int BamAlignment::GetEndPosition(bool usePadded, bool zeroBased) const {
-
-    // TODO: Come back to this for coordinate issues !!!
+int BamAlignment::GetEndPosition(bool usePadded, bool closedInterval) const {
 
     // initialize alignment end to starting position
     int alignEnd = Position;
@@ -467,19 +473,34 @@ int BamAlignment::GetEndPosition(bool usePadded, bool zeroBased) const {
     vector<CigarOp>::const_iterator cigarIter = CigarData.begin();
     vector<CigarOp>::const_iterator cigarEnd  = CigarData.end();
     for ( ; cigarIter != cigarEnd; ++cigarIter) {
-        const char cigarType = (*cigarIter).Type;
-        const uint32_t& cigarLength = (*cigarIter).Length;
+        const CigarOp& op = (*cigarIter);
 
-        if ( cigarType == Constants::BAM_CIGAR_MATCH_CHAR ||
-             cigarType == Constants::BAM_CIGAR_DEL_CHAR ||
-             cigarType == Constants::BAM_CIGAR_REFSKIP_CHAR )
-            alignEnd += cigarLength;
-        else if ( usePadded && cigarType == Constants::BAM_CIGAR_INS_CHAR )
-            alignEnd += cigarLength;
+        switch ( op.Type ) {
+
+            // increase end position on CIGAR chars [DMXN=]
+            case Constants::BAM_CIGAR_DEL_CHAR      :
+            case Constants::BAM_CIGAR_MATCH_CHAR    :
+            case Constants::BAM_CIGAR_MISMATCH_CHAR :
+            case Constants::BAM_CIGAR_REFSKIP_CHAR  :
+            case Constants::BAM_CIGAR_SEQMATCH_CHAR :
+                alignEnd += op.Length;
+                break;
+
+            // increase end position when CIGAR char is 'I' only if @usePadded is true
+            case Constants::BAM_CIGAR_INS_CHAR :
+                if ( usePadded )
+                    alignEnd += op.Length;
+                break;
+
+            // all other CIGAR chars do not affect end position
+            default :
+                break;
+        }
     }
 
-    // adjust for zero-based coordinates, if requested
-    if ( zeroBased ) alignEnd -= 1;
+    // adjust for closedInterval, if requested
+    if ( closedInterval )
+        alignEnd -= 1;
 
     // return result
     return alignEnd;

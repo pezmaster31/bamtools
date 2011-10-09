@@ -2,7 +2,7 @@
 // BamToolsIndex.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 6 October 2011 (DB)
+// Last modified: 8 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the BamTools index format (".bti")
 // ***************************************************************************
@@ -87,7 +87,7 @@ class BamToolsIndex : public BamIndex {
     // (might be useful later to handle any 'legacy' versions if the format changes)
     // listed for example like: BTI_1_0 = 1, BTI_1_1 = 2, BTI_1_2 = 3, BTI_2_0 = 4, and so on
     //
-    // so a change introduced in (hypothetical) BTI_1_2 would be handled from then on by:
+    // so a change introduced in BTI_1_2 may be handled from then on by:
     //
     // if ( indexVersion >= BTI_1_2 )
     //   do something new
@@ -96,6 +96,7 @@ class BamToolsIndex : public BamIndex {
     enum Version { BTI_1_0 = 1
                  , BTI_1_1
                  , BTI_1_2
+                 , BTI_2_0
                  };
 
     // ctor & dtor

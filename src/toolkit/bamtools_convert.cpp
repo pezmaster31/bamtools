@@ -2,7 +2,7 @@
 // bamtools_convert.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 11 June 2011
+// Last modified: 8 October 2011
 // ---------------------------------------------------------------------------
 // Converts between BAM and a number of other formats
 // ***************************************************************************
@@ -277,7 +277,7 @@ void ConvertTool::ConvertToolPrivate::PrintBed(const BamAlignment& a) {
 
     m_out << m_references.at(a.RefID).RefName << "\t"
           << a.Position << "\t"
-          << a.GetEndPosition() + 1 << "\t"
+          << a.GetEndPosition() << "\t"
           << a.Name << "\t"
           << a.MapQuality << "\t"
           << (a.IsReverseStrand() ? "-" : "+") << endl;

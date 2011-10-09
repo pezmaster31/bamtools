@@ -2,7 +2,7 @@
 // BamAux.h (c) 2009 Derek Barnett, Michael Str�mberg
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 October 2011 (DB)
+// Last modified: 8 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides data structures & utility methods that are used throughout the API.
 // ***************************************************************************
@@ -78,6 +78,13 @@ typedef std::vector<RefData> RefVector;
     \brief Represents a sequential genomic region
 
     Allowed to span multiple (sequential) references.
+
+    \warning BamRegion now represents a zero-based, HALF-OPEN interval.
+    In previous versions of BamTools (0.x & 1.x) all intervals were treated
+    as zero-based, CLOSED. I whole-heartedly apologize for any inconsistencies this
+    may have caused if you assumed that BT was always half-open; full aplogies also
+    to those who recognized that BamTools originally used a closed interval, but may
+    need to update their code to reflect this new change.
 */
 struct API_EXPORT BamRegion {
   
@@ -123,7 +130,7 @@ struct API_EXPORT BamRegion {
 
     //! Returns true if region has a right boundary
     bool isRightBoundSpecified(void) const {
-        return ( RightRefID >= 0 && RightPosition >= 0 );
+        return ( RightRefID >= 0 && RightPosition >= 1 );
     }
 };
 

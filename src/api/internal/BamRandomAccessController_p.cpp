@@ -2,7 +2,7 @@
 // BamRandomAccessController_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 October 2011(DB)
+// Last modified: 8 October 2011(DB)
 // ---------------------------------------------------------------------------
 // Manages random access operations in a BAM file
 // **************************************************************************
@@ -79,9 +79,9 @@ BamRandomAccessController::AlignmentState(const BamAlignment& alignment) const {
         // if alignment starts at or after left bound position
         if ( alignment.Position >= m_region.LeftPosition) {
 
-            if ( m_region.isRightBoundSpecified() &&            // right bound is specified AND
-                 m_region.LeftRefID == m_region.RightRefID &&   // left & right bounds on same reference AND
-                 alignment.Position > m_region.RightPosition )  // alignment starts after right bound position
+            if ( m_region.isRightBoundSpecified() &&             // right bound is specified AND
+                 m_region.LeftRefID == m_region.RightRefID &&    // left & right bounds on same reference AND
+                 alignment.Position >= m_region.RightPosition )  // alignment starts on or after right bound position
                 return AfterRegion;
 
             // otherwise, alignment overlaps region
@@ -92,7 +92,7 @@ BamRandomAccessController::AlignmentState(const BamAlignment& alignment) const {
         else {
 
             // if alignment overlaps left bound position
-            if ( alignment.GetEndPosition() >= m_region.LeftPosition )
+            if ( alignment.GetEndPosition() > m_region.LeftPosition )
                 return OverlapsRegion;
             else
                 return BeforeRegion;
@@ -116,15 +116,15 @@ BamRandomAccessController::AlignmentState(const BamAlignment& alignment) const {
             // alignment is on right bound reference
             else {
 
-                // if alignment starts on or before right bound position
-                if ( alignment.Position <= m_region.RightPosition )
+                // if alignment starts before right bound position
+                if ( alignment.Position < m_region.RightPosition )
                     return OverlapsRegion;
                 else
                     return AfterRegion;
             }
         }
 
-        // otherwise, alignment starts after left bound and there is no right bound
+        // otherwise, alignment starts after left bound and there is no right bound given
         else return OverlapsRegion;
     }
 }

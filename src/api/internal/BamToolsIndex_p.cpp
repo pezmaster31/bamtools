@@ -2,7 +2,7 @@
 // BamToolsIndex.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 6 October 2011 (DB)
+// Last modified: 8 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the BamTools index format (".bti")
 // ***************************************************************************
@@ -56,7 +56,7 @@ BamToolsIndex::BamToolsIndex(Internal::BamReaderPrivate* reader)
     , m_cacheMode(BamIndex::LimitedIndexCaching)
     , m_blockSize(BamToolsIndex::DEFAULT_BLOCK_LENGTH)
     , m_inputVersion(0)
-    , m_outputVersion(BTI_1_2) // latest version - used for writing new index files
+    , m_outputVersion(BTI_2_0) // latest version - used for writing new index files
 {
     m_isBigEndian = BamTools::SystemIsBigEndian();
 }
@@ -103,17 +103,12 @@ void BamToolsIndex::CheckVersion(void) {
     // check for deprecated, unsupported versions
     // (the format had to be modified to accomodate a particular bug fix)
 
-    else if ( (Version)m_inputVersion == BamToolsIndex::BTI_1_0 ) {
+    // Version 2.0: introduced support for half-open intervals, instead of the old closed intervals
+    //   respondBy: throwing exception - we're not going to try to handle the old BTI files.
+    else if ( (Version)m_inputVersion < BamToolsIndex::BTI_2_0 ) {
         const string message = "unsupported format: this version of the index may not properly handle "
-                               "reference ends. Please run 'bamtools index -bti -in yourData.bam' to "
-                               "generate an up-to-date, fixed BTI file.";
-        throw BamException("BamToolsIndex::CheckVersion", message);
-    }
-
-    else if ( (Version)m_inputVersion == BamToolsIndex::BTI_1_1 ) {
-        const string message = "unsupported format: this version of the index may not properly handle "
-                               "empty references. Please run 'bamtools index -bti -in yourData.bam to "
-                               "generate an up-to-date, fixed BTI file.";
+                               "coordinate intervals. Please run 'bamtools index -bti -in yourData.bam' "
+                               "to generate an up-to-date, fixed BTI file.";
         throw BamException("BamToolsIndex::CheckVersion", message);
     }
 }
@@ -150,7 +145,7 @@ bool BamToolsIndex::Create(void) {
 
     try {
         // open new index file (read & write)
-        string indexFilename = m_reader->Filename() + Extension();
+        const string indexFilename = m_reader->Filename() + Extension();
         OpenFile(indexFilename, "w+b");
 
         // initialize BtiFileSummary with number of references
@@ -188,7 +183,7 @@ bool BamToolsIndex::Create(void) {
                 else {
 
                     // store previous BTI block data in reference entry
-                    BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
+                    const BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
                     refEntry.Blocks.push_back(block);
 
                     // write reference entry, then clear
@@ -220,7 +215,7 @@ bool BamToolsIndex::Create(void) {
             ++currentBlockCount;
 
             // check end position
-            int32_t alignmentEndPosition = al.GetEndPosition();
+            const int32_t alignmentEndPosition = al.GetEndPosition();
             if ( alignmentEndPosition > blockMaxEndPosition )
                 blockMaxEndPosition = alignmentEndPosition;
 
@@ -228,7 +223,7 @@ bool BamToolsIndex::Create(void) {
             if ( currentBlockCount == m_blockSize ) {
 
                 // store previous block data in reference entry
-                BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
+                const BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
                 refEntry.Blocks.push_back(block);
 
                 // update markers
@@ -246,7 +241,7 @@ bool BamToolsIndex::Create(void) {
         if ( blockRefId >= 0 ) {
 
             // store last BTI block data in reference entry
-            BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
+            const BtiBlock block(blockMaxEndPosition, blockStartOffset, blockStartPosition);
             refEntry.Blocks.push_back(block);
 
             // write last reference entry, then clear
@@ -305,7 +300,7 @@ void BamToolsIndex::GetOffset(const BamRegion& region, int64_t& offset, bool* ha
 
         const BtiBlock& block = (*blockIter);
         if ( block.StartPosition <= region.RightPosition ) {
-            if ( block.MaxEndPosition >= region.LeftPosition ) {
+            if ( block.MaxEndPosition > region.LeftPosition ) {
                 offset = block.StartOffset;
                 break;
             }
@@ -324,7 +319,7 @@ void BamToolsIndex::GetOffset(const BamRegion& region, int64_t& offset, bool* ha
 
             --blockIter;
             const BtiBlock& previousBlock = (*blockIter);
-            if ( previousBlock.MaxEndPosition < region.LeftPosition ) {
+            if ( previousBlock.MaxEndPosition <= region.LeftPosition ) {
                 offset = currentBlock.StartOffset;
                 found = true;
                 break;

@@ -2,7 +2,7 @@
 // BamWriter_p.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 October 2011 (DB)
+// Last modified: 8 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -29,7 +29,7 @@ BamWriterPrivate::~BamWriterPrivate(void) {
     Close();
 }
 
-// calculates minimum bin for a BAM alignment interval
+// calculates minimum bin for a BAM alignment interval [begin, end)
 uint32_t BamWriterPrivate::CalculateMinimumBin(const int begin, int end) const {
     --end;
     if ( (begin >> 14) == (end >> 14) ) return 4681 + (begin >> 14);
@@ -213,10 +213,9 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
     const unsigned int queryLength        = al.QueryBases.size();
     const unsigned int tagDataLength      = al.TagData.size();
 
-    // no way to tell if BamAlignment.Bin is already defined (no default, invalid value)
-    // force calculation of Bin before storing
-    const int endPosition = al.GetEndPosition();
-    const uint32_t alignmentBin = CalculateMinimumBin(al.Position, endPosition);
+    // no way to tell if alignment's bin is already defined (there is no default, invalid value)
+    // so we'll go ahead calculate its bin ID before storing
+    const uint32_t alignmentBin = CalculateMinimumBin(al.Position, al.GetEndPosition());
 
     // create our packed cigar string
     string packedCigar;

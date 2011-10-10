@@ -7,10 +7,10 @@
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
 
-#include <api/BamAlignment.h>
-#include <api/BamWriter.h>
-#include <api/SamHeader.h>
-#include <api/internal/BamWriter_p.h>
+#include "api/BamAlignment.h"
+#include "api/BamWriter.h"
+#include "api/SamHeader.h"
+#include "api/internal/BamWriter_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 using namespace std;

@@ -7,8 +7,8 @@
 // Provides the BamAlignment data structure
 // ***************************************************************************
 
-#include <api/BamAlignment.h>
-#include <api/BamConstants.h>
+#include "api/BamAlignment.h"
+#include "api/BamConstants.h"
 using namespace BamTools;
 using namespace std;
 

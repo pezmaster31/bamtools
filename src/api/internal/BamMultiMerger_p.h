@@ -2,7 +2,7 @@
 // BamMultiMerger_p.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 3 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides merging functionality for BamMultiReader.  At this point, supports
 // sorting results by (refId, position) or by read name.
@@ -21,9 +21,9 @@
 //
 // We mean it.
 
-#include <api/BamAlignment.h>
-#include <api/BamReader.h>
-#include <api/algorithms/Sort.h>
+#include "api/BamAlignment.h"
+#include "api/BamReader.h"
+#include "api/algorithms/Sort.h"
 #include <deque>
 #include <functional>
 #include <set>

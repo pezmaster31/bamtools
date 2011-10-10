@@ -2,12 +2,12 @@
 // BamFile_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides BAM file-specific IO behavior
 // ***************************************************************************
 
-#include <api/internal/BamFile_p.h>
+#include "api/internal/BamFile_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 

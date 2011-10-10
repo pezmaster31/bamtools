@@ -2,7 +2,7 @@
 // BamRandomAccessController_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 6 October 2011(DB)
+// Last modified: 10 October 2011(DB)
 // ---------------------------------------------------------------------------
 // Manages random access operations in a BAM file
 // ***************************************************************************
@@ -20,8 +20,8 @@
 //
 // We mean it.
 
-#include <api/BamAux.h>
-#include <api/BamIndex.h>
+#include "api/BamAux.h"
+#include "api/BamIndex.h"
 
 namespace BamTools {
 

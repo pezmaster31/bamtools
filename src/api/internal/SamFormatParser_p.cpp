@@ -2,15 +2,15 @@
 // SamFormatParser.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 6 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for parsing SAM header text into SamHeader object
 // ***************************************************************************
 
-#include <api/SamConstants.h>
-#include <api/SamHeader.h>
-#include <api/internal/BamException_p.h>
-#include <api/internal/SamFormatParser_p.h>
+#include "api/SamConstants.h"
+#include "api/SamHeader.h"
+#include "api/internal/BamException_p.h"
+#include "api/internal/SamFormatParser_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 

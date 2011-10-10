@@ -10,8 +10,8 @@
 #ifndef BAMWRITER_H
 #define BAMWRITER_H
 
-#include <api/api_global.h>
-#include <api/BamAux.h>
+#include "api/api_global.h"
+#include "api/BamAux.h"
 #include <string>
 
 namespace BamTools {

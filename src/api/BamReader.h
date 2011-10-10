@@ -2,7 +2,7 @@
 // BamReader.h (c) 2009 Derek Barnett, Michael Str�mberg
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides read access to BAM files.
 // ***************************************************************************
@@ -10,10 +10,10 @@
 #ifndef BAMREADER_H
 #define BAMREADER_H
 
-#include <api/api_global.h>
-#include <api/BamAlignment.h>
-#include <api/BamIndex.h>
-#include <api/SamHeader.h>
+#include "api/api_global.h"
+#include "api/BamAlignment.h"
+#include "api/BamIndex.h"
+#include "api/SamHeader.h"
 #include <string>
 
 namespace BamTools {

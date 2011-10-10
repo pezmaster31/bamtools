@@ -2,7 +2,7 @@
 // SamReadGroupDictionary.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 1 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamReadGroup entries.
 // ***************************************************************************
@@ -10,8 +10,8 @@
 #ifndef SAM_READGROUP_DICTIONARY_H
 #define SAM_READGROUP_DICTIONARY_H
 
-#include <api/api_global.h>
-#include <api/SamReadGroup.h>
+#include "api/api_global.h"
+#include "api/SamReadGroup.h"
 #include <string>
 #include <vector>
 

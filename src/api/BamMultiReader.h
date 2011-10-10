@@ -2,7 +2,7 @@
 // BamMultiReader.h (c) 2010 Erik Garrison, Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Convenience class for reading multiple BAM files.
 // ***************************************************************************
@@ -10,8 +10,8 @@
 #ifndef BAMMULTIREADER_H
 #define BAMMULTIREADER_H
 
-#include <api/api_global.h>
-#include <api/BamReader.h>
+#include "api/api_global.h"
+#include "api/BamReader.h"
 #include <map>
 #include <sstream>
 #include <string>

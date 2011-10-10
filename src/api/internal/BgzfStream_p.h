@@ -2,7 +2,7 @@
 // BgzfStream_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 October 2011(DB)
+// Last modified: 10 October 2011(DB)
 // ---------------------------------------------------------------------------
 // Based on BGZF routines developed at the Broad Institute.
 // Provides the basic functionality for reading & writing BGZF files
@@ -22,12 +22,8 @@
 //
 // We mean it.
 
-#include <api/BamAux.h>
-#include <api/BamConstants.h>
-#include <api/IBamIODevice.h>
-#include "zlib.h"
-#include <cstdio>
-#include <memory>
+#include "api/api_global.h"
+#include "api/IBamIODevice.h"
 #include <string>
 
 namespace BamTools {

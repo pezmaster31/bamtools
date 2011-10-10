@@ -12,8 +12,8 @@
 // precludes the need to sort merged files.
 // ***************************************************************************
 
-#include <api/BamMultiReader.h>
-#include <api/internal/BamMultiReader_p.h>
+#include "api/BamMultiReader.h"
+#include "api/internal/BamMultiReader_p.h"
 using namespace BamTools;
 
 #include <string>

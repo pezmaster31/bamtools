@@ -2,7 +2,7 @@
 // BamStandardIndex.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 6 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the standardized BAM index format (".bai")
 // ***************************************************************************
@@ -20,8 +20,8 @@
 //
 // We mean it.
 
-#include <api/BamAux.h>
-#include <api/BamIndex.h>
+#include "api/BamAux.h"
+#include "api/BamIndex.h"
 #include <map>
 #include <set>
 #include <string>

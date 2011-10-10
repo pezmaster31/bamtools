@@ -2,15 +2,15 @@
 // BamIndexFactory_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 6 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides interface for generating BamIndex implementations
 // ***************************************************************************
 
-#include <api/BamAux.h>
-#include <api/internal/BamIndexFactory_p.h>
-#include <api/internal/BamStandardIndex_p.h>
-#include <api/internal/BamToolsIndex_p.h>
+#include "api/BamAux.h"
+#include "api/internal/BamIndexFactory_p.h"
+#include "api/internal/BamStandardIndex_p.h"
+#include "api/internal/BamToolsIndex_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 using namespace std;

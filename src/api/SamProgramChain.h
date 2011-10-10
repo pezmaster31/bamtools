@@ -10,8 +10,8 @@
 #ifndef SAM_PROGRAMCHAIN_H
 #define SAM_PROGRAMCHAIN_H
 
-#include <api/api_global.h>
-#include <api/SamProgram.h>
+#include "api/api_global.h"
+#include "api/SamProgram.h"
 #include <string>
 #include <vector>
 

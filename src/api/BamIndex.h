@@ -2,7 +2,7 @@
 // BamIndex.h (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 9 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides basic BAM index interface
 // ***************************************************************************
@@ -10,8 +10,8 @@
 #ifndef BAM_INDEX_H
 #define BAM_INDEX_H
 
-#include <api/api_global.h>
-#include <api/BamAux.h>
+#include "api/api_global.h"
+#include "api/BamAux.h"
 #include <string>
 
 namespace BamTools {

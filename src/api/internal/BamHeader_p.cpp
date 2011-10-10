@@ -2,16 +2,16 @@
 // BamHeader_p.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for handling BAM headers.
 // ***************************************************************************
 
-#include <api/BamAux.h>
-#include <api/BamConstants.h>
-#include <api/internal/BamException_p.h>
-#include <api/internal/BamHeader_p.h>
-#include <api/internal/BgzfStream_p.h>
+#include "api/BamAux.h"
+#include "api/BamConstants.h"
+#include "api/internal/BamException_p.h"
+#include "api/internal/BamHeader_p.h"
+#include "api/internal/BgzfStream_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 

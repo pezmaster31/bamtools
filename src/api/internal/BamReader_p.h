@@ -2,7 +2,7 @@
 // BamReader_p.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
@@ -20,13 +20,13 @@
 //
 // We mean it.
 
-#include <api/BamAlignment.h>
-#include <api/BamIndex.h>
-#include <api/BamReader.h>
-#include <api/SamHeader.h>
-#include <api/internal/BamHeader_p.h>
-#include <api/internal/BamRandomAccessController_p.h>
-#include <api/internal/BgzfStream_p.h>
+#include "api/BamAlignment.h"
+#include "api/BamIndex.h"
+#include "api/BamReader.h"
+#include "api/SamHeader.h"
+#include "api/internal/BamHeader_p.h"
+#include "api/internal/BamRandomAccessController_p.h"
+#include "api/internal/BgzfStream_p.h"
 #include <string>
 
 namespace BamTools {

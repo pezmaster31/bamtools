@@ -2,12 +2,12 @@
 // BamPipe_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides BAM pipe-specific IO behavior
 // ***************************************************************************
 
-#include <api/internal/BamPipe_p.h>
+#include "api/internal/BamPipe_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 

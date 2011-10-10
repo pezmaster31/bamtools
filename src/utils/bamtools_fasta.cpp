@@ -2,12 +2,12 @@
 // bamtools_fasta.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 13 July 2010
+// Last modified: 10 October 2011
 // ---------------------------------------------------------------------------
 // Provides FASTA reading/indexing functionality.
 // ***************************************************************************
 
-#include <utils/bamtools_fasta.h>
+#include "utils/bamtools_fasta.h"
 using namespace BamTools;
 
 #include <cstdio>

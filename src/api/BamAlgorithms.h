@@ -12,7 +12,7 @@
 #ifndef BAMALGORITHMS_H
 #define BAMALGORITHMS_H
 
-#include <api/algorithms/Sort.h>
+#include "api/algorithms/Sort.h"
 
 /*! \namespace BamTools::Algorithms
     \brief Provides convenient classes & methods for working with BAM data

@@ -2,7 +2,7 @@
 // BamFile_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 9 September 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides BAM file-specific IO behavior
 // ***************************************************************************
@@ -20,7 +20,7 @@
 //
 // We mean it.
 
-#include <api/internal/ILocalIODevice_p.h>
+#include "api/internal/ILocalIODevice_p.h"
 #include <string>
 
 namespace BamTools {

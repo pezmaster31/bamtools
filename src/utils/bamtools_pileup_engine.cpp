@@ -2,12 +2,12 @@
 // bamtools_pileup_engine.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010
+// Last modified: 10 October 2011
 // ---------------------------------------------------------------------------
 // Provides pileup at position functionality for various tools.
 // ***************************************************************************
 
-#include <utils/bamtools_pileup_engine.h>
+#include "utils/bamtools_pileup_engine.h"
 using namespace BamTools;
 
 #include <iostream>

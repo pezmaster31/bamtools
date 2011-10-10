@@ -2,16 +2,16 @@
 // BamToolsIndex.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 8 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the BamTools index format (".bti")
 // ***************************************************************************
 
-#include <api/BamAlignment.h>
-#include <api/internal/BamException_p.h>
-#include <api/internal/BamReader_p.h>
-#include <api/internal/BamToolsIndex_p.h>
-#include <api/internal/BgzfStream_p.h>
+#include "api/BamAlignment.h"
+#include "api/internal/BamException_p.h"
+#include "api/internal/BamReader_p.h"
+#include "api/internal/BamToolsIndex_p.h"
+#include "api/internal/BgzfStream_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 

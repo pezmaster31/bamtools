@@ -2,7 +2,7 @@
 // bamtools_filter_ruleparser.h (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010
+// Last modified: 10 October 2011
 // ---------------------------------------------------------------------------
 // Provides a compound rule parser for FilterEngine.
 // ***************************************************************************
@@ -10,7 +10,7 @@
 #ifndef BAMTOOLS_FILTER_RULEPARSER_H
 #define BAMTOOLS_FILTER_RULEPARSER_H
 
-#include <utils/bamtools_utilities.h>
+#include "utils/bamtools_utilities.h"
 #include <queue>
 #include <stack>
 #include <string>

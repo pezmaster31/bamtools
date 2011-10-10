@@ -2,7 +2,7 @@
 // BamIndexFactory_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 5 April 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides interface for generating BamIndex implementations
 // ***************************************************************************
@@ -10,7 +10,7 @@
 #ifndef BAMINDEX_FACTORY_P_H
 #define BAMINDEX_FACTORY_P_H
 
-#include <api/BamIndex.h>
+#include "api/BamIndex.h"
 #include <string>
 
 namespace BamTools {

@@ -2,7 +2,7 @@
 // SamHeaderVersion.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 24 February 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for comparing SAM header versions
 // *************************************************************************
@@ -20,7 +20,7 @@
 //
 // We mean it.
 
-#include <api/SamConstants.h>
+#include "api/SamConstants.h"
 #include <sstream>
 #include <string>
 

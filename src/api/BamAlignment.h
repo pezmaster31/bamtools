@@ -10,9 +10,9 @@
 #ifndef BAMALIGNMENT_H
 #define BAMALIGNMENT_H
 
-#include <api/api_global.h>
-#include <api/BamAux.h>
-#include <api/BamConstants.h>
+#include "api/api_global.h"
+#include "api/BamAux.h"
+#include "api/BamConstants.h"
 #include <cstdlib>
 #include <cstring>
 #include <string>

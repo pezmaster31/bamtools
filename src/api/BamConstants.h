@@ -10,7 +10,7 @@
 #ifndef BAM_CONSTANTS_H
 #define BAM_CONSTANTS_H
 
-#include <api/api_global.h>
+#include "api/api_global.h"
 #include <cassert>
 #include <string>
 

@@ -2,7 +2,7 @@
 // BamToolsIndex.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 8 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the BamTools index format (".bti")
 // ***************************************************************************
@@ -20,8 +20,8 @@
 //
 // We mean it.
 
-#include <api/BamAux.h>
-#include <api/BamIndex.h>
+#include "api/BamAux.h"
+#include "api/BamIndex.h"
 #include <map>
 #include <string>
 #include <vector>

@@ -11,10 +11,10 @@
 #ifndef ALGORITHMS_SORT_H
 #define ALGORITHMS_SORT_H
 
-#include <api/api_global.h>
-#include <api/BamAlignment.h>
-#include <api/BamReader.h>
-#include <api/BamMultiReader.h>
+#include "api/api_global.h"
+#include "api/BamAlignment.h"
+#include "api/BamReader.h"
+#include "api/BamMultiReader.h"
 #include <cassert>
 #include <algorithm>
 #include <functional>

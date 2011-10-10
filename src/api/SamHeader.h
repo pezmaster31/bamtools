@@ -10,10 +10,10 @@
 #ifndef SAM_HEADER_H
 #define SAM_HEADER_H
 
-#include <api/api_global.h>
-#include <api/SamProgramChain.h>
-#include <api/SamReadGroupDictionary.h>
-#include <api/SamSequenceDictionary.h>
+#include "api/api_global.h"
+#include "api/SamProgramChain.h"
+#include "api/SamReadGroupDictionary.h"
+#include "api/SamSequenceDictionary.h"
 #include <string>
 #include <vector>
 

@@ -2,15 +2,15 @@
 // BamStandardIndex.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 8 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the standardized BAM index format (".bai")
 // ***************************************************************************
 
-#include <api/BamAlignment.h>
-#include <api/internal/BamException_p.h>
-#include <api/internal/BamReader_p.h>
-#include <api/internal/BamStandardIndex_p.h>
+#include "api/BamAlignment.h"
+#include "api/internal/BamException_p.h"
+#include "api/internal/BamReader_p.h"
+#include "api/internal/BamStandardIndex_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 

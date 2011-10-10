@@ -10,7 +10,7 @@
 #ifndef SAM_SEQUENCE_H
 #define SAM_SEQUENCE_H
 
-#include <api/api_global.h>
+#include "api/api_global.h"
 #include <string>
 
 namespace BamTools {

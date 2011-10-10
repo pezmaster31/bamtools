@@ -2,7 +2,7 @@
 // BamHttp_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 8 September 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides reading/writing of BAM files on HTTP server
 // ***************************************************************************
@@ -20,7 +20,7 @@
 //
 // We mean it.
 
-#include <api/IBamIODevice.h>
+#include "api/IBamIODevice.h"
 #include <string>
 
 namespace BamTools {

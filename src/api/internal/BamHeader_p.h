@@ -2,7 +2,7 @@
 // BamHeader_p.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 6 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for handling BAM headers.
 // ***************************************************************************
@@ -20,7 +20,7 @@
 //
 // We mean it.
 
-#include <api/SamHeader.h>
+#include "api/SamHeader.h"
 #include <string>
 
 namespace BamTools {

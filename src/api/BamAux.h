@@ -2,7 +2,7 @@
 // BamAux.h (c) 2009 Derek Barnett, Michael Str�mberg
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 8 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides data structures & utility methods that are used throughout the API.
 // ***************************************************************************
@@ -20,6 +20,7 @@
 
     Provides data structures & utility methods that are used throughout the API.
 */
+
 /*! \namespace BamTools
     \brief Contains all BamTools classes & methods.
 
@@ -34,11 +35,11 @@ namespace BamTools {
 /*! \struct BamTools::CigarOp
     \brief Represents a CIGAR alignment operation.
 
-    \sa http://samtools.sourceforge.net/SAM-1.3.pdf for more details on using CIGAR operations.
+    \sa \samSpecURL for more details on using CIGAR operations.
 */
 struct API_EXPORT CigarOp {
   
-    char     Type;   //!< CIGAR operation type (MIDNSHP)
+    char     Type;   //!< CIGAR operation type (MIDNSHPX=)
     uint32_t Length; //!< CIGAR operation length (number of bases)
     
     //! constructor
@@ -81,10 +82,7 @@ typedef std::vector<RefData> RefVector;
 
     \warning BamRegion now represents a zero-based, HALF-OPEN interval.
     In previous versions of BamTools (0.x & 1.x) all intervals were treated
-    as zero-based, CLOSED. I whole-heartedly apologize for any inconsistencies this
-    may have caused if you assumed that BT was always half-open; full aplogies also
-    to those who recognized that BamTools originally used a closed interval, but may
-    need to update their code to reflect this new change.
+    as zero-based, CLOSED.
 */
 struct API_EXPORT BamRegion {
   
@@ -138,11 +136,7 @@ struct API_EXPORT BamRegion {
 // General utility methods
 
 /*! \fn bool FileExists(const std::string& filename)
-    \brief checks if file exists
-
-    Attempts to open file in a read-only mode.
-
-    \return \c true if file can be opened successfully
+    \brief returns true if the file exists
 */
 API_EXPORT inline bool FileExists(const std::string& filename) {
     std::ifstream f(filename.c_str(), std::ifstream::in);
@@ -151,8 +145,6 @@ API_EXPORT inline bool FileExists(const std::string& filename) {
 
 /*! \fn void SwapEndian_16(int16_t& x)
     \brief swaps endianness of signed 16-bit integer, in place
-
-    Swaps endian representation of value in \a x.
 */
 API_EXPORT inline void SwapEndian_16(int16_t& x) {
     x = ((x >> 8) | (x << 8));
@@ -160,8 +152,6 @@ API_EXPORT inline void SwapEndian_16(int16_t& x) {
 
 /*! \fn void SwapEndian_16(uint16_t& x)
     \brief swaps endianness of unsigned 16-bit integer, in place
-
-    Swaps endian representation of value in \a x.
 */
 API_EXPORT inline void SwapEndian_16(uint16_t& x) {
     x = ((x >> 8) | (x << 8));
@@ -169,8 +159,6 @@ API_EXPORT inline void SwapEndian_16(uint16_t& x) {
 
 /*! \fn void SwapEndian_32(int32_t& x)
     \brief swaps endianness of signed 32-bit integer, in place
-
-    Swaps endian representation of value in \a x.
 */
 API_EXPORT inline void SwapEndian_32(int32_t& x) {
     x = ( (x >> 24) | 
@@ -182,8 +170,6 @@ API_EXPORT inline void SwapEndian_32(int32_t& x) {
 
 /*! \fn void SwapEndian_32(uint32_t& x)
     \brief swaps endianness of unsigned 32-bit integer, in place
-
-    Swaps endian representation of value in \a x.
 */
 API_EXPORT inline void SwapEndian_32(uint32_t& x) {
     x = ( (x >> 24) | 
@@ -195,8 +181,6 @@ API_EXPORT inline void SwapEndian_32(uint32_t& x) {
 
 /*! \fn void SwapEndian_64(int64_t& x)
     \brief swaps endianness of signed 64-bit integer, in place
-
-    Swaps endian representation of value in \a x.
 */
 API_EXPORT inline void SwapEndian_64(int64_t& x) {
     x = ( (x >> 56) | 
@@ -212,8 +196,6 @@ API_EXPORT inline void SwapEndian_64(int64_t& x) {
 
 /*! \fn void SwapEndian_64(uint64_t& x)
     \brief swaps endianness of unsigned 64-bit integer, in place
-
-    Swaps endian representation of value in \a x.
 */
 API_EXPORT inline void SwapEndian_64(uint64_t& x) {
     x = ( (x >> 56) | 
@@ -229,8 +211,6 @@ API_EXPORT inline void SwapEndian_64(uint64_t& x) {
 
 /*! \fn void SwapEndian_16p(char* data)
     \brief swaps endianness of the next 2 bytes in a buffer, in place
-
-    Swaps endian representation the next 2 bytes in \a data.
 */
 API_EXPORT inline void SwapEndian_16p(char* data) {
     uint16_t& value = (uint16_t&)*data; 
@@ -239,8 +219,6 @@ API_EXPORT inline void SwapEndian_16p(char* data) {
 
 /*! \fn void SwapEndian_32p(char* data)
     \brief swaps endianness of the next 4 bytes in a buffer, in place
-
-    Swaps endian representation the next 4 bytes in \a data.
 */
 API_EXPORT inline void SwapEndian_32p(char* data) {
     uint32_t& value = (uint32_t&)*data; 
@@ -249,8 +227,6 @@ API_EXPORT inline void SwapEndian_32p(char* data) {
 
 /*! \fn void SwapEndian_64p(char* data)
     \brief swaps endianness of the next 8 bytes in a buffer, in place
-
-    Swaps endian representation the next 8 bytes in \a data.
 */
 API_EXPORT inline void SwapEndian_64p(char* data) {
     uint64_t& value = (uint64_t&)*data; 
@@ -269,8 +245,8 @@ API_EXPORT inline bool SystemIsBigEndian(void) {
 /*! \fn void PackUnsignedInt(char* buffer, unsigned int value)
     \brief stores unsigned integer value in a byte buffer
 
-    \param buffer destination buffer
-    \param value  unsigned integer to 'pack' in buffer
+    \param[out] buffer destination buffer
+    \param[in]  value  value to 'pack' in buffer
 */
 API_EXPORT inline void PackUnsignedInt(char* buffer, unsigned int value) {
     buffer[0] = (char)value;
@@ -282,8 +258,8 @@ API_EXPORT inline void PackUnsignedInt(char* buffer, unsigned int value) {
 /*! \fn void PackUnsignedShort(char* buffer, unsigned short value)
     \brief stores unsigned short integer value in a byte buffer
 
-    \param buffer destination buffer
-    \param value  unsigned short integer to 'pack' in buffer
+    \param[out] buffer destination buffer
+    \param[in]  value  value to 'pack' in buffer
 */
 API_EXPORT inline void PackUnsignedShort(char* buffer, unsigned short value) {
     buffer[0] = (char)value;
@@ -293,7 +269,7 @@ API_EXPORT inline void PackUnsignedShort(char* buffer, unsigned short value) {
 /*! \fn double UnpackDouble(const char* buffer)
     \brief reads a double value from byte buffer
 
-    \param buffer source byte buffer
+    \param[in] buffer source byte buffer
     \return the (double) value read from the buffer
 */
 API_EXPORT inline double UnpackDouble(const char* buffer) {
@@ -315,7 +291,7 @@ API_EXPORT inline double UnpackDouble(const char* buffer) {
 
     This is an overloaded function.
 
-    \param buffer source byte buffer
+    \param[in] buffer source byte buffer
     \return the (double) value read from the buffer
 */
 API_EXPORT inline double UnpackDouble(char* buffer) {
@@ -325,7 +301,7 @@ API_EXPORT inline double UnpackDouble(char* buffer) {
 /*! \fn double UnpackFloat(const char* buffer)
     \brief reads a float value from byte buffer
 
-    \param buffer source byte buffer
+    \param[in] buffer source byte buffer
     \return the (float) value read from the buffer
 */
 API_EXPORT inline float UnpackFloat(const char* buffer) {
@@ -343,7 +319,7 @@ API_EXPORT inline float UnpackFloat(const char* buffer) {
 
     This is an overloaded function.
 
-    \param buffer source byte buffer
+    \param[in] buffer source byte buffer
     \return the (float) value read from the buffer
 */
 API_EXPORT inline float UnpackFloat(char* buffer) {
@@ -353,7 +329,7 @@ API_EXPORT inline float UnpackFloat(char* buffer) {
 /*! \fn signed int UnpackSignedInt(const char* buffer)
     \brief reads a signed integer value from byte buffer
 
-    \param buffer source byte buffer
+    \param[in] buffer source byte buffer
     \return the (signed int) value read from the buffer
 */
 API_EXPORT inline signed int UnpackSignedInt(const char* buffer) {
@@ -371,7 +347,7 @@ API_EXPORT inline signed int UnpackSignedInt(const char* buffer) {
 
     This is an overloaded function.
 
-    \param buffer source byte buffer
+    \param[in] buffer source byte buffer
     \return the (signed int) value read from the buffer
 */
 API_EXPORT inline signed int UnpackSignedInt(char* buffer) {
@@ -381,7 +357,7 @@ API_EXPORT inline signed int UnpackSignedInt(char* buffer) {
 /*! \fn signed short UnpackSignedShort(const char* buffer)
     \brief reads a signed short integer value from byte buffer
 
-    \param buffer source byte buffer
+    \param[in] buffer source byte buffer
     \return the (signed short) value read from the buffer
 */
 API_EXPORT inline signed short UnpackSignedShort(const char* buffer) {
@@ -397,7 +373,7 @@ API_EXPORT inline signed short UnpackSignedShort(const char* buffer) {
 
     This is an overloaded function.
 
-    \param buffer source byte buffer
+    \param[in] buffer source byte buffer
     \return the (signed short) value read from the buffer
 */
 API_EXPORT inline signed short UnpackSignedShort(char* buffer) {
@@ -407,7 +383,7 @@ API_EXPORT inline signed short UnpackSignedShort(char* buffer) {
 /*! \fn unsigned int UnpackUnsignedInt(const char* buffer)
     \brief reads an unsigned integer value from byte buffer
 
-    \param buffer source byte buffer
+    \param[in] buffer source byte buffer
     \return the (unsigned int) value read from the buffer
 */
 API_EXPORT inline unsigned int UnpackUnsignedInt(const char* buffer) {
@@ -425,7 +401,7 @@ API_EXPORT inline unsigned int UnpackUnsignedInt(const char* buffer) {
 
     This is an overloaded function.
 
-    \param buffer source byte buffer
+    \param[in] buffer source byte buffer
     \return the (unsigned int) value read from the buffer
 */
 API_EXPORT inline unsigned int UnpackUnsignedInt(char* buffer) {
@@ -435,7 +411,7 @@ API_EXPORT inline unsigned int UnpackUnsignedInt(char* buffer) {
 /*! \fn unsigned short UnpackUnsignedShort(const char* buffer)
     \brief reads an unsigned short integer value from byte buffer
 
-    \param buffer source byte buffer
+    \param[in] buffer source byte buffer
     \return the (unsigned short) value read from the buffer
 */
 API_EXPORT inline unsigned short UnpackUnsignedShort(const char* buffer) {
@@ -451,7 +427,7 @@ API_EXPORT inline unsigned short UnpackUnsignedShort(const char* buffer) {
 
     This is an overloaded function.
 
-    \param buffer source byte buffer
+    \param[in] buffer source byte buffer
     \return the (unsigned short) value read from the buffer
 */
 API_EXPORT inline unsigned short UnpackUnsignedShort(char* buffer) {
@@ -461,8 +437,11 @@ API_EXPORT inline unsigned short UnpackUnsignedShort(char* buffer) {
 // ----------------------------------------------------------------
 // 'internal' helper structs
 
+/*! \struct RaiiBuffer
+    \internal
+*/
 struct RaiiBuffer {
-    RaiiBuffer(const unsigned int n)
+    RaiiBuffer(const size_t n)
         : Buffer( new char[n]() )
     { }
     ~RaiiBuffer(void) {

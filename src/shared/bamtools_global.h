@@ -2,7 +2,7 @@
 // bamtools_global.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic definitions for exporting & importing library symbols.
 // Also provides some platform-specific rules for definitions.
@@ -75,17 +75,21 @@
 #  endif
 #endif // BAMTOOLS_TYPES
 
+//! \internal
 inline void bamtools_noop(void) { }
 
+/*! \brief Assert definitions
+    \internal
+*/
 #ifndef BAMTOOLS_ASSERTS
 #define BAMTOOLS_ASSERTS
-#  include <cassert>
-#  include <stdexcept>
 #  ifdef NDEBUG
-#    define BT_ASSERT_UNREACHABLE bamtools_noop()
+#    define BT_ASSERT_UNREACHABLE             bamtools_noop()
 #    define BT_ASSERT_X( condition, message ) bamtools_noop()
 #  else
-#    define BT_ASSERT_UNREACHABLE assert( false )
+#    include <cassert>
+#    include <stdexcept>
+#    define BT_ASSERT_UNREACHABLE             assert( false )
 #    define BT_ASSERT_X( condition, message ) if (!( condition )) { throw std::runtime_error( message ); }
 #  endif
 #endif // BAMTOOLS_ASSERTS

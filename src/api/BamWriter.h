@@ -2,7 +2,7 @@
 // BamWriter.h (c) 2009 Michael Str�mberg, Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 5 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -19,9 +19,11 @@ namespace BamTools {
 class BamAlignment;
 class SamHeader;
 
+//! \cond
 namespace Internal {
     class BamWriterPrivate;
 } // namespace Internal
+//! \endcond
 
 class API_EXPORT BamWriter {
 

@@ -2,7 +2,7 @@
 // BamAlignment.h (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -20,11 +20,13 @@
 
 namespace BamTools {
 
-// forward declaration of BamAlignment's friend classes
+//! \cond
+// forward declaration of BamAlignment's "friends"
 namespace Internal {
     class BamReaderPrivate;
     class BamWriterPrivate;
 } // namespace Internal
+//! \endcond
 
 // BamAlignment data structure
 struct API_EXPORT BamAlignment {
@@ -37,36 +39,31 @@ struct API_EXPORT BamAlignment {
 
     // queries against alignment flags
     public:        
-        bool IsDuplicate(void) const;           // returns true if this read is a PCR duplicate
-        bool IsFailedQC(void) const;            // returns true if this read failed quality control
-        bool IsFirstMate(void) const;           // returns true if alignment is first mate on read
-        bool IsMapped(void) const;              // returns true if alignment is mapped
-        bool IsMateMapped(void) const;          // returns true if alignment's mate is mapped
-        bool IsMateReverseStrand(void) const;   // returns true if alignment's mate mapped to reverse strand
-        bool IsPaired(void) const;              // returns true if alignment part of paired-end read
-        bool IsPrimaryAlignment(void) const;    // returns true if reported position is primary alignment
-        bool IsProperPair(void) const;          // returns true if alignment is part of read that satisfied paired-end resolution
-        bool IsReverseStrand(void) const;       // returns true if alignment mapped to reverse strand
-        bool IsSecondMate(void) const;          // returns true if alignment is second mate on read
+        bool IsDuplicate(void) const;         // returns true if this read is a PCR duplicate
+        bool IsFailedQC(void) const;          // returns true if this read failed quality control
+        bool IsFirstMate(void) const;         // returns true if alignment is first mate on read
+        bool IsMapped(void) const;            // returns true if alignment is mapped
+        bool IsMateMapped(void) const;        // returns true if alignment's mate is mapped
+        bool IsMateReverseStrand(void) const; // returns true if alignment's mate mapped to reverse strand
+        bool IsPaired(void) const;            // returns true if alignment part of paired-end read
+        bool IsPrimaryAlignment(void) const;  // returns true if reported position is primary alignment
+        bool IsProperPair(void) const;        // returns true if alignment is part of read that satisfied paired-end resolution
+        bool IsReverseStrand(void) const;     // returns true if alignment mapped to reverse strand
+        bool IsSecondMate(void) const;        // returns true if alignment is second mate on read
 
     // manipulate alignment flags
     public:        
-        void SetIsDuplicate(bool ok);           // sets value of "PCR duplicate" flag
-        void SetIsFailedQC(bool ok);            // sets value of "failed quality control" flag
-        void SetIsFirstMate(bool ok);           // sets value of "alignment is first mate" flag
-        void SetIsMapped(bool ok);              // sets value of "alignment is mapped" flag
-        void SetIsMateMapped(bool ok);          // sets value of "alignment's mate is mapped" flag
-        void SetIsMateReverseStrand(bool ok);   // sets value of "alignment's mate mapped to reverse strand" flag
-        void SetIsPaired(bool ok);              // sets value of "alignment part of paired-end read" flag
-        void SetIsPrimaryAlignment(bool ok);    // sets value of "position is primary alignment" flag
-        void SetIsProperPair(bool ok);          // sets value of "alignment is part of read that satisfied paired-end resolution" flag
-        void SetIsReverseStrand(bool ok);       // sets value of "alignment mapped to reverse strand" flag
-        void SetIsSecondMate(bool ok);          // sets value of "alignment is second mate on read" flag
-
-        // legacy methods (consider deprecated, but still available)
-        void SetIsMateUnmapped(bool ok);        // complement of using SetIsMateMapped()
-        void SetIsSecondaryAlignment(bool ok);  // complement of using SetIsPrimaryAlignment()
-        void SetIsUnmapped(bool ok);            // complement of using SetIsMapped()
+        void SetIsDuplicate(bool ok);         // sets value of "PCR duplicate" flag
+        void SetIsFailedQC(bool ok);          // sets value of "failed quality control" flag
+        void SetIsFirstMate(bool ok);         // sets value of "alignment is first mate" flag
+        void SetIsMapped(bool ok);            // sets value of "alignment is mapped" flag
+        void SetIsMateMapped(bool ok);        // sets value of "alignment's mate is mapped" flag
+        void SetIsMateReverseStrand(bool ok); // sets value of "alignment's mate mapped to reverse strand" flag
+        void SetIsPaired(bool ok);            // sets value of "alignment part of paired-end read" flag
+        void SetIsPrimaryAlignment(bool ok);  // sets value of "position is primary alignment" flag
+        void SetIsProperPair(bool ok);        // sets value of "alignment is part of read that satisfied paired-end resolution" flag
+        void SetIsReverseStrand(bool ok);     // sets value of "alignment mapped to reverse strand" flag
+        void SetIsSecondMate(bool ok);        // sets value of "alignment is second mate on read" flag
 
     // tag data access methods
     public:
@@ -83,13 +80,8 @@ struct API_EXPORT BamAlignment {
         template<typename T> bool GetTag(const std::string& tag, T& destination) const;
         template<typename T> bool GetTag(const std::string& tag, std::vector<T>& destination) const;
 
-        // retrieves the BAM type-code for requested tag
-        // (returns whether or not tag exists, and type-code is valid)
+        // retrieves the SAM/BAM type-code for requested tag name
         bool GetTagType(const std::string& tag, char& type) const;
-
-        // legacy methods (consider deprecated, but still available)
-        bool GetEditDistance(uint32_t& editDistance) const;         // retrieves value of "NM" tag
-        bool GetReadGroup(std::string& readGroup) const;            // retrieves value of "RG" tag
 
         // returns true if alignment has a record for this tag name
         bool HasTag(const std::string& tag) const;
@@ -127,17 +119,15 @@ struct API_EXPORT BamAlignment {
         int32_t     InsertSize;         // mate-pair insert size
         std::string Filename;           // name of BAM file which this alignment comes from
 
-    //! \cond
+    //! \internal
     // internal utility methods
     private:
         bool FindTag(const std::string& tag,
                      char*& pTagData,
                      const unsigned int& tagDataLength,
                      unsigned int& numBytesParsed) const;
-        bool IsValidSize(const std::string& tag,
-                         const std::string& type) const;
-        void SetErrorString(const std::string& where,
-                            const std::string& what) const;
+        bool IsValidSize(const std::string& tag, const std::string& type) const;
+        void SetErrorString(const std::string& where, const std::string& what) const;
         bool SkipToNextTag(const char storageType,
                            char*& pTagData,
                            unsigned int& numBytesParsed) const;
@@ -169,17 +159,26 @@ struct API_EXPORT BamAlignment {
         friend class Internal::BamWriterPrivate;
 
         mutable std::string ErrorString; // mutable to allow updates even in logically const methods
-    //! \endcond
+    //! \endinternal
 };
 
 // ---------------------------------------------------------
 // BamAlignment tag access methods
 
+/*! \fn bool AddTag(const std::string& tag, const std::string& type, const T& value)
+    \brief Adds a field to the BAM tags.
+
+    Does NOT modify an existing tag - use \link BamAlignment::EditTag() \endlink instead.
+
+    \param[in] tag   2-character tag name
+    \param[in] type  1-character tag type
+    \param[in] value data to store
+    \return \c true if the \b new tag was added successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
 template<typename T>
-inline bool BamAlignment::AddTag(const std::string& tag,
-                                 const std::string& type,
-                                 const T& value)
-{
+inline bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const T& value) {
+
     // if char data not populated, do that first
     if ( SupportData.HasCoreOnly )
         BuildCharData();
@@ -276,10 +275,19 @@ inline bool BamAlignment::AddTag<std::string>(const std::string& tag,
     return true;
 }
 
+/*! \fn template<typename T> bool AddTag(const std::string& tag, const std::vector<T>& values)
+    \brief Adds a numeric array field to the BAM tags.
+
+    Does NOT modify an existing tag - use \link BamAlignment::EditTag() \endlink instead.
+
+    \param[in] tag    2-character tag name
+    \param[in] values vector of data values to store
+    \return \c true if the \b new tag was added successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
 template<typename T>
-inline bool BamAlignment::AddTag(const std::string& tag,
-                                 const std::vector<T>& values)
-{
+inline bool BamAlignment::AddTag(const std::string& tag, const std::vector<T>& values) {
+
     // if char data not populated, do that first
     if ( SupportData.HasCoreOnly )
         BuildCharData();
@@ -333,11 +341,23 @@ inline bool BamAlignment::AddTag(const std::string& tag,
     return true;
 }
 
+/*! \fn template<typename T> bool EditTag(const std::string& tag, const std::string& type, const T& value)
+    \brief Edits a BAM tag field.
+
+    If \a tag does not exist, a new entry is created.
+
+    \param tag[in]   2-character tag name
+    \param type[in]  1-character tag type (must be "Z" or "H")
+    \param value[in] new data value
+
+    \return \c true if the tag was modified/created successfully
+
+    \sa BamAlignment::RemoveTag()
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
 template<typename T>
-inline bool BamAlignment::EditTag(const std::string& tag,
-                                  const std::string& type,
-                                  const T& value)
-{
+inline bool BamAlignment::EditTag(const std::string& tag, const std::string& type, const T& value) {
+
     // if char data not populated, do that first
     if ( SupportData.HasCoreOnly )
         BuildCharData();
@@ -348,10 +368,20 @@ inline bool BamAlignment::EditTag(const std::string& tag,
     return AddTag(tag, type, value);
 }
 
+/*! \fn template<typename T> bool EditTag(const std::string& tag, const std::vector<T>& values)
+    \brief Edits a BAM tag field containing a numeric array.
+
+    If \a tag does not exist, a new entry is created.
+
+    \param tag[in]   2-character tag name
+    \param value[in] vector of data values
+
+    \return \c true if the tag was modified/created successfully
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
 template<typename T>
-inline bool BamAlignment::EditTag(const std::string& tag,
-                                  const std::vector<T>& values)
-{
+inline bool BamAlignment::EditTag(const std::string& tag, const std::vector<T>& values) {
+
     // if char data not populated, do that first
     if ( SupportData.HasCoreOnly )
         BuildCharData();
@@ -362,10 +392,17 @@ inline bool BamAlignment::EditTag(const std::string& tag,
     return AddTag(tag, values);
 }
 
+
+/*! \fn template<typename T> bool GetTag(const std::string& tag, T& destination) const
+    \brief Retrieves the value associated with a BAM tag.
+
+    \param tag[in]          2-character tag name
+    \param destination[out] retrieved value
+    \return \c true if found
+*/
 template<typename T>
-inline bool BamAlignment::GetTag(const std::string& tag,
-                                 T& destination) const
-{
+inline bool BamAlignment::GetTag(const std::string& tag, T& destination) const {
+
     // skip if alignment is core-only
     if ( SupportData.HasCoreOnly ) {
         // TODO: set error string?
@@ -480,11 +517,16 @@ inline bool BamAlignment::GetTag<std::string>(const std::string& tag,
     return true;
 }
 
-// retrieves "binary-array" tag data
+/*! \fn template<typename T> bool GetTag(const std::string& tag, std::vector<T>& destination) const
+    \brief Retrieves the numeric array associated with a BAM tag.
+
+    \param tag[in]          2-character tag name
+    \param destination[out] retrieved values
+    \return \c true if found
+*/
 template<typename T>
-inline bool BamAlignment::GetTag(const std::string& tag,
-                                 std::vector<T>& destination) const
-{
+inline bool BamAlignment::GetTag(const std::string& tag, std::vector<T>& destination) const {
+
     // skip if alignment is core-only
     if ( SupportData.HasCoreOnly ) {
         // TODO: set error string?

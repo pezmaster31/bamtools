@@ -2,7 +2,7 @@
 // SamReadGroupDictionary.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 1 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamReadGroup entries.
 // ***************************************************************************
@@ -38,32 +38,37 @@ SamReadGroupDictionary::SamReadGroupDictionary(const SamReadGroupDictionary& oth
 SamReadGroupDictionary::~SamReadGroupDictionary(void) { }
 
 /*! \fn void SamReadGroupDictionary::Add(const SamReadGroup& readGroup)
-    \brief Adds a read group to the dictionary.
+    \brief Appends a read group to the dictionary.
 
     Duplicate entries are silently discarded.
 
-    \param readGroup entry to be added
+    \param[in] readGroup entry to be added
 */
 void SamReadGroupDictionary::Add(const SamReadGroup& readGroup) {
-
-    // TODO: report error on attempted duplicate?
-
     if ( IsEmpty() || !Contains(readGroup) )
         m_data.push_back(readGroup);
 }
 
 /*! \fn void SamReadGroupDictionary::Add(const std::string& readGroupId)
-    \brief Adds a read group to the dictionary.
+    \brief Appends a read group to the dictionary.
 
     This is an overloaded function.
 
-    \param readGroupId ID of read group to be added
+    \param[in] readGroupId ID of read group to be added
     \sa Add()
 */
 void SamReadGroupDictionary::Add(const std::string& readGroupId) {
     Add( SamReadGroup(readGroupId) );
 }
 
+/*! \fn void SamReadGroupDictionary::Add(const SamReadGroupDictionary& readGroups)
+    \brief Appends another read group dictionary to this one.
+
+    This is an overloaded function.
+
+    \param[in] readGroups entries to be added
+    \sa Add()
+*/
 void SamReadGroupDictionary::Add(const SamReadGroupDictionary& readGroups) {
     SamReadGroupConstIterator rgIter = readGroups.ConstBegin();
     SamReadGroupConstIterator rgEnd  = readGroups.ConstEnd();
@@ -72,11 +77,11 @@ void SamReadGroupDictionary::Add(const SamReadGroupDictionary& readGroups) {
 }
 
 /*! \fn void SamReadGroupDictionary::Add(const std::vector<SamReadGroup>& readGroups)
-    \brief Adds multiple read groups to the dictionary.
+    \brief Appends multiple read groups to the dictionary.
 
     This is an overloaded function.
 
-    \param readGroups entries to be added
+    \param[in] readGroups entries to be added
     \sa Add()
 */
 void SamReadGroupDictionary::Add(const std::vector<SamReadGroup>& readGroups) {
@@ -87,11 +92,11 @@ void SamReadGroupDictionary::Add(const std::vector<SamReadGroup>& readGroups) {
 }
 
 /*! \fn void SamReadGroupDictionary::Add(const std::vector<std::string>& readGroupIds)
-    \brief Adds multiple read groups to the dictionary.
+    \brief Appends multiple read groups to the dictionary.
 
     This is an overloaded function.
 
-    \param readGroupIds IDs of read groups to be added
+    \param[in] readGroupIds IDs of read groups to be added
     \sa Add()
 */
 void SamReadGroupDictionary::Add(const std::vector<std::string>& readGroupIds) {
@@ -145,7 +150,8 @@ SamReadGroupConstIterator SamReadGroupDictionary::ConstEnd(void) const {
 
 /*! \fn bool SamReadGroupDictionary::Contains(const std::string& readGroupId) const
     \brief Returns true if dictionary contains read group.
-    \param readGroupId search for read group matching this ID
+
+    \param[in] readGroupId search for read group matching this ID
     \return \c true if dictionary contains a read group with this ID
 */
 bool SamReadGroupDictionary::Contains(const std::string& readGroupId) const {
@@ -157,7 +163,7 @@ bool SamReadGroupDictionary::Contains(const std::string& readGroupId) const {
 
     This is an overloaded function.
 
-    \param readGroup search for this read group
+    \param[in] readGroup search for this read group
     \return \c true if dictionary contains read group (matching on ID).
 */
 bool SamReadGroupDictionary::Contains(const SamReadGroup& readGroup) const {
@@ -212,7 +218,7 @@ bool SamReadGroupDictionary::IsEmpty(void) const {
 
     This is an overloaded function.
 
-    \param readGroup read group to remove (matches on ID)
+    \param[in] readGroup read group to remove (matches on ID)
 */
 void SamReadGroupDictionary::Remove(const SamReadGroup& readGroup) {
     Remove( readGroup.ID );
@@ -220,7 +226,8 @@ void SamReadGroupDictionary::Remove(const SamReadGroup& readGroup) {
 
 /*! \fn void SamReadGroupDictionary::Remove(const std::string& readGroupId)
     \brief Removes read group from dictionary, if found.
-    \param readGroupId ID of read group to remove
+
+    \param[in] readGroupId ID of read group to remove
     \sa Remove()
 */
 void SamReadGroupDictionary::Remove(const std::string& readGroupId) {
@@ -233,7 +240,7 @@ void SamReadGroupDictionary::Remove(const std::string& readGroupId) {
 
     This is an overloaded function.
 
-    \param readGroups read groups to remove
+    \param[in] readGroups read groups to remove
     \sa Remove()
 */
 void SamReadGroupDictionary::Remove(const std::vector<SamReadGroup>& readGroups) {
@@ -248,7 +255,7 @@ void SamReadGroupDictionary::Remove(const std::vector<SamReadGroup>& readGroups)
 
     This is an overloaded function.
 
-    \param readGroupIds IDs of the read groups to remove
+    \param[in] readGroupIds IDs of the read groups to remove
     \sa Remove()
 */
 void SamReadGroupDictionary::Remove(const std::vector<std::string>& readGroupIds) {
@@ -269,13 +276,11 @@ int SamReadGroupDictionary::Size(void) const {
 /*! \fn SamReadGroup& SamReadGroupDictionary::operator[](const std::string& readGroupId)
     \brief Retrieves the modifiable SamReadGroup that matches \a readGroupId.
 
-    NOTE - If the dictionary contains no read group matching this ID, this function inserts
-    a new one with this ID, and returns a reference to it.
+    \note If the dictionary contains no read group matching this ID, this function inserts
+    a new one with this ID, and returns a reference to it. If you want to avoid this insertion
+    behavior, check the result of Contains() before using this operator.
 
-    If you want to avoid this insertion behavior, check the result of Contains() before
-    using this operator.
-
-    \param readGroupId ID of read group to retrieve
+    \param[in] readGroupId ID of read group to retrieve
     \return a modifiable reference to the SamReadGroup associated with the ID
 */
 SamReadGroup& SamReadGroupDictionary::operator[](const std::string& readGroupId) {

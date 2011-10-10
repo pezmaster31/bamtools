@@ -2,7 +2,7 @@
 // SamHeader.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 6 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides direct read/write access to the SAM header data fields.
 // ***************************************************************************
@@ -27,7 +27,7 @@ using namespace std;
 /*! \var SamHeader::Version
     \brief corresponds to \@HD VN:\<Version\>
 
-    Required for valid SAM header, if @HD record is present.
+    Required for valid SAM header, if \@HD record is present.
 */
 /*! \var SamHeader::SortOrder
     \brief corresponds to \@HD SO:\<SortOrder\>
@@ -43,14 +43,9 @@ using namespace std;
     \brief corresponds to \@RG entries
     \sa SamReadGroup, SamReadGroupDictionary
 */
-/*! \var SamHeader::ProgramName
-    \brief corresponds to \@PG ID:\<ProgramName\>
-*/
-/*! \var SamHeader::ProgramVersion
-    \brief corresponds to \@PG VN:\<ProgramVersion\>
-*/
-/*! \var SamHeader::ProgramCommandLine
-    \brief corresponds to \@PG CL:\<ProgramCommandLine\>
+/*! \var SamHeader::Programs
+    \brief corresponds to \@PG entries
+    \sa SamProgram, SamProgramChain
 */
 /*! \var SamHeader::Comments
     \brief corresponds to \@CO entries
@@ -103,7 +98,12 @@ void SamHeader::Clear(void) {
 }
 
 /*! \fn std::string SamHeader::GetErrorString(void) const
-    \brief Returns human-readable description of last error encountered
+    \brief Returns a human-readable description of the last error that occurred
+
+    This method allows elimination of STDERR pollution. Developers of client code
+    may choose how the messages are displayed to the user, if at all.
+
+    \return error description
 */
 std::string SamHeader::GetErrorString(void) const {
     return m_errorString;
@@ -167,8 +167,9 @@ bool SamHeader::HasComments(void) const {
 
 /*! \fn bool SamHeader::IsValid(bool verbose = false) const
     \brief Checks header contents for required data and proper formatting.
-    \param verbose If set to true, validation errors & warnings will be printed to stderr.
-                   Otherwise, messages are available through SamHeader::GetErrorString().
+
+    \param[in] verbose If set to true, validation errors & warnings will be printed to stderr.
+                       Otherwise, messages are available through SamHeader::GetErrorString().
     \return \c true if SAM header is well-formed
 */
 bool SamHeader::IsValid(bool verbose) const {
@@ -198,7 +199,8 @@ bool SamHeader::IsValid(bool verbose) const {
 
 /*! \fn void SamHeader::SetHeaderText(const std::string& headerText)
     \brief Replaces header contents with \a headerText.
-    \param headerText SAM formatted-text that will be parsed into data fields
+
+    \param[in] headerText SAM formatted-text that will be parsed into data fields
 */
 void SamHeader::SetHeaderText(const std::string& headerText) {
 

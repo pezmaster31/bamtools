@@ -108,11 +108,6 @@ class API_EXPORT BamReader {
 
         // returns a human-readable description of the last error that occurred
         std::string GetErrorString(void) const;
-
-    // deprecated methods
-    public:
-        // returns true if index data is available
-        bool IsIndexLoaded(void) const;
         
     // private implementation
     private:

@@ -2,7 +2,7 @@
 // BamAlignment.cpp (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 8 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -104,31 +104,6 @@ BamAlignment::BamAlignment(const BamAlignment& other)
     \brief destructor
 */
 BamAlignment::~BamAlignment(void) { }
-
-///*! \fn bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const std::string& value)
-//    \brief Adds a field with string data to the BAM tags.
-
-//    Does NOT modify an existing tag - use \link BamAlignment::EditTag() \endlink instead.
-
-//    \param[in] tag   2-character tag name
-//    \param[in] type  1-character tag type (must be "Z" or "H")
-//    \param[in] value string data to store
-//    \return \c true if the \b new tag was added successfully
-//    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
-//*/
-
-
-///*! \fn bool AddTag(const std::string& tag, const std::vector<uint8_t>& values);
-//    \brief Adds a numeric array field to the BAM tags.
-
-//    Does NOT modify an existing tag - use \link BamAlignment::EditTag() \endlink instead.
-
-//    \param tag    2-character tag name
-//    \param values vector of uint8_t values to store
-
-//    \return \c true if the \b new tag was added successfully
-//    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
-//*/
 
 /*! \fn bool BamAlignment::BuildCharData(void)
     \brief Populates alignment string fields (read name, bases, qualities, tag data).
@@ -351,49 +326,20 @@ bool BamAlignment::BuildCharData(void) {
         memcpy((char*)(TagData.data()), tagData, tagDataLength);
     }
 
-    // clear the core-only flag
+    // clear core-only flag & return success
     SupportData.HasCoreOnly = false;
-
-    // return success
     return true;
 }
 
-///*! \fn bool BamAlignment::EditTag(const std::string& tag, const std::string& type, const std::string& value)
-//    \brief Edits a BAM tag field containing string data.
-
-//    If \a tag does not exist, a new entry is created.
-
-//    \param tag   2-character tag name
-//    \param type  1-character tag type (must be "Z" or "H")
-//    \param value string data to store
-
-//    \return \c true if the tag was modified/created successfully
-
-//    \sa BamAlignment::RemoveTag()
-//    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
-//*/
-
-///*! \fn bool EditTag(const std::string& tag, const std::vector<uint8_t>& values);
-//    \brief Edits a BAM tag field containing a numeric array.
-
-//    If \a tag does not exist, a new entry is created.
-
-//    \param tag   2-character tag name
-//    \param value vector of uint8_t values to store
-
-//    \return \c true if the tag was modified/created successfully
-//    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
-//*/
-
-/*! \fn bool BamAlignment::FindTag(const std::string& tag, char*& pTagData, const unsigned int& tagDataLength, unsigned int& numBytesParsed)
+/*! \fn bool BamAlignment::FindTag(const std::string& tag, char*& pTagData, const unsigned int& tagDataLength, unsigned int& numBytesParsed) const
     \internal
 
     Searches for requested tag in BAM tag data.
 
-    \param tag            requested 2-character tag name
-    \param pTagData       pointer to current position in BamAlignment::TagData
-    \param tagDataLength  length of BamAlignment::TagData
-    \param numBytesParsed number of bytes parsed so far
+    \param[in]     tag            requested 2-character tag name
+    \param[in,out] pTagData       pointer to current position in BamAlignment::TagData
+    \param[in]     tagDataLength  length of BamAlignment::TagData
+    \param[in,out] numBytesParsed number of bytes parsed so far
 
     \return \c true if found
 
@@ -428,39 +374,18 @@ bool BamAlignment::FindTag(const std::string& tag,
     return false;
 }
 
-/*! \fn bool BamAlignment::GetEditDistance(uint32_t& editDistance) const
-    \brief Retrieves value of edit distance tag ("NM").
-
-    \deprecated Instead use BamAlignment::GetTag()
-        \code
-            BamAlignment::GetTag("NM", editDistance);
-        \endcode
-
-    \param editDistance destination for retrieved value
-
-    \return \c true if found
-*/
-
-// TODO : REMOVE THIS METHOD
-bool BamAlignment::GetEditDistance(uint32_t& editDistance) const {
-    return GetTag("NM", (uint32_t&)editDistance);
-}
-
-/*! \fn int BamAlignment::GetEndPosition(bool usePadded = false, bool closedInterval = USE_CLOSED_DEFAULT) const
-    \brief Calculates alignment end position, based on starting position and CIGAR data.
+/*! \fn int BamAlignment::GetEndPosition(bool usePadded = false, bool closedInterval = false) const
+    \brief Calculates alignment end position, based on its starting position and CIGAR data.
 
     \warning The position returned now represents a zero-based, HALF-OPEN interval.
     In previous versions of BamTools (0.x & 1.x) all intervals were treated
-    as zero-based, CLOSED. I whole-heartedly apologize for any inconsistencies this
-    may have caused if you assumed that BT was always half-open; full aplogies also
-    to those who recognized that BamTools originally used a closed interval, but may
-    need to update their code to reflect this new change.
+    as zero-based, CLOSED.
 
-    \param usePadded Allow inserted bases to affect the reported position. Default is false, so that
-                     reported position stays synced with reference coordinates.
-
-    \param closedInterval Setting this to true will return a 0-based end coordinate. Default is false,
-                          so that his value represents a standard, half-open interval.
+    \param[in] usePadded      Allow inserted bases to affect the reported position. Default is
+                              false, so that reported position stays synced with reference
+                              coordinates.
+    \param[in] closedInterval Setting this to true will return a 0-based end coordinate. Default is
+                              false, so that his value represents a standard, half-open interval.
 
     \return alignment end position
 */
@@ -486,7 +411,7 @@ int BamAlignment::GetEndPosition(bool usePadded, bool closedInterval) const {
                 alignEnd += op.Length;
                 break;
 
-            // increase end position when CIGAR char is 'I' only if @usePadded is true
+            // increase end position on insertion, only if @usePadded is true
             case Constants::BAM_CIGAR_INS_CHAR :
                 if ( usePadded )
                     alignEnd += op.Length;
@@ -507,58 +432,22 @@ int BamAlignment::GetEndPosition(bool usePadded, bool closedInterval) const {
 }
 
 /*! \fn std::string BamAlignment::GetErrorString(void) const
-    \brief Returns a description of the last error that occurred
+    \brief Returns a human-readable description of the last error that occurred
 
-    This method allows elimnation of STDERR pollution. Developers of client code
+    This method allows elimination of STDERR pollution. Developers of client code
     may choose how the messages are displayed to the user, if at all.
 
-    \return description of last error that occurred
+    \return error description
 */
 std::string BamAlignment::GetErrorString(void) const {
     return ErrorString;
 }
 
-/*! \fn bool BamAlignment::GetReadGroup(std::string& readGroup) const
-    \brief Retrieves value of read group tag ("RG").
-
-    \deprecated Instead use BamAlignment::GetTag()
-        \code
-            BamAlignment::GetTag("RG", readGroup);
-        \endcode
-
-    \param readGroup destination for retrieved value
-
-    \return \c true if found
-*/
-
-// TODO : REMOVE THIS METHOD
-bool BamAlignment::GetReadGroup(std::string& readGroup) const {
-    return GetTag("RG", readGroup);
-}
-
-///*! \fn bool BamAlignment::GetTag(const std::string& tag, std::string& destination) const
-//    \brief Retrieves the string value associated with a BAM tag.
-
-//    \param tag         2-character tag name
-//    \param destination destination for retrieved value
-
-//    \return \c true if found
-//*/
-
-///*! \fn bool BamAlignment::GetTag(const std::string& tag, std::vector<uint32_t>& destination) const
-//    \brief Retrieves the numeric array data associated with a BAM tag
-
-//    \param tag         2-character tag name
-//    \param destination destination for retrieved data
-
-//    \return \c true if found
-//*/
-
 /*! \fn bool BamAlignment::GetTagType(const std::string& tag, char& type) const
     \brief Retrieves the BAM tag type-code associated with requested tag name.
 
-    \param tag  2-character tag name
-    \param type destination for the retrieved (1-character) tag type
+    \param[in]  tag  2-character tag name
+    \param[out] type retrieved (1-character) type-code
 
     \return \c true if found
     \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
@@ -614,7 +503,8 @@ bool BamAlignment::GetTagType(const std::string& tag, char& type) const {
 
 /*! \fn bool BamAlignment::HasTag(const std::string& tag) const
     \brief Returns true if alignment has a record for requested tag.
-    \param tag 2-character tag name
+
+    \param[in] tag 2-character tag name
     \return \c true if alignment has a record for tag
 */
 bool BamAlignment::HasTag(const std::string& tag) const {
@@ -709,17 +599,14 @@ bool BamAlignment::IsSecondMate(void) const {
     return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_READ_2) != 0 );
 }
 
-/*! \fn bool BamAlignment::IsValidSize(const string& tag, const string& type) const
+/*! \fn bool BamAlignment::IsValidSize(const std::string& tag, const std::string& type) const
     \internal
 
     Checks that tag name & type strings are expected sizes.
-    \a tag  should have length
-    \a type should have length 1
 
-    \param tag  BAM tag name
-    \param type BAM tag type-code
-
-    \return \c true if both \a tag and \a type are correct sizes
+    \param tag[in]  BAM tag name
+    \param type[in] BAM tag type-code
+    \return \c true if both input strings are valid sizes
 */
 bool BamAlignment::IsValidSize(const std::string& tag, const std::string& type) const {
     return (tag.size()  == Constants::BAM_TAG_TAGSIZE) &&
@@ -728,6 +615,8 @@ bool BamAlignment::IsValidSize(const std::string& tag, const std::string& type) 
 
 /*! \fn void BamAlignment::RemoveTag(const std::string& tag)
     \brief Removes field from BAM tags.
+
+    \param[in] tag 2-character name of field to remove
 */
 void BamAlignment::RemoveTag(const std::string& tag) {
   
@@ -780,6 +669,9 @@ void BamAlignment::RemoveTag(const std::string& tag) {
     \internal
 
     Sets a formatted error string for this alignment.
+
+    \param[in] where class/method where error occurred
+    \param[in] what  description of error
 */
 void BamAlignment::SetErrorString(const std::string& where, const std::string& what) const {
     static const string SEPARATOR = ": ";
@@ -826,15 +718,6 @@ void BamAlignment::SetIsMateMapped(bool ok) {
     else    AlignmentFlag |=  Constants::BAM_ALIGNMENT_MATE_UNMAPPED;
 }
 
-/*! \fn void BamAlignment::SetIsMateUnmapped(bool ok)
-    \brief Complement of using SetIsMateMapped().
-    \deprecated For sake of symmetry with the query methods
-    \sa IsMateMapped(), SetIsMateMapped()
-*/
-void BamAlignment::SetIsMateUnmapped(bool ok) {
-    SetIsMateMapped(!ok);
-}
-
 /*! \fn void BamAlignment::SetIsMateReverseStrand(bool ok)
     \brief Sets "alignment's mate mapped to reverse strand" flag to \a ok.
 */
@@ -875,15 +758,6 @@ void BamAlignment::SetIsReverseStrand(bool ok) {
     else    AlignmentFlag &= ~Constants::BAM_ALIGNMENT_REVERSE_STRAND;
 }
 
-/*! \fn void BamAlignment::SetIsSecondaryAlignment(bool ok)
-    \brief Complement of using SetIsPrimaryAlignment().
-    \deprecated For sake of symmetry with the query methods
-    \sa IsPrimaryAlignment(), SetIsPrimaryAlignment()
-*/
-void BamAlignment::SetIsSecondaryAlignment(bool ok) {
-    SetIsPrimaryAlignment(!ok);
-}
-
 /*! \fn void BamAlignment::SetIsSecondMate(bool ok)
     \brief Sets "alignment is second mate on read" flag to \a ok.
 */
@@ -892,26 +766,18 @@ void BamAlignment::SetIsSecondMate(bool ok) {
     else    AlignmentFlag &= ~Constants::BAM_ALIGNMENT_READ_2;
 }
 
-/*! \fn void BamAlignment::SetIsUnmapped(bool ok)
-    \brief Complement of using SetIsMapped().
-    \deprecated For sake of symmetry with the query methods
-    \sa IsMapped(), SetIsMapped()
-*/
-void BamAlignment::SetIsUnmapped(bool ok) {
-    SetIsMapped(!ok);
-}
-
-/*! \fn bool BamAlignment::SkipToNextTag(const char storageType, char*& pTagData, unsigned int& numBytesParsed)
+/*! \fn bool BamAlignment::SkipToNextTag(const char storageType, char*& pTagData, unsigned int& numBytesParsed) const
     \internal
 
     Moves to next available tag in tag data string
 
-    \param storageType    BAM tag type-code that determines how far to move cursor
-    \param pTagData       pointer to current position (cursor) in tag string
-    \param numBytesParsed report of how many bytes were parsed (cumulatively)
+    \param[in]     storageType    BAM tag type-code that determines how far to move cursor
+    \param[in,out] pTagData       pointer to current position (cursor) in tag string
+    \param[in,out] numBytesParsed report of how many bytes were parsed (cumulatively)
 
     \return \c if storageType was a recognized BAM tag type
-    \post \a pTagData will point to the byte where the next tag data begins.
+
+    \post \a pTagData       will point to the byte where the next tag data begins.
           \a numBytesParsed will correspond to the cursor's position in the full TagData string.
 */
 bool BamAlignment::SkipToNextTag(const char storageType,

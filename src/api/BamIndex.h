@@ -2,7 +2,7 @@
 // BamIndex.h (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 6 October 2011 (DB)
+// Last modified: 9 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides basic BAM index interface
 // ***************************************************************************
@@ -29,8 +29,6 @@ namespace Internal {
 
     It is exposed to the public API to allow advanced users to implement
     their own custom indexing schemes.
-
-    More documentation on methods & enums coming soon.
 */
 
 class API_EXPORT BamIndex {
@@ -76,6 +74,8 @@ class API_EXPORT BamIndex {
         // change the index caching behavior
         virtual void SetCacheMode(const BamIndex::IndexCacheMode& mode) =0;
 
+    //! \cond
+
     // internal methods
     protected:
         void SetErrorString(const std::string& where, const std::string& what) const {
@@ -86,6 +86,8 @@ class API_EXPORT BamIndex {
     protected:
         Internal::BamReaderPrivate* m_reader; // copy, not owned
         mutable std::string m_errorString;
+
+    //! \endcond
 };
 
 } // namespace BamTools

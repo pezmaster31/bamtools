@@ -2,7 +2,7 @@
 // BamConstants.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 October 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides basic constants for handling BAM files.
 // ***************************************************************************
@@ -69,7 +69,7 @@ const char BAM_CIGAR_MISMATCH_CHAR = 'X';
 const int BAM_CIGAR_SHIFT = 4;
 const int BAM_CIGAR_MASK  = ((1 << BAM_CIGAR_SHIFT) - 1);
 
-// BAM tag types
+// BAM tag types & sizes
 const char BAM_TAG_TYPE_ASCII  = 'A';
 const char BAM_TAG_TYPE_UINT8  = 'c';
 const char BAM_TAG_TYPE_INT8   = 'C';
@@ -124,7 +124,7 @@ const char BAM_DNA_N     = 'N';
 const char BAM_DNA_DEL   = '-';
 const char BAM_DNA_PAD   = '*';
 
-// zlib constants
+// zlib & BGZF constants
 const char GZIP_ID1   = 31;
 const char GZIP_ID2   = 139;
 const char CM_DEFLATE = 8;
@@ -134,10 +134,9 @@ const char BGZF_XLEN  = 6;
 const char BGZF_ID1   = 66;
 const char BGZF_ID2   = 67;
 const char BGZF_LEN   = 2;
-const int8_t GZIP_WINDOW_BITS = -15;
-const int8_t Z_DEFAULT_MEM_LEVEL = 8;
 
-// BZGF constants
+const int8_t   GZIP_WINDOW_BITS          = -15;
+const int8_t   Z_DEFAULT_MEM_LEVEL       = 8;
 const uint8_t  BGZF_BLOCK_HEADER_LENGTH  = 18;
 const uint8_t  BGZF_BLOCK_FOOTER_LENGTH  = 8;
 const uint32_t BGZF_MAX_BLOCK_SIZE       = 65536;
@@ -145,6 +144,7 @@ const uint32_t BGZF_DEFAULT_BLOCK_SIZE   = 65536;
 
 } // namespace Constants
 
+//! \cond
 // -------------------------
 // tag-type helper structs
 // -------------------------
@@ -274,6 +274,8 @@ struct TagTypeHelper<std::string> {
     }
     static char TypeCode(void) { return Constants::BAM_TAG_TYPE_STRING; }
 };
+
+//! \endcond
 
 } // namespace BamTools
 

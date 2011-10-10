@@ -2,7 +2,7 @@
 // SamProgramChain.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 19 April 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a SamProgram record "chain"
 // ***************************************************************************
@@ -20,7 +20,7 @@ using namespace std;
 
     Provides methods for operating on a collection of SamProgram records.
 
-    N.B. - Underlying container is *NOT* ordered by linkage, but by order of
+    \note Underlying container is *NOT* ordered by linkage, but by order of
     appearance in SamHeader and subsequent Add() calls. Using the current
     iterators will not allow you to step through the header's program history.
     Instead use First()/Last() to access oldest/newest records, respectively.
@@ -48,12 +48,12 @@ SamProgramChain::~SamProgramChain(void) { }
 
     Duplicate entries are silently discarded.
 
-    N.B. - Underlying container is *NOT* ordered by linkage, but by order of
+    \note Underlying container is *NOT* ordered by linkage, but by order of
     appearance in SamHeader and subsequent Add() calls. Using the current
     iterators will not allow you to step through the header's program history.
     Instead use First()/Last() to access oldest/newest records, respectively.
 
-    \param program entry to be appended
+    \param[in] program entry to be appended
 */
 void SamProgramChain::Add(SamProgram& program) {
 
@@ -70,12 +70,12 @@ void SamProgramChain::Add(SamProgram& program) {
     m_data.push_back(program);
 }
 
-/*! \fn void SamProgramChain::Add(const std::vector<SamProgram>& programs)
+/*! \fn void SamProgramChain::Add(std::vector<SamProgram>& programs)
     \brief Appends a batch of programs to the end of the chain.
 
     This is an overloaded function.
 
-    \param programs batch of program records to append
+    \param[in] programs batch of program records to append
     \sa Add()
 */
 void SamProgramChain::Add(std::vector<SamProgram>& programs) {
@@ -132,7 +132,7 @@ SamProgramConstIterator SamProgramChain::ConstEnd(void) const {
 
     This is an overloaded function.
 
-    \param program SamProgram to search for
+    \param[in] program SamProgram to search for
     \return \c true if chain contains program (matching on ID)
 */
 bool SamProgramChain::Contains(const SamProgram& program) const {
@@ -141,7 +141,8 @@ bool SamProgramChain::Contains(const SamProgram& program) const {
 
 /*! \fn bool SamProgramChain::Contains(const std::string& programId) const
     \brief Returns true if chains has a program record with this ID
-    \param programId search for program matching this ID
+
+    \param[in] programId search for program matching this ID
     \return \c true if chain contains a program record with this ID
 */
 bool SamProgramChain::Contains(const std::string& programId) const {
@@ -170,7 +171,7 @@ SamProgramConstIterator SamProgramChain::End(void) const {
 /*! \fn SamProgram& SamProgramChain::First(void)
     \brief Fetches first (oldest) record in the chain.
 
-    N.B. - This function will fail if the chain is empty. If this is possible,
+    \warning This function will fail if the chain is empty. If this is possible,
     check the result of IsEmpty() before calling this function.
 
     \return a modifiable reference to the first (oldest) program entry
@@ -188,7 +189,7 @@ SamProgram& SamProgramChain::First(void) {
     }
 
     // otherwise error
-    cerr << "SamProgramChain ERROR - could not find any record without a PP tag" << endl;
+    cerr << "SamProgramChain::First: could not find any record without a PP tag" << endl;
     exit(1);
 }
 
@@ -197,7 +198,7 @@ SamProgram& SamProgramChain::First(void) {
 
     This is an overloaded function.
 
-    N.B. - This function will fail if the chain is empty. If this is possible,
+    \warning This function will fail if the chain is empty. If this is possible,
     check the result of IsEmpty() before calling this function.
 
     \return a read-only reference to the first (oldest) program entry
@@ -215,7 +216,7 @@ const SamProgram& SamProgramChain::First(void) const {
     }
 
     // otherwise error
-    cerr << "SamProgramChain ERROR - could not find any record without a PP tag" << endl;
+    cerr << "SamProgramChain::First: could not find any record without a PP tag" << endl;
     exit(1);
 }
 
@@ -247,7 +248,7 @@ bool SamProgramChain::IsEmpty(void) const {
 /*! \fn SamProgram& SamProgramChain::Last(void)
     \brief Fetches last (newest) record in the chain.
 
-    N.B. - This function will fail if the chain is empty. If this is possible,
+    \warning This function will fail if the chain is empty. If this is possible,
     check the result of IsEmpty() before calling this function.
 
     \return a modifiable reference to the last (newest) program entry
@@ -264,7 +265,7 @@ SamProgram& SamProgramChain::Last(void) {
     }
 
     // otherwise error
-    cerr << "SamProgramChain ERROR - could not determine last record" << endl;
+    cerr << "SamProgramChain::Last: could not determine last record" << endl;
     exit(1);
 }
 
@@ -273,7 +274,7 @@ SamProgram& SamProgramChain::Last(void) {
 
     This is an overloaded function.
 
-    N.B. - This function will fail if the chain is empty. If this is possible,
+    \warning This function will fail if the chain is empty. If this is possible,
     check the result of IsEmpty() before calling this function.
 
     \return a read-only reference to the last (newest) program entry
@@ -290,12 +291,13 @@ const SamProgram& SamProgramChain::Last(void) const {
     }
 
     // otherwise error
-    cerr << "SamProgramChain ERROR - could not determine last record" << endl;
+    cerr << "SamProgramChain::Last: could not determine last record" << endl;
     exit(1);
 }
 
 /*! \fn const std::string SamProgramChain::NextIdFor(const std::string& programId) const
     \internal
+
     \return ID of program record, whose PreviousProgramID matches \a programId.
     Otherwise, returns empty string if none found.
 */
@@ -329,10 +331,11 @@ int SamProgramChain::Size(void) const {
 /*! \fn SamProgram& SamProgramChain::operator[](const std::string& programId)
     \brief Retrieves the modifiable SamProgram record that matches \a programId.
 
-    NOTE - If the chain contains no read group matching this ID, this function will
-    print an error and terminate.
+    \warning If the chain contains no read group matching this ID, this function will
+    print an error and terminate. Check the return value of Contains() if this may be
+    possible.
 
-    \param programId ID of program record to retrieve
+    \param[in] programId ID of program record to retrieve
     \return a modifiable reference to the SamProgram associated with the ID
 */
 SamProgram& SamProgramChain::operator[](const std::string& programId) {
@@ -342,7 +345,7 @@ SamProgram& SamProgramChain::operator[](const std::string& programId) {
 
     // if record not found
     if ( index == (int)m_data.size() ) {
-        cerr << "SamProgramChain ERROR - unknown programId: " << programId << endl;
+        cerr << "SamProgramChain::operator[] - unknown programId: " << programId << endl;
         exit(1);
     }
 

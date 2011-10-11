@@ -2,7 +2,7 @@
 // SamSequenceDictionary.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 1 October 2011
+// Last modified: 10 October 2011
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamSequence entries.
 // ***************************************************************************
@@ -10,8 +10,8 @@
 #ifndef SAM_SEQUENCE_DICTIONARY_H
 #define SAM_SEQUENCE_DICTIONARY_H
 
-#include <api/api_global.h>
-#include <api/SamSequence.h>
+#include "api/api_global.h"
+#include "api/SamSequence.h""
 #include <string>
 #include <map>
 #include <vector>

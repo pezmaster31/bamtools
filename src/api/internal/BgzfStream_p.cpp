@@ -2,7 +2,7 @@
 // BgzfStream_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011(DB)
+// Last modified: 11 October 2011(DB)
 // ---------------------------------------------------------------------------
 // Based on BGZF routines developed at the Broad Institute.
 // Provides the basic functionality for reading & writing BGZF files
@@ -76,12 +76,6 @@ bool BgzfStream::CheckBlockHeader(char* header) {
 // closes BGZF file
 void BgzfStream::Close(void) {
 
-    // reset state
-    m_blockLength = 0;
-    m_blockOffset = 0;
-    m_blockAddress = 0;
-    m_isWriteCompressed = true;
-
     // skip if no device open
     if ( m_device == 0 ) return;
 
@@ -97,6 +91,12 @@ void BgzfStream::Close(void) {
     m_device->Close();
     delete m_device;
     m_device = 0;
+
+    // reset state
+    m_blockLength = 0;
+    m_blockOffset = 0;
+    m_blockAddress = 0;
+    m_isWriteCompressed = true;
 }
 
 // compresses the current block
@@ -154,16 +154,16 @@ size_t BgzfStream::DeflateBlock(void) {
 
             deflateEnd(&zs);
 
-            // if error status
-            if ( status != Z_OK )
-                throw BamException("BgzfStream::DeflateBlock", "zlib deflate failed");
-
-            // not enough space available in buffer
+            // there was not enough space available in buffer
             // try to reduce the input length & re-start loop
-            inputLength -= 1024;
-            if ( inputLength <= 0 )
-                throw BamException("BgzfStream::DeflateBlock", "input reduction failed");
-            continue;
+            if ( status == Z_OK ) {
+                inputLength -= 1024;
+                if ( inputLength < 0 )
+                    throw BamException("BgzfStream::DeflateBlock", "input reduction failed");
+                continue;
+            }
+
+            throw BamException("BgzfStream::DeflateBlock", "zlib deflate failed");
         }
 
         // finalize the compression routine
@@ -302,6 +302,7 @@ size_t BgzfStream::Read(char* data, const size_t dataLength) {
         return 0;
 
     // read blocks as needed until desired data length is retrieved
+    char* output = data;
     size_t numBytesRead = 0;
     while ( numBytesRead < dataLength ) {
 
@@ -318,12 +319,12 @@ size_t BgzfStream::Read(char* data, const size_t dataLength) {
 
         // copy data from uncompressed source buffer into data destination buffer
         const size_t copyLength = min( (dataLength-numBytesRead), (size_t)bytesAvailable );
-        memcpy(data, Resources.UncompressedBlock + m_blockOffset, copyLength);
+        memcpy(output, Resources.UncompressedBlock + m_blockOffset, copyLength);
 
         // update counters
-        m_blockOffset  += copyLength;
-        data         += copyLength;
-        numBytesRead += copyLength;
+        m_blockOffset += copyLength;
+        output        += copyLength;
+        numBytesRead  += copyLength;
     }
 
     // update block data

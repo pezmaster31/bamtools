@@ -117,8 +117,6 @@ class BamToolsIndex : public BamIndex {
         bool Jump(const BamTools::BamRegion& region, bool* hasAlignmentsInRegion);
         // loads existing data from file into memory
         bool Load(const std::string& filename);
-        // change the index caching behavior
-        void SetCacheMode(const BamIndex::IndexCacheMode& mode);
     public:
         // returns format's file extension
         static const std::string Extension(void);
@@ -160,7 +158,6 @@ class BamToolsIndex : public BamIndex {
     // data members
     private:
         bool  m_isBigEndian;
-        BamIndex::IndexCacheMode m_cacheMode;
         BtiFileSummary m_indexFileSummary;
         uint32_t m_blockSize;
         int32_t m_inputVersion; // Version is serialized as int

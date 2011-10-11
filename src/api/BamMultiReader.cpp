@@ -321,19 +321,6 @@ bool BamMultiReader::Rewind(void) {
     return d->Rewind();
 }
 
-/*! \fn void BamMultiReader::SetIndexCacheMode(const BamIndex::IndexCacheMode& mode)
-    \brief Changes the caching behavior of the index data.
-
-    Default mode is BamIndex::LimitedIndexCaching.
-
-    \param[in] mode desired cache mode for index, see BamIndex::IndexCacheMode for
-                    description of the available cache modes
-    \sa HasIndex(), BamReader::SetIndexCacheMode()
-*/
-void BamMultiReader::SetIndexCacheMode(const BamIndex::IndexCacheMode& mode) {
-    d->SetIndexCacheMode(mode);
-}
-
 /*! \fn bool BamMultiReader::SetRegion(const BamRegion& region)
     \brief Sets a target region of interest
 

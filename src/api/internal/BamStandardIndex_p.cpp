@@ -62,7 +62,6 @@ BamStandardIndex::RaiiWrapper::~RaiiWrapper(void) {
 // ctor
 BamStandardIndex::BamStandardIndex(Internal::BamReaderPrivate* reader)
     : BamIndex(reader)
-    , m_cacheMode(BamIndex::LimitedIndexCaching)
     , m_bufferLength(0)
 {
      m_isBigEndian = BamTools::SystemIsBigEndian();
@@ -760,12 +759,6 @@ void BamStandardIndex::SaveLinearOffsetsSummary(const int& refId, const int& num
 void BamStandardIndex::Seek(const int64_t& position, const int& origin) {
     if ( fseek64(Resources.IndexStream, position, origin) != 0 )
         throw BamException("BamStandardIndex::Seek", "could not seek in BAI file");
-}
-
-// change the index caching behavior
-void BamStandardIndex::SetCacheMode(const BamIndex::IndexCacheMode& mode) {
-    m_cacheMode = mode;
-    // do nothing else here ? cache mode will be ignored from now on, most likely
 }
 
 void BamStandardIndex::SkipBins(const int& numBins) {

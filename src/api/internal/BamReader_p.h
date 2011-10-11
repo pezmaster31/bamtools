@@ -67,7 +67,6 @@ class BamReaderPrivate {
         bool LocateIndex(const BamIndex::IndexType& preferredType);
         bool OpenIndex(const std::string& indexFilename);
         void SetIndex(BamIndex* index);
-        void SetIndexCacheMode(const BamIndex::IndexCacheMode& mode);
 
         // error handling
         std::string GetErrorString(void) const;

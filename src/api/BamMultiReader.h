@@ -97,8 +97,6 @@ class API_EXPORT BamMultiReader {
         bool LocateIndexes(const BamIndex::IndexType& preferredType = BamIndex::STANDARD);
         // opens index files for current BAM files.
         bool OpenIndexes(const std::vector<std::string>& indexFilenames);
-        // changes the caching behavior of the index data
-        void SetIndexCacheMode(const BamIndex::IndexCacheMode& mode);
 
         // ----------------------
         // error handling

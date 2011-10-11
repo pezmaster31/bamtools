@@ -35,11 +35,6 @@ class API_EXPORT BamIndex {
 
     // enums
     public:
-        // specify index-caching behavior
-        enum IndexCacheMode { FullIndexCaching = 0 // store entire index file contents in memory
-                            , LimitedIndexCaching  // store only index data for current reference
-                            , NoIndexCaching       // do not store any index data between jumps
-                            };
 
         // list of supported BamIndex types
         enum IndexType { BAMTOOLS = 0
@@ -70,9 +65,6 @@ class API_EXPORT BamIndex {
 
         // loads existing data from file into memory
         virtual bool Load(const std::string& filename) =0;
-
-        // change the index caching behavior
-        virtual void SetCacheMode(const BamIndex::IndexCacheMode& mode) =0;
 
     //! \cond
 

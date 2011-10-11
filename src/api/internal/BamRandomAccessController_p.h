@@ -55,7 +55,6 @@ class BamRandomAccessController {
         bool LocateIndex(BamReaderPrivate* reader, const BamIndex::IndexType& preferredType);
         bool OpenIndex(const std::string& indexFilename, BamReaderPrivate* reader);
         void SetIndex(BamIndex* index);
-        void SetIndexCacheMode(const BamIndex::IndexCacheMode& mode);
 
         // region methods
         void ClearRegion(void);
@@ -80,7 +79,6 @@ class BamRandomAccessController {
 
         // index data
         BamIndex* m_index;  // owns the index, not a copy - responsible for deleting
-        BamIndex::IndexCacheMode m_indexCacheMode;
 
         // region data
         BamRegion m_region;

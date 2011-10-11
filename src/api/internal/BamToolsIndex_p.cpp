@@ -53,7 +53,6 @@ BamToolsIndex::RaiiWrapper::~RaiiWrapper(void) {
 // ctor
 BamToolsIndex::BamToolsIndex(Internal::BamReaderPrivate* reader)
     : BamIndex(reader)
-    , m_cacheMode(BamIndex::LimitedIndexCaching)
     , m_blockSize(BamToolsIndex::DEFAULT_BLOCK_LENGTH)
     , m_inputVersion(0)
     , m_outputVersion(BTI_2_0) // latest version - used for writing new index files
@@ -536,12 +535,6 @@ void BamToolsIndex::ReadReferenceEntry(BtiReferenceEntry& refEntry) {
 void BamToolsIndex::Seek(const int64_t& position, const int& origin) {
     if ( fseek64(Resources.IndexStream, position, origin) != 0 )
         throw BamException("BamToolsIndex::Seek", "could not seek in BAI file");
-}
-
-// change the index caching behavior
-void BamToolsIndex::SetCacheMode(const BamIndex::IndexCacheMode& mode) {
-    m_cacheMode = mode;
-    // do nothing else here ? cache mode will be ignored from now on, most likely
 }
 
 void BamToolsIndex::SkipBlocks(const int& numBlocks) {

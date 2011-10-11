@@ -623,22 +623,6 @@ void BamMultiReaderPrivate::SetErrorString(const string& where, const string& wh
     m_errorString = where + SEPARATOR + what;
 }
 
-// sets the index caching mode on the readers
-void BamMultiReaderPrivate::SetIndexCacheMode(const BamIndex::IndexCacheMode mode) {
-
-    // iterate over readers
-    vector<MergeItem>::iterator readerIter = m_readers.begin();
-    vector<MergeItem>::iterator readerEnd  = m_readers.end();
-    for ( ; readerIter != readerEnd; ++readerIter ) {
-        MergeItem& item = (*readerIter);
-        BamReader* reader = item.Reader;
-        if ( reader == 0 ) continue;
-
-        // set reader's index cache mode
-        reader->SetIndexCacheMode(mode);
-    }
-}
-
 bool BamMultiReaderPrivate::SetRegion(const BamRegion& region) {
 
     // NB: While it may make sense to track readers in which we can

@@ -447,11 +447,6 @@ void BamReaderPrivate::SetIndex(BamIndex* index) {
     m_randomAccessController.SetIndex(index);
 }
 
-// change the index caching behavior
-void BamReaderPrivate::SetIndexCacheMode(const BamIndex::IndexCacheMode& mode) {
-    m_randomAccessController.SetIndexCacheMode(mode);
-}
-
 // sets current region & attempts to jump to it
 // returns success/failure
 bool BamReaderPrivate::SetRegion(const BamRegion& region) {

@@ -70,7 +70,6 @@ class BamMultiReaderPrivate {
         bool HasIndexes(void) const;
         bool LocateIndexes(const BamIndex::IndexType& preferredType = BamIndex::STANDARD);
         bool OpenIndexes(const std::vector<std::string>& indexFilenames);
-        void SetIndexCacheMode(const BamIndex::IndexCacheMode mode);
 
         // error handling
         std::string GetErrorString(void) const;

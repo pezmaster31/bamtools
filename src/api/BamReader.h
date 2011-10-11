@@ -99,8 +99,6 @@ class API_EXPORT BamReader {
         bool OpenIndex(const std::string& indexFilename);
         // sets a custom BamIndex on this reader
         void SetIndex(BamIndex* index);
-        // changes the caching behavior of the index data
-        void SetIndexCacheMode(const BamIndex::IndexCacheMode& mode);
 
         // ----------------------
         // error handling

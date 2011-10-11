@@ -21,7 +21,6 @@ using namespace std;
 
 BamRandomAccessController::BamRandomAccessController(void)
     : m_index(0)
-    , m_indexCacheMode(BamIndex::LimitedIndexCaching)
     , m_hasAlignmentsInRegion(true)
 { }
 
@@ -174,11 +173,8 @@ bool BamRandomAccessController::CreateIndex(BamReaderPrivate* reader,
         return false;
     }
 
-    // save new index
+    // save new index & return success
     SetIndex(newIndex);
-
-    // set new index's cache mode & return success
-    newIndex->SetCacheMode(m_indexCacheMode);
     return true;
 }
 
@@ -226,9 +222,6 @@ bool BamRandomAccessController::OpenIndex(const string& indexFilename, BamReader
         return false;
     }
 
-    // set cache mode
-    index->SetCacheMode(m_indexCacheMode);
-
     // attempt to load data from index file
     if ( !index->Load(indexFilename) ) {
         const string indexError = index->GetErrorString();
@@ -255,12 +248,6 @@ void BamRandomAccessController::SetIndex(BamIndex* index) {
     if ( m_index )
         ClearIndex();
     m_index = index;
-}
-
-void BamRandomAccessController::SetIndexCacheMode(const BamIndex::IndexCacheMode& mode) {
-    m_indexCacheMode = mode;
-    if ( m_index )
-        m_index->SetCacheMode(mode);
 }
 
 bool BamRandomAccessController::SetRegion(const BamRegion& region, const int& referenceCount) {

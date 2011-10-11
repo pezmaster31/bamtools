@@ -11,7 +11,7 @@
 #define SAM_SEQUENCE_DICTIONARY_H
 
 #include "api/api_global.h"
-#include "api/SamSequence.h""
+#include "api/SamSequence.h"
 #include <string>
 #include <map>
 #include <vector>

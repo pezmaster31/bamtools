@@ -2,7 +2,7 @@
 // bamtools_resolve.cpp (c) 2011
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 6 July 2011
+// Last modified: 12 October 2011
 // ---------------------------------------------------------------------------
 // Resolves paired-end reads (marking the IsProperPair flag as needed).
 // ***************************************************************************
@@ -1029,7 +1029,7 @@ void ResolveTool::ResolveToolPrivate::ParseHeader(const SamHeader& header) {
     SamReadGroupConstIterator rgIter = header.ReadGroups.ConstBegin();
     SamReadGroupConstIterator rgEnd  = header.ReadGroups.ConstEnd();
     for ( ; rgIter != rgEnd; ++rgIter ) {
-        const SamReadGroup& rg = (*rgIter);
+        const SamReadGroup& rg = rgIter->second;
         m_readGroups.insert( make_pair<string, ReadGroupResolver>(rg.ID, ReadGroupResolver()) );
     }
 }

@@ -2,7 +2,7 @@
 // SamSequenceDictionary.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011
+// Last modified: 12 October 2011
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamSequence entries.
 // ***************************************************************************
@@ -12,13 +12,13 @@
 
 #include "api/api_global.h"
 #include "api/SamSequence.h"
-#include <string>
 #include <map>
+#include <string>
 #include <vector>
 
 namespace BamTools {
 
-typedef std::vector<SamSequence>             SamSequenceContainer;
+typedef std::map<std::string, SamSequence>   SamSequenceContainer;
 typedef SamSequenceContainer::iterator       SamSequenceIterator;
 typedef SamSequenceContainer::const_iterator SamSequenceConstIterator;
 
@@ -73,10 +73,6 @@ class API_EXPORT SamSequenceDictionary {
         SamSequenceIterator      End(void);                 // returns iterator to end()
         SamSequenceConstIterator End(void) const;           // returns const_iterator to end()
         SamSequenceConstIterator ConstEnd(void) const;      // returns const_iterator to end()
-
-    // internal methods
-    private:
-        int IndexOf(const std::string& name) const;
 
     // data members
     private:

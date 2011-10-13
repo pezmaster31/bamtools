@@ -2,7 +2,7 @@
 // BamAlignment.h (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 12 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -99,6 +99,12 @@ struct API_EXPORT BamAlignment {
 
         // returns a description of the last error that occurred
         std::string GetErrorString(void) const;
+
+        // retrieves the size, read locations and reference locations of soft-clip operations
+        bool GetSoftClips(std::vector<int>& clipSizes,
+                          std::vector<int>& readPositions,
+                          std::vector<int>& genomePositions,
+                          bool usePadded = false) const;
 
     // public data fields
     public:

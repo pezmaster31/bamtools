@@ -2,7 +2,7 @@
 // BamAlignment.cpp (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 13 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -441,6 +441,94 @@ int BamAlignment::GetEndPosition(bool usePadded, bool closedInterval) const {
 */
 std::string BamAlignment::GetErrorString(void) const {
     return ErrorString;
+}
+
+/*! \fn bool BamAlignment::GetSoftClips(std::vector<int>& clipSizes, std::vector<int>& readPositions, std::vector<int>& genomePositions, bool usePadded = false) const
+    \brief Identifies if an alignment has a soft clip. If so, identifies the
+           sizes of the soft clips, as well as their positions in the read and reference.
+
+    \param[out] clipSizes       vector of the sizes of each soft clip in the alignment
+    \param[out] readPositions   vector of the 0-based read locations of each soft clip in the alignment.
+                                These positions are basically indexes within the read, not genomic positions.
+    \param[out] genomePositions vector of the 0-based genome locations of each soft clip in the alignment
+    \param[in]  usePadded       inserted bases affect reported position. Default is false, so that
+                                reported position stays 'sync-ed' with reference coordinates.
+
+    \return \c true if any soft clips were found in the alignment
+*/
+bool BamAlignment::GetSoftClips(vector<int>& clipSizes,
+                                vector<int>& readPositions,
+                                vector<int>& genomePositions,
+                                bool usePadded) const
+{
+    // initialize positions & flags
+    int refPosition  = Position;
+    int readPosition = 0;
+    bool softClipFound = false;
+    bool firstCigarOp  = true;
+
+    // iterate over cigar operations
+    vector<CigarOp>::const_iterator cigarIter = CigarData.begin();
+    vector<CigarOp>::const_iterator cigarEnd  = CigarData.end();
+    for ( ; cigarIter != cigarEnd; ++cigarIter) {
+        const CigarOp& op = (*cigarIter);
+
+        switch ( op.Type ) {
+
+            // increase both read & genome positions on CIGAR chars [DMXN=]
+            case Constants::BAM_CIGAR_DEL_CHAR      :
+            case Constants::BAM_CIGAR_MATCH_CHAR    :
+            case Constants::BAM_CIGAR_MISMATCH_CHAR :
+            case Constants::BAM_CIGAR_REFSKIP_CHAR  :
+            case Constants::BAM_CIGAR_SEQMATCH_CHAR :
+                refPosition  += op.Length;
+                readPosition += op.Length;
+                break;
+
+            // increase read position on insertion, genome position only if @usePadded is true
+            case Constants::BAM_CIGAR_INS_CHAR :
+                readPosition += op.Length;
+                if ( usePadded )
+                    refPosition += op.Length;
+                break;
+
+            case Constants::BAM_CIGAR_SOFTCLIP_CHAR :
+
+                softClipFound = true;
+
+                //////////////////////////////////////////////////////////////////////////////
+                // if we are dealing with the *first* CIGAR operation
+                // for this alignment, we increment the read position so that
+                // the read and genome position of the clip are referring to the same base.
+                // For example, in the alignment below, the ref position would be 4, yet
+                //              the read position would be 0. Thus, to "sync" the two,
+                //              we need to increment the read position by the length of the
+                //              soft clip.
+                // Read:  ATCGTTTCGTCCCTGC
+                // Ref:   GGGATTTCGTCCCTGC
+                // Cigar: SSSSMMMMMMMMMMMM
+                //
+                // NOTE: This only needs to be done if the soft clip is the _first_ CIGAR op.
+                //////////////////////////////////////////////////////////////////////////////
+                if ( firstCigarOp )
+                    readPosition += op.Length;
+
+                // track the soft clip's size, read position, and genome position
+                clipSizes.push_back(op.Length);
+                readPositions.push_back(readPosition);
+                genomePositions.push_back(refPosition);
+
+            // any other CIGAR operations have no effect
+            default :
+                break;
+        }
+
+        // clear our "first pass" flag
+        firstCigarOp = false;
+    }
+
+    // return whether any soft clips found
+    return softClipFound;
 }
 
 /*! \fn bool BamAlignment::GetTagType(const std::string& tag, char& type) const

@@ -2,7 +2,7 @@
 // SamReadGroupDictionary.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 12 October 2011 (DB)
+// Last modified: 14 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamReadGroup entries.
 // ***************************************************************************
@@ -18,7 +18,7 @@
 
 namespace BamTools {
 
-typedef std::map<std::string, SamReadGroup>   SamReadGroupContainer;
+typedef std::vector<SamReadGroup>             SamReadGroupContainer;
 typedef SamReadGroupContainer::iterator       SamReadGroupIterator;
 typedef SamReadGroupContainer::const_iterator SamReadGroupConstIterator;
 
@@ -77,6 +77,7 @@ class API_EXPORT SamReadGroupDictionary {
     // data members
     private:
         SamReadGroupContainer m_data;
+        std::map<std::string, SamReadGroup> m_lookupData;
 };
 
 } // namespace BamTools

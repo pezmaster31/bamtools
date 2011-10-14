@@ -2,7 +2,7 @@
 // SamFormatPrinter.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 12 October 2011 (DB)
+// Last modified: 14 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for printing formatted SAM header to string
 // ***************************************************************************
@@ -81,7 +81,7 @@ void SamFormatPrinter::PrintSQ(std::stringstream& out) const {
     SamSequenceConstIterator seqIter = m_header.Sequences.ConstBegin();
     SamSequenceConstIterator seqEnd  = m_header.Sequences.ConstEnd();
     for ( ; seqIter != seqEnd; ++seqIter ) {
-        const SamSequence& seq = seqIter->second;
+        const SamSequence& seq = (*seqIter);
 
         // @SQ SN:<Name> LN:<Length>
         out << Constants::SAM_SQ_BEGIN_TOKEN
@@ -115,7 +115,7 @@ void SamFormatPrinter::PrintRG(std::stringstream& out) const {
     SamReadGroupConstIterator rgIter = m_header.ReadGroups.ConstBegin();
     SamReadGroupConstIterator rgEnd  = m_header.ReadGroups.ConstEnd();
     for ( ; rgIter != rgEnd; ++rgIter ) {
-        const SamReadGroup& rg = rgIter->second;
+        const SamReadGroup& rg = (*rgIter);
 
         // @RG ID:<ID>
         out << Constants::SAM_RG_BEGIN_TOKEN

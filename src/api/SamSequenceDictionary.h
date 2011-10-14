@@ -2,7 +2,7 @@
 // SamSequenceDictionary.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 12 October 2011
+// Last modified: 14 October 2011
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamSequence entries.
 // ***************************************************************************
@@ -18,7 +18,7 @@
 
 namespace BamTools {
 
-typedef std::map<std::string, SamSequence>   SamSequenceContainer;
+typedef std::vector<SamSequence>             SamSequenceContainer;
 typedef SamSequenceContainer::iterator       SamSequenceIterator;
 typedef SamSequenceContainer::const_iterator SamSequenceConstIterator;
 
@@ -77,6 +77,7 @@ class API_EXPORT SamSequenceDictionary {
     // data members
     private:
         SamSequenceContainer m_data;
+        std::map<std::string, SamSequence> m_lookupData;
 };
 
 } // namespace BamTools

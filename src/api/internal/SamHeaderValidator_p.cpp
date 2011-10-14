@@ -2,7 +2,7 @@
 // SamHeaderValidator.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 12 October 2011 (DB)
+// Last modified: 14 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for validating SamHeader data
 // ***************************************************************************
@@ -244,7 +244,7 @@ bool SamHeaderValidator::ValidateSequenceDictionary(void) {
     SamSequenceConstIterator seqIter = sequences.ConstBegin();
     SamSequenceConstIterator seqEnd  = sequences.ConstEnd();
     for ( ; seqIter != seqEnd; ++seqIter ) {
-        const SamSequence& seq = seqIter->second;
+        const SamSequence& seq = (*seqIter);
         isValid &= ValidateSequence(seq);
     }
 
@@ -264,7 +264,7 @@ bool SamHeaderValidator::ContainsUniqueSequenceNames(void) {
     SamSequenceConstIterator seqIter = sequences.ConstBegin();
     SamSequenceConstIterator seqEnd  = sequences.ConstEnd();
     for ( ; seqIter != seqEnd; ++seqIter ) {
-        const SamSequence& seq = seqIter->second;
+        const SamSequence& seq = (*seqIter);
 
         // lookup sequence name
         const string& name = seq.Name;
@@ -348,7 +348,7 @@ bool SamHeaderValidator::ValidateReadGroupDictionary(void) {
     SamReadGroupConstIterator rgIter = readGroups.ConstBegin();
     SamReadGroupConstIterator rgEnd  = readGroups.ConstEnd();
     for ( ; rgIter != rgEnd; ++rgIter ) {
-        const SamReadGroup& rg = rgIter->second;
+        const SamReadGroup& rg = (*rgIter);
         isValid &= ValidateReadGroup(rg);
     }
 
@@ -370,7 +370,7 @@ bool SamHeaderValidator::ContainsUniqueIDsAndPlatformUnits(void) {
     SamReadGroupConstIterator rgIter = readGroups.ConstBegin();
     SamReadGroupConstIterator rgEnd  = readGroups.ConstEnd();
     for ( ; rgIter != rgEnd; ++rgIter ) {
-        const SamReadGroup& rg = rgIter->second;
+        const SamReadGroup& rg = (*rgIter);
 
         // --------------------------------
         // check for unique ID

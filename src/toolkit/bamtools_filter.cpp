@@ -2,7 +2,7 @@
 // bamtools_filter.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 April 2011
+// Last modified: 14 October 2011
 // ---------------------------------------------------------------------------
 // Filters BAM file(s) according to some user-specified criteria
 // ***************************************************************************
@@ -489,7 +489,7 @@ const string FilterTool::FilterToolPrivate::GetScriptContents(void) {
     if ( !inFile ) {
         cerr << "bamtools filter ERROR: could not open script: "
              << m_settings->ScriptFilename << " for reading" << endl;
-        return false;
+        return string();
     }
     
     // read in entire script contents  
@@ -505,7 +505,7 @@ const string FilterTool::FilterToolPrivate::GetScriptContents(void) {
         // read next block of data
         if ( fgets(buffer, 1024, inFile) == 0 ) {
             cerr << "bamtools filter ERROR: could not read script contents" << endl;
-            return false;
+            return string();
         }
         
         docStream << buffer;
@@ -515,8 +515,7 @@ const string FilterTool::FilterToolPrivate::GetScriptContents(void) {
     fclose(inFile);
     
     // import buffer contents to document, return
-    string document = docStream.str();
-    return document;
+    return docStream.str();
 }
 
 void FilterTool::FilterToolPrivate::InitProperties(void) {

@@ -2,7 +2,7 @@
 // SamReadGroupDictionary.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 14 October 2011 (DB)
+// Last modified: 16 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamReadGroup entries.
 // ***************************************************************************
@@ -47,7 +47,7 @@ SamReadGroupDictionary::~SamReadGroupDictionary(void) { }
 void SamReadGroupDictionary::Add(const SamReadGroup& readGroup) {
     if ( IsEmpty() || !Contains(readGroup) ) {
         m_data.push_back(readGroup);
-        m_lookupData[readGroup.ID] = readGroup;
+        m_lookupData[readGroup.ID] = m_data.size() - 1;
     }
 }
 
@@ -219,15 +219,20 @@ void SamReadGroupDictionary::Remove(const SamReadGroup& readGroup) {
 */
 void SamReadGroupDictionary::Remove(const std::string& readGroupId) {
 
-    SamReadGroupIterator rgIter = Begin();
-    SamReadGroupIterator rgEnd  = End();
-    for ( size_t i = 0 ; rgIter != rgEnd; ++rgIter, ++i ) {
-        SamReadGroup& rg = (*rgIter);
-        if( rg.ID == readGroupId ) {
-            m_data.erase( Begin() + i );
-        }
+    // skip if empty dictionary or if ID unknown
+    if ( IsEmpty() || !Contains(readGroupId) )
+        return;
+
+    // update 'lookup index' for every entry after @readGroupId
+    const size_t indexToRemove = m_lookupData[readGroupId];
+    const size_t numEntries = m_data.size();
+    for ( size_t i = indexToRemove+1; i < numEntries; ++i ) {
+        const SamReadGroup& rg = m_data.at(i);
+        --m_lookupData[rg.ID];
     }
 
+    // erase entry from containers
+    m_data.erase( Begin() + indexToRemove );
     m_lookupData.erase(readGroupId);
 }
 
@@ -280,10 +285,13 @@ int SamReadGroupDictionary::Size(void) const {
     \return a modifiable reference to the SamReadGroup associated with the ID
 */
 SamReadGroup& SamReadGroupDictionary::operator[](const std::string& readGroupId) {
+
     if ( !Contains(readGroupId) ) {
         SamReadGroup rg(readGroupId);
         m_data.push_back(rg);
-        m_lookupData[readGroupId] = rg;
+        m_lookupData[readGroupId] = m_data.size() - 1;
     }
-    return m_lookupData[readGroupId];
+
+    const size_t index = m_lookupData[readGroupId];
+    return m_data.at(index);
 }

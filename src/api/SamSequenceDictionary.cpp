@@ -2,7 +2,7 @@
 // SamSequenceDictionary.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 14 October 2011 (DB)
+// Last modified: 16 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamSequence entries.
 // *************************************************************************
@@ -47,7 +47,7 @@ SamSequenceDictionary::~SamSequenceDictionary(void) { }
 void SamSequenceDictionary::Add(const SamSequence& sequence) {
     if ( IsEmpty() || !Contains(sequence) ) {
         m_data.push_back(sequence);
-        m_lookupData[sequence.Name] = sequence;
+        m_lookupData[sequence.Name] = m_data.size() - 1;
     }
 }
 
@@ -223,15 +223,20 @@ void SamSequenceDictionary::Remove(const SamSequence& sequence) {
 */
 void SamSequenceDictionary::Remove(const std::string& sequenceName) {
 
-    SamSequenceIterator seqIter = Begin();
-    SamSequenceIterator seqEnd  = End();
-    for ( size_t i = 0 ; seqIter != seqEnd; ++seqIter, ++i ) {
-        SamSequence& seq = (*seqIter);
-        if( seq.Name == sequenceName ) {
-            m_data.erase( Begin() + i );
-        }
+    // skip if empty dictionary or if name unknown
+    if ( IsEmpty() || !Contains(sequenceName) )
+        return;
+
+    // update 'lookup index' for every entry after @sequenceName
+    const size_t indexToRemove = m_lookupData[sequenceName];
+    const size_t numEntries = m_data.size();
+    for ( size_t i = indexToRemove+1; i < numEntries; ++i ) {
+        const SamSequence& sq = m_data.at(i);
+        --m_lookupData[sq.Name];
     }
 
+    // erase entry from containers
+    m_data.erase( Begin() + indexToRemove );
     m_lookupData.erase(sequenceName);
 }
 
@@ -284,10 +289,13 @@ int SamSequenceDictionary::Size(void) const {
     \return a modifiable reference to the SamSequence associated with the name
 */
 SamSequence& SamSequenceDictionary::operator[](const std::string& sequenceName) {
+
     if ( !Contains(sequenceName) ) {
         SamSequence seq(sequenceName, 0);
         m_data.push_back(seq);
-        m_lookupData[sequenceName] = seq;
+        m_lookupData[sequenceName] = m_data.size() - 1;
     }
-    return m_lookupData[sequenceName];
+
+    const size_t index = m_lookupData[sequenceName];
+    return m_data.at(index);
 }

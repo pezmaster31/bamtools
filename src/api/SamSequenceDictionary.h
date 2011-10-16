@@ -2,7 +2,7 @@
 // SamSequenceDictionary.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 14 October 2011
+// Last modified: 16 October 2011
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamSequence entries.
 // ***************************************************************************
@@ -77,7 +77,7 @@ class API_EXPORT SamSequenceDictionary {
     // data members
     private:
         SamSequenceContainer m_data;
-        std::map<std::string, SamSequence> m_lookupData;
+        std::map<std::string, size_t> m_lookupData;
 };
 
 } // namespace BamTools

@@ -2,7 +2,7 @@
 // BamConstants.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 16 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides basic constants for handling BAM files.
 // ***************************************************************************
@@ -71,12 +71,12 @@ const int BAM_CIGAR_MASK  = ((1 << BAM_CIGAR_SHIFT) - 1);
 
 // BAM tag types & sizes
 const char BAM_TAG_TYPE_ASCII  = 'A';
-const char BAM_TAG_TYPE_UINT8  = 'c';
-const char BAM_TAG_TYPE_INT8   = 'C';
-const char BAM_TAG_TYPE_UINT16 = 's';
-const char BAM_TAG_TYPE_INT16  = 'S';
-const char BAM_TAG_TYPE_UINT32 = 'i';
-const char BAM_TAG_TYPE_INT32  = 'I';
+const char BAM_TAG_TYPE_INT8   = 'c';
+const char BAM_TAG_TYPE_UINT8  = 'C';
+const char BAM_TAG_TYPE_INT16  = 's';
+const char BAM_TAG_TYPE_UINT16 = 'S';
+const char BAM_TAG_TYPE_INT32  = 'i';
+const char BAM_TAG_TYPE_UINT32 = 'I';
 const char BAM_TAG_TYPE_FLOAT  = 'f';
 const char BAM_TAG_TYPE_STRING = 'Z';
 const char BAM_TAG_TYPE_HEX    = 'H';
@@ -190,7 +190,7 @@ struct TagTypeHelper<int8_t> {
 
 template<>
 struct TagTypeHelper<uint16_t> {
-    static bool CanCovnertFrom(const char c) {
+    static bool CanConvertFrom(const char c) {
         return ( c == Constants::BAM_TAG_TYPE_ASCII ||
                  c == Constants::BAM_TAG_TYPE_UINT8 ||
                  c == Constants::BAM_TAG_TYPE_UINT16 );

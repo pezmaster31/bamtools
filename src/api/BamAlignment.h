@@ -2,7 +2,7 @@
 // BamAlignment.h (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 12 October 2011 (DB)
+// Last modified: 16 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -427,7 +427,7 @@ inline bool BamAlignment::GetTag(const std::string& tag, T& destination) const {
     unsigned int numBytesParsed = 0;
 
     // return failure if tag not found
-    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
+    if ( !FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
         // TODO: set error string?
         return false;
     }
@@ -508,7 +508,7 @@ inline bool BamAlignment::GetTag<std::string>(const std::string& tag,
     unsigned int numBytesParsed = 0;
 
     // return failure if tag not found
-    if ( FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
+    if ( !FindTag(tag, pTagData, tagDataLength, numBytesParsed) ) {
         // TODO: set error string?
         return false;
     }

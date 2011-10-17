@@ -2,7 +2,7 @@
 // BamAlignment.cpp (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 13 October 2011 (DB)
+// Last modified: 17 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -365,18 +365,9 @@ bool BamAlignment::FindTag(const std::string& tag,
             return true;
 
         // get the storage class and find the next tag
-        if ( *pTagStorageType == '\0' ) {
-            ErrorString = "unexpected null found - 1";
-            return false;
-        }
-        if ( !SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) ) {
-            ErrorString = "could not skip to next tag";
-            return false;
-        }
-        if ( *pTagData == '\0' ) {
-            ErrorString = "unexpected null found - 2";
-            return false;
-        }
+        if ( *pTagStorageType == '\0' ) return false;
+        if ( !SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) ) return false;
+        if ( *pTagData == '\0' ) return false;
     }
 
     // checked all tags, none match

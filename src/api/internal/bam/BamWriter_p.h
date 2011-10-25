@@ -2,7 +2,7 @@
 // BamWriter_p.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 25 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -21,7 +21,7 @@
 // We mean it.
 
 #include "api/BamAux.h"
-#include "api/internal/BgzfStream_p.h"
+#include "api/internal/io/BgzfStream_p.h"
 #include <string>
 #include <vector>
 

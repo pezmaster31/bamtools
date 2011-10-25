@@ -2,13 +2,13 @@
 // BamReader.cpp (c) 2009 Derek Barnett, Michael Str�mberg
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 25 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides read access to BAM files.
 // ***************************************************************************
 
 #include "api/BamReader.h"
-#include "api/internal/BamReader_p.h"
+#include "api/internal/bam/BamReader_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 

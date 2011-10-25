@@ -25,26 +25,26 @@ set( BamToolsAPISources
         SamReadGroupDictionary.cpp
         SamSequence.cpp
         SamSequenceDictionary.cpp
-        internal/BamDeviceFactory_p.cpp
-        internal/BamException_p.cpp
-        internal/BamFile_p.cpp
-        internal/BamFtp_p.cpp
-        internal/BamHeader_p.cpp
-        internal/BamHttp_p.cpp
-        internal/BamIndexFactory_p.cpp
-        internal/BamMultiReader_p.cpp
-        internal/BamPipe_p.cpp
-        internal/BamRandomAccessController_p.cpp
-        internal/BamReader_p.cpp
-        internal/BamStandardIndex_p.cpp
-        internal/BamToolsIndex_p.cpp
-        internal/BamWriter_p.cpp
-        internal/BgzfStream_p.cpp
-        internal/ILocalIODevice_p.cpp
-        internal/IRemoteIODevice_p.cpp
-        internal/SamFormatParser_p.cpp
-        internal/SamFormatPrinter_p.cpp
-        internal/SamHeaderValidator_p.cpp
+        internal/bam/BamHeader_p.cpp
+        internal/bam/BamMultiReader_p.cpp
+        internal/bam/BamRandomAccessController_p.cpp
+        internal/bam/BamReader_p.cpp
+        internal/bam/BamWriter_p.cpp
+        internal/index/BamIndexFactory_p.cpp
+        internal/index/BamStandardIndex_p.cpp
+        internal/index/BamToolsIndex_p.cpp
+        internal/io/BamDeviceFactory_p.cpp
+        internal/io/BamFile_p.cpp
+        internal/io/BamFtp_p.cpp
+        internal/io/BamHttp_p.cpp
+        internal/io/BamPipe_p.cpp
+        internal/io/BgzfStream_p.cpp
+        internal/io/ILocalIODevice_p.cpp
+        internal/io/IRemoteIODevice_p.cpp
+        internal/sam/SamFormatParser_p.cpp
+        internal/sam/SamFormatPrinter_p.cpp
+        internal/sam/SamHeaderValidator_p.cpp
+        internal/utils/BamException_p.cpp
 )
 
 # create main BamTools API shared library

@@ -2,7 +2,7 @@
 // BgzfStream_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 11 October 2011(DB)
+// Last modified: 25 October 2011(DB)
 // ---------------------------------------------------------------------------
 // Based on BGZF routines developed at the Broad Institute.
 // Provides the basic functionality for reading & writing BGZF files
@@ -11,9 +11,9 @@
 
 #include "api/BamAux.h"
 #include "api/BamConstants.h"
-#include "api/internal/BamDeviceFactory_p.h"
-#include "api/internal/BamException_p.h"
-#include "api/internal/BgzfStream_p.h"
+#include "api/internal/io/BamDeviceFactory_p.h"
+#include "api/internal/io/BgzfStream_p.h"
+#include "api/internal/utils/BamException_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 

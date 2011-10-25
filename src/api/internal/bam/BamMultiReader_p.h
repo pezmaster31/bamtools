@@ -2,7 +2,7 @@
 // BamMultiReader_p.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 25 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Functionality for simultaneously reading multiple BAM files
 // *************************************************************************
@@ -22,7 +22,7 @@
 
 #include "api/SamHeader.h"
 #include "api/BamMultiReader.h"
-#include "api/internal/BamMultiMerger_p.h"
+#include "api/internal/bam/BamMultiMerger_p.h"
 #include <string>
 #include <vector>
 

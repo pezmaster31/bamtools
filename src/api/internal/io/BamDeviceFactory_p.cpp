@@ -2,16 +2,16 @@
 // BamDeviceFactory_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 September 2011 (DB)
+// Last modified: 25 September 2011 (DB)
 // ---------------------------------------------------------------------------
 // Creates built-in concrete implementations of IBamIODevices
 // ***************************************************************************
 
-#include "api/internal/BamDeviceFactory_p.h"
-#include "api/internal/BamFile_p.h"
-#include "api/internal/BamFtp_p.h"
-#include "api/internal/BamHttp_p.h"
-#include "api/internal/BamPipe_p.h"
+#include "api/internal/io/BamDeviceFactory_p.h"
+#include "api/internal/io/BamFile_p.h"
+#include "api/internal/io/BamFtp_p.h"
+#include "api/internal/io/BamHttp_p.h"
+#include "api/internal/io/BamPipe_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 

@@ -2,14 +2,14 @@
 // SamFormatPrinter.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 14 October 2011 (DB)
+// Last modified: 25 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for printing formatted SAM header to string
 // ***************************************************************************
 
 #include "api/SamConstants.h"
 #include "api/SamHeader.h"
-#include "api/internal/SamFormatPrinter_p.h"
+#include "api/internal/sam/SamFormatPrinter_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 

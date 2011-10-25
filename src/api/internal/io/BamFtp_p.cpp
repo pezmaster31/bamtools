@@ -1,55 +1,55 @@
 // ***************************************************************************
-// BamHttp_p.cpp (c) 2011 Derek Barnett
+// BamFtp_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 25 October 2011 (DB)
 // ---------------------------------------------------------------------------
-// Provides reading/writing of BAM files on HTTP server
+// Provides reading/writing of BAM files on FTP server
 // ***************************************************************************
 
-#include "api/internal/BamHttp_p.h"
+#include "api/internal/io/BamFtp_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 
 using namespace std;
 
-BamHttp::BamHttp(const string& url)
+BamFtp::BamFtp(const string& url)
     : IBamIODevice()
 {
-    BT_ASSERT_X(false, "BamHttp not yet implemented");
+    BT_ASSERT_X(false, "BamFtp not yet implemented");
 }
 
-BamHttp::~BamHttp(void) { }
+BamFtp::~BamFtp(void) { }
 
-void BamHttp::Close(void) {
+void BamFtp::Close(void) {
     return ;
 }
 
-bool BamHttp::IsRandomAccess(void) const {
+bool BamFtp::IsRandomAccess(void) const {
     return true;
 }
 
-bool BamHttp::Open(const IBamIODevice::OpenMode mode) {
+bool BamFtp::Open(const IBamIODevice::OpenMode mode) {
     (void) mode;
     return true;
 }
 
-size_t BamHttp::Read(char* data, const unsigned int numBytes) {
+size_t BamFtp::Read(char* data, const unsigned int numBytes) {
     (void)data;
     (void)numBytes;
     return 0;
 }
 
-bool BamHttp::Seek(const int64_t& position) {
+bool BamFtp::Seek(const int64_t& position) {
     (void)position;
     return true;
 }
 
-int64_t BamHttp::Tell(void) const {
+int64_t BamFtp::Tell(void) const {
     return -1;
 }
 
-size_t BamHttp::Write(const char* data, const unsigned int numBytes) {
+size_t BamFtp::Write(const char* data, const unsigned int numBytes) {
     (void)data;
     (void)numBytes;
     return 0;

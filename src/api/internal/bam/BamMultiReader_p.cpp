@@ -2,7 +2,7 @@
 // BamMultiReader_p.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 14 October 2011 (DB)
+// Last modified: 25 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Functionality for simultaneously reading multiple BAM files
 // *************************************************************************
@@ -11,7 +11,7 @@
 #include "api/BamMultiReader.h"
 #include "api/SamConstants.h"
 #include "api/algorithms/Sort.h"
-#include "api/internal/BamMultiReader_p.h"
+#include "api/internal/bam/BamMultiReader_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 

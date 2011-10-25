@@ -1,14 +1,14 @@
 // ***************************************************************************
-// BamPipe_p.h (c) 2011 Derek Barnett
+// BamFile_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 25 October 2011 (DB)
 // ---------------------------------------------------------------------------
-// Provides BAM pipe-specific IO behavior
+// Provides BAM file-specific IO behavior
 // ***************************************************************************
 
-#ifndef BAMPIPE_P_H
-#define BAMPIPE_P_H
+#ifndef BAMFILE_P_H
+#define BAMFILE_P_H
 
 //  -------------
 //  W A R N I N G
@@ -20,27 +20,32 @@
 //
 // We mean it.
 
-#include "api/internal/ILocalIODevice_p.h"
+#include "api/internal/io/ILocalIODevice_p.h"
 #include <string>
 
 namespace BamTools {
 namespace Internal {
 
-class BamPipe : public ILocalIODevice {
+class BamFile : public ILocalIODevice {
 
     // ctor & dtor
     public:
-        BamPipe(void);
-        ~BamPipe(void);
+        BamFile(const std::string& filename);
+        ~BamFile(void);
 
-    // IBamIODevice implementation
+    // ILocalIODevice implementation
     public:
+        void Close(void);
         bool IsRandomAccess(void) const;
         bool Open(const IBamIODevice::OpenMode mode);
         bool Seek(const int64_t& position);
+
+    // data members
+    private:
+        std::string m_filename;
 };
 
 } // namespace Internal
 } // namespace BamTools
 
-#endif // BAMPIPE_P_H
+#endif // BAMFILE_P_H

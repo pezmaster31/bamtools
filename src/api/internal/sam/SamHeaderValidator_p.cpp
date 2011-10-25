@@ -2,15 +2,15 @@
 // SamHeaderValidator.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 14 October 2011 (DB)
+// Last modified: 25 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for validating SamHeader data
 // ***************************************************************************
 
 #include "api/SamConstants.h"
 #include "api/SamHeader.h"
-#include "api/internal/SamHeaderValidator_p.h"
-#include "api/internal/SamHeaderVersion_p.h"
+#include "api/internal/sam/SamHeaderValidator_p.h"
+#include "api/internal/sam/SamHeaderVersion_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 

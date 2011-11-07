@@ -38,10 +38,10 @@ class BamFtp : public IBamIODevice {
         void Close(void);
         bool IsRandomAccess(void) const;
         bool Open(const IBamIODevice::OpenMode mode);
-        size_t Read(char* data, const unsigned int numBytes);
+        int64_t Read(char* data, const unsigned int numBytes);
         bool Seek(const int64_t& position);
         int64_t Tell(void) const;
-        size_t Write(const char* data, const unsigned int numBytes);
+        int64_t Write(const char* data, const unsigned int numBytes);
 
     // internal methods
     private:

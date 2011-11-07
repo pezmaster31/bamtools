@@ -2,7 +2,7 @@
 // BamHttp_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 7 November 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides reading/writing of BAM files on HTTP server
 // ***************************************************************************
@@ -26,6 +26,10 @@
 namespace BamTools {
 namespace Internal {
 
+class HttpRequestHeader;
+class HttpResponseHeader;
+class TcpSocket;
+
 class BamHttp : public IBamIODevice {
 
     // ctor & dtor
@@ -36,18 +40,45 @@ class BamHttp : public IBamIODevice {
     // IBamIODevice implementation
     public:
         void Close(void);
+        bool IsOpen(void) const ;
         bool IsRandomAccess(void) const;
         bool Open(const IBamIODevice::OpenMode mode);
-        size_t Read(char* data, const unsigned int numBytes);
+        int64_t Read(char* data, const unsigned int numBytes);
         bool Seek(const int64_t& position);
         int64_t Tell(void) const;
-        size_t Write(const char* data, const unsigned int numBytes);
+        int64_t Write(const char* data, const unsigned int numBytes);
 
     // internal methods
     private:
+        bool ConnectSocket(void);
+        bool EnsureSocketConnection(void);
+        void ParseUrl(const std::string& url);
+        int64_t ReadFromSocket(char* data, const unsigned int numBytes);
+        bool ReceiveResponse(void);
+        bool SendRequest(const size_t numBytes = 0);
+        int64_t WriteToSocket(const char* data, const unsigned int numBytes);
 
     // data members
     private:
+
+        // our main socket
+        TcpSocket* m_socket;
+
+        // our connection data
+        std::string m_hostname;
+        std::string m_port;
+        std::string m_filename;
+
+        // our last (active) request & response info
+        HttpRequestHeader*  m_request;
+        HttpResponseHeader* m_response;
+
+        // internal state flags
+        bool m_isUrlParsed;
+
+        // file position
+        int64_t m_filePosition;
+        int64_t m_endRangeFilePosition;
 };
 
 } // namespace Internal

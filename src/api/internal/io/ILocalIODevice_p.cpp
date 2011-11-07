@@ -38,10 +38,10 @@ void ILocalIODevice::Close(void) {
     m_mode = IBamIODevice::NotOpen;
 }
 
-size_t ILocalIODevice::Read(char* data, const unsigned int numBytes) {
+int64_t ILocalIODevice::Read(char* data, const unsigned int numBytes) {
     BT_ASSERT_X( m_stream, "ILocalIODevice::Read: trying to read from null stream" );
     BT_ASSERT_X( (m_mode == IBamIODevice::ReadOnly), "ILocalIODevice::Read: device not in read-only mode");
-    return fread(data, sizeof(char), numBytes, m_stream);
+    return static_cast<int64_t>( fread(data, sizeof(char), numBytes, m_stream) );
 }
 
 int64_t ILocalIODevice::Tell(void) const {
@@ -49,8 +49,8 @@ int64_t ILocalIODevice::Tell(void) const {
     return ftell64(m_stream);
 }
 
-size_t ILocalIODevice::Write(const char* data, const unsigned int numBytes) {
+int64_t ILocalIODevice::Write(const char* data, const unsigned int numBytes) {
     BT_ASSERT_X( m_stream, "ILocalIODevice::Write: tryint to write to null stream" );
     BT_ASSERT_X( (m_mode == IBamIODevice::WriteOnly), "ILocalIODevice::Write: device not in write-only mode" );
-    return fwrite(data, sizeof(char), numBytes, m_stream);
+    return static_cast<int64_t>( fwrite(data, sizeof(char), numBytes, m_stream) );
 }

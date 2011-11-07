@@ -25,24 +25,6 @@ using namespace BamTools::Internal;
 #include <sstream>
 using namespace std;
 
-// ----------------------------
-// RaiiWrapper implementation
-// ----------------------------
-
-BgzfStream::RaiiWrapper::RaiiWrapper(void) {
-    CompressedBlock   = new char[Constants::BGZF_MAX_BLOCK_SIZE];
-    UncompressedBlock = new char[Constants::BGZF_DEFAULT_BLOCK_SIZE];
-}
-
-BgzfStream::RaiiWrapper::~RaiiWrapper(void) {
-
-    // clean up buffers
-    delete[] CompressedBlock;
-    delete[] UncompressedBlock;
-    CompressedBlock = 0;
-    UncompressedBlock = 0;
-}
-
 // ---------------------------
 // BgzfStream implementation
 // ---------------------------
@@ -54,6 +36,8 @@ BgzfStream::BgzfStream(void)
   , m_blockAddress(0)
   , m_isWriteCompressed(true)
   , m_device(0)
+  , m_uncompressedBlock(Constants::BGZF_DEFAULT_BLOCK_SIZE)
+  , m_compressedBlock(Constants::BGZF_MAX_BLOCK_SIZE)
 { }
 
 // destructor
@@ -84,13 +68,17 @@ void BgzfStream::Close(void) {
     if ( m_device->IsOpen() && (m_device->Mode() == IBamIODevice::WriteOnly) ) {
         FlushBlock();
         const size_t blockLength = DeflateBlock();
-        m_device->Write(Resources.CompressedBlock, blockLength);
+        m_device->Write(m_compressedBlock.Buffer, blockLength);
     }
 
     // close device
     m_device->Close();
     delete m_device;
     m_device = 0;
+
+    // ensure our buffers are cleared out
+    m_uncompressedBlock.Clear();
+    m_compressedBlock.Clear();
 
     // reset state
     m_blockLength = 0;
@@ -103,7 +91,7 @@ void BgzfStream::Close(void) {
 size_t BgzfStream::DeflateBlock(void) {
 
     // initialize the gzip header
-    char* buffer = Resources.CompressedBlock;
+    char* buffer = m_compressedBlock.Buffer;
     memset(buffer, 0, 18);
     buffer[0]  = Constants::GZIP_ID1;
     buffer[1]  = Constants::GZIP_ID2;
@@ -129,7 +117,7 @@ size_t BgzfStream::DeflateBlock(void) {
         z_stream zs;
         zs.zalloc    = NULL;
         zs.zfree     = NULL;
-        zs.next_in   = (Bytef*)Resources.UncompressedBlock;
+        zs.next_in   = (Bytef*)m_uncompressedBlock.Buffer;
         zs.avail_in  = inputLength;
         zs.next_out  = (Bytef*)&buffer[Constants::BGZF_BLOCK_HEADER_LENGTH];
         zs.avail_out = bufferSize -
@@ -187,7 +175,7 @@ size_t BgzfStream::DeflateBlock(void) {
 
     // store the CRC32 checksum
     uint32_t crc = crc32(0, NULL, 0);
-    crc = crc32(crc, (Bytef*)Resources.UncompressedBlock, inputLength);
+    crc = crc32(crc, (Bytef*)m_uncompressedBlock.Buffer, inputLength);
     BamTools::PackUnsignedInt(&buffer[compressedLength - 8], crc);
     BamTools::PackUnsignedInt(&buffer[compressedLength - 4], inputLength);
 
@@ -196,7 +184,7 @@ size_t BgzfStream::DeflateBlock(void) {
     if ( remaining > 0 ) {
         if ( remaining > inputLength )
             throw BamException("BgzfStream::DeflateBlock", "after deflate, remainder too large");
-        memcpy(Resources.UncompressedBlock, Resources.UncompressedBlock + inputLength, remaining);
+        memcpy(m_uncompressedBlock.Buffer, m_uncompressedBlock.Buffer + inputLength, remaining);
     }
 
     // update block data
@@ -218,8 +206,16 @@ void BgzfStream::FlushBlock(void) {
         const size_t blockLength = DeflateBlock();
 
         // flush the data to our output device
-        const size_t numBytesWritten = m_device->Write(Resources.CompressedBlock, blockLength);
-        if ( numBytesWritten != blockLength ) {
+        const int64_t numBytesWritten = m_device->Write(m_compressedBlock.Buffer, blockLength);
+
+        // check for device error
+        if ( numBytesWritten < 0 ) {
+            const string message = string("device error: ") + m_device->GetErrorString();
+            throw BamException("BgzfStream::FlushBlock", message);
+        }
+
+        // check that we wrote expected numBytes
+        if ( numBytesWritten != static_cast<int64_t>(blockLength) ) {
             stringstream s("");
             s << "expected to write " << blockLength
               << " bytes during flushing, but wrote " << numBytesWritten;
@@ -238,9 +234,9 @@ size_t BgzfStream::InflateBlock(const size_t& blockLength) {
     z_stream zs;
     zs.zalloc    = NULL;
     zs.zfree     = NULL;
-    zs.next_in   = (Bytef*)Resources.CompressedBlock + 18;
+    zs.next_in   = (Bytef*)m_compressedBlock.Buffer + 18;
     zs.avail_in  = blockLength - 16;
-    zs.next_out  = (Bytef*)Resources.UncompressedBlock;
+    zs.next_out  = (Bytef*)m_uncompressedBlock.Buffer;
     zs.avail_out = Constants::BGZF_DEFAULT_BLOCK_SIZE;
 
     // initialize
@@ -319,7 +315,7 @@ size_t BgzfStream::Read(char* data, const size_t dataLength) {
 
         // copy data from uncompressed source buffer into data destination buffer
         const size_t copyLength = min( (dataLength-numBytesRead), (size_t)bytesAvailable );
-        memcpy(output, Resources.UncompressedBlock + m_blockOffset, copyLength);
+        memcpy(output, m_uncompressedBlock.Buffer + m_blockOffset, copyLength);
 
         // update counters
         m_blockOffset += copyLength;
@@ -349,7 +345,13 @@ void BgzfStream::ReadBlock(void) {
 
     // read block header from file
     char header[Constants::BGZF_BLOCK_HEADER_LENGTH];
-    size_t numBytesRead = m_device->Read(header, Constants::BGZF_BLOCK_HEADER_LENGTH);
+    int64_t numBytesRead = m_device->Read(header, Constants::BGZF_BLOCK_HEADER_LENGTH);
+
+    // check for device error
+    if ( numBytesRead < 0 ) {
+        const string message = string("device error: ") + m_device->GetErrorString();
+        throw BamException("BgzfStream::ReadBlock", message);
+    }
 
     // if block header empty
     if ( numBytesRead == 0 ) {
@@ -358,7 +360,7 @@ void BgzfStream::ReadBlock(void) {
     }
 
     // if block header invalid size
-    if ( numBytesRead != Constants::BGZF_BLOCK_HEADER_LENGTH )
+    if ( numBytesRead != static_cast<int8_t>(Constants::BGZF_BLOCK_HEADER_LENGTH) )
         throw BamException("BgzfStream::ReadBlock", "invalid block header size");
 
     // validate block header contents
@@ -367,22 +369,30 @@ void BgzfStream::ReadBlock(void) {
 
     // copy header contents to compressed buffer
     const size_t blockLength = BamTools::UnpackUnsignedShort(&header[16]) + 1;
-    memcpy(Resources.CompressedBlock, header, Constants::BGZF_BLOCK_HEADER_LENGTH);
+    memcpy(m_compressedBlock.Buffer, header, Constants::BGZF_BLOCK_HEADER_LENGTH);
 
     // read remainder of block
     const size_t remaining = blockLength - Constants::BGZF_BLOCK_HEADER_LENGTH;
-    numBytesRead = m_device->Read(&Resources.CompressedBlock[Constants::BGZF_BLOCK_HEADER_LENGTH], remaining);
-    if ( numBytesRead != remaining )
+    numBytesRead = m_device->Read(&m_compressedBlock.Buffer[Constants::BGZF_BLOCK_HEADER_LENGTH], remaining);
+
+    // check for device error
+    if ( numBytesRead < 0 ) {
+        const string message = string("device error: ") + m_device->GetErrorString();
+        throw BamException("BgzfStream::ReadBlock", message);
+    }
+
+    // check that we read in expected numBytes
+    if ( numBytesRead != static_cast<int64_t>(remaining) )
         throw BamException("BgzfStream::ReadBlock", "could not read data from block");
 
     // decompress block data
-    numBytesRead = InflateBlock(blockLength);
+    const size_t newBlockLength = InflateBlock(blockLength);
 
     // update block data
     if ( m_blockLength != 0 )
         m_blockOffset = 0;
     m_blockAddress = blockAddress;
-    m_blockLength  = numBytesRead;
+    m_blockLength  = newBlockLength;
 }
 
 // seek to position in BGZF file
@@ -442,7 +452,7 @@ size_t BgzfStream::Write(const char* data, const size_t dataLength) {
 
         // copy data contents to uncompressed output buffer
         unsigned int copyLength = min(blockLength - m_blockOffset, dataLength - numBytesWritten);
-        char* buffer = Resources.UncompressedBlock;
+        char* buffer = m_uncompressedBlock.Buffer;
         memcpy(buffer + m_blockOffset, input, copyLength);
 
         // update counter

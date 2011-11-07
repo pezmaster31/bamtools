@@ -34,14 +34,18 @@ bool BamPipe::Open(const IBamIODevice::OpenMode mode) {
     else if ( mode == IBamIODevice::WriteOnly )
         m_stream = freopen(0, "wb", stdout);
     else {
-        SetErrorString("BamPipe::Open", "unknown open mode requested");
+        const string errorType = string( mode == IBamIODevice::ReadWrite ? "unsupported"
+                                                                         : "unknown" );
+        const string message = errorType + " open mode requested";
+        SetErrorString("BamPipe::Open", message);
         return false;
     }
 
     // check that we obtained a valid FILE*
     if ( m_stream == 0 ) {
         const string message_base = string("could not open handle on ");
-        const string message = message_base + ( (mode == IBamIODevice::ReadOnly) ? "stdin" : "stdout" );
+        const string message = message_base + ( (mode == IBamIODevice::ReadOnly) ? "stdin"
+                                                                                 : "stdout" );
         SetErrorString("BamPipe::Open", message);
         return false;
     }

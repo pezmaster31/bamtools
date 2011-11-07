@@ -26,9 +26,10 @@ namespace BamTools {
 class API_EXPORT IBamIODevice {
 
     // enums
-    public: enum OpenMode { NotOpen = 0
-                          , ReadOnly
-                          , WriteOnly
+    public: enum OpenMode { NotOpen   = 0x0000
+                          , ReadOnly  = 0x0001
+                          , WriteOnly = 0x0002
+                          , ReadWrite = ReadOnly | WriteOnly
                           };
 
     // ctor & dtor
@@ -42,10 +43,10 @@ class API_EXPORT IBamIODevice {
         virtual void Close(void) =0;
         virtual bool IsRandomAccess(void) const =0;
         virtual bool Open(const OpenMode mode) =0;
-        virtual size_t Read(char* data, const unsigned int numBytes) =0;
+        virtual int64_t Read(char* data, const unsigned int numBytes) =0;
         virtual bool Seek(const int64_t& position) =0;
         virtual int64_t Tell(void) const =0;
-        virtual size_t Write(const char* data, const unsigned int numBytes) =0;
+        virtual int64_t Write(const char* data, const unsigned int numBytes) =0;
 
         // default implementation provided
         virtual std::string GetErrorString(void);

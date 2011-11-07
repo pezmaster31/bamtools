@@ -12,7 +12,10 @@ include_directories( ${BamTools_SOURCE_DIR}/src )
 add_definitions( -DBAMTOOLS_API_LIBRARY ) # (for proper exporting of library symbols)
 add_definitions( -fPIC ) # (attempt to force PIC compiling on CentOS, not being set on shared libs by CMake)
 
-# list of all BamTools API source (.cpp) files
+# fetch all internal source files
+add_subdirectory ( internal )
+
+# make list of all API source files
 set( BamToolsAPISources
         BamAlignment.cpp
         BamMultiReader.cpp
@@ -25,26 +28,7 @@ set( BamToolsAPISources
         SamReadGroupDictionary.cpp
         SamSequence.cpp
         SamSequenceDictionary.cpp
-        internal/bam/BamHeader_p.cpp
-        internal/bam/BamMultiReader_p.cpp
-        internal/bam/BamRandomAccessController_p.cpp
-        internal/bam/BamReader_p.cpp
-        internal/bam/BamWriter_p.cpp
-        internal/index/BamIndexFactory_p.cpp
-        internal/index/BamStandardIndex_p.cpp
-        internal/index/BamToolsIndex_p.cpp
-        internal/io/BamDeviceFactory_p.cpp
-        internal/io/BamFile_p.cpp
-        internal/io/BamFtp_p.cpp
-        internal/io/BamHttp_p.cpp
-        internal/io/BamPipe_p.cpp
-        internal/io/BgzfStream_p.cpp
-        internal/io/ILocalIODevice_p.cpp
-        internal/io/IRemoteIODevice_p.cpp
-        internal/sam/SamFormatParser_p.cpp
-        internal/sam/SamFormatPrinter_p.cpp
-        internal/sam/SamHeaderValidator_p.cpp
-        internal/utils/BamException_p.cpp
+        ${InternalSources}
 )
 
 # create main BamTools API shared library
@@ -58,8 +42,14 @@ set_target_properties( BamTools-static PROPERTIES OUTPUT_NAME "bamtools" )
 set_target_properties( BamTools-static PROPERTIES PREFIX "lib" )
 
 # link libraries with zlib automatically
-target_link_libraries( BamTools z )
-target_link_libraries( BamTools-static z )
+if ( _WIN32 )
+    set( APILibs z ws2_32 )
+else ( _WIN32 )
+    set( APILibs z )
+endif ( _WIN32 )
+
+target_link_libraries( BamTools ${APILibs} )
+target_link_libraries( BamTools-static ${APILibs} )
 
 # set library install destinations
 install( TARGETS BamTools LIBRARY DESTINATION "lib/bamtools" RUNTIME DESTINATION "bin")
@@ -69,7 +59,7 @@ install( TARGETS BamTools-static ARCHIVE DESTINATION "lib/bamtools")
 include(../ExportHeader.cmake)
 set(ApiIncludeDir "api")
 ExportHeader(APIHeaders api_global.h             ${ApiIncludeDir})
-ExportHeader(APIHeaders BamAlgorithms.h           ${ApiIncludeDir})
+ExportHeader(APIHeaders BamAlgorithms.h          ${ApiIncludeDir})
 ExportHeader(APIHeaders BamAlignment.h           ${ApiIncludeDir})
 ExportHeader(APIHeaders BamAux.h                 ${ApiIncludeDir})
 ExportHeader(APIHeaders BamConstants.h           ${ApiIncludeDir})

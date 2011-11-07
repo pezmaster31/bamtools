@@ -35,9 +35,9 @@ class ILocalIODevice : public IBamIODevice {
     // IBamIODevice implementation
     public:
         virtual void Close(void);
-        virtual size_t Read(char* data, const unsigned int numBytes);
+        virtual int64_t Read(char* data, const unsigned int numBytes);
         virtual int64_t Tell(void) const;
-        virtual size_t Write(const char* data, const unsigned int numBytes);
+        virtual int64_t Write(const char* data, const unsigned int numBytes);
 
     // data members
     protected:

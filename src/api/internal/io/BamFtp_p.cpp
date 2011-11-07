@@ -30,11 +30,17 @@ bool BamFtp::IsRandomAccess(void) const {
 }
 
 bool BamFtp::Open(const IBamIODevice::OpenMode mode) {
-    (void) mode;
+
+    if ( mode != IBamIODevice::ReadOnly ) {
+        SetErrorString("BamFtp::Open", "writing on this device is not supported");
+        return false;
+    }
+
+
     return true;
 }
 
-size_t BamFtp::Read(char* data, const unsigned int numBytes) {
+int64_t BamFtp::Read(char* data, const unsigned int numBytes) {
     (void)data;
     (void)numBytes;
     return 0;
@@ -49,8 +55,9 @@ int64_t BamFtp::Tell(void) const {
     return -1;
 }
 
-size_t BamFtp::Write(const char* data, const unsigned int numBytes) {
+int64_t BamFtp::Write(const char* data, const unsigned int numBytes) {
     (void)data;
     (void)numBytes;
+    BT_ASSERT_X(false, "BamFtp::Write : write-mode not supported on this device");
     return 0;
 }

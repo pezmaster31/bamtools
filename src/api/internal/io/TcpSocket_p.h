@@ -72,7 +72,9 @@ class TcpSocket {
         bool CanReadLine(void) const;
         void ClearBuffer(void); // force buffer to clear (not a 'flush', just a 'discard')
         int64_t Read(char* data, const unsigned int numBytes);
-        std::string ReadLine(void);
+        std::string ReadLine(int64_t max = 0);
+        int64_t ReadLine(char* dest, size_t max);
+        bool WaitForReadLine(void);
         int64_t Write(const char* data, const unsigned int numBytes);
 
         // connection values

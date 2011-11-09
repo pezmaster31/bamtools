@@ -26,6 +26,8 @@
 namespace BamTools {
 namespace Internal {
 
+class TcpSocket;
+
 class BamFtp : public IBamIODevice {
 
     // ctor & dtor
@@ -36,6 +38,7 @@ class BamFtp : public IBamIODevice {
     // IBamIODevice implementation
     public:
         void Close(void);
+        bool IsOpen(void) const;
         bool IsRandomAccess(void) const;
         bool Open(const IBamIODevice::OpenMode mode);
         int64_t Read(char* data, const unsigned int numBytes);
@@ -45,9 +48,40 @@ class BamFtp : public IBamIODevice {
 
     // internal methods
     private:
+        bool ConnectCommandSocket(void);
+        bool ConnectDataSocket(void);        
+        bool ParsePassiveResponse(void);
+        void ParseUrl(const std::string& url);
+        int64_t ReadCommandSocket(char* data, const unsigned int numBytes);
+        int64_t ReadDataSocket(char* data, const unsigned int numBytes);
+        bool ReceiveReply(void);
+        bool SendCommand(const std::string& command, bool waitForReply);
+        int64_t WriteCommandSocket(const char* data, const unsigned int numBytes);
+        int64_t WriteDataSocket(const char* data, const unsigned int numBytes);
 
     // data members
     private:
+        // our main socket
+        TcpSocket* m_commandSocket;
+        TcpSocket* m_dataSocket;
+
+        // our connection data
+        std::string m_hostname;
+        uint16_t    m_port;
+        std::string m_dataHostname;
+        uint16_t    m_dataPort;
+        std::string m_filename;
+
+        std::string m_username;
+        std::string m_password;
+
+        std::string m_response;
+
+        // internal state flags
+        bool m_isUrlParsed;
+
+        // file position
+        int64_t m_filePosition;
 };
 
 } // namespace Internal

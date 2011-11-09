@@ -2,6 +2,8 @@
 using namespace BamTools;
 using namespace BamTools::Internal;
 
+#include <iostream> // debug
+
 #include <cstdlib>
 #include <cstring>
 using namespace std;
@@ -59,9 +61,9 @@ char& ByteArray::operator[](size_t i) {
 }
 
 size_t ByteArray::IndexOf(const char c, const size_t from, const size_t to) const {
-    const size_t size = ( (to == 0 ) ? m_data.size() : to);
+    const size_t size = ( (to == 0 ) ? m_data.size() : to );
     for ( size_t i = from; i < size; ++i ) {
-        if ( m_data.at(i) == c )
+        if ( m_data.at(i) == c ) 
             return i;
     }
     return m_data.size();

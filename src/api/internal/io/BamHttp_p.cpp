@@ -2,7 +2,7 @@
 // BamHttp_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 November 2011 (DB)
+// Last modified: 8 November 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides reading/writing of BAM files on HTTP server
 // ***************************************************************************
@@ -36,6 +36,11 @@ static const char SLASH_CHAR = '/';
 // -----------------
 // utility methods
 // -----------------
+
+static inline
+bool endsWith(const string& source, const string& pattern) {
+    return ( source.find(pattern) == (source.length() - pattern.length()) );
+}
 
 static inline
 string toLower(const string& s) {
@@ -161,6 +166,9 @@ bool BamHttp::Open(const IBamIODevice::OpenMode mode) {
 
 void BamHttp::ParseUrl(const string& url) {
 
+    // clear flag to start
+    m_isUrlParsed = false;
+
     // make sure url starts with "http://", case-insensitive
     string tempUrl(url);
     toLower(tempUrl);
@@ -209,13 +217,14 @@ int64_t BamHttp::Read(char* data, const unsigned int numBytes) {
 
         // if socket has access to entire file contents
         // i.e. we received response with full data (status code == 200)
-        if ( !m_endRangeFilePosition >= 0 ) {
+        if ( m_endRangeFilePosition < 0 ) {
 
             // try to read 'remainingBytes' from socket
             const int64_t socketBytesRead = ReadFromSocket(data+bytesReadSoFar, remainingBytes);
             if ( socketBytesRead < 0 )
                 return -1;
             bytesReadSoFar += socketBytesRead;
+            m_filePosition += socketBytesRead;
         }
 
         // socket has access to a range of data (might already be in buffer)
@@ -232,6 +241,7 @@ int64_t BamHttp::Read(char* data, const unsigned int numBytes) {
                 if ( socketBytesRead < 0 )
                     return -1;
                 bytesReadSoFar += socketBytesRead;
+                m_filePosition += socketBytesRead;
             }
 
             // otherwise, this is a 1st-time read OR we already read everything from the last GET request
@@ -256,7 +266,6 @@ int64_t BamHttp::ReadFromSocket(char* data, const unsigned int maxNumBytes) {
     const int64_t numBytesRead = m_socket->Read(data, maxNumBytes);
     if ( numBytesRead < 0 )
         return -1;
-    m_filePosition += numBytesRead;
     return numBytesRead;
 }
 
@@ -270,21 +279,17 @@ bool BamHttp::ReceiveResponse(void) {
     if ( !EnsureSocketConnection() )
         return false;
 
-    // read response header from socket
-    RaiiBuffer header(0x10000);
-    size_t l = 0;
-    while ( m_socket->Read(header.Buffer + l, 1) >= 0 ) {
-        if ( header.Buffer[l] == '\n' && l >= 3 ) {
-            if (strncmp(header.Buffer + l - 3, "\r\n\r\n", 4) == 0)
-                break;
-        }
-        ++l;
-    }
+    // fetch header, up until double new line
     string responseHeader;
-    responseHeader.resize(l+1);
-    for ( size_t i = 0; i < l; ++i )
-        responseHeader[i] = header.Buffer[i];
+    static const string doubleNewLine = "\n\n";
+    do {
+        // read line & append to full header
+        const string headerLine = m_socket->ReadLine();
+        responseHeader += headerLine;
 
+    } while ( !endsWith(responseHeader, doubleNewLine) );
+
+    // sanity check
     if ( responseHeader.empty() ) {
         // TODO: set error string
         Close();
@@ -339,7 +344,7 @@ bool BamHttp::Seek(const int64_t& position) {
     // discard socket's buffer contents, update positions, & return success
     m_socket->ClearBuffer();
     m_filePosition = position;
-    m_endRangeFilePosition = -1;
+    m_endRangeFilePosition = position;
     return true;
 }
 
@@ -351,8 +356,8 @@ bool BamHttp::SendRequest(const size_t numBytes) {
 
     // create range string
     m_endRangeFilePosition = m_filePosition + numBytes;
-    stringstream range("bytes=");
-    range << m_filePosition << "-" << m_endRangeFilePosition;
+    stringstream range("");
+    range << "bytes=" << m_filePosition << "-" << m_endRangeFilePosition;
 
     // make sure we're connected
     if ( !EnsureSocketConnection() )
@@ -377,12 +382,13 @@ int64_t BamHttp::Write(const char* data, const unsigned int numBytes) {
     (void)data;
     (void)numBytes;
     BT_ASSERT_X(false, "BamHttp::Write : write-mode not supported on this device");
-    return 0;
+    SetErrorString("BamHttp::Write", "write-mode not supported on this device");
+    return -1;
 }
 
 int64_t BamHttp::WriteToSocket(const char* data, const unsigned int numBytes) {
-    if ( !EnsureSocketConnection() )
-        return false;
+    if ( !m_socket->IsConnected() )
+        return -1;
     m_socket->ClearBuffer();
     return m_socket->Write(data, numBytes);
 }

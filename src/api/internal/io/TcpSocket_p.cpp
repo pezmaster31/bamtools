@@ -7,11 +7,15 @@
 // Provides generic TCP socket (buffered) I/O
 // ***************************************************************************
 
+#include "api/internal/io/ByteArray_p.h"
 #include "api/internal/io/TcpSocket_p.h"
 #include "api/internal/io/TcpSocketEngine_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 
+#include <iostream> // debug
+
+#include <algorithm>
 #include <sstream>
 #include <vector>
 using namespace std;
@@ -24,7 +28,7 @@ namespace BamTools {
 namespace Internal {
 
 // constants
-static const size_t DEFAULT_BUFFER_SIZE = 0x8000;
+static const size_t DEFAULT_BUFFER_SIZE = 0x4000;
 
 } // namespace Internal
 } // namespace BamTools
@@ -67,15 +71,16 @@ bool TcpSocket::ConnectImpl(const HostInfo& hostInfo,
 {
     // skip if we're already connected
     if ( m_state == TcpSocket::ConnectedState ) {
-        m_error = TcpSocket::SocketResourceError;
+        m_error = TcpSocket::SocketResourceError; 
+        m_errorString = "socket already connected";
         return false;
     }
 
     // reset socket state
-    m_mode =  mode;
-    m_hostName = hostInfo.HostName();
-    m_state = TcpSocket::UnconnectedState;
-    m_error = TcpSocket::UnknownSocketError;
+    m_hostName   = hostInfo.HostName();
+    m_mode       = mode;    
+    m_state      = TcpSocket::UnconnectedState;
+    m_error      = TcpSocket::UnknownSocketError;
 //    m_localPort  = 0;
     m_remotePort = 0;
 //    m_localAddress.Clear();
@@ -86,6 +91,7 @@ bool TcpSocket::ConnectImpl(const HostInfo& hostInfo,
     vector<HostAddress> addresses = hostInfo.Addresses();
     if ( addresses.empty() ) {
         m_error = TcpSocket::HostNotFoundError;
+        m_errorString = "no IP addresses found for host";
         return false;
     }
 
@@ -124,6 +130,7 @@ bool TcpSocket::ConnectImpl(const HostInfo& hostInfo,
 
     // if we get here, no connection could be made
     m_error = TcpSocket::HostNotFoundError;
+    m_errorString = "could not connect to any host addresses";
     return false;
 }
 
@@ -149,7 +156,7 @@ bool TcpSocket::ConnectToHost(const string& hostName,
     // if host name was IP address ("x.x.x.x" or IPv6 format)
     // otherwise host name was 'plain-text' ("www.foo.bar")
     // we need to look up IP address(es)
-    if ( hostAddress.HasIPAddress() )
+    if ( hostAddress.HasIPAddress() ) 
         info.SetAddresses( vector<HostAddress>(1, hostAddress) );
     else
         info = HostInfo::Lookup(hostName, port);
@@ -171,6 +178,9 @@ void TcpSocket::DisconnectFromHost(void) {
     m_remoteAddress.Clear();
     m_hostName.clear();
     m_cachedSocketDescriptor = -1;
+
+    // for future, make sure there's outgoing data that needs to be flushed
+    m_readBuffer.Clear();
 }
 
 TcpSocket::SocketError TcpSocket::GetError(void) const {
@@ -241,6 +251,13 @@ int64_t TcpSocket::Read(char* data, const unsigned int numBytes) {
 
 bool TcpSocket::ReadFromSocket(void) {
 
+    // check for any socket engine errors
+    if ( !m_engine->IsValid() ) {
+        m_errorString = "TcpSocket::ReadFromSocket - socket disconnected";
+        ResetSocketEngine();
+        return false;
+    }
+
     // wait for ready read
     bool timedOut;
     bool isReadyRead = m_engine->WaitForRead(5000, &timedOut);
@@ -250,13 +267,15 @@ bool TcpSocket::ReadFromSocket(void) {
 
         // if we simply timed out
         if ( timedOut ) {
-            // TODO: set error string
+            m_errorString = "TcpSocket::ReadFromSocket - timed out waiting for ready read";
+            // get error from engine ?
             return false;
         }
 
         // otherwise, there was an error
         else {
-            // TODO: set error string
+            m_errorString = "TcpSocket::ReadFromSocket - encountered error while waiting for ready read";
+            // get error from engine ?
             return false;
         }
     }
@@ -264,12 +283,16 @@ bool TcpSocket::ReadFromSocket(void) {
     // #########################################################################
     // clean this up - smells funky, but it's a key step so it has to be right
     // #########################################################################
+
     // get number of bytes available from socket
     // (if 0, still try to read some data so we don't trigger any OS event behavior
     //  that respond to repeated access to a remote closed socket)
     int64_t bytesToRead = m_engine->NumBytesAvailable();
-    if ( bytesToRead < 0 )
+    if ( bytesToRead < 0 ) {
+        m_errorString = "TcpSocket::ReadFromSocket - encountered error while determining numBytesAvailable";
+        // get error from engine ?
         return false;
+    }
     else if ( bytesToRead == 0 )
         bytesToRead = 4096;
 
@@ -277,29 +300,86 @@ bool TcpSocket::ReadFromSocket(void) {
     char* buffer = m_readBuffer.Reserve(bytesToRead);
     int64_t numBytesRead = m_engine->Read(buffer, bytesToRead);
 
-    // (Qt uses -2 for no data, not error)
-    // squeeze buffer back down & return success
-    if ( numBytesRead == -2 ) {
-        m_readBuffer.Chop(bytesToRead);
-        return true;
-    }
-    // #########################################################################
-
-    // check for any socket engine errors
-    if ( !m_engine->IsValid() ) {
-        // TODO: set error string
-        ResetSocketEngine();
+    // if error while reading
+    if ( numBytesRead == -1 ) {
+        m_errorString = "TcpSocket::ReadFromSocket - encountered error while reading bytes";
+        // get error from engine ?
         return false;
     }
+
+    // handle special case (no data, but not error)
+    if ( numBytesRead == -2 ) 
+        m_readBuffer.Chop(bytesToRead);
 
     // return success
     return true;
 }
 
-string TcpSocket::ReadLine(void) {
-    if ( m_readBuffer.CanReadLine() )
-        return m_readBuffer.ReadLine();
-    return string();
+string TcpSocket::ReadLine(int64_t max) {
+
+    // prep result byte buffer
+    ByteArray result;
+
+    size_t bufferMax = ((max > static_cast<int64_t>(string::npos)) ? string::npos : static_cast<size_t>(max));
+    result.Resize(bufferMax);
+
+    // read data
+    int64_t readBytes(0);
+    if ( result.Size() == 0 ) {
+
+        if ( bufferMax == 0 )
+            bufferMax = string::npos;
+
+        result.Resize(1);
+
+        int64_t readResult;
+        do {
+            result.Resize( static_cast<size_t>(std::min(bufferMax, result.Size() + DEFAULT_BUFFER_SIZE)) );
+            readResult = ReadLine(result.Data()+readBytes, result.Size()-readBytes);
+            if ( readResult > 0 || readBytes == 0 )
+                readBytes += readResult;
+        } while ( readResult == DEFAULT_BUFFER_SIZE && result[static_cast<size_t>(readBytes-1)] != '\n' );
+
+    } else
+        readBytes = ReadLine(result.Data(), result.Size());
+
+    // clean up byte buffer
+    if ( readBytes <= 0 )
+        result.Clear();
+    else
+        result.Resize(static_cast<size_t>(readBytes));
+
+    // return byte buffer as string
+    return string( result.ConstData(), result.Size() );
+}
+
+int64_t TcpSocket::ReadLine(char* dest, size_t max) {
+    
+    // wait for buffer to contain line contents
+    if ( !WaitForReadLine() ) {
+        m_errorString = "TcpSocket::ReadLine - error waiting for read line";
+        return -1;
+    }
+    
+    // leave room for null term
+    if ( max < 2 )
+        return -1;
+    --max;
+
+    // read from buffer, handle newlines
+    int64_t readSoFar = m_readBuffer.ReadLine(dest, max);
+    if ( readSoFar && dest[readSoFar-1] == '\n' ) {
+
+        // adjust for windows-style '\r\n'
+        if ( readSoFar > 1 && dest[readSoFar-2] == '\r') {
+            --readSoFar;
+            dest[readSoFar-1] = '\n';
+        }
+    }
+
+    // null terminate & return number of bytes read
+    dest[readSoFar] = '\0';
+    return readSoFar;
 }
 
 void TcpSocket::ResetSocketEngine(void) {
@@ -314,6 +394,18 @@ void TcpSocket::ResetSocketEngine(void) {
     // reset our state & cached socket handle
     m_state = TcpSocket::UnconnectedState;
     m_cachedSocketDescriptor = -1;
+}
+
+bool TcpSocket::WaitForReadLine(void) {
+
+    // wait until we can read a line (will return immediately if already capable)
+    while ( !CanReadLine() ) {
+        if ( !ReadFromSocket() ) 
+            return false;
+    }
+
+    // if we get here, success  
+    return true;
 }
 
 int64_t TcpSocket::Write(const char* data, const unsigned int numBytes) {

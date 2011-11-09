@@ -15,12 +15,6 @@ using namespace std;
 namespace BamTools {
 namespace Internal {
 
-// convenience 'isalpha' wrapper
-static inline
-bool isAlpha(char c) {
-    return ( isalpha(c) != 0 );
-}
-
 // split a string into fields, on delimiter character
 static inline
 vector<string> split(const string& source, char delim) {
@@ -56,6 +50,13 @@ bool parseIp4(const string& address, uint32_t& maybeIp4 ) {
     // convert each field to integer value
     uint32_t ipv4(0);
     for ( uint8_t i = 0; i < 4; ++i ) {
+
+        const string& field = addressFields.at(i);
+        const size_t fieldSize = field.size();
+        for ( size_t j = 0; j < fieldSize; ++j ) {
+            if ( !isdigit(field[j]) )
+                return false;
+        }
 
         int value = atoi( addressFields.at(i).c_str() );
         if ( value < 0 || value > 255 )

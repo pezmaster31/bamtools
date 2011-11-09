@@ -40,7 +40,7 @@ class BamHttp : public IBamIODevice {
     // IBamIODevice implementation
     public:
         void Close(void);
-        bool IsOpen(void) const ;
+        bool IsOpen(void) const;
         bool IsRandomAccess(void) const;
         bool Open(const IBamIODevice::OpenMode mode);
         int64_t Read(char* data, const unsigned int numBytes);

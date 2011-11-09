@@ -9,6 +9,8 @@ using namespace BamTools::Internal;
 #  include "api/internal/io/NetUnix_p.h"
 #endif
 
+#include <iostream> // debug
+
 // standard C++ includes
 #include <cstdlib>
 #include <cstring>
@@ -139,6 +141,8 @@ HostInfo HostInfo::Lookup(const string& hostname, const string& port) {
     // do 'normal' lookup
     else {
 
+        cout << "HostInfo::Lookup() - looking up addresses for domain name: " << hostname << endl;
+
         // setup address lookup 'hints'
         addrinfo hints;
         memset(&hints, 0, sizeof(hints));
@@ -153,6 +157,8 @@ HostInfo HostInfo::Lookup(const string& hostname, const string& port) {
         // if everything OK
         if ( status == 0 ) {
 
+            cout << "HostInfo::Lookup() - found addresses" << endl;
+
             // iterate over all IP addresses found
             addrinfo* p = res;
             for ( ; p != NULL; p = p->ai_next ) {
@@ -161,6 +167,7 @@ HostInfo HostInfo::Lookup(const string& hostname, const string& port) {
                 if ( p->ai_family == AF_INET ) {
                     sockaddr_in* ipv4 = (sockaddr_in*)p->ai_addr;
                     HostAddress a( ntohl(ipv4->sin_addr.s_addr) );
+                    cout << "\t" << a.GetIPString() << endl;
                     uniqueAddresses.insert(a);
                 }
 
@@ -168,6 +175,7 @@ HostInfo HostInfo::Lookup(const string& hostname, const string& port) {
                 else if ( p->ai_family == AF_INET6 ) {
                     sockaddr_in6* ipv6 = (sockaddr_in6*)p->ai_addr;
                     HostAddress a(ipv6->sin6_addr.s6_addr);
+                    cout << "\t" << a.GetIPString() << endl;
                     uniqueAddresses.insert(a);
                 }
             }
@@ -185,7 +193,7 @@ HostInfo HostInfo::Lookup(const string& hostname, const string& port) {
                      status == EAI_NONAME
                   || status == EAI_FAIL
 #  ifdef EAI_NODATA
-                  || status == EAI_NODATA  // officially deprecated, but just in case we run into it
+                  || status == EAI_NODATA  // officially deprecated, but just in case we happen to hit it
 #  endif // EAI_NODATA
 
 #else  // _WIN32

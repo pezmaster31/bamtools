@@ -418,7 +418,7 @@ bool BamFtp::ReceiveReply(void) {
     return true;
 }
 
-bool BamFtp::Seek(const int64_t& position) {
+bool BamFtp::Seek(const int64_t& position, const int origin) {
 
     // if FTP device not in a valid state
     if ( !IsOpen() ) {
@@ -434,7 +434,14 @@ bool BamFtp::Seek(const int64_t& position) {
     m_commandSocket->DisconnectFromHost();
 
     // update file position & return success
-    m_filePosition = position;
+    if ( origin == SEEK_CUR )
+        m_filePosition += position;
+    else if ( origin == SEEK_SET)
+        m_filePosition = position;
+    else {
+        // TODO: set error string
+        return false;
+    }
     return true;
 }
 

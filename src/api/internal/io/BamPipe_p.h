@@ -37,7 +37,7 @@ class BamPipe : public ILocalIODevice {
     public:
         bool IsRandomAccess(void) const;
         bool Open(const IBamIODevice::OpenMode mode);
-        bool Seek(const int64_t& position);
+        bool Seek(const int64_t& position, const int origin = SEEK_SET);
 };
 
 } // namespace Internal

@@ -22,6 +22,7 @@
 
 #include "api/BamAux.h"
 #include "api/BamIndex.h"
+#include "api/IBamIODevice.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -128,9 +129,9 @@ class BamToolsIndex : public BamIndex {
         void CheckMagicNumber(void);
         void CheckVersion(void);
         void CloseFile(void);
-        bool IsFileOpen(void) const;
-        void OpenFile(const std::string& filename, const char* mode);
-        void Seek(const int64_t& position, const int& origin);
+        bool IsDeviceOpen(void) const;
+        void OpenFile(const std::string& filename, IBamIODevice::OpenMode mode);
+        void Seek(const int64_t& position, const int origin);
         int64_t Tell(void) const;
 
         // index-creation methods
@@ -165,10 +166,11 @@ class BamToolsIndex : public BamIndex {
 
         struct RaiiWrapper {
             FILE* IndexStream;
+            IBamIODevice* Device;
             RaiiWrapper(void);
             ~RaiiWrapper(void);
         };
-        RaiiWrapper Resources;
+        RaiiWrapper m_resources;
 
     // static constants
     private:

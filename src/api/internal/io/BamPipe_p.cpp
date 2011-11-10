@@ -55,7 +55,7 @@ bool BamPipe::Open(const IBamIODevice::OpenMode mode) {
     return true;
 }
 
-bool BamPipe::Seek(const int64_t& ) {
+bool BamPipe::Seek(const int64_t&, const int) {
     SetErrorString("BamPipe::Seek", "random access not allowed in FIFO pipe");
     return false;
 }

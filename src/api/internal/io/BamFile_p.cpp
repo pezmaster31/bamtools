@@ -43,6 +43,8 @@ bool BamFile::Open(const IBamIODevice::OpenMode mode) {
         m_stream = fopen(m_filename.c_str(), "rb");
     else if ( mode == IBamIODevice::WriteOnly )
         m_stream = fopen(m_filename.c_str(), "wb");
+    else if ( mode == IBamIODevice::ReadWrite )
+        m_stream = fopen(m_filename.c_str(), "w+b");
     else {
         SetErrorString("BamFile::Open", "unknown open mode requested");
         return false;
@@ -61,7 +63,7 @@ bool BamFile::Open(const IBamIODevice::OpenMode mode) {
     return true;
 }
 
-bool BamFile::Seek(const int64_t& position) {
+bool BamFile::Seek(const int64_t& position, const int origin) {
     BT_ASSERT_X( m_stream, "BamFile::Seek() - null stream" );
-    return ( fseek64(m_stream, position, SEEK_SET) == 0 );
+    return ( fseek64(m_stream, position, origin) == 0 );
 }

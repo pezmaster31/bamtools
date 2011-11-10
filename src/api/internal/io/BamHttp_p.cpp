@@ -333,7 +333,7 @@ bool BamHttp::ReceiveResponse(void) {
     return false;
 }
 
-bool BamHttp::Seek(const int64_t& position) {
+bool BamHttp::Seek(const int64_t& position, const int origin) {
 
     // if HTTP device not in a valid state
     if ( !IsOpen() ) {
@@ -343,8 +343,16 @@ bool BamHttp::Seek(const int64_t& position) {
 
     // discard socket's buffer contents, update positions, & return success
     m_socket->ClearBuffer();
-    m_filePosition = position;
-    m_endRangeFilePosition = position;
+
+    if ( origin == SEEK_CUR )
+        m_filePosition += position;
+    else if ( origin == SEEK_SET )
+        m_filePosition = position;
+    else {
+        // TODO: set error string
+        return false;
+    }
+    m_endRangeFilePosition = m_filePosition;
     return true;
 }
 

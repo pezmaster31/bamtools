@@ -44,7 +44,7 @@ class BamHttp : public IBamIODevice {
         bool IsRandomAccess(void) const;
         bool Open(const IBamIODevice::OpenMode mode);
         int64_t Read(char* data, const unsigned int numBytes);
-        bool Seek(const int64_t& position);
+        bool Seek(const int64_t& position, const int origin = SEEK_SET);
         int64_t Tell(void) const;
         int64_t Write(const char* data, const unsigned int numBytes);
 

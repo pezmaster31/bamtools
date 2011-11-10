@@ -31,9 +31,9 @@ const string BamIndexFactory::CreateIndexFilename(const string& bamFilename,
 // creates a new BamIndex object, depending on extension of @indexFilename
 BamIndex* BamIndexFactory::CreateIndexFromFilename(const string& indexFilename, BamReaderPrivate* reader) {
 
-    // if file doesn't exist, return null index
-    if ( !BamTools::FileExists(indexFilename) )
-        return 0;
+//    // if file doesn't exist, return null index
+//    if ( !BamTools::FileExists(indexFilename) )
+//        return 0;
 
     // get file extension from index filename, including dot (".EXT")
     // if can't get file extension, return null index
@@ -91,19 +91,19 @@ const string BamIndexFactory::FindIndexFilename(const string& bamFilename,
     // try to find index of preferred type first
     // return index filename if found
     string indexFilename = CreateIndexFilename(bamFilename, preferredType);
-    if ( !indexFilename.empty() && BamTools::FileExists(indexFilename) )
+    if ( !indexFilename.empty() /*&& BamTools::FileExists(indexFilename)*/ )
         return indexFilename;
 
     // couldn't find preferred type, try the other supported types
     // return index filename if found
     if ( preferredType != BamIndex::STANDARD ) {
         indexFilename = CreateIndexFilename(bamFilename, BamIndex::STANDARD);
-        if ( !indexFilename.empty() && BamTools::FileExists(indexFilename) )
+        if ( !indexFilename.empty() /*&& BamTools::FileExists(indexFilename)*/ )
             return indexFilename;
     }
     if ( preferredType != BamIndex::BAMTOOLS ) {
         indexFilename = CreateIndexFilename(bamFilename, BamIndex::BAMTOOLS);
-        if ( !indexFilename.empty() && BamTools::FileExists(indexFilename) )
+        if ( !indexFilename.empty()/* && BamTools::FileExists(indexFilename) */)
             return indexFilename;
     }
 

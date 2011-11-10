@@ -19,6 +19,7 @@
 #define IBAMIODEVICE_H
 
 #include "api/api_global.h"
+#include <cstdio>
 #include <string>
 
 namespace BamTools {
@@ -39,12 +40,14 @@ class API_EXPORT IBamIODevice {
     // IBamIODevice interface
     public:
 
+        // TODO: add seek(pos, *from*)
+
         // pure virtuals
         virtual void Close(void) =0;
         virtual bool IsRandomAccess(void) const =0;
         virtual bool Open(const OpenMode mode) =0;
         virtual int64_t Read(char* data, const unsigned int numBytes) =0;
-        virtual bool Seek(const int64_t& position) =0;
+        virtual bool Seek(const int64_t& position, const int origin = SEEK_SET) =0;
         virtual int64_t Tell(void) const =0;
         virtual int64_t Write(const char* data, const unsigned int numBytes) =0;
 

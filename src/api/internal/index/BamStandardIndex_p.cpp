@@ -10,6 +10,7 @@
 #include "api/BamAlignment.h"
 #include "api/internal/bam/BamReader_p.h"
 #include "api/internal/index/BamStandardIndex_p.h"
+#include "api/internal/io/BamDeviceFactory_p.h"
 #include "api/internal/utils/BamException_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
@@ -38,15 +39,16 @@ const int BamStandardIndex::SIZEOF_LINEAROFFSET   = sizeof(uint64_t);
 // ----------------------------
 
 BamStandardIndex::RaiiWrapper::RaiiWrapper(void)
-    : IndexStream(0)
+    : Device(0)
     , Buffer(0)
 { }
 
 BamStandardIndex::RaiiWrapper::~RaiiWrapper(void) {
 
-    if ( IndexStream ) {
-        fclose(IndexStream);
-        IndexStream = 0;
+    if ( Device ) {
+        Device->Close();
+        delete Device;
+        Device = 0;
     }
 
     if ( Buffer ) {
@@ -145,9 +147,9 @@ void BamStandardIndex::CalculateCandidateOffsets(const BaiReferenceSummary& refS
             for ( int j = 0; j < numAlignmentChunks; ++j ) {
 
                 // read chunk start & stop from buffer
-                memcpy((char*)&chunkStart, Resources.Buffer+offset, sizeof(uint64_t));
+                memcpy((char*)&chunkStart, m_resources.Buffer+offset, sizeof(uint64_t));
                 offset += sizeof(uint64_t);
-                memcpy((char*)&chunkStop, Resources.Buffer+offset, sizeof(uint64_t));
+                memcpy((char*)&chunkStop, m_resources.Buffer+offset, sizeof(uint64_t));
                 offset += sizeof(uint64_t);
 
                 // swap endian-ness if necessary
@@ -226,8 +228,8 @@ void BamStandardIndex::CheckMagicNumber(void) {
 
     // check 'magic number' to see if file is BAI index
     char magic[4];
-    const size_t elementsRead = fread(magic, sizeof(char), 4, Resources.IndexStream);
-    if ( elementsRead != 4 )
+    const int64_t numBytesRead = m_resources.Device->Read(magic, sizeof(magic));
+    if ( numBytesRead != 4 )
         throw BamException("BamStandardIndex::CheckMagicNumber", "could not read BAI magic number");
 
     // compare to expected value
@@ -244,17 +246,18 @@ void BamStandardIndex::ClearReferenceEntry(BaiReferenceEntry& refEntry) {
 void BamStandardIndex::CloseFile(void) {
 
     // close file stream
-    if ( IsFileOpen() ) {
-        fclose(Resources.IndexStream);
-        Resources.IndexStream = 0;
+    if ( IsDeviceOpen() ) {
+        m_resources.Device->Close();
+        delete m_resources.Device;
+        m_resources.Device = 0;
     }
 
     // clear index file summary data
     m_indexFileSummary.clear();
 
     // clean up I/O buffer
-    delete[] Resources.Buffer;
-    Resources.Buffer = 0;
+    delete[] m_resources.Buffer;
+    m_resources.Buffer = 0;
     m_bufferLength = 0;
 }
 
@@ -279,7 +282,7 @@ bool BamStandardIndex::Create(void) {
 
         // open new index file (read & write)
         string indexFilename = m_reader->Filename() + Extension();
-        OpenFile(indexFilename, "w+b");
+        OpenFile(indexFilename, IBamIODevice::ReadWrite);
 
         // initialize BaiFileSummary with number of references
         const int& numReferences = m_reader->GetReferenceCount();
@@ -498,8 +501,10 @@ bool BamStandardIndex::HasAlignments(const int& referenceID) const {
     return ( refSummary.NumBins > 0 );
 }
 
-bool BamStandardIndex::IsFileOpen(void) const {
-    return ( Resources.IndexStream != 0 );
+bool BamStandardIndex::IsDeviceOpen(void) const {
+    if ( m_resources.Device == 0 )
+        return false;
+    return m_resources.Device->IsOpen();
 }
 
 // attempts to use index data to jump to @region, returns success/fail
@@ -541,7 +546,7 @@ bool BamStandardIndex::Load(const std::string& filename) {
     try {
 
         // attempt to open file (read-only)
-        OpenFile(filename, "rb");
+        OpenFile(filename, IBamIODevice::ReadOnly);
 
         // validate format
         CheckMagicNumber();
@@ -612,23 +617,29 @@ void BamStandardIndex::MergeAlignmentChunks(BaiAlignmentChunkVector& chunks) {
     chunks = mergedChunks;
 }
 
-void BamStandardIndex::OpenFile(const std::string& filename, const char* mode) {
+void BamStandardIndex::OpenFile(const std::string& filename, IBamIODevice::OpenMode mode) {
 
     // make sure any previous index file is closed
     CloseFile();
 
+    m_resources.Device = BamDeviceFactory::CreateDevice(filename);
+    if ( m_resources.Device == 0 ) {
+        const string message = string("could not open file: ") + filename;
+        throw BamException("BamStandardIndex::OpenFile", message);
+    }
+
     // attempt to open file
-    Resources.IndexStream = fopen(filename.c_str(), mode);
-    if ( !IsFileOpen() ) {
+    m_resources.Device->Open(mode);
+    if ( !IsDeviceOpen() ) {
         const string message = string("could not open file: ") + filename;
         throw BamException("BamStandardIndex::OpenFile", message);
     }
 }
 
 void BamStandardIndex::ReadBinID(uint32_t& binId) {
-    const size_t elementsRead = fread(&binId, sizeof(binId), 1, Resources.IndexStream);
+    const int64_t numBytesRead = m_resources.Device->Read((char*)&binId, sizeof(binId));
     if ( m_isBigEndian ) SwapEndian_32(binId);
-    if ( elementsRead != 1 )
+    if ( numBytesRead != sizeof(binId) )
         throw BamException("BamStandardIndex::ReadBinID", "could not read BAI bin ID");
 }
 
@@ -646,11 +657,11 @@ void BamStandardIndex::ReadBinIntoBuffer(uint32_t& binId, int32_t& numAlignmentC
 void BamStandardIndex::ReadIntoBuffer(const unsigned int& bytesRequested) {
 
     // ensure that our buffer is big enough for request
-    BamStandardIndex::CheckBufferSize(Resources.Buffer, m_bufferLength, bytesRequested);
+    BamStandardIndex::CheckBufferSize(m_resources.Buffer, m_bufferLength, bytesRequested);
 
     // read from BAI file stream
-    const size_t bytesRead = fread( Resources.Buffer, sizeof(char), bytesRequested, Resources.IndexStream );
-    if ( bytesRead != (size_t)bytesRequested ) {
+    const int64_t bytesRead = m_resources.Device->Read(m_resources.Buffer, bytesRequested);
+    if ( bytesRead != (int64_t)bytesRequested ) {
         stringstream s("");
         s << "expected to read: " << bytesRequested << " bytes, "
           << "but instead read: " << bytesRead;
@@ -659,37 +670,37 @@ void BamStandardIndex::ReadIntoBuffer(const unsigned int& bytesRequested) {
 }
 
 void BamStandardIndex::ReadLinearOffset(uint64_t& linearOffset) {
-    const size_t elementsRead = fread(&linearOffset, sizeof(linearOffset), 1, Resources.IndexStream);
+    const int64_t numBytesRead = m_resources.Device->Read((char*)&linearOffset, sizeof(linearOffset));
     if ( m_isBigEndian ) SwapEndian_64(linearOffset);
-    if ( elementsRead != 1 )
+    if ( numBytesRead != sizeof(linearOffset) )
         throw BamException("BamStandardIndex::ReadLinearOffset", "could not read BAI linear offset");
 }
 
 void BamStandardIndex::ReadNumAlignmentChunks(int& numAlignmentChunks) {
-    const size_t elementsRead = fread(&numAlignmentChunks, sizeof(numAlignmentChunks), 1, Resources.IndexStream);
+    const int64_t numBytesRead = m_resources.Device->Read((char*)&numAlignmentChunks, sizeof(numAlignmentChunks));
     if ( m_isBigEndian ) SwapEndian_32(numAlignmentChunks);
-    if ( elementsRead != 1 )
+    if ( numBytesRead != sizeof(numAlignmentChunks) )
         throw BamException("BamStandardIndex::ReadNumAlignmentChunks", "could not read BAI chunk count");
 }
 
 void BamStandardIndex::ReadNumBins(int& numBins) {
-    const size_t elementsRead = fread(&numBins, sizeof(numBins), 1, Resources.IndexStream);
+    const int64_t numBytesRead = m_resources.Device->Read((char*)&numBins, sizeof(numBins));
     if ( m_isBigEndian ) SwapEndian_32(numBins);
-    if ( elementsRead != 1 )
+    if ( numBytesRead != sizeof(numBins) )
         throw BamException("BamStandardIndex::ReadNumBins", "could not read BAI bin count");
 }
 
 void BamStandardIndex::ReadNumLinearOffsets(int& numLinearOffsets) {
-    const size_t elementsRead = fread(&numLinearOffsets, sizeof(numLinearOffsets), 1, Resources.IndexStream);
+    const int64_t numBytesRead = m_resources.Device->Read((char*)&numLinearOffsets, sizeof(numLinearOffsets));
     if ( m_isBigEndian ) SwapEndian_32(numLinearOffsets);
-    if ( elementsRead != 1 )
+    if ( numBytesRead != sizeof(numLinearOffsets) )
         throw BamException("BamStandardIndex::ReadNumAlignmentChunks", "could not read BAI linear offset count");
 }
 
 void BamStandardIndex::ReadNumReferences(int& numReferences) {
-    const size_t elementsRead = fread(&numReferences, sizeof(numReferences), 1, Resources.IndexStream);
+    const int64_t numBytesRead = m_resources.Device->Read((char*)&numReferences, sizeof(numReferences));
     if ( m_isBigEndian ) SwapEndian_32(numReferences);
-    if ( elementsRead != 1 )
+    if ( numBytesRead != sizeof(numReferences) )
         throw BamException("BamStandardIndex::ReadNumReferences", "could not read reference count");
 }
 
@@ -756,8 +767,8 @@ void BamStandardIndex::SaveLinearOffsetsSummary(const int& refId, const int& num
 }
 
 // seek to position in index file stream
-void BamStandardIndex::Seek(const int64_t& position, const int& origin) {
-    if ( fseek64(Resources.IndexStream, position, origin) != 0 )
+void BamStandardIndex::Seek(const int64_t& position, const int origin) {
+    if ( !m_resources.Device->Seek(position, origin) )
         throw BamException("BamStandardIndex::Seek", "could not seek in BAI file");
 }
 
@@ -828,7 +839,7 @@ void BamStandardIndex::SummarizeReference(BaiReferenceSummary& refSummary) {
 
 // return position of file pointer in index file stream
 int64_t BamStandardIndex::Tell(void) const {
-    return ftell64(Resources.IndexStream);
+    return m_resources.Device->Tell();
 }
 
 void BamStandardIndex::WriteAlignmentChunk(const BaiAlignmentChunk& chunk) {
@@ -844,10 +855,10 @@ void BamStandardIndex::WriteAlignmentChunk(const BaiAlignmentChunk& chunk) {
     }
 
     // write to index file
-    size_t elementsWritten = 0;
-    elementsWritten += fwrite(&start, sizeof(start), 1, Resources.IndexStream);
-    elementsWritten += fwrite(&stop,  sizeof(stop),  1, Resources.IndexStream);
-    if ( elementsWritten != 2 )
+    int64_t numBytesWritten = 0;
+    numBytesWritten += m_resources.Device->Write((const char*)&start, sizeof(start));
+    numBytesWritten += m_resources.Device->Write((const char*)&stop, sizeof(stop));
+    if ( numBytesWritten != (sizeof(start)+sizeof(stop)) )
         throw BamException("BamStandardIndex::WriteAlignmentChunk", "could not write BAI alignment chunk");
 }
 
@@ -859,8 +870,8 @@ void BamStandardIndex::WriteAlignmentChunks(BaiAlignmentChunkVector& chunks) {
     // write chunks
     int32_t chunkCount = chunks.size();
     if ( m_isBigEndian ) SwapEndian_32(chunkCount);
-    const size_t elementsWritten = fwrite(&chunkCount, sizeof(chunkCount), 1, Resources.IndexStream);
-    if ( elementsWritten != 1 )
+    const int64_t numBytesWritten = m_resources.Device->Write((const char*)&chunkCount, sizeof(chunkCount));
+    if ( numBytesWritten != sizeof(chunkCount) )
         throw BamException("BamStandardIndex::WriteAlignmentChunks", "could not write BAI chunk count");
 
     // iterate over chunks
@@ -875,8 +886,8 @@ void BamStandardIndex::WriteBin(const uint32_t& binId, BaiAlignmentChunkVector& 
     // write BAM bin ID
     uint32_t binKey = binId;
     if ( m_isBigEndian ) SwapEndian_32(binKey);
-    const size_t elementsWritten = fwrite(&binKey, sizeof(binKey), 1, Resources.IndexStream);
-    if ( elementsWritten != 1 )
+    const int64_t numBytesWritten = m_resources.Device->Write((const char*)&binKey, sizeof(binKey));
+    if ( numBytesWritten != sizeof(binKey) )
         throw BamException("BamStandardIndex::WriteBin", "could not write bin ID");
 
     // write bin's alignment chunks
@@ -888,8 +899,8 @@ void BamStandardIndex::WriteBins(const int& refId, BaiBinMap& bins) {
     // write number of bins
     int32_t binCount = bins.size();
     if ( m_isBigEndian ) SwapEndian_32(binCount);
-    const size_t elementsWritten = fwrite(&binCount, sizeof(binCount), 1, Resources.IndexStream);
-    if ( elementsWritten != 1 )
+    const int64_t numBytesWritten = m_resources.Device->Write((const char*)&binCount, sizeof(binCount));
+    if ( numBytesWritten != sizeof(binCount) )
         throw BamException("BamStandardIndex::WriteBins", "could not write bin count");
 
     // save summary for reference's bins
@@ -904,17 +915,17 @@ void BamStandardIndex::WriteBins(const int& refId, BaiBinMap& bins) {
 
 void BamStandardIndex::WriteHeader(void) {
 
-    size_t elementsWritten = 0;
+    int64_t numBytesWritten = 0;
 
     // write magic number
-    elementsWritten += fwrite(BamStandardIndex::BAI_MAGIC, sizeof(char), 4, Resources.IndexStream);
+    numBytesWritten += m_resources.Device->Write(BamStandardIndex::BAI_MAGIC, 4);
 
     // write number of reference sequences
     int32_t numReferences = m_indexFileSummary.size();
     if ( m_isBigEndian ) SwapEndian_32(numReferences);
-    elementsWritten += fwrite(&numReferences, sizeof(numReferences), 1, Resources.IndexStream);
+    numBytesWritten += m_resources.Device->Write((const char*)&numReferences, sizeof(numReferences));
 
-    if ( elementsWritten != 5 )
+    if ( numBytesWritten != sizeof(numReferences)+4 )
         throw BamException("BamStandardIndex::WriteHeader", "could not write BAI header");
 }
 
@@ -923,12 +934,12 @@ void BamStandardIndex::WriteLinearOffsets(const int& refId, BaiLinearOffsetVecto
     // make sure linear offsets are sorted before writing & saving summary
     SortLinearOffsets(linearOffsets);
 
-    size_t elementsWritten = 0;
+    int64_t numBytesWritten = 0;
 
     // write number of linear offsets
     int32_t offsetCount = linearOffsets.size();
     if ( m_isBigEndian ) SwapEndian_32(offsetCount);
-    elementsWritten += fwrite(&offsetCount, sizeof(offsetCount), 1, Resources.IndexStream);
+    numBytesWritten += m_resources.Device->Write((const char*)&offsetCount, sizeof(offsetCount));
 
     // save summary for reference's linear offsets
     SaveLinearOffsetsSummary(refId, linearOffsets.size());
@@ -941,10 +952,10 @@ void BamStandardIndex::WriteLinearOffsets(const int& refId, BaiLinearOffsetVecto
         // write linear offset
         uint64_t linearOffset = (*offsetIter);
         if ( m_isBigEndian ) SwapEndian_64(linearOffset);
-        elementsWritten += fwrite(&linearOffset, sizeof(linearOffset), 1, Resources.IndexStream);
+        numBytesWritten += m_resources.Device->Write((const char*)&linearOffset, sizeof(linearOffset));
     }
 
-    if ( elementsWritten != (linearOffsets.size() + 1) )
+    if ( numBytesWritten != (sizeof(offsetCount) + linearOffsets.size()*sizeof(uint64_t)) )
         throw BamException("BamStandardIndex::WriteLinearOffsets", "could not write BAI linear offsets");
 }
 

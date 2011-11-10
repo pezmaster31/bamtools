@@ -1,5 +1,24 @@
+// ***************************************************************************
+// TcpSocketEngine_p.h (c) 2011 Derek Barnett
+// Marth Lab, Department of Biology, Boston College
+// ---------------------------------------------------------------------------
+// Last modified: 10 November 2011 (DB)
+// ---------------------------------------------------------------------------
+// Provides low-level implementation of TCP I/O
+// ***************************************************************************
+
 #ifndef TCPSOCKETENGINE_P_H
 #define TCPSOCKETENGINE_P_H
+
+//  -------------
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the BamTools API.  It exists purely as an
+// implementation detail. This header file may change from version to version
+// without notice, or even be removed.
+//
+// We mean it.
 
 #include "api/internal/io/HostAddress_p.h"
 #include "api/internal/io/TcpSocket_p.h"
@@ -51,8 +70,7 @@ struct TcpSocketEngine {
         bool    nativeConnect(const HostAddress& address, const uint16_t port);
         bool    nativeCreateSocket(HostAddress::NetworkProtocol protocol);
         void    nativeDisconnect(void);
-        bool    nativeFetchConnectionParameters(void);
-        int64_t  nativeNumBytesAvailable(void) const;
+        int64_t nativeNumBytesAvailable(void) const;
         int64_t nativeRead(char* dest, size_t max);
         int     nativeSelect(int msecs, bool isRead) const;
         int64_t nativeWrite(const char* data, size_t length);

@@ -1,5 +1,28 @@
+// ***************************************************************************
+// RollingBuffer_p.h (c) 2011 Derek Barnett
+// Marth Lab, Department of Biology, Boston College
+// ---------------------------------------------------------------------------
+// Last modified: 10 November 2011 (DB)
+// ---------------------------------------------------------------------------
+// Provides a dynamic I/O FIFO byte queue, which removes bytes as they are
+// read from the front of the buffer and grows to accept bytes being written
+// to buffer end.
+//
+// implementation note: basically a 'smart' wrapper around 1..* ByteArrays
+// ***************************************************************************
+
 #ifndef ROLLINGBUFFER_P_H
 #define ROLLINGBUFFER_P_H
+
+//  -------------
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the BamTools API.  It exists purely as an
+// implementation detail. This header file may change from version to version
+// without notice, or even be removed.
+//
+// We mean it.
 
 #include "api/api_global.h"
 #include "api/internal/io/ByteArray_p.h"
@@ -13,21 +36,32 @@ class RollingBuffer {
 
     // ctors & dtor
     public:
-        RollingBuffer(size_t growth); // inits buffer, new byte arrays will try to be of size @growth
-        ~RollingBuffer(void);         // dtor
+        RollingBuffer(size_t growth);
+        ~RollingBuffer(void);
 
     // RollingBuffer interface
     public:
-        size_t BlockSize(void) const;          // returns current buffer size
-        bool CanReadLine(void) const;          // checks buffer for carriage return
-        void Chop(size_t n);                   // frees @n bytes from end of buffer
-        void Clear(void);                      // clears entire buffer structure
-        void Free(size_t n);                   // frees @n bytes from front of buffer
-        size_t IndexOf(char c) const;          // checks buffer for @c
-        bool IsEmpty(void) const;              // returns whether buffer contains data
-        size_t Read(char* dest, size_t max);   // returns up to @maxLen bytes into @dest, returns exactly how many bytes were read from buffer
+
+        // returns current buffer size
+        size_t BlockSize(void) const;
+        // checks buffer for new line
+        bool CanReadLine(void) const;
+        // frees @n bytes from end of buffer
+        void Chop(size_t n);
+        // clears entire buffer structure
+        void Clear(void);
+        // frees @n bytes from front of buffer
+        void Free(size_t n);
+        // checks buffer for @c
+        size_t IndexOf(char c) const;
+        // returns whether buffer contains data
+        bool IsEmpty(void) const;
+        // reads up to @maxLen bytes into @dest
+        // returns exactly how many bytes were read from buffer
+        size_t Read(char* dest, size_t max);
+        // reads until newline (or up to @maxLen bytes)
+        // returns exactly how many bytes were read from buffer
         size_t ReadLine(char* dest, size_t max);
-        std::string ReadLine(size_t max = 0);
 
         const char* ReadPointer(void) const;   // returns a C-fxn compatible char* to byte data
         char* Reserve(size_t n);               // ensures that buffer contains space for @n incoming bytes, returns write-able char*

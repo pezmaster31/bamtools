@@ -2,7 +2,7 @@
 // BamToolsIndex.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 25 October 2011 (DB)
+// Last modified: 10 November 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the BamTools index format (".bti")
 // ***************************************************************************
@@ -39,16 +39,10 @@ const int BamToolsIndex::SIZEOF_BLOCK         = sizeof(int32_t)*2 + sizeof(int64
 // ----------------------------
 
 BamToolsIndex::RaiiWrapper::RaiiWrapper(void)
-    : IndexStream(0)
-    , Device(0)
+    : Device(0)
 { }
 
 BamToolsIndex::RaiiWrapper::~RaiiWrapper(void) {
-    if ( IndexStream ) {
-        fclose(IndexStream);
-        IndexStream = 0;
-    }
-
     if ( Device ) {
         Device->Close();
         delete Device;
@@ -93,8 +87,6 @@ void BamToolsIndex::CheckVersion(void) {
 
     // read version from file
     const int64_t numBytesRead = m_resources.Device->Read((char*)&m_inputVersion, sizeof(m_inputVersion));
-//    size_t elementsRead = fread(&m_inputVersion, sizeof(m_inputVersion), 1, m_resources.IndexStream);
-//    if ( elementsRead != 1 )
     if ( numBytesRead != sizeof(m_inputVersion) )
         throw BamException("BamToolsIndex::CheckVersion", "could not read format version");
     if ( m_isBigEndian ) SwapEndian_32(m_inputVersion);
@@ -131,9 +123,6 @@ void BamToolsIndex::ClearReferenceEntry(BtiReferenceEntry& refEntry) {
 
 void BamToolsIndex::CloseFile(void) {
     if ( IsDeviceOpen() ) {
-        fclose(m_resources.IndexStream);
-        m_resources.IndexStream = 0;
-
         m_resources.Device->Close();
         delete m_resources.Device;
         m_resources.Device = 0;
@@ -375,7 +364,6 @@ bool BamToolsIndex::IsDeviceOpen(void) const {
     if ( m_resources.Device == 0 )
         return false;
     return m_resources.Device->IsOpen();
-//    return ( m_resources.IndexStream != 0 );
 }
 
 // attempts to use index data to jump to @region, returns success/fail
@@ -458,27 +446,21 @@ void BamToolsIndex::LoadHeader(void) {
 
     // use file's BTI block size to set member variable
     const int64_t numBytesRead = m_resources.Device->Read((char*)&m_blockSize, sizeof(m_blockSize));
-//    const size_t elementsRead = fread(&m_blockSize, sizeof(m_blockSize), 1, m_resources.IndexStream);
     if ( m_isBigEndian ) SwapEndian_32(m_blockSize);
-//    if ( elementsRead != 1 )
     if ( numBytesRead != sizeof(m_blockSize) )
         throw BamException("BamToolsIndex::LoadHeader", "could not read BTI block size");
 }
 
 void BamToolsIndex::LoadNumBlocks(int& numBlocks) {
     const int64_t numBytesRead = m_resources.Device->Read((char*)&numBlocks, sizeof(numBlocks));
-//    const size_t elementsRead = fread(&numBlocks, sizeof(numBlocks), 1, m_resources.IndexStream);
     if ( m_isBigEndian ) SwapEndian_32(numBlocks);
-//    if ( elementsRead != 1 )
     if ( numBytesRead != sizeof(numBlocks) )
         throw BamException("BamToolsIndex::LoadNumBlocks", "could not read number of BTI blocks");
 }
 
 void BamToolsIndex::LoadNumReferences(int& numReferences) {
     const int64_t numBytesRead = m_resources.Device->Read((char*)&numReferences, sizeof(numReferences));
-//    const size_t elementsRead = fread(&numReferences, sizeof(numReferences), 1, m_resources.IndexStream);
     if ( m_isBigEndian ) SwapEndian_32(numReferences);
-//    if ( elementsRead != 1 )
     if ( numBytesRead != sizeof(numReferences) )
         throw BamException("BamToolsIndex::LoadNumReferences", "could not read number of references");
 }
@@ -509,7 +491,6 @@ void BamToolsIndex::OpenFile(const std::string& filename, IBamIODevice::OpenMode
     }
 
     // attempt to open file
-//    m_resources.IndexStream = fopen(filename.c_str(), mode);
     m_resources.Device->Open(mode);
     if ( !IsDeviceOpen() ) {
         const string message = string("could not open file: ") + filename;
@@ -520,11 +501,6 @@ void BamToolsIndex::OpenFile(const std::string& filename, IBamIODevice::OpenMode
 void BamToolsIndex::ReadBlock(BtiBlock& block) {
 
     // read in block data members
-//    size_t elementsRead = 0;
-//    elementsRead += fread(&block.MaxEndPosition, sizeof(block.MaxEndPosition), 1, m_resources.IndexStream);
-//    elementsRead += fread(&block.StartOffset,    sizeof(block.StartOffset),    1, m_resources.IndexStream);
-//    elementsRead += fread(&block.StartPosition,  sizeof(block.StartPosition),  1, m_resources.IndexStream);
-
     int64_t numBytesRead = 0;
     numBytesRead += m_resources.Device->Read((char*)&block.MaxEndPosition, sizeof(block.MaxEndPosition));
     numBytesRead += m_resources.Device->Read((char*)&block.StartOffset,    sizeof(block.StartOffset));
@@ -537,7 +513,7 @@ void BamToolsIndex::ReadBlock(BtiBlock& block) {
         SwapEndian_32(block.StartPosition);
     }
 
-//    if ( elementsRead != 3 )
+    // check block read ok
     const int expectedBytes = sizeof(block.MaxEndPosition) +
                               sizeof(block.StartOffset) +
                               sizeof(block.StartPosition);
@@ -575,7 +551,6 @@ void BamToolsIndex::ReadReferenceEntry(BtiReferenceEntry& refEntry) {
 
 void BamToolsIndex::Seek(const int64_t& position, const int origin) {
     if ( !m_resources.Device->Seek(position, origin) )
-//    if ( fseek64(m_resources.IndexStream, position, origin) != 0 )
         throw BamException("BamToolsIndex::Seek", "could not seek in BAI file");
 }
 
@@ -585,7 +560,6 @@ void BamToolsIndex::SkipBlocks(const int& numBlocks) {
 
 int64_t BamToolsIndex::Tell(void) const {
     return m_resources.Device->Tell();
-//    return ftell64(m_resources.IndexStream);
 }
 
 void BamToolsIndex::WriteBlock(const BtiBlock& block) {
@@ -607,15 +581,11 @@ void BamToolsIndex::WriteBlock(const BtiBlock& block) {
     numBytesWritten += m_resources.Device->Write((const char*)&maxEndPosition, sizeof(maxEndPosition));
     numBytesWritten += m_resources.Device->Write((const char*)&startOffset,    sizeof(startOffset));
     numBytesWritten += m_resources.Device->Write((const char*)&startPosition,  sizeof(startPosition));
+
+    // check block written ok
     const int expectedBytes = sizeof(maxEndPosition) +
                               sizeof(startOffset) +
                               sizeof(startPosition);
-
-//    size_t elementsWritten = 0;
-//    elementsWritten += fwrite(&maxEndPosition, sizeof(maxEndPosition), 1, m_resources.IndexStream);
-//    elementsWritten += fwrite(&startOffset,    sizeof(startOffset),    1, m_resources.IndexStream);
-//    elementsWritten += fwrite(&startPosition,  sizeof(startPosition),  1, m_resources.IndexStream);
-//    if ( elementsWritten != 3 )
     if ( numBytesWritten != expectedBytes )
         throw BamException("BamToolsIndex::WriteBlock", "could not write BTI block");
 }
@@ -630,36 +600,30 @@ void BamToolsIndex::WriteBlocks(const BtiBlockVector& blocks) {
 void BamToolsIndex::WriteHeader(void) {
 
     int64_t numBytesWritten = 0 ;
-//    size_t elementsWritten = 0;
 
     // write BTI index format 'magic number'
     numBytesWritten += m_resources.Device->Write(BamToolsIndex::BTI_MAGIC, 4);
-//    elementsWritten += fwrite(BamToolsIndex::BTI_MAGIC, 1, 4, m_resources.IndexStream);
 
     // write BTI index format version
     int32_t currentVersion = (int32_t)m_outputVersion;
     if ( m_isBigEndian ) SwapEndian_32(currentVersion);
     numBytesWritten += m_resources.Device->Write((const char*)&currentVersion, sizeof(currentVersion));
-//    elementsWritten += fwrite(&currentVersion, sizeof(currentVersion), 1, m_resources.IndexStream);
 
     // write block size
     uint32_t blockSize = m_blockSize;
     if ( m_isBigEndian ) SwapEndian_32(blockSize);
     numBytesWritten += m_resources.Device->Write((const char*)&blockSize, sizeof(blockSize));
-//    elementsWritten += fwrite(&blockSize, sizeof(blockSize), 1, m_resources.IndexStream);
 
     // write number of references
     int32_t numReferences = m_indexFileSummary.size();
     if ( m_isBigEndian ) SwapEndian_32(numReferences);
     numBytesWritten += m_resources.Device->Write((const char*)&numReferences, sizeof(numReferences));
-//    elementsWritten += fwrite(&numReferences, sizeof(numReferences), 1, m_resources.IndexStream);
 
+    // check header written ok
     const int expectedBytes = 4 +
                               sizeof(currentVersion) +
                               sizeof(blockSize) +
                               sizeof(numReferences);
-
-//    if ( elementsWritten != 7 )
     if ( numBytesWritten != expectedBytes )
         throw BamException("BamToolsIndex::WriteHeader", "could not write BTI header");
 }
@@ -670,8 +634,6 @@ void BamToolsIndex::WriteReferenceEntry(const BtiReferenceEntry& refEntry) {
     uint32_t numBlocks = refEntry.Blocks.size();
     if ( m_isBigEndian ) SwapEndian_32(numBlocks);
     const int64_t numBytesWritten = m_resources.Device->Write((const char*)&numBlocks, sizeof(numBlocks));
-//    const size_t elementsWritten = fwrite(&numBlocks, sizeof(numBlocks), 1, m_resources.IndexStream);
-//    if ( elementsWritten != 1 )
     if ( numBytesWritten != sizeof(numBlocks) )
         throw BamException("BamToolsIndex::WriteReferenceEntry", "could not write number of blocks");
 

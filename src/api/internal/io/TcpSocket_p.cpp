@@ -2,9 +2,9 @@
 // TcpSocket_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 25 October 2011 (DB)
+// Last modified: 10 November 2011 (DB)
 // ---------------------------------------------------------------------------
-// Provides generic TCP socket (buffered) I/O
+// Provides basic TCP I/O interface
 // ***************************************************************************
 
 #include "api/internal/io/ByteArray_p.h"
@@ -12,8 +12,6 @@
 #include "api/internal/io/TcpSocketEngine_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
-
-#include <iostream> // debug
 
 #include <algorithm>
 #include <sstream>

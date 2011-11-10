@@ -2,7 +2,7 @@
 // IBamIODevice.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 10 November 2011 (DB)
 // ---------------------------------------------------------------------------
 // Base class for all BAM I/O devices (e.g. local file, pipe, HTTP, FTP, etc.)
 //

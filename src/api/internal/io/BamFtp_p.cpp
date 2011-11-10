@@ -2,7 +2,7 @@
 // BamFtp_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 8 November 2011 (DB)
+// Last modified: 10 November 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides reading/writing of BAM files on FTP server
 // ***************************************************************************
@@ -12,8 +12,6 @@
 #include "api/internal/io/TcpSocket_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
-
-#include <iostream> // debug
 
 #include <cctype>
 #include <cstdlib>
@@ -28,12 +26,14 @@ namespace Internal {
 // constants
 // -----------
 
-static const uint16_t FTP_PORT  = 21;
-static const string FTP_PREFIX = "ftp://";
-static const size_t FTP_PREFIX_LENGTH = 6;
-static const string FTP_NEWLINE = "\r\n";
+static const uint16_t FTP_PORT          = 21;
+static const string   FTP_PREFIX        = "ftp://";
+static const size_t   FTP_PREFIX_LENGTH = 6;
+static const string   FTP_NEWLINE       = "\r\n";
+
 static const string DEFAULT_USER = "anonymous";
 static const string DEFAULT_PASS = "anonymous@";
+
 static const string ABOR_CMD = "ABOR";
 static const string USER_CMD = "USER";
 static const string PASS_CMD = "PASS";
@@ -42,14 +42,16 @@ static const string REIN_CMD = "REIN";
 static const string REST_CMD = "REST";
 static const string RETR_CMD = "RETR";
 static const string TYPE_CMD = "TYPE";
-static const char COLON_CHAR = ':';
-static const char COMMA_CHAR = ',';
-static const char DOT_CHAR   = '.';
-static const char MINUS_CHAR = '-';
-static const char SLASH_CHAR = '/';
-static const char SPACE_CHAR = ' ';
-static const char LEFT_PAREN_CHAR  = '(';
-static const char RIGHT_PAREN_CHAR = ')';
+
+static const char CMD_SEPARATOR  = ' ';
+static const char HOST_SEPARATOR = '/';
+static const char IP_SEPARATOR   = '.';
+
+static const char MULTILINE_CONTINUE = '-';
+
+static const char PASV_REPLY_PREFIX    = '(';
+static const char PASV_REPLY_SEPARATOR = ',';
+static const char PASV_REPLY_SUFFIX    = ')';
 
 // -----------------
 // utility methods
@@ -145,21 +147,21 @@ bool BamFtp::ConnectCommandSocket(void) {
     }
 
     // send USER command
-    string userCommand = USER_CMD + SPACE_CHAR + m_username + FTP_NEWLINE;
+    string userCommand = USER_CMD + CMD_SEPARATOR + m_username + FTP_NEWLINE;
     if ( !SendCommand(userCommand, true) ) {
         Close();
         return false;
     }
 
     // send PASS command
-    string passwordCommand = PASS_CMD + SPACE_CHAR + m_password + FTP_NEWLINE;
+    string passwordCommand = PASS_CMD + CMD_SEPARATOR + m_password + FTP_NEWLINE;
     if ( !SendCommand(passwordCommand, true) ) {
         Close();
         return false;
     }
 
     // send TYPE command
-    string typeCommand = TYPE_CMD + SPACE_CHAR + "I" + FTP_NEWLINE;
+    string typeCommand = TYPE_CMD + CMD_SEPARATOR + 'I' + FTP_NEWLINE;
     if ( !SendCommand(typeCommand, true) ) {
         Close();
         return false;
@@ -199,7 +201,7 @@ bool BamFtp::ConnectDataSocket(void) {
 
         stringstream fpStream("");
         fpStream << m_filePosition;
-        string restartCommand = REST_CMD + SPACE_CHAR + fpStream.str() + FTP_NEWLINE;
+        string restartCommand = REST_CMD + CMD_SEPARATOR + fpStream.str() + FTP_NEWLINE;
         if ( !SendCommand(restartCommand, true) ) {
             // TODO: set error string
             return false;
@@ -207,7 +209,7 @@ bool BamFtp::ConnectDataSocket(void) {
     }
 
     // main file retrieval request
-    string retrieveCommand = RETR_CMD + SPACE_CHAR + m_filename + FTP_NEWLINE;
+    string retrieveCommand = RETR_CMD + CMD_SEPARATOR + m_filename + FTP_NEWLINE;
     if ( !SendCommand(retrieveCommand, false) ) {
         // TODO: set error string
         return false;
@@ -268,8 +270,8 @@ bool BamFtp::ParsePassiveResponse(void) {
         return false;
 
     // find parentheses
-    const size_t leftParenFound  = m_response.find(LEFT_PAREN_CHAR);
-    const size_t rightParenFound = m_response.find(RIGHT_PAREN_CHAR);
+    const size_t leftParenFound  = m_response.find(PASV_REPLY_PREFIX);
+    const size_t rightParenFound = m_response.find(PASV_REPLY_SUFFIX);
     if ( leftParenFound == string::npos || rightParenFound == string::npos )
         return false;
 
@@ -278,14 +280,14 @@ bool BamFtp::ParsePassiveResponse(void) {
     const string hostAndPort(responseBegin+leftParenFound+1, responseBegin+rightParenFound);
 
     // parse into string fields
-    vector<string> fields = split(hostAndPort, COMMA_CHAR);
+    vector<string> fields = split(hostAndPort, PASV_REPLY_SEPARATOR);
     if ( fields.size() != 6 )
         return false;
 
     // fetch passive connection IP
-    m_dataHostname = fields[0] + DOT_CHAR +
-                     fields[1] + DOT_CHAR +
-                     fields[2] + DOT_CHAR +
+    m_dataHostname = fields[0] + IP_SEPARATOR +
+                     fields[1] + IP_SEPARATOR +
+                     fields[2] + IP_SEPARATOR +
                      fields[3];
 
     // fetch passive connection port
@@ -310,7 +312,7 @@ void BamFtp::ParseUrl(const string& url) {
         return;
 
     // find end of host name portion (first '/' hit after the prefix)
-    const size_t firstSlashFound = tempUrl.find(SLASH_CHAR, FTP_PREFIX_LENGTH);
+    const size_t firstSlashFound = tempUrl.find(HOST_SEPARATOR, FTP_PREFIX_LENGTH);
     if ( firstSlashFound == string::npos ) {
         ;  // no slash found... no filename given along with host?
     }
@@ -403,7 +405,7 @@ bool BamFtp::ReceiveReply(void) {
              isdigit(headerLine[0]) &&
              isdigit(headerLine[1]) &&
              isdigit(headerLine[2]) &&
-             ( headerLine[3] != MINUS_CHAR )
+             ( headerLine[3] != MULTILINE_CONTINUE )
            )
         {
             headerEnd = true;

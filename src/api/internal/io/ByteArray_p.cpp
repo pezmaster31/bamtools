@@ -1,8 +1,15 @@
+// ***************************************************************************
+// ByteArray_p.cpp (c) 2011 Derek Barnett
+// Marth Lab, Department of Biology, Boston College
+// ---------------------------------------------------------------------------
+// Last modified: 10 November 2011 (DB)
+// ---------------------------------------------------------------------------
+// Provides a dynamic, variable-length byte buffer
+// ***************************************************************************
+
 #include "api/internal/io/ByteArray_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
-
-#include <iostream> // debug
 
 #include <cstdlib>
 #include <cstring>

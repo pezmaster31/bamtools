@@ -2,7 +2,7 @@
 // BamHttp_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 8 November 2011 (DB)
+// Last modified: 10 November 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides reading/writing of BAM files on HTTP server
 // ***************************************************************************
@@ -30,8 +30,16 @@ namespace Internal {
 static const string HTTP_PORT   = "80";
 static const string HTTP_PREFIX = "http://";
 static const size_t HTTP_PREFIX_LENGTH = 7;
-static const char COLON_CHAR = ':';
-static const char SLASH_CHAR = '/';
+
+static const string DOUBLE_NEWLINE = "\n\n";
+
+static const string GET_METHOD   = "GET";
+static const string HOST_HEADER  = "Host";
+static const string RANGE_HEADER = "Range";
+static const string BYTES_PREFIX = "bytes=";
+
+static const char HOST_SEPARATOR  = '/';
+static const char PROXY_SEPARATOR = ':';
 
 // -----------------
 // utility methods
@@ -177,14 +185,14 @@ void BamHttp::ParseUrl(const string& url) {
         return;
 
     // find end of host name portion (first '/' hit after the prefix)
-    const size_t firstSlashFound = tempUrl.find(SLASH_CHAR, HTTP_PREFIX_LENGTH);
+    const size_t firstSlashFound = tempUrl.find(HOST_SEPARATOR, HTTP_PREFIX_LENGTH);
     if ( firstSlashFound == string::npos ) {
         ;  // no slash found... no filename given along with host?
     }
 
     // fetch hostname (check for proxy port)
     string hostname = tempUrl.substr(HTTP_PREFIX_LENGTH, (firstSlashFound - HTTP_PREFIX_LENGTH));
-    const size_t colonFound = hostname.find(COLON_CHAR);
+    const size_t colonFound = hostname.find(PROXY_SEPARATOR);
     if ( colonFound != string::npos ) {
         ; // TODO: handle proxy port (later, just skip for now)
     } else {
@@ -234,7 +242,8 @@ int64_t BamHttp::Read(char* data, const unsigned int numBytes) {
             // there is data left from last request
             if ( m_endRangeFilePosition > m_filePosition ) {
 
-                // try to read either the total 'remainingBytes' or whatever we have remaining from last request range
+                // try to read either the total 'remainingBytes' or
+                // whatever we have remaining from last request range
                 const size_t rangeRemainingBytes = m_endRangeFilePosition - m_filePosition;
                 const size_t bytesToRead = std::min(remainingBytes, rangeRemainingBytes);
                 const int64_t socketBytesRead = ReadFromSocket(data+bytesReadSoFar, bytesToRead);
@@ -244,7 +253,8 @@ int64_t BamHttp::Read(char* data, const unsigned int numBytes) {
                 m_filePosition += socketBytesRead;
             }
 
-            // otherwise, this is a 1st-time read OR we already read everything from the last GET request
+            // otherwise, this is a 1st-time read or
+            // we already read everything from the last GET request
             else {
 
                 // request for next range
@@ -281,13 +291,12 @@ bool BamHttp::ReceiveResponse(void) {
 
     // fetch header, up until double new line
     string responseHeader;
-    static const string doubleNewLine = "\n\n";
     do {
         // read line & append to full header
         const string headerLine = m_socket->ReadLine();
         responseHeader += headerLine;
 
-    } while ( !endsWith(responseHeader, doubleNewLine) );
+    } while ( !endsWith(responseHeader, DOUBLE_NEWLINE) );
 
     // sanity check
     if ( responseHeader.empty() ) {
@@ -365,16 +374,16 @@ bool BamHttp::SendRequest(const size_t numBytes) {
     // create range string
     m_endRangeFilePosition = m_filePosition + numBytes;
     stringstream range("");
-    range << "bytes=" << m_filePosition << "-" << m_endRangeFilePosition;
+    range << BYTES_PREFIX << m_filePosition << '-' << m_endRangeFilePosition;
 
     // make sure we're connected
     if ( !EnsureSocketConnection() )
         return false;
 
     // create request
-    m_request = new HttpRequestHeader("GET", m_filename);
-    m_request->SetField("Host",  m_hostname);
-    m_request->SetField("Range", range.str());
+    m_request = new HttpRequestHeader(GET_METHOD, m_filename);
+    m_request->SetField(HOST_HEADER,  m_hostname);
+    m_request->SetField(RANGE_HEADER, range.str());
 
     // write request to socket
     const string requestHeader = m_request->ToString();

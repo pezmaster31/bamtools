@@ -1,3 +1,13 @@
+// ***************************************************************************
+// HttpHeader_p.cpp (c) 2011 Derek Barnett
+// Marth Lab, Department of Biology, Boston College
+// ---------------------------------------------------------------------------
+// Last modified: 10 November 2011 (DB)
+// ---------------------------------------------------------------------------
+// Provides a generic interface for parsing/generating HTTP headers, along
+// with specialized request & response header types
+// ***************************************************************************
+
 #include "api/internal/io/HttpHeader_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;

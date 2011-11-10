@@ -1,6 +1,18 @@
+// ***************************************************************************
+// TcpSocketEngine_p.cpp (c) 2011 Derek Barnett
+// Marth Lab, Department of Biology, Boston College
+// ---------------------------------------------------------------------------
+// Last modified: 10 November 2011 (DB)
+// ---------------------------------------------------------------------------
+// Provides low-level implementation of TCP I/O
+// ***************************************************************************
+
+// N.B. - this file contains the top-level, platform-independent logic. "Native" methods
+//        are called as needed from the TcpSocketEngine_<X>.cpp files. Selection of the proper
+//        native method file should have been handled at build-time by CMake.
+
 #include "api/internal/io/HostInfo_p.h"
 #include "api/internal/io/TcpSocketEngine_p.h"
-
 using namespace BamTools;
 using namespace BamTools::Internal;
 

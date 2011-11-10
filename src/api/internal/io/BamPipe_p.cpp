@@ -2,7 +2,7 @@
 // BamPipe_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 25 October 2011 (DB)
+// Last modified: 10 November 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides BAM pipe-specific IO behavior
 // ***************************************************************************
@@ -34,8 +34,8 @@ bool BamPipe::Open(const IBamIODevice::OpenMode mode) {
     else if ( mode == IBamIODevice::WriteOnly )
         m_stream = freopen(0, "wb", stdout);
     else {
-        const string errorType = string( mode == IBamIODevice::ReadWrite ? "unsupported"
-                                                                         : "unknown" );
+        const string errorType = string( (mode == IBamIODevice::ReadWrite) ? "unsupported"
+                                                                           : "unknown" );
         const string message = errorType + " open mode requested";
         SetErrorString("BamPipe::Open", message);
         return false;

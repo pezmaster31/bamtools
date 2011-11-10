@@ -2,7 +2,7 @@
 // BamFtp_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 10 November 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides reading/writing of BAM files on FTP server
 // ***************************************************************************
@@ -61,7 +61,8 @@ class BamFtp : public IBamIODevice {
 
     // data members
     private:
-        // our main socket
+
+        // our main sockets
         TcpSocket* m_commandSocket;
         TcpSocket* m_dataSocket;
 

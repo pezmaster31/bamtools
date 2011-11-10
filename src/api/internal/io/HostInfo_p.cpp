@@ -1,3 +1,12 @@
+// ***************************************************************************
+// HostInfo_p.cpp (c) 2011 Derek Barnett
+// Marth Lab, Department of Biology, Boston College
+// ---------------------------------------------------------------------------
+// Last modified: 10 November 2011 (DB)
+// ---------------------------------------------------------------------------
+// Provides DNS lookup functionality for hostname & its discovered addresses
+// ***************************************************************************
+
 #include "api/internal/io/HostInfo_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
@@ -16,7 +25,7 @@ using namespace BamTools::Internal;
 using namespace std;
 
 // -------------------------
-// HostInfo basics
+// HostInfo implementation
 // -------------------------
 
 HostInfo::HostInfo(void)
@@ -64,9 +73,10 @@ void HostInfo::SetHostName(const string& name) {
     m_hostName = name;
 }
 
-// ------------------------------
+// ---------------------------------
 // HostInfo::Lookup(host, port)
-// ------------------------------
+//  - the real "heavy-lifter" here
+// ---------------------------------
 
 HostInfo HostInfo::Lookup(const string& hostname, const string& port) {
 

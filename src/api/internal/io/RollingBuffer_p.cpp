@@ -1,8 +1,19 @@
+// ***************************************************************************
+// RollingBuffer_p.cpp (c) 2011 Derek Barnett
+// Marth Lab, Department of Biology, Boston College
+// ---------------------------------------------------------------------------
+// Last modified: 10 November 2011 (DB)
+// ---------------------------------------------------------------------------
+// Provides a dynamic I/O FIFO byte queue, which removes bytes as they are
+// read from the front of the buffer and grows to accept bytes being written
+// to buffer end.
+//
+// implementation note: basically a 'smart' wrapper around 1..* ByteArrays
+// ***************************************************************************
+
 #include "api/internal/io/RollingBuffer_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
-
-#include <iostream> // for debug
 
 #include <climits>
 #include <cstring>
@@ -229,42 +240,6 @@ size_t RollingBuffer::ReadLine(char* dest, size_t max) {
     // null terminate 'dest' & return numBytesRead
     dest[bytesReadSoFar] = '\0';
     return bytesReadSoFar;
-}
-
-string RollingBuffer::ReadLine(size_t max) {
-
-    ByteArray result;
-    result.Resize(max);
-
-    size_t numBytesRead = 0;
-
-    // if max not provided, we need to read incrementally
-    if ( max == 0 ) {
-        max = UINT_MAX;
-
-        // make sure we leave room for null terminator
-        result.Resize(1);
-
-        size_t readResult;
-        do {
-            result.Resize(std::min(max, result.Size()+m_bufferGrowth));
-            readResult = ReadLine(result.Data() + numBytesRead, result.Size() - numBytesRead);
-            if ( readResult > 0 || numBytesRead == 0 )
-                numBytesRead += readResult;
-        } while ( readResult == m_bufferGrowth && result[numBytesRead-1] != '\n');
-    }
-
-    // otherwise read line with provided max
-    else numBytesRead = ReadLine(result.Data(), result.Size());
-
-    // adjust byte array depending on numBytesRead
-    if ( numBytesRead == 0 )
-        result.Clear();
-    else
-        result.Resize(numBytesRead);
-
-    // return string from byte array
-    return string(result.ConstData(), result.Size());
 }
 
 const char* RollingBuffer::ReadPointer(void) const {

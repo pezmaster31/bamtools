@@ -2,12 +2,11 @@
 // BamIndexFactory_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 25 October 2011 (DB)
+// Last modified: 10 November 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides interface for generating BamIndex implementations
 // ***************************************************************************
 
-#include "api/BamAux.h"
 #include "api/internal/index/BamIndexFactory_p.h"
 #include "api/internal/index/BamStandardIndex_p.h"
 #include "api/internal/index/BamToolsIndex_p.h"
@@ -30,10 +29,6 @@ const string BamIndexFactory::CreateIndexFilename(const string& bamFilename,
 
 // creates a new BamIndex object, depending on extension of @indexFilename
 BamIndex* BamIndexFactory::CreateIndexFromFilename(const string& indexFilename, BamReaderPrivate* reader) {
-
-//    // if file doesn't exist, return null index
-//    if ( !BamTools::FileExists(indexFilename) )
-//        return 0;
 
     // get file extension from index filename, including dot (".EXT")
     // if can't get file extension, return null index
@@ -91,19 +86,19 @@ const string BamIndexFactory::FindIndexFilename(const string& bamFilename,
     // try to find index of preferred type first
     // return index filename if found
     string indexFilename = CreateIndexFilename(bamFilename, preferredType);
-    if ( !indexFilename.empty() /*&& BamTools::FileExists(indexFilename)*/ )
+    if ( !indexFilename.empty() )
         return indexFilename;
 
     // couldn't find preferred type, try the other supported types
     // return index filename if found
     if ( preferredType != BamIndex::STANDARD ) {
         indexFilename = CreateIndexFilename(bamFilename, BamIndex::STANDARD);
-        if ( !indexFilename.empty() /*&& BamTools::FileExists(indexFilename)*/ )
+        if ( !indexFilename.empty() )
             return indexFilename;
     }
     if ( preferredType != BamIndex::BAMTOOLS ) {
         indexFilename = CreateIndexFilename(bamFilename, BamIndex::BAMTOOLS);
-        if ( !indexFilename.empty()/* && BamTools::FileExists(indexFilename) */)
+        if ( !indexFilename.empty() )
             return indexFilename;
     }
 

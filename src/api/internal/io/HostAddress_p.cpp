@@ -1,3 +1,12 @@
+// ***************************************************************************
+// HostAddress_p.cpp (c) 2011 Derek Barnett
+// Marth Lab, Department of Biology, Boston College
+// ---------------------------------------------------------------------------
+// Last modified: 10 November 2011 (DB)
+// ---------------------------------------------------------------------------
+// Provides a generic IP address container
+// ***************************************************************************
+
 #include "api/internal/io/HostAddress_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
@@ -17,7 +26,7 @@ namespace Internal {
 
 // split a string into fields, on delimiter character
 static inline
-vector<string> split(const string& source, char delim) {
+vector<string> Split(const string& source, char delim) {
     stringstream ss(source);
     string field;
     vector<string> fields;
@@ -28,7 +37,7 @@ vector<string> split(const string& source, char delim) {
 
 // return number of occurrences of @pattern in @source
 static inline
-uint8_t countHits(const string& source, const string& pattern) {
+uint8_t CountHits(const string& source, const string& pattern) {
 
     uint8_t count(0);
     size_t found = source.find(pattern);
@@ -40,10 +49,10 @@ uint8_t countHits(const string& source, const string& pattern) {
 }
 
 static
-bool parseIp4(const string& address, uint32_t& maybeIp4 ) {
+bool ParseIp4(const string& address, uint32_t& maybeIp4 ) {
 
     // split IP address into string fields
-    vector<string> addressFields = split(address, '.');
+    vector<string> addressFields = Split(address, '.');
     if ( addressFields.size() != 4 )
         return false;
 
@@ -73,7 +82,7 @@ bool parseIp4(const string& address, uint32_t& maybeIp4 ) {
 }
 
 static
-bool parseIp6(const string& address, uint8_t* maybeIp6 ) {
+bool ParseIp6(const string& address, uint8_t* maybeIp6 ) {
 
     string tmp = address;
 
@@ -84,13 +93,13 @@ bool parseIp6(const string& address, uint8_t* maybeIp6 ) {
         tmp = tmp.substr(0, percentFound);
 
     // split IP address into string fields
-    vector<string> fields = split(tmp, ':');
+    vector<string> fields = Split(tmp, ':');
     const uint8_t numFields = fields.size();
     if ( numFields < 3 || numFields > 8 )
         return false;
 
     // get number of '::' separators
-    const uint8_t numColonColons = countHits(tmp, "::");
+    const uint8_t numColonColons = CountHits(tmp, "::");
     if ( numFields == 8 && numColonColons > 1 )
         return false;
 
@@ -158,7 +167,7 @@ bool parseIp6(const string& address, uint8_t* maybeIp6 ) {
 
                 // parse the IPv4 section
                 uint32_t maybeIp4;
-                if ( !parseIp4(field, maybeIp4) )
+                if ( !ParseIp4(field, maybeIp4) )
                     return false;
 
                 // store IPv4 fields in IPv6 container
@@ -274,10 +283,10 @@ void HostAddress::Clear(void) {
     memset(&m_ip6Address, 0, sizeof(IPv6Address));
     m_ipString.clear();
 
-    // this may feel funny, but cleared IP value (equivalent to '0.0.0.0') is technically valid IP
-    // and that's not really what this flag is checking
+    // this may feel funny, but cleared IP (equivalent to '0.0.0.0') is technically valid
+    // and that's not really what this flag is checking anyway
     //
-    // this flag is only false iff the string passed in is a 'plain-text' hostname (www.foo.bar)
+    // this flag is false *iff* the string passed in is a 'plain-text' hostname (www.foo.bar)
     m_hasIpAddress = true;
 }
 
@@ -337,7 +346,7 @@ bool HostAddress::ParseAddress(void) {
     if ( found != string::npos ) {
         // try parse IP6 address
         uint8_t maybeIp6[16];
-        if ( parseIp6(s, maybeIp6) ) {
+        if ( ParseIp6(s, maybeIp6) ) {
             SetAddress(maybeIp6);
             m_protocol = HostAddress::IPv6Protocol;
             return true;
@@ -348,7 +357,7 @@ bool HostAddress::ParseAddress(void) {
     found = s.find('.');
     if ( found != string::npos ) {
         uint32_t maybeIp4(0);
-        if ( parseIp4(s, maybeIp4) ) {
+        if ( ParseIp4(s, maybeIp4) ) {
             SetAddress(maybeIp4);
             m_protocol = HostAddress::IPv4Protocol;
             return true;

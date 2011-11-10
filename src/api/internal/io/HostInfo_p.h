@@ -1,5 +1,24 @@
+// ***************************************************************************
+// HostInfo_p.h (c) 2011 Derek Barnett
+// Marth Lab, Department of Biology, Boston College
+// ---------------------------------------------------------------------------
+// Last modified: 10 November 2011 (DB)
+// ---------------------------------------------------------------------------
+// Provides DNS lookup functionality for hostname/IP addresses
+// ***************************************************************************
+
 #ifndef HOSTINFO_P_H
 #define HOSTINFO_P_H
+
+//  -------------
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the BamTools API.  It exists purely as an
+// implementation detail. This header file may change from version to version
+// without notice, or even be removed.
+//
+// We mean it.
 
 #include "api/internal/io/HostAddress_p.h"
 #include <string>

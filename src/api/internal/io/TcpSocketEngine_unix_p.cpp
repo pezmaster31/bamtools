@@ -1,3 +1,12 @@
+// ***************************************************************************
+// TcpSocketEngine_unix_p.cpp (c) 2011 Derek Barnett
+// Marth Lab, Department of Biology, Boston College
+// ---------------------------------------------------------------------------
+// Last modified: 10 November 2011 (DB)
+// ---------------------------------------------------------------------------
+// Provides low-level implementation of TCP I/O for all UNIX-like systems
+// ***************************************************************************
+
 #include "api/internal/io/TcpSocketEngine_p.h"
 #include "api/internal/io/NetUnix_p.h"
 using namespace BamTools;
@@ -151,7 +160,8 @@ bool TcpSocketEngine::nativeConnect(const HostAddress& address, const uint16_t p
 bool TcpSocketEngine::nativeCreateSocket(HostAddress::NetworkProtocol protocol) {
 
     // get protocol value for requested protocol type
-    const int protocolNum = ( (protocol == HostAddress::IPv6Protocol) ? AF_INET6 : AF_INET );
+    const int protocolNum = ( (protocol == HostAddress::IPv6Protocol) ? AF_INET6
+                                                                      : AF_INET );
 
     // attempt to create socket
     int socketFd = socket(protocolNum, SOCK_STREAM, IPPROTO_TCP);
@@ -253,11 +263,10 @@ int64_t TcpSocketEngine::nativeRead(char* dest, size_t max) {
                 break;
         }
     }
-
     return static_cast<int64_t>(ret);
 }
 
-// negative value for msecs will block (forever) until
+// negative value for msecs will block (forever) until ready
 int TcpSocketEngine::nativeSelect(int msecs, bool isRead) const {
 
     // set up FD set
@@ -298,6 +307,5 @@ int64_t TcpSocketEngine::nativeWrite(const char* data, size_t length) {
                 break;
         }
     }
-
     return static_cast<int64_t>(writtenBytes);
 }

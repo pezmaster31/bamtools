@@ -2,7 +2,7 @@
 // BamReader_p.cpp (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 14 November 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
@@ -367,7 +367,6 @@ bool BamReaderPrivate::Open(const string& filename) {
 
         // open BgzfStream
         m_stream.Open(filename, IBamIODevice::ReadOnly);
-        assert(m_stream);
 
         // load BAM metadata
         LoadHeaderData();

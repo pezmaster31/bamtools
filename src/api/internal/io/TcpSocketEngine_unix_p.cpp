@@ -2,7 +2,7 @@
 // TcpSocketEngine_unix_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 November 2011 (DB)
+// Last modified: 15 November 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides low-level implementation of TCP I/O for all UNIX-like systems
 // ***************************************************************************
@@ -23,31 +23,6 @@ using namespace std;
 
 namespace BamTools {
 namespace Internal {
-
-//static inline
-//void getPortAndAddress(const sockaddr* s, uint16_t& port, HostAddress& address) {
-
-//    // IPv6
-//    if (s->sa_family == AF_INET6) {
-//        sockaddr_in6* ip6 = (sockaddr_in6*)s;
-//        port = ntohs(ip6->sin6_port);
-//        IPv6Address tmp;
-//        memcpy(&tmp.data, &(ip6->sin6_addr.s6_addr), sizeof(tmp));
-//        address.SetAddress(tmp);
-//        return;
-//    }
-
-//    // IPv4
-//    if ( s->sa_family == AF_INET ) {
-//        sockaddr_in* ip4 = (sockaddr_in*)s;
-//        port = ntohl(ip4->sin_port);
-//        address.SetAddress( ntohl(ip4->sin_addr.s_addr) );
-//        return;
-//    }
-
-//    // should be unreachable
-//    BT_ASSERT_X(false, "TcpSocketEngine::getPortAndAddress() : unknown network protocol ");
-//}
 
 } // namespace Internal
 } // namespace BamTools
@@ -100,19 +75,21 @@ bool TcpSocketEngine::nativeConnect(const HostAddress& address, const uint16_t p
     // attempt connection
     int connectResult = connect(m_socketDescriptor, sockAddrPtr, sockAddrSize);
 
-    // if hit error
+    // if failed, handle error
     if ( connectResult == -1 ) {
 
-        // see what error was encountered
-        switch ( errno ) {
+        // ensure state is set before checking errno
+        m_socketState = TcpSocket::UnconnectedState;
+
+        // set error type/message depending on errno
+        switch ( errno ) { // <-- potential thread issues later? but can't get error type from connectResult
 
             case EISCONN:
-                m_socketState = TcpSocket::ConnectedState;
+                m_socketState = TcpSocket::ConnectedState; // socket was already connected
                 break;
             case ECONNREFUSED:
             case EINVAL:
                 m_socketError = TcpSocket::ConnectionRefusedError;
-                m_socketState = TcpSocket::UnconnectedState;
                 m_errorString = "connection refused";
                 break;
             case ETIMEDOUT:
@@ -121,32 +98,26 @@ bool TcpSocketEngine::nativeConnect(const HostAddress& address, const uint16_t p
                 break;
             case EHOSTUNREACH:
                 m_socketError = TcpSocket::NetworkError;
-                m_socketState = TcpSocket::UnconnectedState;
                 m_errorString = "host unreachable";
                 break;
             case ENETUNREACH:
                 m_socketError = TcpSocket::NetworkError;
-                m_socketState = TcpSocket::UnconnectedState;
                 m_errorString = "network unreachable";
                 break;
             case EADDRINUSE:
-                m_socketError = TcpSocket::NetworkError;
+                m_socketError = TcpSocket::SocketResourceError;
                 m_errorString = "address already in use";
                 break;
             case EACCES:
             case EPERM:
                 m_socketError = TcpSocket::SocketAccessError;
-                m_socketState = TcpSocket::UnconnectedState;
                 m_errorString = "permission denied";
-            case EAFNOSUPPORT:
-            case EBADF:
-            case EFAULT:
-            case ENOTSOCK:
-                m_socketState = TcpSocket::UnconnectedState;
+                break;
             default:
                 break;
         }
 
+        // double check that we're not in 'connected' state; if so, return failure
         if ( m_socketState != TcpSocket::ConnectedState )
             return false;
     }
@@ -201,39 +172,6 @@ bool TcpSocketEngine::nativeCreateSocket(HostAddress::NetworkProtocol protocol) 
     return true;
 }
 
-//bool TcpSocketEngine::nativeFetchConnectionParameters(void) {
-
-//    // reset addresses/ports
-////    m_localAddress.Clear();
-//    m_remoteAddress.Clear();
-////    m_localPort  = 0;
-//    m_remotePort = 0;
-
-//    // skip (return failure) if invalid socket FD
-//    if ( m_socketDescriptor == -1 )
-//        return false;
-
-//    sockaddr sa;
-//    BT_SOCKLEN_T sockAddrSize = sizeof(sa);
-
-//    // fetch local address info
-//    memset(&sa, 0, sizeof(sa));
-//    if ( getsockname(m_socketDescriptor, &sa, &sockAddrSize) == 0 )
-//        getPortAndAddress(&sa, m_localPort, m_localAddress);
-//    else if ( errno == EBADF ) {
-//        m_socketError = TcpSocket::UnsupportedSocketOperationError;
-//        m_errorString = "invalid socket descriptor";
-//        return false;
-//    }
-
-//    // fetch remote address
-//    if ( getpeername(m_socketDescriptor, &sa, &sockAddrSize) == 0 )
-//        getPortAndAddress(&sa, m_remotePort, m_remoteAddress);
-
-//    // return success
-//    return true;
-//}
-
 int64_t TcpSocketEngine::nativeNumBytesAvailable(void) const {
 
     // fetch number of bytes, return 0 on error
@@ -280,12 +218,10 @@ int TcpSocketEngine::nativeSelect(int msecs, bool isRead) const {
     tv.tv_usec = (msecs % 1000) * 1000;
 
     // do 'select'
-    int ret;
     if ( isRead )
-        ret = select(m_socketDescriptor + 1, &fds, 0, 0, (msecs < 0 ? 0 : &tv));
+        return select(m_socketDescriptor + 1, &fds, 0, 0, (msecs < 0 ? 0 : &tv));
     else
-        ret = select(m_socketDescriptor + 1, 0, &fds, 0, (msecs < 0 ? 0 : &tv));
-    return ret;
+        return select(m_socketDescriptor + 1, 0, &fds, 0, (msecs < 0 ? 0 : &tv));
 }
 
 int64_t TcpSocketEngine::nativeWrite(const char* data, size_t length) {

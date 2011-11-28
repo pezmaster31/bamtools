@@ -66,6 +66,9 @@ class API_EXPORT BamIndex {
         // loads existing data from file into memory
         virtual bool Load(const std::string& filename) =0;
 
+        // returns the 'type' enum for derived index format
+        virtual BamIndex::IndexType Type(void) const =0;
+
     //! \cond
 
     // internal methods

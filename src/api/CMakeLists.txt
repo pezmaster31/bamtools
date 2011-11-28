@@ -49,43 +49,41 @@ set( BamToolsAPISources
 
 # create main BamTools API shared library
 add_library( BamTools SHARED ${BamToolsAPISources} )
-set_target_properties( BamTools PROPERTIES SOVERSION "2.0.5" )
-set_target_properties( BamTools PROPERTIES OUTPUT_NAME "bamtools" )
+set_target_properties( BamTools PROPERTIES
+                       SOVERSION "2.0.5"
+                       OUTPUT_NAME "bamtools" )
+target_link_libraries( BamTools z )
+install( TARGETS BamTools LIBRARY DESTINATION "lib/bamtools" RUNTIME DESTINATION "bin" )
 
 # create main BamTools API static library
 add_library( BamTools-static STATIC ${BamToolsAPISources} )
-set_target_properties( BamTools-static PROPERTIES OUTPUT_NAME "bamtools" )
-set_target_properties( BamTools-static PROPERTIES PREFIX "lib" )
-
-# link libraries with zlib automatically
-target_link_libraries( BamTools z )
+set_target_properties( BamTools-static PROPERTIES
+                       OUTPUT_NAME "bamtools"
+                       PREFIX "lib" )
 target_link_libraries( BamTools-static z )
-
-# set library install destinations
-install( TARGETS BamTools LIBRARY DESTINATION "lib/bamtools" RUNTIME DESTINATION "bin")
-install( TARGETS BamTools-static ARCHIVE DESTINATION "lib/bamtools")
+install( TARGETS BamTools-static ARCHIVE DESTINATION "lib/bamtools" )
 
 # export API headers
-include(../ExportHeader.cmake)
-set(ApiIncludeDir "api")
-ExportHeader(APIHeaders api_global.h             ${ApiIncludeDir})
-ExportHeader(APIHeaders BamAlgorithms.h           ${ApiIncludeDir})
-ExportHeader(APIHeaders BamAlignment.h           ${ApiIncludeDir})
-ExportHeader(APIHeaders BamAux.h                 ${ApiIncludeDir})
-ExportHeader(APIHeaders BamConstants.h           ${ApiIncludeDir})
-ExportHeader(APIHeaders BamIndex.h               ${ApiIncludeDir})
-ExportHeader(APIHeaders BamMultiReader.h         ${ApiIncludeDir})
-ExportHeader(APIHeaders BamReader.h              ${ApiIncludeDir})
-ExportHeader(APIHeaders BamWriter.h              ${ApiIncludeDir})
-ExportHeader(APIHeaders IBamIODevice.h           ${ApiIncludeDir})
-ExportHeader(APIHeaders SamConstants.h           ${ApiIncludeDir})
-ExportHeader(APIHeaders SamHeader.h              ${ApiIncludeDir})
-ExportHeader(APIHeaders SamProgram.h             ${ApiIncludeDir})
-ExportHeader(APIHeaders SamProgramChain.h        ${ApiIncludeDir})
-ExportHeader(APIHeaders SamReadGroup.h           ${ApiIncludeDir})
-ExportHeader(APIHeaders SamReadGroupDictionary.h ${ApiIncludeDir})
-ExportHeader(APIHeaders SamSequence.h            ${ApiIncludeDir})
-ExportHeader(APIHeaders SamSequenceDictionary.h  ${ApiIncludeDir})
+include( ../ExportHeader.cmake )
+set( ApiIncludeDir "api" )
+ExportHeader( APIHeaders api_global.h             ${ApiIncludeDir} )
+ExportHeader( APIHeaders BamAlgorithms.h          ${ApiIncludeDir} )
+ExportHeader( APIHeaders BamAlignment.h           ${ApiIncludeDir} )
+ExportHeader( APIHeaders BamAux.h                 ${ApiIncludeDir} )
+ExportHeader( APIHeaders BamConstants.h           ${ApiIncludeDir} )
+ExportHeader( APIHeaders BamIndex.h               ${ApiIncludeDir} )
+ExportHeader( APIHeaders BamMultiReader.h         ${ApiIncludeDir} )
+ExportHeader( APIHeaders BamReader.h              ${ApiIncludeDir} )
+ExportHeader( APIHeaders BamWriter.h              ${ApiIncludeDir} )
+ExportHeader( APIHeaders IBamIODevice.h           ${ApiIncludeDir} )
+ExportHeader( APIHeaders SamConstants.h           ${ApiIncludeDir} )
+ExportHeader( APIHeaders SamHeader.h              ${ApiIncludeDir} )
+ExportHeader( APIHeaders SamProgram.h             ${ApiIncludeDir} )
+ExportHeader( APIHeaders SamProgramChain.h        ${ApiIncludeDir} )
+ExportHeader( APIHeaders SamReadGroup.h           ${ApiIncludeDir} )
+ExportHeader( APIHeaders SamReadGroupDictionary.h ${ApiIncludeDir} )
+ExportHeader( APIHeaders SamSequence.h            ${ApiIncludeDir} )
+ExportHeader( APIHeaders SamSequenceDictionary.h  ${ApiIncludeDir} )
 
-set(AlgorithmsIncludeDir "api/algorithms")
-ExportHeader(AlgorithmsHeaders algorithms/Sort.h ${AlgorithmsIncludeDir})
+set( AlgorithmsIncludeDir "api/algorithms" )
+ExportHeader( AlgorithmsHeaders algorithms/Sort.h ${AlgorithmsIncludeDir} )

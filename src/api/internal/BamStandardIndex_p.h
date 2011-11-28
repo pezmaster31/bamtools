@@ -122,6 +122,7 @@ class BamStandardIndex : public BamIndex {
         bool Jump(const BamTools::BamRegion& region, bool* hasAlignmentsInRegion);
         // loads existing data from file into memory
         bool Load(const std::string& filename);
+        BamIndex::IndexType Type(void) const { return BamIndex::STANDARD; }
     public:
         // returns format's file extension
         static const std::string Extension(void);

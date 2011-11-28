@@ -2,7 +2,7 @@
 // BamWriter.cpp (c) 2009 Michael Str�mberg, Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 25 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -10,7 +10,7 @@
 #include "api/BamAlignment.h"
 #include "api/BamWriter.h"
 #include "api/SamHeader.h"
-#include "api/internal/BamWriter_p.h"
+#include "api/internal/bam/BamWriter_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 using namespace std;

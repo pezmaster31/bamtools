@@ -2,17 +2,17 @@
 // SamHeader.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 25 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides direct read/write access to the SAM header data fields.
 // ***************************************************************************
 
 #include "api/SamConstants.h"
 #include "api/SamHeader.h"
-#include "api/internal/BamException_p.h"
-#include "api/internal/SamFormatParser_p.h"
-#include "api/internal/SamFormatPrinter_p.h"
-#include "api/internal/SamHeaderValidator_p.h"
+#include "api/internal/utils/BamException_p.h"
+#include "api/internal/sam/SamFormatParser_p.h"
+#include "api/internal/sam/SamFormatPrinter_p.h"
+#include "api/internal/sam/SamHeaderValidator_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 using namespace std;

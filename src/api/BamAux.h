@@ -2,7 +2,7 @@
 // BamAux.h (c) 2009 Derek Barnett, Michael Str�mberg
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 25 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides data structures & utility methods that are used throughout the API.
 // ***************************************************************************
@@ -11,6 +11,7 @@
 #define BAMAUX_H
 
 #include "api/api_global.h"
+#include <cstring>
 #include <fstream> 
 #include <iostream>
 #include <string>
@@ -441,13 +442,25 @@ API_EXPORT inline unsigned short UnpackUnsignedShort(char* buffer) {
     \internal
 */
 struct RaiiBuffer {
+
+    // data members
+    char* Buffer;
+    const size_t NumBytes;
+
+    // ctor & dtor
     RaiiBuffer(const size_t n)
         : Buffer( new char[n]() )
+        , NumBytes(n)
     { }
+
     ~RaiiBuffer(void) {
         delete[] Buffer;
     }
-    char* Buffer;
+
+    // add'l methods
+    void Clear(void) {
+        memset(Buffer, 0, NumBytes);
+    }
 };
 
 } // namespace BamTools

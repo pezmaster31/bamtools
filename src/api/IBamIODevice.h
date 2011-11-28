@@ -2,7 +2,7 @@
 // IBamIODevice.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 10 November 2011 (DB)
 // ---------------------------------------------------------------------------
 // Base class for all BAM I/O devices (e.g. local file, pipe, HTTP, FTP, etc.)
 //
@@ -19,6 +19,7 @@
 #define IBAMIODEVICE_H
 
 #include "api/api_global.h"
+#include <cstdio>
 #include <string>
 
 namespace BamTools {
@@ -26,9 +27,10 @@ namespace BamTools {
 class API_EXPORT IBamIODevice {
 
     // enums
-    public: enum OpenMode { NotOpen = 0
-                          , ReadOnly
-                          , WriteOnly
+    public: enum OpenMode { NotOpen   = 0x0000
+                          , ReadOnly  = 0x0001
+                          , WriteOnly = 0x0002
+                          , ReadWrite = ReadOnly | WriteOnly
                           };
 
     // ctor & dtor
@@ -38,14 +40,16 @@ class API_EXPORT IBamIODevice {
     // IBamIODevice interface
     public:
 
+        // TODO: add seek(pos, *from*)
+
         // pure virtuals
         virtual void Close(void) =0;
         virtual bool IsRandomAccess(void) const =0;
         virtual bool Open(const OpenMode mode) =0;
-        virtual size_t Read(char* data, const unsigned int numBytes) =0;
-        virtual bool Seek(const int64_t& position) =0;
+        virtual int64_t Read(char* data, const unsigned int numBytes) =0;
+        virtual bool Seek(const int64_t& position, const int origin = SEEK_SET) =0;
         virtual int64_t Tell(void) const =0;
-        virtual size_t Write(const char* data, const unsigned int numBytes) =0;
+        virtual int64_t Write(const char* data, const unsigned int numBytes) =0;
 
         // default implementation provided
         virtual std::string GetErrorString(void);

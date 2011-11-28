@@ -2,7 +2,7 @@
 // BamMultiReader.h (c) 2010 Erik Garrison, Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 25 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Convenience class for reading multiple BAM files.
 // ***************************************************************************

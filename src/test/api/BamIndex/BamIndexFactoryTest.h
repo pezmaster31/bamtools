@@ -2,9 +2,9 @@
 #define BAMINDEX_FACTORYTEST_H
 
 #include "api/BamIndex.h"
-#include "api/internal/BamIndexFactory_p.h"
-#include "api/internal/BamStandardIndex_p.h"
-#include "api/internal/BamToolsIndex_p.h"
+#include "api/internal/index/BamIndexFactory_p.h"
+#include "api/internal/index/BamStandardIndex_p.h"
+#include "api/internal/index/BamToolsIndex_p.h"
 
 #include <gtest/gtest.h>
 #include <iostream>

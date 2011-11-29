@@ -2,11 +2,7 @@
 // BamReader_p.cpp (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-<<<<<<< HEAD:src/api/internal/BamReader_p.cpp
-// Last modified: 14 November 2011 (DB)
-=======
-// Last modified: 25 October 2011 (DB)
->>>>>>> remoteio:src/api/internal/bam/BamReader_p.cpp
+// Last modified: 28 November 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************

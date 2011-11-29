@@ -2,7 +2,7 @@
 #define BAMSTANDARDINDEX_TEST_H
 
 #include <gtest/gtest.h>
-#include "api/internal/BamStandardIndex_p.h"
+#include "api/internal/index/BamStandardIndex_p.h"
 
 TEST(BamStandardIndexTest, Open) {
 

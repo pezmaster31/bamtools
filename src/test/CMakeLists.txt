@@ -24,5 +24,5 @@ target_link_libraries( BamTools-test BamTools BamTools-utils jsoncpp gtest )
 # add test - running 'make check' will ensure build & run
 add_test( BamToolsTest BamTools-test )
 add_custom_target( check COMMAND ${EXECUTABLE_OUTPUT_PATH}/test_bamtools
-                         DEPENDS BamTools-test )
+                         DEPENDS BamTools-test gtest )
 

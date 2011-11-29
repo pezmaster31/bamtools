@@ -1,0 +1,6 @@
+#ifndef BAMTOOLS_TEST_UTILS_H
+#define BAMTOOLS_TEST_UTILS_H
+
+
+#endif // BAMTOOLS_TEST_UTILS_H
+

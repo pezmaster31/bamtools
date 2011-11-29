@@ -1,12 +1,12 @@
-#ifndef SAMHEADER_VALIDATORTEST_H
-#define SAMHEADER_VALIDATORTEST_H
+#ifndef SAMHEADER_VALIDATIONTEST_H
+#define SAMHEADER_VALIDATIONTEST_H
 
 #include "api/SamHeader.h"
 #include <gtest/gtest.h>
 #include <iostream>
 #include <string>
 
-TEST(SamHeader_ValidatorTest, EmptyHeader) {
+TEST(SamHeader_ValidationTest, EmptyHeader) {
 
     BamTools::SamHeader header("");
     std::string headerText = header.ToString();
@@ -14,7 +14,7 @@ TEST(SamHeader_ValidatorTest, EmptyHeader) {
     EXPECT_TRUE(header.IsValid());
 }
 
-TEST(SamHeader_ValidatorTest, Version) {
+TEST(SamHeader_ValidationTest, Version) {
 
     BamTools::SamHeader header("");
 
@@ -50,7 +50,7 @@ TEST(SamHeader_ValidatorTest, Version) {
     EXPECT_FALSE(header.IsValid());
 }
 
-TEST(SamHeader_ValidatorTest, GroupOrder) {
+TEST(SamHeader_ValidationTest, GroupOrder) {
 
     BamTools::SamHeader header("");
 
@@ -71,7 +71,7 @@ TEST(SamHeader_ValidatorTest, GroupOrder) {
     EXPECT_FALSE(header.IsValid());
 }
 
-TEST(SamHeader_ValidatorTest, SortOrder) {
+TEST(SamHeader_ValidationTest, SortOrder) {
 
     BamTools::SamHeader header("");
 
@@ -92,7 +92,7 @@ TEST(SamHeader_ValidatorTest, SortOrder) {
     EXPECT_FALSE(header.IsValid());
 }
 
-TEST(SamHeader_ValidatorTest, SequenceDictionary) {
+TEST(SamHeader_ValidationTest, SequenceDictionary) {
 
     BamTools::SamHeader header("");
     BamTools::SamSequence sequence;
@@ -190,7 +190,7 @@ TEST(SamHeader_ValidatorTest, SequenceDictionary) {
     EXPECT_FALSE(header.IsValid());
 }
 
-TEST(SamHeader_ValidatorTest, ReadGroupDictionary) {
+TEST(SamHeader_ValidationTest, ReadGroupDictionary) {
 
     BamTools::SamHeader header("");
     BamTools::SamReadGroup readGroup;
@@ -289,4 +289,4 @@ TEST(SamHeader_ValidatorTest, ReadGroupDictionary) {
     EXPECT_FALSE(header.IsValid());
 }
 
-#endif // SAMHEADER_VALIDATORTEST_H
+#endif // SAMHEADER_VALIDATIONTEST_H

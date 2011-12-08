@@ -2,7 +2,7 @@
 // bamtools_split.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 April 2011 (DB)
+// Last modified: 8 December 2011 (DB)
 // ---------------------------------------------------------------------------
 // Splits a BAM file on user-specified property, creating a new BAM output
 // file for each value found
@@ -69,6 +69,7 @@ struct SplitTool::SplitSettings {
     // flags
     bool HasInputFilename;
     bool HasCustomOutputStub;
+    bool HasCustomRefPrefix;
     bool IsSplittingMapped;
     bool IsSplittingPaired;
     bool IsSplittingReference;
@@ -76,6 +77,7 @@ struct SplitTool::SplitSettings {
     
     // string args
     string CustomOutputStub;
+    string CustomRefPrefix;
     string InputFilename;
     string TagToSplit;
     
@@ -83,11 +85,13 @@ struct SplitTool::SplitSettings {
     SplitSettings(void)
         : HasInputFilename(false)
         , HasCustomOutputStub(false)
+        , HasCustomRefPrefix(false)
         , IsSplittingMapped(false)
         , IsSplittingPaired(false)
         , IsSplittingReference(false)
         , IsSplittingTag(false)
         , CustomOutputStub("")
+        , CustomRefPrefix("")
         , InputFilename(Options::StandardIn())
         , TagToSplit("")
     { } 
@@ -298,6 +302,16 @@ bool SplitTool::SplitToolPrivate::SplitReference(void) {
     map<int32_t, BamWriter*> outputFiles;
     map<int32_t, BamWriter*>::iterator writerIter;
     
+    // determine reference prefix
+    string refPrefix = SPLIT_REFERENCE_TOKEN;
+    if ( m_settings->HasCustomRefPrefix )
+        refPrefix = m_settings->CustomRefPrefix;
+
+    // make sure prefix starts with '.'
+    const size_t dotFound = refPrefix.find('.');
+    if ( dotFound != 0 )
+        refPrefix = string(".") + refPrefix;
+
     // iterate through alignments
     BamAlignment al;
     BamWriter* writer;
@@ -319,7 +333,7 @@ bool SplitTool::SplitToolPrivate::SplitReference(void) {
                 refName = m_references.at(currentRefId).RefName;
 
             // construct new output filename
-            const string outputFilename = m_outputFilenameStub + SPLIT_REFERENCE_TOKEN + refName + ".bam";
+            const string outputFilename = m_outputFilenameStub + refPrefix + refName + ".bam";
 
             // open new BamWriter
             writer = new BamWriter;
@@ -518,12 +532,18 @@ SplitTool::SplitTool(void)
     , m_impl(0)
 {
     // set program details
-    Options::SetProgramInfo("bamtools split", "splits a BAM file on user-specified property, creating a new BAM output file for each value found", "[-in <filename>] [-stub <filename stub>] < -mapped | -paired | -reference | -tag <TAG> > ");
+    const string name = "bamtools split";
+    const string description = "splits a BAM file on user-specified property, creating a new BAM output file for each value found";
+    const string args = "[-in <filename>] [-stub <filename stub>] < -mapped | -paired | -reference [-refPrefix <prefix>] | -tag <TAG> > ";
+    Options::SetProgramInfo(name, description, args);
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in",   "BAM filename",  "the input BAM file",  "", m_settings->HasInputFilename,  m_settings->InputFilename,  IO_Opts, Options::StandardIn());
-    Options::AddValueOption("-stub", "filename stub", "prefix stub for output BAM files (default behavior is to use input filename, without .bam extension, as stub). If input is stdin and no stub provided, a timestamp is generated as the stub.", "", m_settings->HasCustomOutputStub, m_settings->CustomOutputStub, IO_Opts);
+    Options::AddValueOption("-refPrefix", "string", "custom prefix for splitting by references. Currently files end with REF_<refName>.bam. This option allows you to replace \"REF_\" with a prefix of your choosing.", "",
+                            m_settings->HasCustomRefPrefix, m_settings->CustomRefPrefix, IO_Opts);
+    Options::AddValueOption("-stub", "filename stub", "prefix stub for output BAM files (default behavior is to use input filename, without .bam extension, as stub). If input is stdin and no stub provided, a timestamp is generated as the stub.", "",
+                            m_settings->HasCustomOutputStub, m_settings->CustomOutputStub, IO_Opts);
     
     OptionGroup* SplitOpts = Options::CreateOptionGroup("Split Options");
     Options::AddOption("-mapped",    "split mapped/unmapped alignments",       m_settings->IsSplittingMapped,    SplitOpts);

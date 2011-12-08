@@ -2,7 +2,7 @@
 // SamFormatParser.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 25 October 2011 (DB)
+// Last modified: 8 December 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides functionality for parsing SAM header text into SamHeader object
 // ***************************************************************************
@@ -48,16 +48,12 @@ void SamFormatParser::ParseSamLine(const string& line) {
 
     // determine token at beginning of line
     const string firstToken = line.substr(0,3);
-    string restOfLine = line.substr(4);
+    const string restOfLine = line.substr(4);
     if      ( firstToken == Constants::SAM_HD_BEGIN_TOKEN) ParseHDLine(restOfLine);
     else if ( firstToken == Constants::SAM_SQ_BEGIN_TOKEN) ParseSQLine(restOfLine);
     else if ( firstToken == Constants::SAM_RG_BEGIN_TOKEN) ParseRGLine(restOfLine);
     else if ( firstToken == Constants::SAM_PG_BEGIN_TOKEN) ParsePGLine(restOfLine);
     else if ( firstToken == Constants::SAM_CO_BEGIN_TOKEN) ParseCOLine(restOfLine);
-    else {
-        const string message = string("unknown token: ") + firstToken;
-        throw BamException("SamFormatParser::ParseSamLine", message);
-    }
 }
 
 void SamFormatParser::ParseHDLine(const string& line) {
@@ -78,10 +74,6 @@ void SamFormatParser::ParseHDLine(const string& line) {
         if      ( tokenTag == Constants::SAM_HD_VERSION_TAG    ) m_header.Version    = tokenValue;
         else if ( tokenTag == Constants::SAM_HD_SORTORDER_TAG  ) m_header.SortOrder  = tokenValue;
         else if ( tokenTag == Constants::SAM_HD_GROUPORDER_TAG ) m_header.GroupOrder = tokenValue;
-        else {
-            const string message = string("unknown HD tag: ") + tokenTag;
-            throw BamException("SamFormatParser::ParseHDLine", message);
-        }
     }
 
     // check for required tags
@@ -112,10 +104,6 @@ void SamFormatParser::ParseSQLine(const string& line) {
         else if ( tokenTag == Constants::SAM_SQ_CHECKSUM_TAG   ) seq.Checksum = tokenValue;
         else if ( tokenTag == Constants::SAM_SQ_SPECIES_TAG    ) seq.Species = tokenValue;
         else if ( tokenTag == Constants::SAM_SQ_URI_TAG        ) seq.URI = tokenValue;
-        else {
-            const string message = string("unknown SQ tag: ") + tokenTag;
-            throw BamException("SamFormatParser::ParseSQLine", message);
-        }
     }
 
     // check for required tags
@@ -157,10 +145,6 @@ void SamFormatParser::ParseRGLine(const string& line) {
         else if ( tokenTag == Constants::SAM_RG_SAMPLE_TAG              ) rg.Sample = tokenValue;
         else if ( tokenTag == Constants::SAM_RG_SEQCENTER_TAG           ) rg.SequencingCenter = tokenValue;
         else if ( tokenTag == Constants::SAM_RG_SEQTECHNOLOGY_TAG       ) rg.SequencingTechnology = tokenValue;
-        else {
-            const string message = string("unknown RG tag: ") + tokenTag;
-            throw BamException("SamFormatParser::ParseRGLine", message);
-        }
     }
 
     // check for required tags
@@ -193,10 +177,6 @@ void SamFormatParser::ParsePGLine(const string& line) {
         else if ( tokenTag == Constants::SAM_PG_COMMANDLINE_TAG     ) pg.CommandLine = tokenValue;
         else if ( tokenTag == Constants::SAM_PG_PREVIOUSPROGRAM_TAG ) pg.PreviousProgramID = tokenValue;
         else if ( tokenTag == Constants::SAM_PG_VERSION_TAG         ) pg.Version = tokenValue;
-        else {
-            const string message = string("unknown PG tag: ") + tokenTag;
-            throw BamException("SamFormatParser::ParsePGLine", message);
-        }
     }
 
     // check for required tags

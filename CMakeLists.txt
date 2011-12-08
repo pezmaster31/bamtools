@@ -11,9 +11,6 @@ project( BamTools )
 # Cmake requirements
 cmake_minimum_required( VERSION 2.6.4 )
 
-# init CTest
-enable_testing()
-
 # Force the build directory to be different from source directory
 macro( ENSURE_OUT_OF_SOURCE_BUILD MSG )
     string( COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}" insource )
@@ -34,8 +31,8 @@ ensure_out_of_source_build( "
 
 # set BamTools version information
 set( BamTools_VERSION_MAJOR 2 )
-set( BamTools_VERSION_MINOR 0 )
-set( BamTools_VERSION_BUILD 5 )
+set( BamTools_VERSION_MINOR 1 )
+set( BamTools_VERSION_BUILD 0 )
 
 # set our library and executable destination dirs
 set( EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin" )

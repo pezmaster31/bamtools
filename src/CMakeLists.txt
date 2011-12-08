@@ -6,7 +6,6 @@
 # ==========================
 
 add_subdirectory( api )
-add_subdirectory( test )
 add_subdirectory( third_party )
 add_subdirectory( toolkit )
 add_subdirectory( utils )

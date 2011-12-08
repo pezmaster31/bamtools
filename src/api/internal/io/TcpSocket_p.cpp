@@ -2,7 +2,7 @@
 // TcpSocket_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 November 2011 (DB)
+// Last modified: 7 December 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides basic TCP I/O interface
 // ***************************************************************************
@@ -243,22 +243,32 @@ int64_t TcpSocket::Read(char* data, const unsigned int numBytes) {
     }
 
     // fetch data from socket, return 0 for success, -1 for failure
-    // since this should be called in a loop, we'll pull the actual bytes on next iteration
-    return ( ReadFromSocket() ? 0 : -1 );
+    // since this should be called in a loop,
+    // we'll pull the actual bytes from the buffer on next iteration
+    const int64_t socketBytesRead = ReadFromSocket();
+    if ( socketBytesRead < 0 ) {
+        // TODO: set error string/state ?
+        return -1;
+    }
+
+    // we should have data now in buffer, try to fetch requested amount
+    // if nothing in buffer, we will return 0 bytes read (signals EOF reached)
+    const size_t numBytesRead = m_readBuffer.Read(data, numBytes);
+    return static_cast<int64_t>(numBytesRead);
 }
 
-bool TcpSocket::ReadFromSocket(void) {
+int64_t TcpSocket::ReadFromSocket(void) {
 
     // check for any socket engine errors
     if ( !m_engine->IsValid() ) {
         m_errorString = "TcpSocket::ReadFromSocket - socket disconnected";
         ResetSocketEngine();
-        return false;
+        return -1;
     }
 
     // wait for ready read
     bool timedOut;
-    bool isReadyRead = m_engine->WaitForRead(5000, &timedOut);
+    const bool isReadyRead = m_engine->WaitForRead(5000, &timedOut);
 
     // if not ready
     if ( !isReadyRead ) {
@@ -267,50 +277,35 @@ bool TcpSocket::ReadFromSocket(void) {
         if ( timedOut ) {
             m_errorString = "TcpSocket::ReadFromSocket - timed out waiting for ready read";
             // get error from engine ?
-            return false;
+            return -1;
         }
 
         // otherwise, there was an error
         else {
             m_errorString = "TcpSocket::ReadFromSocket - encountered error while waiting for ready read";
             // get error from engine ?
-            return false;
+            return -1;
         }
     }
 
-    // #########################################################################
-    // clean this up - smells funky, but it's a key step so it has to be right
-    // #########################################################################
-
     // get number of bytes available from socket
-    // (if 0, still try to read some data so we don't trigger any OS event behavior
-    //  that respond to repeated access to a remote closed socket)
-    int64_t bytesToRead = m_engine->NumBytesAvailable();
+    const int64_t bytesToRead = m_engine->NumBytesAvailable();
     if ( bytesToRead < 0 ) {
         m_errorString = "TcpSocket::ReadFromSocket - encountered error while determining numBytesAvailable";
         // get error from engine ?
-        return false;
+        return -1;
     }
-    else if ( bytesToRead == 0 )
-        bytesToRead = 4096;
 
     // make space in buffer & read from socket
     char* buffer = m_readBuffer.Reserve(bytesToRead);
-    int64_t numBytesRead = m_engine->Read(buffer, bytesToRead);
-
-    // if error while reading
+    const int64_t numBytesRead = m_engine->Read(buffer, bytesToRead);
     if ( numBytesRead == -1 ) {
         m_errorString = "TcpSocket::ReadFromSocket - encountered error while reading bytes";
         // get error from engine ?
-        return false;
     }
 
-    // handle special case (no data, but not error)
-    if ( numBytesRead == -2 ) 
-        m_readBuffer.Chop(bytesToRead);
-
-    // return success
-    return true;
+    // return number of bytes actually read
+    return numBytesRead;
 }
 
 string TcpSocket::ReadLine(int64_t max) {
@@ -415,7 +410,7 @@ int64_t TcpSocket::Write(const char* data, const unsigned int numBytes) {
 
     // wait for our socket to be write-able
     bool timedOut;
-    bool isReadyWrite = m_engine->WaitForWrite(3000, &timedOut);
+    const bool isReadyWrite = m_engine->WaitForWrite(3000, &timedOut);
     if ( isReadyWrite )
         bytesWritten = m_engine->Write(data, numBytes);
     else {

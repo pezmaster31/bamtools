@@ -2,7 +2,7 @@
 // BamHttp_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 November 2011 (DB)
+// Last modified: 8 December 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides reading/writing of BAM files on HTTP server
 // ***************************************************************************
@@ -229,8 +229,10 @@ int64_t BamHttp::Read(char* data, const unsigned int numBytes) {
 
             // try to read 'remainingBytes' from socket
             const int64_t socketBytesRead = ReadFromSocket(data+bytesReadSoFar, remainingBytes);
-            if ( socketBytesRead < 0 )
+            if ( socketBytesRead < 0 ) // error
                 return -1;
+            else if ( socketBytesRead == 0 ) // EOF
+                return bytesReadSoFar;
             bytesReadSoFar += socketBytesRead;
             m_filePosition += socketBytesRead;
         }
@@ -247,8 +249,10 @@ int64_t BamHttp::Read(char* data, const unsigned int numBytes) {
                 const size_t rangeRemainingBytes = m_endRangeFilePosition - m_filePosition;
                 const size_t bytesToRead = std::min(remainingBytes, rangeRemainingBytes);
                 const int64_t socketBytesRead = ReadFromSocket(data+bytesReadSoFar, bytesToRead);
-                if ( socketBytesRead < 0 )
+                if ( socketBytesRead < 0 ) // error
                     return -1;
+                else if ( socketBytesRead == 0 ) // EOF
+                    return bytesReadSoFar;
                 bytesReadSoFar += socketBytesRead;
                 m_filePosition += socketBytesRead;
             }
@@ -324,16 +328,22 @@ bool BamHttp::ReceiveResponse(void) {
         RaiiBuffer tmp(0x8000);
         int64_t numBytesRead = 0;
         while ( numBytesRead < m_filePosition ) {
-            int64_t result = ReadFromSocket(tmp.Buffer, 0x8000);
-            if ( result < 0 ) {
+
+            const int64_t remaining = m_filePosition - numBytesRead;
+            const size_t bytesToRead = static_cast<size_t>( (remaining > 0x8000) ? 0x8000 : remaining );
+            const int64_t socketBytesRead = ReadFromSocket(tmp.Buffer, bytesToRead);
+            if ( socketBytesRead < 0 ) { // error
                 Close();
                 return false;
             }
-            numBytesRead += result;
+            else if ( socketBytesRead == 0 ) // EOF
+                break;
+
+            numBytesRead += socketBytesRead;
         }
 
         // return success
-        return true;
+        return ( numBytesRead == m_filePosition);
     }
 
     // on any other reponse status

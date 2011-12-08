@@ -355,8 +355,10 @@ int64_t BamFtp::Read(char* data, const unsigned int numBytes) {
 
         // read bytes from data socket
         const int64_t socketBytesRead = ReadDataSocket(data+bytesReadSoFar, remainingBytes);
-        if ( socketBytesRead < 0 )
+        if ( socketBytesRead < 0 ) // error
             return -1;
+        else if ( socketBytesRead == 0 ) // EOF
+            return bytesReadSoFar;
         bytesReadSoFar += socketBytesRead;
         m_filePosition += socketBytesRead;
     }

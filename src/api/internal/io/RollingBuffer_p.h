@@ -2,7 +2,7 @@
 // RollingBuffer_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 November 2011 (DB)
+// Last modified: 7 December 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides a dynamic I/O FIFO byte queue, which removes bytes as they are
 // read from the front of the buffer and grows to accept bytes being written
@@ -62,11 +62,14 @@ class RollingBuffer {
         // reads until newline (or up to @maxLen bytes)
         // returns exactly how many bytes were read from buffer
         size_t ReadLine(char* dest, size_t max);
-
-        const char* ReadPointer(void) const;   // returns a C-fxn compatible char* to byte data
-        char* Reserve(size_t n);               // ensures that buffer contains space for @n incoming bytes, returns write-able char*
-        size_t Size(void) const;               // returns current number of bytes stored in buffer
-        void Write(const char* src, size_t n); // reserves space for @n bytes, then appends contents of @src to buffer
+        // returns a C-fxn compatible char* to byte data
+        const char* ReadPointer(void) const;
+        // ensures that buffer contains space for @n incoming bytes, returns write-able char*
+        char* Reserve(size_t n);
+        // returns current number of bytes stored in buffer
+        size_t Size(void) const;
+        // reserves space for @n bytes, then appends contents of @src to buffer
+        void Write(const char* src, size_t n);
 
     // data members
     private:

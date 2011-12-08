@@ -182,25 +182,7 @@ int64_t TcpSocketEngine::nativeNumBytesAvailable(void) const {
 }
 
 int64_t TcpSocketEngine::nativeRead(char* dest, size_t max) {
-
-    if ( !IsValid() )
-        return -1;
-
-    ssize_t ret = read(m_socketDescriptor, dest, max);
-    if ( ret < 0 ) {
-        ret = -1;
-        switch ( errno ) {
-            case EAGAIN :
-                // No data was available for reading
-                ret = -2;
-                break;
-            case ECONNRESET :
-                ret = 0;
-                break;
-            default:
-                break;
-        }
-    }
+    const ssize_t ret = read(m_socketDescriptor, dest, max);
     return static_cast<int64_t>(ret);
 }
 
@@ -225,23 +207,6 @@ int TcpSocketEngine::nativeSelect(int msecs, bool isRead) const {
 }
 
 int64_t TcpSocketEngine::nativeWrite(const char* data, size_t length) {
-
-    ssize_t writtenBytes = write(m_socketDescriptor, data, length);
-    if ( writtenBytes < 0 ) {
-        switch (errno) {
-            case EPIPE:
-            case ECONNRESET:
-                writtenBytes = -1;
-                m_socketError = TcpSocket::RemoteHostClosedError;
-                m_errorString = "remote host closed connection";
-                Close();
-                break;
-            case EAGAIN:
-                writtenBytes = 0;
-                break;
-            default:
-                break;
-        }
-    }
+    const ssize_t writtenBytes = write(m_socketDescriptor, data, length);
     return static_cast<int64_t>(writtenBytes);
 }

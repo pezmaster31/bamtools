@@ -2,7 +2,7 @@
 // TcpSocket_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 November 2011 (DB)
+// Last modified: 7 December 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides basic TCP I/O interface
 // ***************************************************************************
@@ -95,7 +95,7 @@ class TcpSocket {
                          const std::string& port,
                          IBamIODevice::OpenMode mode);
         bool InitializeSocketEngine(HostAddress::NetworkProtocol protocol);
-        bool ReadFromSocket(void);
+        int64_t ReadFromSocket(void);
         void ResetSocketEngine(void);
 
     // data members

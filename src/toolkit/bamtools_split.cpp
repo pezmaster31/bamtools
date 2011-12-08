@@ -311,9 +311,17 @@ bool SplitTool::SplitToolPrivate::SplitReference(void) {
         // if no writer associated with this value
         if ( writerIter == outputFiles.end() ) {
         
-            // open new BamWriter
-            const string refName = m_references.at(currentRefId).RefName;
+            // fetch reference name for ID
+            string refName;
+            if ( currentRefId == -1 )
+                refName = "unmapped";
+            else
+                refName = m_references.at(currentRefId).RefName;
+
+            // construct new output filename
             const string outputFilename = m_outputFilenameStub + SPLIT_REFERENCE_TOKEN + refName + ".bam";
+
+            // open new BamWriter
             writer = new BamWriter;
             if ( !writer->Open(outputFilename, m_header, m_references) ) {
                 cerr << "bamtools split ERROR: could not open " << outputFilename
@@ -373,9 +381,13 @@ bool SplitTool::SplitToolPrivate::SplitTag(void) {
             case (Constants::BAM_TAG_TYPE_STRING) :
             case (Constants::BAM_TAG_TYPE_HEX)    :
                 return SplitTagImpl<string>(al);
+
+            case (Constants::BAM_TAG_TYPE_ARRAY) :
+                cerr << "bamtools split ERROR: array tag types are not supported" << endl;
+                return false;
           
             default:
-                fprintf(stderr, "bamtools split ERROR: unknown tag type encountered: [%c]\n", tagType);
+                cerr << "bamtools split ERROR: unknown tag type encountered: " << tagType << endl;
                 return false;
         }
     }

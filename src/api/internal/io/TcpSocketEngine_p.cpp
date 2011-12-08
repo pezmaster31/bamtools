@@ -2,7 +2,7 @@
 // TcpSocketEngine_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 November 2011 (DB)
+// Last modified: 8 December 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides low-level implementation of TCP I/O
 // ***************************************************************************
@@ -13,6 +13,7 @@
 
 #include "api/internal/io/HostInfo_p.h"
 #include "api/internal/io/TcpSocketEngine_p.h"
+
 using namespace BamTools;
 using namespace BamTools::Internal;
 
@@ -150,7 +151,7 @@ bool TcpSocketEngine::WaitForRead(int msec, bool* timedOut) {
     *timedOut = false;
 
     // need to wait for our socket to be ready to read
-    int ret = nativeSelect(msec, true);
+    const int ret = nativeSelect(msec, true);
 
     // if timed out
     if ( ret == 0 ) {
@@ -169,7 +170,7 @@ bool TcpSocketEngine::WaitForWrite(int msec, bool* timedOut) {
     *timedOut = false;
 
     // need to wait for our socket to be ready to write
-    int ret = nativeSelect(msec, false);
+    const int ret = nativeSelect(msec, false);
 
     // if timed out
     if ( ret == 0 ) {

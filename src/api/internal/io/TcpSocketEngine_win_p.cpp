@@ -2,7 +2,7 @@
 // TcpSocketEngine_win_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 15 November 2011 (DB)
+// Last modified: 8 December 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides low-level implementation of TCP I/O for all Windows systems
 // ***************************************************************************
@@ -14,18 +14,8 @@ using namespace BamTools::Internal;
 
 #include <cstring>
 #include <iostream>
+#include <sstream>
 using namespace std;
-
-// ------------------------
-// static utility methods
-// ------------------------
-
-namespace BamTools {
-namespace Internal {
-
-
-} // namespace Internal
-} // namespace BamTools
 
 // --------------------------------
 // TcpSocketEngine implementation
@@ -162,6 +152,10 @@ bool TcpSocketEngine::nativeCreateSocket(HostAddress::NetworkProtocol protocol) 
                 m_errorString = "out of resources";
                 break;
             default:
+                m_socketError = TcpSocket::UnknownSocketError;
+                stringstream errStream("");
+                errStream << "WSA ErrorCode: " << errorCode;
+                m_errorString = errStream.str();
                 break;
         }
 
@@ -203,23 +197,10 @@ int64_t TcpSocketEngine::nativeRead(char* dest, size_t max) {
     DWORD flags = 0;
     DWORD bytesRead = 0;
     const int readResult = WSARecv(m_socketDescriptor, &buf, 1, &bytesRead, &flags, 0, 0);
+    if ( readResult == SOCKET_ERROR )
+        return -1;
 
-    // if error encountered
-    if ( readResult == SOCKET_ERROR ) {
-        const int errorCode = WSAGetLastError();
-        switch ( errorCode ) {
-            case WSAEWOULDBLOCK: // nothing read this time, but more coming later
-                return -2;
-            default:
-                return -1;        // on any other errors
-        }
-    }
-
-    //  check if nothing was read this time, but more is coming
-    if ( WSAGetLastError() == WSAEWOULDBLOCK )
-        return -2;
-
-    // otherwise return number of bytes read
+    // return number of bytes read
     return static_cast<int64_t>(bytesRead);
 }
 
@@ -252,24 +233,9 @@ int64_t TcpSocketEngine::nativeWrite(const char* data, size_t length) {
     DWORD flags = 0;
     DWORD bytesWritten = 0;
     const int writeResult = WSASend(m_socketDescriptor, &buf, 1, &bytesWritten, flags, 0, 0);
+    if ( writeResult == SOCKET_ERROR )
+        return -1;
 
-    // error encountered
-    if ( writeResult == SOCKET_ERROR )  {
-
-        const int errorCode = WSAGetLastError();
-        switch ( errorCode ) {
-            case WSAEWOULDBLOCK:
-                return 0;
-            case WSAECONNRESET:
-            case WSAECONNABORTED:
-                m_socketError = TcpSocket::NetworkError;
-                m_errorString = "connection reset or aborted";
-                return -1;
-            default:
-                return -1;
-        }
-    }
-
-    // otherwise return number of bytes written
+    // return number of bytes written
     return static_cast<int64_t>(bytesWritten);
 }

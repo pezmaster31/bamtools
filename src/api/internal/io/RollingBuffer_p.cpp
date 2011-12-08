@@ -2,7 +2,7 @@
 // RollingBuffer_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 November 2011 (DB)
+// Last modified: 8 December 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides a dynamic I/O FIFO byte queue, which removes bytes as they are
 // read from the front of the buffer and grows to accept bytes being written
@@ -166,6 +166,10 @@ void RollingBuffer::Free(size_t n) {
 }
 
 size_t RollingBuffer::IndexOf(char c) const {
+
+    // skip processing if empty buffer
+    if ( IsEmpty() )
+        return string::npos;
 
     size_t index(0);
 

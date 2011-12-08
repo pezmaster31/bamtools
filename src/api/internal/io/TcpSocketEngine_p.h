@@ -2,7 +2,7 @@
 // TcpSocketEngine_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 November 2011 (DB)
+// Last modified: 8 December 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides low-level implementation of TCP I/O
 // ***************************************************************************
@@ -22,6 +22,10 @@
 
 #include "api/internal/io/HostAddress_p.h"
 #include "api/internal/io/TcpSocket_p.h"
+
+#ifdef _WIN32
+#  include "api/internal/io/NetWin_p.h"
+#endif
 
 namespace BamTools {
 namespace Internal {
@@ -87,6 +91,10 @@ struct TcpSocketEngine {
         TcpSocket::SocketError m_socketError;
         TcpSocket::SocketState m_socketState;
         std::string m_errorString;
+
+#ifdef _WIN32
+        WindowsSockInit m_win;
+#endif
 };
 
 } // namespace Internal

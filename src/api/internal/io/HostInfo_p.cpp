@@ -2,7 +2,7 @@
 // HostInfo_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 November 2011 (DB)
+// Last modified: 8 December 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides DNS lookup functionality for hostname & its discovered addresses
 // ***************************************************************************
@@ -81,6 +81,7 @@ void HostInfo::SetHostName(const string& name) {
 HostInfo HostInfo::Lookup(const string& hostname, const string& port) {
 
     HostInfo result;
+    result.SetHostName(hostname);
     set<HostAddress> uniqueAddresses;
 
 #ifdef _WIN32

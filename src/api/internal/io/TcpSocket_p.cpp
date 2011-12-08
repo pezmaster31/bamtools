@@ -2,7 +2,7 @@
 // TcpSocket_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 December 2011 (DB)
+// Last modified: 8 December 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides basic TCP I/O interface
 // ***************************************************************************
@@ -69,14 +69,14 @@ bool TcpSocket::ConnectImpl(const HostInfo& hostInfo,
 {
     // skip if we're already connected
     if ( m_state == TcpSocket::ConnectedState ) {
-        m_error = TcpSocket::SocketResourceError; 
+        m_error = TcpSocket::SocketResourceError;
         m_errorString = "socket already connected";
         return false;
     }
 
     // reset socket state
     m_hostName   = hostInfo.HostName();
-    m_mode       = mode;    
+    m_mode       = mode;
     m_state      = TcpSocket::UnconnectedState;
     m_error      = TcpSocket::UnknownSocketError;
 //    m_localPort  = 0;
@@ -154,7 +154,7 @@ bool TcpSocket::ConnectToHost(const string& hostName,
     // if host name was IP address ("x.x.x.x" or IPv6 format)
     // otherwise host name was 'plain-text' ("www.foo.bar")
     // we need to look up IP address(es)
-    if ( hostAddress.HasIPAddress() ) 
+    if ( hostAddress.HasIPAddress() )
         info.SetAddresses( vector<HostAddress>(1, hostAddress) );
     else
         info = HostInfo::Lookup(hostName, port);
@@ -275,24 +275,25 @@ int64_t TcpSocket::ReadFromSocket(void) {
 
         // if we simply timed out
         if ( timedOut ) {
+            // TODO: get add'l error info from engine ?
             m_errorString = "TcpSocket::ReadFromSocket - timed out waiting for ready read";
-            // get error from engine ?
-            return -1;
         }
 
-        // otherwise, there was an error
+        // otherwise, there was some other error
         else {
+            // TODO: get add'l error info from engine ?
             m_errorString = "TcpSocket::ReadFromSocket - encountered error while waiting for ready read";
-            // get error from engine ?
-            return -1;
         }
+
+        // return failure
+        return -1;
     }
 
     // get number of bytes available from socket
     const int64_t bytesToRead = m_engine->NumBytesAvailable();
     if ( bytesToRead < 0 ) {
+        // TODO: get add'l error info from engine ?
         m_errorString = "TcpSocket::ReadFromSocket - encountered error while determining numBytesAvailable";
-        // get error from engine ?
         return -1;
     }
 
@@ -300,8 +301,8 @@ int64_t TcpSocket::ReadFromSocket(void) {
     char* buffer = m_readBuffer.Reserve(bytesToRead);
     const int64_t numBytesRead = m_engine->Read(buffer, bytesToRead);
     if ( numBytesRead == -1 ) {
+        // TODO: get add'l error info from engine ?
         m_errorString = "TcpSocket::ReadFromSocket - encountered error while reading bytes";
-        // get error from engine ?
     }
 
     // return number of bytes actually read
@@ -327,7 +328,7 @@ string TcpSocket::ReadLine(int64_t max) {
 
         int64_t readResult;
         do {
-            result.Resize( static_cast<size_t>(std::min(bufferMax, result.Size() + DEFAULT_BUFFER_SIZE)) );
+            result.Resize( static_cast<size_t>(min(bufferMax, result.Size() + DEFAULT_BUFFER_SIZE)) );
             readResult = ReadLine(result.Data()+readBytes, result.Size()-readBytes);
             if ( readResult > 0 || readBytes == 0 )
                 readBytes += readResult;
@@ -347,13 +348,13 @@ string TcpSocket::ReadLine(int64_t max) {
 }
 
 int64_t TcpSocket::ReadLine(char* dest, size_t max) {
-    
+
     // wait for buffer to contain line contents
     if ( !WaitForReadLine() ) {
         m_errorString = "TcpSocket::ReadLine - error waiting for read line";
         return -1;
     }
-    
+
     // leave room for null term
     if ( max < 2 )
         return -1;
@@ -393,11 +394,11 @@ bool TcpSocket::WaitForReadLine(void) {
 
     // wait until we can read a line (will return immediately if already capable)
     while ( !CanReadLine() ) {
-        if ( !ReadFromSocket() ) 
+        if ( !ReadFromSocket() )
             return false;
     }
 
-    // if we get here, success  
+    // if we get here, success
     return true;
 }
 
@@ -406,22 +407,23 @@ int64_t TcpSocket::Write(const char* data, const unsigned int numBytes) {
     // single-shot attempt at write (not buffered, just try to shove the data through socket)
     // this method purely exists to send 'small' HTTP requests/FTP commands from client to server
 
-    int64_t bytesWritten(0);
-
     // wait for our socket to be write-able
     bool timedOut;
     const bool isReadyWrite = m_engine->WaitForWrite(3000, &timedOut);
-    if ( isReadyWrite )
-        bytesWritten = m_engine->Write(data, numBytes);
-    else {
-        // timeout is OK (with current setup), we'll just return 0 & try again
-        // but we need to report if engine encountered some other error
-        if ( !timedOut ) {
-            // TODO: set error string
-            bytesWritten = -1;
-        }
-    }
 
-    // return actual number of bytes written to socket
-    return bytesWritten;
+    // if ready, return number of bytes written
+    if ( isReadyWrite )
+        return m_engine->Write(data, numBytes);
+
+    // otherwise, socket not ready for writing
+    // set error string depending on reason & return failure
+    if ( !timedOut ) {
+        // TODO: get add'l error info from engine ??
+        m_errorString = "TcpSocket::Write - timed out waiting for ready-write";
+    }
+    else {
+        // TODO: get add'l error info from engine ??
+        m_errorString = "TcpSocket::Write - error encountered while waiting for ready-write";
+    }
+    return -1;
 }

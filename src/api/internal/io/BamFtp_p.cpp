@@ -2,7 +2,7 @@
 // BamFtp_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 November 2011 (DB)
+// Last modified: 8 December 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides reading/writing of BAM files on FTP server
 // ***************************************************************************
@@ -78,7 +78,7 @@ static inline
 string toLower(const string& s) {
     string out;
     const size_t sSize = s.size();
-    out.reserve(sSize);
+    out.resize(sSize);
     for ( size_t i = 0; i < sSize; ++i )
         out[i] = tolower(s[i]);
     return out;
@@ -136,7 +136,7 @@ bool BamFtp::ConnectCommandSocket(void) {
 
     // connect to FTP server
     if ( !m_commandSocket->ConnectToHost(m_hostname, m_port, m_mode) ) {
-        SetErrorString("BamFtp::ConnectCommandSocket", "could not connect to host");
+        SetErrorString("BamFtp::ConnectCommandSocket", "could not connect to host - ");
         return false;
     }
 
@@ -180,7 +180,7 @@ bool BamFtp::ConnectDataSocket(void) {
     }
 
     // make sure we're starting with a fresh data channel
-    if ( m_dataSocket->IsConnected() ) 
+    if ( m_dataSocket->IsConnected() )
         m_dataSocket->DisconnectFromHost();
 
     // send passive connection command
@@ -227,7 +227,7 @@ bool BamFtp::ConnectDataSocket(void) {
         m_dataSocket->DisconnectFromHost();
         return false;
     }
-    
+
     // make sure we have reply code 150 (all good)
     if ( !startsWith(m_response, "150") ) {
         // TODO: set error string
@@ -368,21 +368,11 @@ int64_t BamFtp::Read(char* data, const unsigned int numBytes) {
 }
 
 int64_t BamFtp::ReadCommandSocket(char* data, const unsigned int maxNumBytes) {
-
-    // try to read 'remainingBytes' from socket
-    const int64_t numBytesRead = m_commandSocket->Read(data, maxNumBytes);
-    if ( numBytesRead < 0 )
-        return -1;
-    return numBytesRead;
+    return m_commandSocket->Read(data, maxNumBytes);
 }
 
 int64_t BamFtp::ReadDataSocket(char* data, const unsigned int maxNumBytes) {
-
-    // try to read 'remainingBytes' from socket
-    const int64_t numBytesRead = m_dataSocket->Read(data, maxNumBytes);
-    if ( numBytesRead < 0 )
-        return -1;
-    return numBytesRead;
+    return m_dataSocket->Read(data, maxNumBytes);
 }
 
 bool BamFtp::ReceiveReply(void) {

@@ -2,11 +2,11 @@
 // NetWin_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 November 2011 (DB)
+// Last modified: 8 December 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides common networking-related includes, etc. for Windows systems
 //
-// Note: only supports XP and later
+// Note: requires Windows XP or later
 // ***************************************************************************
 
 #ifndef NETWIN_P_H
@@ -38,7 +38,7 @@
 namespace BamTools {
 namespace Internal {
 
-// use RAII to ensure WSA is en
+// use RAII to ensure WSA is initialized
 class WindowsSockInit {
     public:
         WindowsSockInit(void) {

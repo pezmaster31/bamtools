@@ -275,12 +275,7 @@ int64_t BamHttp::Read(char* data, const unsigned int numBytes) {
 }
 
 int64_t BamHttp::ReadFromSocket(char* data, const unsigned int maxNumBytes) {
-
-    // try to read 'remainingBytes' from socket
-    const int64_t numBytesRead = m_socket->Read(data, maxNumBytes);
-    if ( numBytesRead < 0 )
-        return -1;
-    return numBytesRead;
+    return m_socket->Read(data, maxNumBytes);
 }
 
 bool BamHttp::ReceiveResponse(void) {

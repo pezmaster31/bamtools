@@ -2,7 +2,7 @@
 // TcpSocket_p.cpp (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 8 December 2011 (DB)
+// Last modified: 5 January 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides basic TCP I/O interface
 // ***************************************************************************
@@ -14,6 +14,7 @@ using namespace BamTools;
 using namespace BamTools::Internal;
 
 #include <algorithm>
+#include <climits>
 #include <sstream>
 #include <vector>
 using namespace std;
@@ -313,8 +314,8 @@ string TcpSocket::ReadLine(int64_t max) {
 
     // prep result byte buffer
     ByteArray result;
-
-    size_t bufferMax = ((max > static_cast<int64_t>(string::npos)) ? string::npos : static_cast<size_t>(max));
+    size_t bufferMax = ((max > static_cast<int64_t>(UINT_MAX))
+                        ? UINT_MAX : static_cast<size_t>(max));
     result.Resize(bufferMax);
 
     // read data
@@ -322,7 +323,7 @@ string TcpSocket::ReadLine(int64_t max) {
     if ( result.Size() == 0 ) {
 
         if ( bufferMax == 0 )
-            bufferMax = string::npos;
+            bufferMax = UINT_MAX;
 
         result.Resize(1);
 

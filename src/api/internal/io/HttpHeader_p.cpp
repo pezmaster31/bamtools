@@ -125,7 +125,7 @@ int HttpHeader::GetMinorVersion(void) const {
     return m_minorVersion;
 }
 
-string HttpHeader::GetValue(const string& key) const {
+string HttpHeader::GetValue(const string& key) {
     if ( ContainsKey(key) )
         return m_fields[key];
     else return string();

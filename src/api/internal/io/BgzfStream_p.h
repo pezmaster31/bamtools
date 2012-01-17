@@ -2,7 +2,7 @@
 // BgzfStream_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 25 October 2011(DB)
+// Last modified: 17 January 2012(DB)
 // ---------------------------------------------------------------------------
 // Based on BGZF routines developed at the Broad Institute.
 // Provides the basic functionality for reading & writing BGZF files
@@ -61,7 +61,7 @@ class BgzfStream {
     // internal methods
     private:
         // compresses the current block
-        size_t DeflateBlock(void);
+        size_t DeflateBlock(int32_t blockLength);
         // flushes the data in the BGZF block
         void FlushBlock(void);
         // de-compresses the current block
@@ -76,9 +76,9 @@ class BgzfStream {
 
     // data members
     public:
-        unsigned int m_blockLength;
-        unsigned int m_blockOffset;
-        uint64_t     m_blockAddress;
+        int32_t m_blockLength;
+        int32_t m_blockOffset;
+        int64_t m_blockAddress;
 
         bool m_isWriteCompressed;
         IBamIODevice* m_device;

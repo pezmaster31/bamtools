@@ -2,7 +2,7 @@
 // BamWriter_p.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 25 October 2011 (DB)
+// Last modified: 13 February 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -283,7 +283,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
         pBaseQualities[i] -= 33; // FASTQ conversion
     m_stream.Write(pBaseQualities, queryLength);
 
-    // write the read group tag
+    // write the tag data
     if ( m_isBigEndian ) {
 
         char* tagData = new char[tagDataLength]();
@@ -434,13 +434,14 @@ void BamWriterPrivate::WriteReferences(const BamTools::RefVector& referenceSeque
     RefVector::const_iterator rsEnd  = referenceSequences.end();
     for ( ; rsIter != rsEnd; ++rsIter ) {
 
-        // write the reference sequence name length
-        uint32_t referenceSequenceNameLen = rsIter->RefName.size() + 1;
-        if ( m_isBigEndian ) BamTools::SwapEndian_32(referenceSequenceNameLen);
-        m_stream.Write((char*)&referenceSequenceNameLen, Constants::BAM_SIZEOF_INT);
+        // write the reference sequence name length (+1 for terminator)
+        const uint32_t actualNameLen = rsIter->RefName.size() + 1;
+        uint32_t maybeSwappedNameLen = actualNameLen;
+        if ( m_isBigEndian ) BamTools::SwapEndian_32(maybeSwappedNameLen);
+        m_stream.Write((char*)&maybeSwappedNameLen, Constants::BAM_SIZEOF_INT);
 
         // write the reference sequence name
-        m_stream.Write(rsIter->RefName.c_str(), referenceSequenceNameLen);
+        m_stream.Write(rsIter->RefName.c_str(), actualNameLen);
 
         // write the reference sequence length
         int32_t referenceLength = rsIter->RefLength;
@@ -452,11 +453,12 @@ void BamWriterPrivate::WriteReferences(const BamTools::RefVector& referenceSeque
 void BamWriterPrivate::WriteSamHeaderText(const std::string& samHeaderText) {
 
     // write the SAM header  text length
-    uint32_t samHeaderLen = samHeaderText.size();
-    if ( m_isBigEndian ) BamTools::SwapEndian_32(samHeaderLen);
-    m_stream.Write((char*)&samHeaderLen, Constants::BAM_SIZEOF_INT);
+    const uint32_t actualHeaderLen = samHeaderText.size();
+    uint32_t maybeSwappedHeaderLen = samHeaderText.size();
+    if ( m_isBigEndian ) BamTools::SwapEndian_32(maybeSwappedHeaderLen);
+    m_stream.Write((char*)&maybeSwappedHeaderLen, Constants::BAM_SIZEOF_INT);
 
     // write the SAM header text
-    if ( samHeaderLen > 0 )
-        m_stream.Write(samHeaderText.data(), samHeaderLen);
+    if ( actualHeaderLen > 0 )
+        m_stream.Write(samHeaderText.data(), actualHeaderLen);
 }

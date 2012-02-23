@@ -2,7 +2,7 @@
 // BamAlignment.cpp (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 17 October 2011 (DB)
+// Last modified: 22 February 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -70,8 +70,12 @@ using namespace std;
     \brief constructor
 */
 BamAlignment::BamAlignment(void)
-    : RefID(-1)
+    : Length(0)
+    , RefID(-1)
     , Position(-1)
+    , Bin(0)
+    , MapQuality(0)
+    , AlignmentFlag(0)
     , MateRefID(-1)
     , MatePosition(-1)
     , InsertSize(0)

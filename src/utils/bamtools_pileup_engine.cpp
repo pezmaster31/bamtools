@@ -127,17 +127,36 @@ void PileupEngine::PileupEnginePrivate::ApplyVisitors(void) {
 
 void PileupEngine::PileupEnginePrivate::ClearOldData(void) {
  
-    // remove any data that ends before CurrentPosition
+    // remove any alignments that end before our CurrentPosition
+    // N.B. - BAM positions are 0-based, half-open. GetEndPosition() returns a 1-based position,
+    //        while our CurrentPosition is 0-based. For example, an alignment with 'endPosition' of
+    //        100 does not overlap a 'CurrentPosition' of 100, and should be discarded.
+
     size_t i = 0;
-    while ( i < CurrentAlignments.size() ) {
-      
-        // remove alignment if it ends before CurrentPosition
+    size_t j = 0;
+    const size_t numAlignments = CurrentAlignments.size();
+    while ( i < numAlignments ) {
+
+        // skip over alignment if its (1-based) endPosition is <= to (0-based) CurrentPosition
+        // i.e. this entry will not be saved upon vector resize
         const int endPosition = CurrentAlignments[i].GetEndPosition();
-        if ( endPosition <= CurrentPosition )
-            CurrentAlignments.erase(CurrentAlignments.begin() + i);
-        else
+        if ( endPosition <= CurrentPosition ) {
             ++i;
+            continue;
+        }
+
+        // otherwise alignment ends after CurrentPosition
+        // move it towards vector beginning, at index j
+        if ( i != j )
+            CurrentAlignments[j] = CurrentAlignments[i];
+
+        // increment our indices
+        ++i;
+        ++j;
     }
+
+    // 'squeeze' vector to size j, discarding all remaining alignments in the container
+    CurrentAlignments.resize(j);
 }
 
 void PileupEngine::PileupEnginePrivate::CreatePileupData(void) {

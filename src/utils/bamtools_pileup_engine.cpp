@@ -2,7 +2,7 @@
 // bamtools_pileup_engine.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011
+// Last modified: 9 March 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides pileup at position functionality for various tools.
 // ***************************************************************************
@@ -133,7 +133,7 @@ void PileupEngine::PileupEnginePrivate::ClearOldData(void) {
       
         // remove alignment if it ends before CurrentPosition
         const int endPosition = CurrentAlignments[i].GetEndPosition();
-        if ( endPosition < CurrentPosition )
+        if ( endPosition <= CurrentPosition )
             CurrentAlignments.erase(CurrentAlignments.begin() + i);
         else
             ++i;

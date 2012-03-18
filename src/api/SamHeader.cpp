@@ -72,6 +72,7 @@ SamHeader::SamHeader(const SamHeader& other)
     , Sequences(other.Sequences)
     , ReadGroups(other.ReadGroups)
     , Programs(other.Programs)
+    , Comments(other.Comments)
 { }
 
 /*! \fn SamHeader::~SamHeader(void)

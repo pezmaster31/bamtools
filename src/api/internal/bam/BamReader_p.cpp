@@ -232,6 +232,7 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment) {
 
     // read in the 'block length' value, make sure it's not zero
     char buffer[sizeof(uint32_t)];
+    fill_n(buffer, sizeof(uint32_t), 0);
     m_stream.Read(buffer, sizeof(uint32_t));
     alignment.SupportData.BlockLength = BamTools::UnpackUnsignedInt(buffer);
     if ( m_isBigEndian ) BamTools::SwapEndian_32(alignment.SupportData.BlockLength);

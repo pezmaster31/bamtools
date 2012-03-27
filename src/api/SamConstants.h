@@ -2,7 +2,7 @@
 // SamConstants.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 27 March 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides constants for SAM header
 // ***************************************************************************
@@ -23,6 +23,8 @@ const char SAM_PERIOD = '.';
 const char SAM_STAR   = '*';
 const char SAM_TAB    = '\t';
 const std::string SAM_DIGITS = "0123456789";
+
+const std::string SAM_CURRENT_VERSION = "1.4";
 
 // HD entries
 const std::string SAM_HD_BEGIN_TOKEN    = "@HD";

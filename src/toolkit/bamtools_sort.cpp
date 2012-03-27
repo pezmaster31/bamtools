@@ -2,7 +2,7 @@
 // bamtools_sort.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 11 October 2011 (DB)
+// Last modified: 27 March 2012 (DB)
 // ---------------------------------------------------------------------------
 // Sorts an input BAM file
 // ***************************************************************************
@@ -133,6 +133,8 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
     
     // get basic data that will be shared by all temp/output files 
     SamHeader header = reader.GetHeader();
+    if ( !header.HasVersion() )
+        header.Version = Constants::SAM_CURRENT_VERSION;
     header.SortOrder = ( m_settings->IsSortingByName
                        ? Constants::SAM_HD_SORTORDER_QUERYNAME
                        : Constants::SAM_HD_SORTORDER_COORDINATE );

@@ -3,7 +3,7 @@
 // Marth Lab, Department of Biology, Boston College
 // All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 4 April 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides sorting functionality.
 // ***************************************************************************
@@ -85,7 +85,7 @@ struct API_EXPORT Sort {
 
         // data members
         private:
-            const Sort::Order& m_order;
+            const Sort::Order m_order;
     };
 
     /*! \struct BamTools::Algorithms::Sort::ByPosition
@@ -131,7 +131,7 @@ struct API_EXPORT Sort {
 
         // data members
         private:
-            Sort::Order m_order;
+            const Sort::Order m_order;
     };
 
     /*! \struct BamTools::Algorithms::Sort::ByTag
@@ -178,8 +178,8 @@ struct API_EXPORT Sort {
 
         // data members
         private:
-            std::string m_tag;
-            Sort::Order m_order;
+            const std::string m_tag;
+            const Sort::Order m_order;
     };
 
     /*! \struct BamTools::Algorithms::Sort::Unsorted

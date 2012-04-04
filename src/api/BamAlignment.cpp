@@ -2,7 +2,7 @@
 // BamAlignment.cpp (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 22 February 2012 (DB)
+// Last modified: 4 April 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -25,12 +25,22 @@ using namespace std;
 */
 /*! \var BamAlignment::QueryBases
     \brief 'original' sequence (as reported from sequencing machine)
+
+    \note Setting this field to "*" indicates that the sequence is not to be stored on output.
+    In this case, the contents of the Qualities field should be invalidated as well (cleared or marked as "*").
 */
 /*! \var BamAlignment::AlignedBases
     \brief 'aligned' sequence (includes any indels, padding, clipping)
+
+    This field will be completely empty after reading from BamReader/BamMultiReader when
+    QueryBases is empty.
 */
 /*! \var BamAlignment::Qualities
     \brief FASTQ qualities (ASCII characters, not numeric values)
+
+    \note Setting this field to "*" indicates to BamWriter that the quality scores are not to be stored,
+    but instead will be output as a sequence of '0xFF'. Otherwise, QueryBases must not be a "*" and
+    the length of this field should equal the length of QueryBases.
 */
 /*! \var BamAlignment::TagData
     \brief tag data (use the provided methods to query/modify)
@@ -138,22 +148,17 @@ bool BamAlignment::BuildCharData(void) {
     const unsigned int tagDataLength  = dataLength - tagDataOffset;
 
     // check offsets to see what char data exists
-    const bool hasSeqData  = ( seqDataOffset  < dataLength );
-    const bool hasQualData = ( qualDataOffset < dataLength );
+    const bool hasSeqData  = ( seqDataOffset  < qualDataOffset );
+    const bool hasQualData = ( qualDataOffset < tagDataOffset );
     const bool hasTagData  = ( tagDataOffset  < dataLength );
 
-    // set up char buffers
-    const char* allCharData = SupportData.AllCharData.data();
-    const char* seqData     = ( hasSeqData  ? (((const char*)allCharData) + seqDataOffset)  : (const char*)0 );
-    const char* qualData    = ( hasQualData ? (((const char*)allCharData) + qualDataOffset) : (const char*)0 );
-          char* tagData     = ( hasTagData  ? (((char*)allCharData) + tagDataOffset)        : (char*)0 );
-
     // store alignment name (relies on null char in name as terminator)
-    Name.assign((const char*)(allCharData));
+    Name.assign(SupportData.AllCharData.data());
 
     // save query sequence
     QueryBases.clear();
     if ( hasSeqData ) {
+        const char* seqData = SupportData.AllCharData.data() + seqDataOffset;
         QueryBases.reserve(SupportData.QuerySequenceLength);
         for ( size_t i = 0; i < SupportData.QuerySequenceLength; ++i ) {
             const char singleBase = Constants::BAM_DNA_LOOKUP[ ( (seqData[(i/2)] >> (4*(1-(i%2)))) & 0xf ) ];
@@ -161,13 +166,21 @@ bool BamAlignment::BuildCharData(void) {
         }
     }
 
-    // save qualities, converting from numeric QV to 'FASTQ-style' ASCII character
+    // save qualities
+
     Qualities.clear();
     if ( hasQualData ) {
-        Qualities.reserve(SupportData.QuerySequenceLength);
-        for ( size_t i = 0; i < SupportData.QuerySequenceLength; ++i ) {
-            const char singleQuality = static_cast<const char>(qualData[i]+33);
-            Qualities.append(1, singleQuality);
+        const char* qualData = SupportData.AllCharData.data() + qualDataOffset;
+
+        // if marked as unstored (sequence of 0xFF) - don't do conversion, just fill with 0xFFs
+        if ( qualData[0] == (char)0xFF )
+            Qualities.resize(SupportData.QuerySequenceLength, (char)0xFF);
+
+        // otherwise convert from numeric QV to 'FASTQ-style' ASCII character
+        else {
+            Qualities.reserve(SupportData.QuerySequenceLength);
+            for ( size_t i = 0; i < SupportData.QuerySequenceLength; ++i )
+                Qualities.append(1, qualData[i]+33);
         }
     }
 
@@ -176,7 +189,7 @@ bool BamAlignment::BuildCharData(void) {
 
     // if QueryBases has data, build AlignedBases using CIGAR data
     // otherwise, AlignedBases will remain empty (this case IS allowed)
-    if ( !QueryBases.empty() ) {
+    if ( !QueryBases.empty() && QueryBases != "*" ) {
 
         // resize AlignedBases
         AlignedBases.reserve(SupportData.QuerySequenceLength);
@@ -235,6 +248,9 @@ bool BamAlignment::BuildCharData(void) {
     // save tag data
     TagData.clear();
     if ( hasTagData ) {
+
+        char* tagData = (((char*)SupportData.AllCharData.data()) + tagDataOffset);
+
         if ( IsBigEndian ) {
             size_t i = 0;
             while ( i < tagDataLength ) {

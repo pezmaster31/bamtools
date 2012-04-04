@@ -396,7 +396,7 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a) {
         m_out << "\"queryBases\":\"" << a.QueryBases << "\",";
     
     // write qualities
-    if ( !a.Qualities.empty() ) {
+    if ( !a.Qualities.empty() && a.Qualities.at(0) != (char)0xFF ) {
         string::const_iterator s = a.Qualities.begin();
         m_out << "\"qualities\":[" << static_cast<short>(*s) - 33;
         ++s;
@@ -539,7 +539,7 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
         m_out << a.QueryBases << "\t";
     
     // write qualities
-    if ( a.Qualities.empty() )
+    if ( a.Qualities.empty() || (a.Qualities.at(0) == (char)0xFF) )
         m_out << "*";
     else
         m_out << a.Qualities;

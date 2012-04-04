@@ -2,7 +2,7 @@
 // BamWriter_p.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 13 February 2012 (DB)
+// Last modified: 4 April 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -210,7 +210,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
     // calculate char lengths
     const unsigned int nameLength         = al.Name.size() + 1;
     const unsigned int numCigarOperations = al.CigarData.size();
-    const unsigned int queryLength        = al.QueryBases.size();
+    const unsigned int queryLength        = ( (al.QueryBases == "*") ? 0 : al.QueryBases.size() );
     const unsigned int tagDataLength      = al.TagData.size();
 
     // no way to tell if alignment's bin is already defined (there is no default, invalid value)
@@ -223,15 +223,18 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
     const unsigned int packedCigarLength = packedCigar.size();
 
     // encode the query
+    unsigned int encodedQueryLength = 0;
     string encodedQuery;
-    EncodeQuerySequence(al.QueryBases, encodedQuery);
-    const unsigned int encodedQueryLength = encodedQuery.size();
+    if ( queryLength > 0 ) {
+        EncodeQuerySequence(al.QueryBases, encodedQuery);
+        encodedQueryLength = encodedQuery.size();
+    }
 
     // write the block size
     const unsigned int dataBlockSize = nameLength +
                                        packedCigarLength +
                                        encodedQueryLength +
-                                       queryLength +
+                                       queryLength +         // here referring to quality length
                                        tagDataLength;
     unsigned int blockSize = Constants::BAM_CORE_SIZE + dataBlockSize;
     if ( m_isBigEndian ) BamTools::SwapEndian_32(blockSize);
@@ -274,14 +277,22 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
     else
         m_stream.Write(packedCigar.data(), packedCigarLength);
 
-    // write the encoded query sequence
-    m_stream.Write(encodedQuery.data(), encodedQueryLength);
+    if ( queryLength > 0 ) {
 
-    // write the base qualities
-    char* pBaseQualities = (char*)al.Qualities.data();
-    for ( size_t i = 0; i < queryLength; ++i )
-        pBaseQualities[i] -= 33; // FASTQ conversion
-    m_stream.Write(pBaseQualities, queryLength);
+        // write the encoded query sequence
+        m_stream.Write(encodedQuery.data(), encodedQueryLength);
+
+        // write the base qualities
+        char* pBaseQualities = new char[queryLength]();
+        if ( al.Qualities.empty() || al.Qualities == "*" )
+            memset(pBaseQualities, 0xFF, queryLength); // if missing or '*', fill with invalid qual
+        else {
+            for ( size_t i = 0; i < queryLength; ++i )
+                pBaseQualities[i] = al.Qualities.at(i) - 33; // FASTQ ASCII -> phred score conversion
+        }
+        m_stream.Write(pBaseQualities, queryLength);
+        delete[] pBaseQualities;
+    }
 
     // write the tag data
     if ( m_isBigEndian ) {

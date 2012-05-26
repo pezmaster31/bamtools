@@ -2,7 +2,7 @@
 // BamStandardIndex.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 November 2011 (DB)
+// Last modified: 25 May 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides index operations for the standardized BAM index format (".bai")
 // ***************************************************************************
@@ -389,17 +389,17 @@ bool BamStandardIndex::Create(void) {
         }
 
         // after finishing alignments, if any data was read, check:
-        if ( currentRefID >= 0 ) {
+        if ( lastOffset != currentOffset ) {
 
             // store last alignment chunk to its bin, then write last reference entry with data
             SaveAlignmentChunkToBin(refEntry.Bins, currentBin, currentOffset, lastOffset);
             WriteReferenceEntry(refEntry);
+        }
 
-            // then write any empty references remaining at end of file
-            for ( int i = currentRefID+1; i < numReferences; ++i ) {
-                BaiReferenceEntry emptyEntry(i);
-                WriteReferenceEntry(emptyEntry);
-            }
+        // then write any empty references remaining at end of file
+        for ( int i = currentRefID+1; i < numReferences; ++i ) {
+            BaiReferenceEntry emptyEntry(i);
+            WriteReferenceEntry(emptyEntry);
         }
 
     } catch ( BamException& e) {

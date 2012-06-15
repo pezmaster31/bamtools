@@ -54,8 +54,8 @@ target_link_libraries( BamTools        ${APILibs} )
 target_link_libraries( BamTools-static ${APILibs} )
 
 # set library install destinations
-install( TARGETS BamTools        LIBRARY DESTINATION "lib/bamtools" RUNTIME DESTINATION "bin")
-install( TARGETS BamTools-static ARCHIVE DESTINATION "lib/bamtools")
+install( TARGETS BamTools        LIBRARY DESTINATION "lib" RUNTIME DESTINATION "bin")
+install( TARGETS BamTools-static ARCHIVE DESTINATION "lib")
 
 # export API headers
 include(../ExportHeader.cmake)

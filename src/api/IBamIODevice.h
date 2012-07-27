@@ -24,6 +24,9 @@
 
 namespace BamTools {
 
+class IBamIODevice;
+typedef IBamIODevice* (*CreateBamIODeviceCallback)(const std::string& source);
+
 class API_EXPORT IBamIODevice {
 
     // enums
@@ -55,6 +58,8 @@ class API_EXPORT IBamIODevice {
         virtual std::string GetErrorString(void);
         virtual bool IsOpen(void) const;
         virtual OpenMode Mode(void) const;
+
+        static void RegisterCreatorCallback(CreateBamIODeviceCallback cb);
 
     // internal methods
     protected:

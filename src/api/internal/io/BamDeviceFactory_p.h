@@ -29,6 +29,8 @@ namespace Internal {
 class BamDeviceFactory {
     public:
         static IBamIODevice* CreateDevice(const std::string& source);
+        static void RegisterCreatorCallback(CreateBamIODeviceCallback cb);
+
 };
 
 } // namespace Internal

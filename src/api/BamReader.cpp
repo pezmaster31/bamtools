@@ -1,15 +1,14 @@
 // ***************************************************************************
 // BamReader.cpp (c) 2009 Derek Barnett, Michael Str�mberg
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 4 March 2011 (DB)
+// Last modified: 25 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides read access to BAM files.
 // ***************************************************************************
 
-#include <api/BamReader.h>
-#include <api/internal/BamReader_p.h>
+#include "api/BamReader.h"
+#include "api/internal/bam/BamReader_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 
@@ -39,26 +38,39 @@ BamReader::~BamReader(void) {
     d = 0;
 }
 
-/*! \fn void BamReader::Close(void)
+/*! \fn bool BamReader::Close(void)
     \brief Closes the current BAM file.
 
     Also clears out all header and reference data.
 
+    \return \c true if file closed OK
     \sa IsOpen(), Open()
 */
-void BamReader::Close(void) {
-    d->Close();
+bool BamReader::Close(void) {
+    return d->Close();
 }
 
 /*! \fn bool BamReader::CreateIndex(const BamIndex::IndexType& type)
     \brief Creates an index file for current BAM file.
 
-    \param type file format to create, see BamIndex::IndexType for available formats
+    \param[in] type file format to create, see BamIndex::IndexType for available formats
     \return \c true if index created OK
     \sa LocateIndex(), OpenIndex()
 */
 bool BamReader::CreateIndex(const BamIndex::IndexType& type) {
     return d->CreateIndex(type);
+}
+
+/*! \fn std::string BamReader::GetErrorString(void) const
+    \brief Returns a human-readable description of the last error that occurred
+
+    This method allows elimination of STDERR pollution. Developers of client code
+    may choose how the messages are displayed to the user, if at all.
+
+    \return error description
+*/
+string BamReader::GetErrorString(void) const {
+    return d->GetErrorString();
 }
 
 /*! \fn const std::string BamReader::GetFilename(void) const
@@ -80,7 +92,7 @@ const std::string BamReader::GetFilename(void) const {
 
     Header data is wrapped in a SamHeader object that can be conveniently queried & modified.
 
-    N.B. - Modifying the retrieved SamHeader object does NOT affect the
+    \note Modifying the retrieved SamHeader object does NOT affect the
     current BAM file. This file has been opened in a read-only mode.
     However, your modified SamHeader object can be used in conjunction with
     BamWriter to generate a new BAM file with the appropriate header information.
@@ -95,7 +107,7 @@ SamHeader BamReader::GetHeader(void) const {
 /*! \fn std::string BamReader::GetHeaderText(void) const
     \brief Returns SAM header data, as SAM-formatted text.
 
-    N.B. - Modifying the retrieved text does NOT affect the current
+    \note Modifying the retrieved text does NOT affect the current
     BAM file. This file has been opened in a read-only mode. However,
     your modified header text can be used in conjunction with BamWriter
     to generate a new BAM file with the appropriate header information.
@@ -128,7 +140,7 @@ std::string BamReader::GetHeaderText(void) const {
     are required, consider using GetNextAlignmentCore() for a significant
     performance boost.
 
-    \param alignment destination for alignment record data
+    \param[out] alignment destination for alignment record data
     \returns \c true if a valid alignment was found
 */
 bool BamReader::GetNextAlignment(BamAlignment& alignment) {
@@ -145,7 +157,7 @@ bool BamReader::GetNextAlignment(BamAlignment& alignment) {
     when these fields are not required for every alignment. These fields can be
     populated 'lazily' (as needed) by calling BamAlignment::BuildCharData() later.
 
-    \param alignment destination for alignment record data
+    \param[out] alignment destination for alignment record data
     \returns \c true if a valid alignment was found
     \sa SetRegion()
 */
@@ -172,6 +184,8 @@ const RefVector& BamReader::GetReferenceData(void) const {
     \brief Returns the ID of the reference with this name.
 
     If \a refName is not found, returns -1.
+
+    \param[in] refName name of reference to look up
 */
 int BamReader::GetReferenceID(const std::string& refName) const {
     return d->GetReferenceID(refName);
@@ -181,25 +195,6 @@ int BamReader::GetReferenceID(const std::string& refName) const {
     \brief Returns \c true if index data is available.
 */
 bool BamReader::HasIndex(void) const {
-    return d->HasIndex();
-}
-
-/*! \fn bool BamReader::IsIndexLoaded(void) const
-    \brief Returns \c true if index data is available.
-
-    \deprecated Instead use HasIndex()
-    \cond
-    Deprecated purely for API semantic clarity - HasIndex() should be clearer
-    than IsIndexLoaded() in light of the new caching modes that may clear the
-    index data from memory, but leave the index file open for later random access
-    seeks.
-
-    For example, what would (IsIndexLoaded() == true) mean when cacheMode has been
-    explicitly set to NoIndexCaching? This is confusing at best, misleading about
-    current memory behavior at worst.
-    \endcond
-*/
-bool BamReader::IsIndexLoaded(void) const {
     return d->HasIndex();
 }
 
@@ -215,6 +210,9 @@ bool BamReader::IsOpen(void) const {
 
     This is a convenience method, equivalent to calling SetRegion()
     with only a left boundary specified.
+
+    \param[in] refID    left-bound reference ID
+    \param[in] position left-bound position
 
     \returns \c true if jump was successful
     \sa HasIndex()
@@ -238,7 +236,8 @@ bool BamReader::Jump(int refID, int position) {
     with the desired index filename. If that function returns false, you can use
     CreateIndex() to then build an index of the exact requested format.
 
-    \param preferredType desired index file format, see BamIndex::IndexType for available formats
+    \param[in] preferredType desired index file format, see BamIndex::IndexType for available formats
+
     \returns \c true if (any) index file could be found
 */
 bool BamReader::LocateIndex(const BamIndex::IndexType& preferredType) {
@@ -251,7 +250,8 @@ bool BamReader::LocateIndex(const BamIndex::IndexType& preferredType) {
     If BamReader is already opened on another file, this function closes
     that file, then attempts to open requested \a filename.
 
-    \param filename name of BAM file to open
+    \param[in] filename name of BAM file to open
+
     \returns \c true if BAM file was opened successfully
     \sa Close(), IsOpen(), OpenIndex()
 */
@@ -262,7 +262,7 @@ bool BamReader::Open(const std::string& filename) {
 /*! \fn bool BamReader::OpenIndex(const std::string& indexFilename)
     \brief Opens a BAM index file.
 
-    \param indexFilename name of BAM index file
+    \param[in] indexFilename name of BAM index file to open
 
     \returns \c true if BAM index file was opened & data loaded successfully
     \sa LocateIndex(), Open(), SetIndex()
@@ -277,7 +277,7 @@ bool BamReader::OpenIndex(const std::string& indexFilename) {
     Useful for performing multiple sequential passes through a BAM file.
     Calling this function clears any prior region that may have been set.
 
-    N.B. - Note that this function sets the file pointer to first alignment record
+    \note This function sets the file pointer to first alignment record
     in the BAM file, NOT the beginning of the file.
 
     \returns \c true if rewind operation was successful
@@ -299,28 +299,15 @@ bool BamReader::Rewind(void) {
         reader.SetIndex(new MyCustomBamIndex);
     \endcode
 
-    N.B. - BamReader takes ownership of \a index - i.e. BamReader will
-    take care of deleting the pointer when the reader is destructed,
-    when the current BAM file is closed, or when a new index is requested.
+    \note BamReader takes ownership of \a index - i.e. the BamReader will
+    take care of deleting it when the reader is destructed, when the current
+    BAM file is closed, or when a new index is requested.
 
-    \param index custom BamIndex subclass created by client
+    \param[in] index custom BamIndex subclass created by client
     \sa CreateIndex(), LocateIndex(), OpenIndex()
 */
 void BamReader::SetIndex(BamIndex* index) {
     d->SetIndex(index);
-}
-
-/*! \fn void BamReader::SetIndexCacheMode(const BamIndex::IndexCacheMode& mode)
-    \brief Changes the caching behavior of the index data.
-
-    Default mode is BamIndex::LimitedIndexCaching.
-
-    \param mode desired cache mode for index, see BamIndex::IndexCacheMode for
-                description of the available cache modes
-    \sa HasIndex()
-*/
-void BamReader::SetIndexCacheMode(const BamIndex::IndexCacheMode& mode) {
-    d->SetIndexCacheMode(mode);
 }
 
 /*! \fn bool BamReader::SetRegion(const BamRegion& region)
@@ -337,7 +324,12 @@ void BamReader::SetIndexCacheMode(const BamIndex::IndexCacheMode& mode) {
     that all alignments that lie downstream of the left boundary are
     considered valid, continuing to the end of the BAM file.
 
-    \param region desired region-of-interest to activate
+    \warning BamRegion now represents a zero-based, HALF-OPEN interval.
+    In previous versions of BamTools (0.x & 1.x) all intervals were treated
+    as zero-based, CLOSED.
+
+    \param[in] region desired region-of-interest to activate
+
     \returns \c true if reader was able to jump successfully to the region's left boundary
     \sa HasIndex(), Jump()
 */
@@ -353,10 +345,14 @@ bool BamReader::SetRegion(const BamRegion& region) {
 
     This is an overloaded function.
 
-    \param leftRefID     referenceID of region's left boundary
-    \param leftPosition  position of region's left boundary
-    \param rightRefID    reference ID of region's right boundary
-    \param rightPosition position of region's right boundary
+    \warning This function expects a zero-based, HALF-OPEN interval.
+    In previous versions of BamTools (0.x & 1.x) all intervals were treated
+    as zero-based, CLOSED.
+
+    \param[in] leftRefID     referenceID of region's left boundary
+    \param[in] leftPosition  position of region's left boundary
+    \param[in] rightRefID    reference ID of region's right boundary
+    \param[in] rightPosition position of region's right boundary
 
     \returns \c true if reader was able to jump successfully to the region's left boundary
     \sa HasIndex(), Jump()

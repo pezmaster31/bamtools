@@ -1,14 +1,13 @@
 // ***************************************************************************
 // SamSequenceDictionary.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 18 April 2011 (DB)
+// Last modified: 16 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamSequence entries.
 // *************************************************************************
 
-#include <api/SamSequenceDictionary.h>
+#include "api/SamSequenceDictionary.h"
 using namespace BamTools;
 
 #include <iostream>
@@ -30,6 +29,7 @@ SamSequenceDictionary::SamSequenceDictionary(void) { }
 */
 SamSequenceDictionary::SamSequenceDictionary(const SamSequenceDictionary& other)
     : m_data(other.m_data)
+    , m_lookupData(other.m_lookupData)
 { }
 
 /*! \fn SamSequenceDictionary::~SamSequenceDictionary(void)
@@ -38,39 +38,53 @@ SamSequenceDictionary::SamSequenceDictionary(const SamSequenceDictionary& other)
 SamSequenceDictionary::~SamSequenceDictionary(void) { }
 
 /*! \fn void SamSequenceDictionary::Add(const SamSequence& sequence)
-    \brief Adds a sequence to the dictionary.
+    \brief Appends a sequence to the dictionary.
 
     Duplicate entries are silently discarded.
 
-    \param sequence entry to be added
+    \param[in] sequence entry to be added
 */
 void SamSequenceDictionary::Add(const SamSequence& sequence) {
-
-    // TODO: report error on attempted duplicate?
-
-    if ( IsEmpty() || !Contains(sequence) )
+    if ( IsEmpty() || !Contains(sequence) ) {
         m_data.push_back(sequence);
+        m_lookupData[sequence.Name] = m_data.size() - 1;
+    }
 }
 
 /*! \fn void SamSequenceDictionary::Add(const std::string& name, const int& length)
-    \brief Adds a sequence to the dictionary.
+    \brief Appends a sequence to the dictionary.
 
     This is an overloaded function.
 
-    \param name name of sequence entry to be added
-    \param length length of sequence entry to be added
+    \param[in] name name of sequence entry to be added
+    \param[in] length length of sequence entry to be added
     \sa Add()
 */
 void SamSequenceDictionary::Add(const std::string& name, const int& length) {
     Add( SamSequence(name, length) );
 }
 
-/*! \fn void SamSequenceDictionary::Add(const std::vector<SamSequence>& sequences)
-    \brief Adds multiple sequences to the dictionary.
+/*! \fn void SamSequenceDictionary::Add(const SamSequenceDictionary& sequences)
+    \brief Appends another sequence dictionary to this one
 
     This is an overloaded function.
 
-    \param sequences entries to be added
+    \param[in] sequences sequence dictionary to be appended
+    \sa Add()
+*/
+void SamSequenceDictionary::Add(const SamSequenceDictionary& sequences) {
+    SamSequenceConstIterator seqIter = sequences.ConstBegin();
+    SamSequenceConstIterator seqEnd  = sequences.ConstEnd();
+    for ( ; seqIter != seqEnd; ++seqIter )
+        Add(*seqIter);
+}
+
+/*! \fn void SamSequenceDictionary::Add(const std::vector<SamSequence>& sequences)
+    \brief Appends multiple sequences to the dictionary.
+
+    This is an overloaded function.
+
+    \param[in] sequences entries to be added
     \sa Add()
 */
 void SamSequenceDictionary::Add(const std::vector<SamSequence>& sequences) {
@@ -81,11 +95,11 @@ void SamSequenceDictionary::Add(const std::vector<SamSequence>& sequences) {
 }
 
 /*! \fn void SamSequenceDictionary::Add(const std::map<std::string, int>& sequenceMap)
-    \brief Adds multiple sequences to the dictionary.
+    \brief Appends multiple sequences to the dictionary.
 
     This is an overloaded function.
 
-    \param sequenceMap map of sequence entries (name => length) to be added
+    \param[in] sequenceMap map of sequence entries (name => length) to be added
     \sa Add()
 */
 void SamSequenceDictionary::Add(const std::map<std::string, int>& sequenceMap) {
@@ -122,6 +136,7 @@ SamSequenceConstIterator SamSequenceDictionary::Begin(void) const {
 */
 void SamSequenceDictionary::Clear(void) {
     m_data.clear();
+    m_lookupData.clear();
 }
 
 /*! \fn SamSequenceConstIterator SamSequenceDictionary::ConstBegin(void) const
@@ -142,11 +157,12 @@ SamSequenceConstIterator SamSequenceDictionary::ConstEnd(void) const {
 
 /*! \fn bool SamSequenceDictionary::Contains(const std::string& sequenceName) const
     \brief Returns true if dictionary contains sequence.
-    \param sequenceName search for sequence matching this name
+
+    \param[in] sequenceName search for sequence matching this name
     \return \c true if dictionary contains a sequence with this name
 */
 bool SamSequenceDictionary::Contains(const std::string& sequenceName) const {
-    return ( IndexOf(sequenceName) != (int)m_data.size() );
+    return ( m_lookupData.find(sequenceName) != m_lookupData.end() );
 }
 
 /*! \fn bool SamSequenceDictionary::Contains(const SamSequence& sequence) const
@@ -154,11 +170,11 @@ bool SamSequenceDictionary::Contains(const std::string& sequenceName) const {
 
     This is an overloaded function.
 
-    \param sequence search for this sequence
+    \param[in] sequence search for this sequence
     \return \c true if dictionary contains sequence (matching on name)
 */
 bool SamSequenceDictionary::Contains(const SamSequence& sequence) const {
-    return ( IndexOf(sequence.Name) != (int)m_data.size() );
+    return Contains(sequence.Name);
 }
 
 /*! \fn SamSequenceIterator SamSequenceDictionary::End(void)
@@ -180,22 +196,6 @@ SamSequenceConstIterator SamSequenceDictionary::End(void) const {
     return m_data.end();
 }
 
-/*! \fn int SamSequenceDictionary::IndexOf(const std::string& name) const
-    \internal
-    \return index of sequence if found (matching on name).  Otherwise, returns vector::size() (invalid index).
-*/
-int SamSequenceDictionary::IndexOf(const std::string& name) const {
-    SamSequenceConstIterator begin = ConstBegin();
-    SamSequenceConstIterator iter  = begin;
-    SamSequenceConstIterator end   = ConstEnd();
-    for ( ; iter != end; ++iter ) {
-        const SamSequence& currentSeq = (*iter);
-        if ( currentSeq.Name == name )
-            break;
-    }
-    return distance( begin, iter );
-}
-
 /*! \fn bool SamSequenceDictionary::IsEmpty(void) const
     \brief Returns \c true if dictionary contains no sequences
     \sa Size()
@@ -209,21 +209,35 @@ bool SamSequenceDictionary::IsEmpty(void) const {
 
     This is an overloaded function.
 
-    \param sequence SamSequence to remove (matching on name)
+    \param[in] sequence SamSequence to remove (matching on name)
 */
 void SamSequenceDictionary::Remove(const SamSequence& sequence) {
-    Remove( sequence.Name );
+    Remove(sequence.Name);
 }
 
 /*! \fn void SamSequenceDictionary::Remove(const std::string& sequenceName)
     \brief Removes sequence from dictionary, if found.
 
-    \param sequenceName name of sequence to remove
+    \param[in] sequenceName name of sequence to remove
     \sa Remove()
 */
 void SamSequenceDictionary::Remove(const std::string& sequenceName) {
-    if ( Contains(sequenceName) )
-        m_data.erase( m_data.begin() + IndexOf(sequenceName) );
+
+    // skip if empty dictionary or if name unknown
+    if ( IsEmpty() || !Contains(sequenceName) )
+        return;
+
+    // update 'lookup index' for every entry after @sequenceName
+    const size_t indexToRemove = m_lookupData[sequenceName];
+    const size_t numEntries = m_data.size();
+    for ( size_t i = indexToRemove+1; i < numEntries; ++i ) {
+        const SamSequence& sq = m_data.at(i);
+        --m_lookupData[sq.Name];
+    }
+
+    // erase entry from containers
+    m_data.erase( Begin() + indexToRemove );
+    m_lookupData.erase(sequenceName);
 }
 
 /*! \fn void SamSequenceDictionary::Remove(const std::vector<SamSequence>& sequences)
@@ -231,7 +245,7 @@ void SamSequenceDictionary::Remove(const std::string& sequenceName) {
 
     This is an overloaded function.
 
-    \param sequences sequences to remove
+    \param[in] sequences sequences to remove
     \sa Remove()
 */
 void SamSequenceDictionary::Remove(const std::vector<SamSequence>& sequences) {
@@ -246,7 +260,7 @@ void SamSequenceDictionary::Remove(const std::vector<SamSequence>& sequences) {
 
     This is an overloaded function.
 
-    \param sequenceNames names of the sequences to remove
+    \param[in] sequenceNames names of the sequences to remove
     \sa Remove()
 */
 void SamSequenceDictionary::Remove(const std::vector<std::string>& sequenceNames) {
@@ -267,27 +281,21 @@ int SamSequenceDictionary::Size(void) const {
 /*! \fn SamSequence& SamSequenceDictionary::operator[](const std::string& sequenceName)
     \brief Retrieves the modifiable SamSequence that matches \a sequenceName.
 
-    NOTE - If the dictionary contains no sequence matching this name, this function inserts
-    a new one with this name (length:0), and returns a reference to it.
+    \note If the dictionary contains no sequence matching this name, this function inserts
+    a new one with this name (length:0), and returns a reference to it. If you want to avoid
+    this insertion behavior, check the result of Contains() before using this operator.
 
-    If you want to avoid this insertion behavior, check the result of Contains() before
-    using this operator.
-
-    \param sequenceName name of sequence to retrieve
+    \param[in] sequenceName name of sequence to retrieve
     \return a modifiable reference to the SamSequence associated with the name
 */
 SamSequence& SamSequenceDictionary::operator[](const std::string& sequenceName) {
 
-    // look up sequence ID
-    int index = IndexOf(sequenceName);
-
-    // if found, return sequence at index
-    if ( index != (int)m_data.size() )
-        return m_data[index];
-
-    // otherwise, append new sequence and return reference
-    else {
-        m_data.push_back( SamSequence(sequenceName, 0) );
-        return m_data.back();
+    if ( !Contains(sequenceName) ) {
+        SamSequence seq(sequenceName, 0);
+        m_data.push_back(seq);
+        m_lookupData[sequenceName] = m_data.size() - 1;
     }
+
+    const size_t index = m_lookupData[sequenceName];
+    return m_data.at(index);
 }

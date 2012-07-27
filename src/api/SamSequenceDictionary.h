@@ -1,9 +1,8 @@
 // ***************************************************************************
 // SamSequenceDictionary.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 18 April 2011
+// Last modified: 16 October 2011
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a collection of SamSequence entries.
 // ***************************************************************************
@@ -11,10 +10,10 @@
 #ifndef SAM_SEQUENCE_DICTIONARY_H
 #define SAM_SEQUENCE_DICTIONARY_H
 
-#include <api/api_global.h>
-#include <api/SamSequence.h>
-#include <string>
+#include "api/api_global.h"
+#include "api/SamSequence.h"
 #include <map>
+#include <string>
 #include <vector>
 
 namespace BamTools {
@@ -38,6 +37,7 @@ class API_EXPORT SamSequenceDictionary {
         void Add(const std::string& name, const int& length);
 
         // adds multiple sequences
+        void Add(const SamSequenceDictionary& sequences);
         void Add(const std::vector<SamSequence>& sequences);
         void Add(const std::map<std::string, int>& sequenceMap);
 
@@ -74,13 +74,10 @@ class API_EXPORT SamSequenceDictionary {
         SamSequenceConstIterator End(void) const;           // returns const_iterator to end()
         SamSequenceConstIterator ConstEnd(void) const;      // returns const_iterator to end()
 
-    // internal methods
-    private:
-        int IndexOf(const std::string& name) const;
-
     // data members
     private:
         SamSequenceContainer m_data;
+        std::map<std::string, size_t> m_lookupData;
 };
 
 } // namespace BamTools

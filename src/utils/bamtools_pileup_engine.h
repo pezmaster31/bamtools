@@ -1,9 +1,8 @@
 // ***************************************************************************
 // bamtools_pileup_engine.h (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 18 September 2010
+// Last modified: 10 October 2011
 // ---------------------------------------------------------------------------
 // Provides pileup at position functionality for various tools.
 // ***************************************************************************
@@ -11,8 +10,9 @@
 #ifndef BAMTOOLS_PILEUP_ENGINE_H
 #define BAMTOOLS_PILEUP_ENGINE_H
 
+#include "utils/utils_global.h"
+
 #include <api/BamAlignment.h>
-#include <utils/utils_global.h>
 #include <vector>
 
 namespace BamTools {

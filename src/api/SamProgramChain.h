@@ -1,9 +1,8 @@
 // ***************************************************************************
 // SamProgramChain.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 April 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides methods for operating on a SamProgram record "chain"
 // ***************************************************************************
@@ -11,8 +10,8 @@
 #ifndef SAM_PROGRAMCHAIN_H
 #define SAM_PROGRAMCHAIN_H
 
-#include <api/api_global.h>
-#include <api/SamProgram.h>
+#include "api/api_global.h"
+#include "api/SamProgram.h"
 #include <string>
 #include <vector>
 

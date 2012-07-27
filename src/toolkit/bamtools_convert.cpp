@@ -1,9 +1,8 @@
 // ***************************************************************************
 // bamtools_convert.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 11 June 2011
+// Last modified: 8 October 2011
 // ---------------------------------------------------------------------------
 // Converts between BAM and a number of other formats
 // ***************************************************************************
@@ -278,7 +277,7 @@ void ConvertTool::ConvertToolPrivate::PrintBed(const BamAlignment& a) {
 
     m_out << m_references.at(a.RefID).RefName << "\t"
           << a.Position << "\t"
-          << a.GetEndPosition() + 1 << "\t"
+          << a.GetEndPosition() << "\t"
           << a.Name << "\t"
           << a.MapQuality << "\t"
           << (a.IsReverseStrand() ? "-" : "+") << endl;
@@ -397,7 +396,7 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a) {
         m_out << "\"queryBases\":\"" << a.QueryBases << "\",";
     
     // write qualities
-    if ( !a.Qualities.empty() ) {
+    if ( !a.Qualities.empty() && a.Qualities.at(0) != (char)0xFF ) {
         string::const_iterator s = a.Qualities.begin();
         m_out << "\"qualities\":[" << static_cast<short>(*s) - 33;
         ++s;
@@ -540,7 +539,7 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
         m_out << a.QueryBases << "\t";
     
     // write qualities
-    if ( a.Qualities.empty() )
+    if ( a.Qualities.empty() || (a.Qualities.at(0) == (char)0xFF) )
         m_out << "*";
     else
         m_out << a.Qualities;

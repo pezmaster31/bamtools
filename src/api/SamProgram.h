@@ -1,9 +1,8 @@
 // ***************************************************************************
 // SamProgram.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 April 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides direct read/write access to the SAM header program records.
 // ***************************************************************************
@@ -27,21 +26,21 @@ struct API_EXPORT SamProgram {
     ~SamProgram(void);
 
     // query/modify entire program record
-    void Clear(void);                           // clears all data fields
+    void Clear(void);                      // clears all data fields
 
     // convenience query methods
-    bool HasCommandLine(void) const;            // returns true if program record has a command line entry
-    bool HasID(void) const;                     // returns true if program record has an ID
-    bool HasName(void) const;                   // returns true if program record has a name
-    bool HasPreviousProgramID(void) const;      // returns true if program record has a 'previous program ID'
-    bool HasVersion(void) const;                // returns true if program record has a version
+    bool HasCommandLine(void) const;       // returns true if program record has a command line entry
+    bool HasID(void) const;                // returns true if program record has an ID
+    bool HasName(void) const;              // returns true if program record has a name
+    bool HasPreviousProgramID(void) const; // returns true if program record has a 'previous program ID'
+    bool HasVersion(void) const;           // returns true if program record has a version
 
     // data members
-    std::string CommandLine;                    // CL:<CommandLine>
-    std::string ID;                             // ID:<ID>          *Required for valid SAM header*
-    std::string Name;                           // PN:<Name>
-    std::string PreviousProgramID;              // PP:<PreviousProgramID>
-    std::string Version;                        // VN:<Version>
+    std::string CommandLine;               // CL:<CommandLine>
+    std::string ID;                        // ID:<ID>          *Required for valid SAM header*
+    std::string Name;                      // PN:<Name>
+    std::string PreviousProgramID;         // PP:<PreviousProgramID>
+    std::string Version;                   // VN:<Version>
 
     // internal (non-standard) methods & fields
     private:

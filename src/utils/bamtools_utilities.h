@@ -1,9 +1,8 @@
 // ***************************************************************************
 // bamtools_utilities.h (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 9 June 2011
+// Last modified: 7 October 2011
 // ---------------------------------------------------------------------------
 // Provides general utilities used by BamTools sub-tools.
 // ***************************************************************************
@@ -13,13 +12,11 @@
 
 #include <api/BamAux.h>
 #include <utils/utils_global.h>
-#include <cassert>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
-#define BAMTOOLS_ASSERT_UNREACHABLE assert( false )
-#define BAMTOOLS_ASSERT_MESSAGE( condition, message ) if (!( condition )) throw std::runtime_error( message );
+#define BAMTOOLS_ASSERT_UNREACHABLE BT_ASSERT_UNREACHABLE
+#define BAMTOOLS_ASSERT_MESSAGE( condition, message ) BT_ASSERT_X( condition, message )
 
 namespace BamTools {
 

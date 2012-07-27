@@ -1,14 +1,13 @@
 // ***************************************************************************
 // SamSequence.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 18 April 2011 (DB)
+// Last modified: 10 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides direct read/write access to the SAM sequence data fields.
 // ***************************************************************************
 
-#include <api/SamSequence.h>
+#include "api/SamSequence.h"
 #include <sstream>
 using namespace BamTools;
 using namespace std;

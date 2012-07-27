@@ -1,21 +1,18 @@
 // ***************************************************************************
 // BamWriter.cpp (c) 2009 Michael Str�mberg, Derek Barnett
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 4 March 2011 (DB)
+// Last modified: 25 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
 
-#include <api/BamAlignment.h>
-#include <api/BamWriter.h>
-#include <api/SamHeader.h>
-#include <api/internal/BamWriter_p.h>
+#include "api/BamAlignment.h"
+#include "api/BamWriter.h"
+#include "api/SamHeader.h"
+#include "api/internal/bam/BamWriter_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
-
-#include <iostream>
 using namespace std;
 
 /*! \class BamTools::BamWriter
@@ -58,6 +55,18 @@ void BamWriter::Close(void) {
     d->Close();
 }
 
+/*! \fn std::string BamWriter::GetErrorString(void) const
+    \brief Returns a human-readable description of the last error that occurred
+
+    This method allows elimination of STDERR pollution. Developers of client code
+    may choose how the messages are displayed to the user, if at all.
+
+    \return error description
+*/
+std::string BamWriter::GetErrorString(void) const {
+    return d->GetErrorString();
+}
+
 /*! \fn bool BamWriter::IsOpen(void) const
     \brief Returns \c true if BAM file is open for writing.
     \sa Open()
@@ -73,9 +82,9 @@ bool BamWriter::IsOpen(void) const {
 
     Will overwrite the BAM file if it already exists.
 
-    \param filename           name of output BAM file
-    \param samHeaderText      header data, as SAM-formatted string
-    \param referenceSequences list of reference entries
+    \param[in] filename           name of output BAM file
+    \param[in] samHeaderText      header data, as SAM-formatted string
+    \param[in] referenceSequences list of reference entries
 
     \return \c true if opened successfully
     \sa Close(), IsOpen(), BamReader::GetHeaderText(), BamReader::GetReferenceData()
@@ -96,9 +105,9 @@ bool BamWriter::Open(const std::string& filename,
 
     Will overwrite the BAM file if it already exists.
 
-    \param filename           name of output BAM file
-    \param samHeader          header data, wrapped in SamHeader object
-    \param referenceSequences list of reference entries
+    \param[in] filename           name of output BAM file
+    \param[in] samHeader          header data, wrapped in SamHeader object
+    \param[in] referenceSequences list of reference entries
 
     \return \c true if opened successfully
     \sa Close(), IsOpen(), BamReader::GetHeader(), BamReader::GetReferenceData()
@@ -113,20 +122,20 @@ bool BamWriter::Open(const std::string& filename,
 /*! \fn void BamWriter::SaveAlignment(const BamAlignment& alignment)
     \brief Saves an alignment to the BAM file.
 
-    \param alignment BamAlignment record to save
+    \param[in] alignment BamAlignment record to save
     \sa BamReader::GetNextAlignment(), BamReader::GetNextAlignmentCore()
 */
-void BamWriter::SaveAlignment(const BamAlignment& alignment) {
-    d->SaveAlignment(alignment);
+bool BamWriter::SaveAlignment(const BamAlignment& alignment) {
+    return d->SaveAlignment(alignment);
 }
 
-/*! \fn void BamWriter::SetCompressionMode(const CompressionMode& compressionMode)
+/*! \fn void BamWriter::SetCompressionMode(const BamWriter::CompressionMode& compressionMode)
     \brief Sets the output compression mode.
 
     Default mode is BamWriter::Compressed.
 
-    N.B. - Changing the compression mode is disabled on open files (i.e. the request will be ignored).
-    Be sure to call this function before opening the BAM file.
+    \note Changing the compression mode is disabled on open files (i.e. the request will
+    be ignored). Be sure to call this function before opening the BAM file.
 
     \code
         BamWriter writer;
@@ -135,9 +144,9 @@ void BamWriter::SaveAlignment(const BamAlignment& alignment) {
         // ...
     \endcode
 
-    \param compressionMode desired output compression behavior
+    \param[in] compressionMode desired output compression behavior
     \sa IsOpen(), Open()
 */
-void BamWriter::SetCompressionMode(const CompressionMode& compressionMode) {
+void BamWriter::SetCompressionMode(const BamWriter::CompressionMode& compressionMode) {
     d->SetWriteCompressed( compressionMode == BamWriter::Compressed );
 }

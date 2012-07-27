@@ -1,9 +1,8 @@
 // ***************************************************************************
 // bamtools_sort.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 14 June 2011 (DB)
+// Last modified: 27 March 2012 (DB)
 // ---------------------------------------------------------------------------
 // Sorts an input BAM file
 // ***************************************************************************
@@ -13,8 +12,10 @@
 #include <api/SamConstants.h>
 #include <api/BamMultiReader.h>
 #include <api/BamWriter.h>
+#include <api/algorithms/Sort.h>
 #include <utils/bamtools_options.h>
 using namespace BamTools;
+using namespace BamTools::Algorithms;
 
 #include <cstdio>
 #include <algorithm>
@@ -35,24 +36,6 @@ namespace BamTools {
 //    compromise that should perform well on average.
 const unsigned int SORT_DEFAULT_MAX_BUFFER_COUNT  = 500000;  // max numberOfAlignments for buffer
 const unsigned int SORT_DEFAULT_MAX_BUFFER_MEMORY = 1024;    // Mb
-
-// -----------------------------------
-// comparison objects (for sorting)
-
-struct SortLessThanPosition {
-    bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
-        if ( lhs.RefID != rhs.RefID )
-            return lhs.RefID < rhs.RefID;
-        else
-            return lhs.Position < rhs.Position;
-    }
-};
-
-struct SortLessThanName {
-    bool operator() (const BamAlignment& lhs, const BamAlignment& rhs) {
-        return lhs.Name < rhs.Name;
-    }
-};
     
 } // namespace BamTools
 
@@ -131,7 +114,7 @@ SortTool::SortToolPrivate::SortToolPrivate(SortTool::SortSettings* settings)
     // that way multiple sort runs don't trip on each other's temp files
     if ( m_settings) {
         size_t extensionFound = m_settings->InputBamFilename.find(".bam");
-        if (extensionFound != string::npos )
+        if ( extensionFound != string::npos )
             m_tempFilenameStub = m_settings->InputBamFilename.substr(0,extensionFound);
         m_tempFilenameStub.append(".sort.temp.");
     }
@@ -150,6 +133,8 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
     
     // get basic data that will be shared by all temp/output files 
     SamHeader header = reader.GetHeader();
+    if ( !header.HasVersion() )
+        header.Version = Constants::SAM_CURRENT_VERSION;
     header.SortOrder = ( m_settings->IsSortingByName
                        ? Constants::SAM_HD_SORTORDER_QUERYNAME
                        : Constants::SAM_HD_SORTORDER_COORDINATE );
@@ -161,7 +146,7 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
     vector<BamAlignment> buffer;
     buffer.reserve( (size_t)(m_settings->MaxBufferCount*1.1) );
     bool bufferFull = false;
-    
+
     // if sorting by name, we need to generate full char data
     // so can't use GetNextAlignmentCore()
     if ( m_settings->IsSortingByName ) {
@@ -178,18 +163,10 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
 
             // if buffer is "full"
             else {
-
-                // push any unmapped reads into buffer,
-                // don't want to split these into a separate temp file
-                if ( !al.IsMapped() )
-                    buffer.push_back(al);
-
-                // "al" is mapped, so create a sorted temp file with current buffer contents
+                // so create a sorted temp file with current buffer contents
                 // then push "al" into fresh buffer
-                else {
-                    CreateSortedTempFile(buffer);
-                    buffer.push_back(al);
-                }
+                CreateSortedTempFile(buffer);
+                buffer.push_back(al);
             }
         }
     }
@@ -209,18 +186,10 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
 
             // if buffer is "full"
             else {
-
-                // push any unmapped reads into buffer,
-                // don't want to split these into a separate temp file
-                if ( !al.IsMapped() )
-                    buffer.push_back(al);
-
-                // "al" is mapped, so create a sorted temp file with current buffer contents
+                // create a sorted temp file with current buffer contents
                 // then push "al" into fresh buffer
-                else {
-                    CreateSortedTempFile(buffer);
-                    buffer.push_back(al);
-                }
+                CreateSortedTempFile(buffer);
+                buffer.push_back(al);
             }
         }
     }
@@ -268,12 +237,6 @@ bool SortTool::SortToolPrivate::MergeSortedRuns(void) {
         return false;
     }
 
-    // set sort order for merge
-    if ( m_settings->IsSortingByName )
-        multiReader.SetSortOrder(BamMultiReader::SortedByReadName);
-    else
-        multiReader.SetSortOrder(BamMultiReader::SortedByPosition);
-    
     // open writer for our completely sorted output BAM file
     BamWriter mergedWriter;
     if ( !mergedWriter.Open(m_settings->OutputBamFilename, m_headerText, m_references) ) {
@@ -288,7 +251,7 @@ bool SortTool::SortToolPrivate::MergeSortedRuns(void) {
     while ( multiReader.GetNextAlignmentCore(al) )
         mergedWriter.SaveAlignment(al);
   
-    // close readers
+    // close files
     multiReader.Close();
     mergedWriter.Close();
     
@@ -300,6 +263,7 @@ bool SortTool::SortToolPrivate::MergeSortedRuns(void) {
         remove(tempFilename.c_str());
     }
   
+    // return success
     return true;
 }
 
@@ -320,9 +284,9 @@ void SortTool::SortToolPrivate::SortBuffer(vector<BamAlignment>& buffer) {
     
     // sort buffer by desired method
     if ( m_settings->IsSortingByName )
-        std::stable_sort ( buffer.begin(), buffer.end(), SortLessThanName() );
-    else 
-        std::stable_sort ( buffer.begin(), buffer.end(), SortLessThanPosition() );
+        std::stable_sort( buffer.begin(), buffer.end(), Sort::ByName() );
+    else
+        std::stable_sort( buffer.begin(), buffer.end(), Sort::ByPosition() );
 }
     
 bool SortTool::SortToolPrivate::WriteTempFile(const vector<BamAlignment>& buffer,

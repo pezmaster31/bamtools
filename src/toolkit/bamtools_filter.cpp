@@ -1,9 +1,8 @@
 // ***************************************************************************
 // bamtools_filter.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 7 April 2011
+// Last modified: 14 October 2011
 // ---------------------------------------------------------------------------
 // Filters BAM file(s) according to some user-specified criteria
 // ***************************************************************************
@@ -47,6 +46,7 @@ const string ISPRIMARYALIGNMENT_PROPERTY  = "isPrimaryAlignment";
 const string ISPROPERPAIR_PROPERTY        = "isProperPair";
 const string ISREVERSESTRAND_PROPERTY     = "isReverseStrand";
 const string ISSECONDMATE_PROPERTY        = "isSecondMate";
+const string ISSINGLETON_PROPERTY         = "isSingleton";
 const string MAPQUALITY_PROPERTY          = "mapQuality";
 const string MATEPOSITION_PROPERTY        = "matePosition";
 const string MATEREFERENCE_PROPERTY       = "mateReference";
@@ -102,6 +102,10 @@ struct BamAlignmentChecker {
             else if ( propertyName == ISPROPERPAIR_PROPERTY )         keepAlignment &= valueFilter.check(al.IsProperPair());
             else if ( propertyName == ISREVERSESTRAND_PROPERTY )      keepAlignment &= valueFilter.check(al.IsReverseStrand());
             else if ( propertyName == ISSECONDMATE_PROPERTY )         keepAlignment &= valueFilter.check(al.IsSecondMate());
+            else if ( propertyName == ISSINGLETON_PROPERTY ) {
+                const bool isSingleton = al.IsPaired() && al.IsMapped() && !al.IsMateMapped();
+                keepAlignment &= valueFilter.check(isSingleton);
+            }
             else if ( propertyName == MAPQUALITY_PROPERTY )           keepAlignment &= valueFilter.check(al.MapQuality);
             else if ( propertyName == MATEPOSITION_PROPERTY )         keepAlignment &= ( al.IsPaired() && al.IsMateMapped() && valueFilter.check(al.MateRefID) );
             else if ( propertyName == MATEREFERENCE_PROPERTY ) {
@@ -278,6 +282,7 @@ struct FilterTool::FilterSettings {
     bool HasIsProperPairFilter;
     bool HasIsReverseStrandFilter;
     bool HasIsSecondMateFilter;
+    bool HasIsSingletonFilter;
 
     // filters
     string IsDuplicateFilter;
@@ -291,6 +296,7 @@ struct FilterTool::FilterSettings {
     string IsProperPairFilter;
     string IsReverseStrandFilter;
     string IsSecondMateFilter;
+    string IsSingletonFilter;
 
     // ---------------------------------
     // constructor
@@ -319,6 +325,7 @@ struct FilterTool::FilterSettings {
         , HasIsProperPairFilter(false)
         , HasIsReverseStrandFilter(false)
         , HasIsSecondMateFilter(false)
+        , HasIsSingletonFilter(false)
         , IsDuplicateFilter(TRUE_STR)
         , IsFailedQCFilter(TRUE_STR)
         , IsFirstMateFilter(TRUE_STR)
@@ -330,6 +337,7 @@ struct FilterTool::FilterSettings {
         , IsProperPairFilter(TRUE_STR)
         , IsReverseStrandFilter(TRUE_STR)
         , IsSecondMateFilter(TRUE_STR)
+        , IsSingletonFilter(TRUE_STR)
     { }
 };
 
@@ -411,7 +419,8 @@ bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const string& filt
              propertyName == ISPRIMARYALIGNMENT_PROPERTY ||
              propertyName == ISPROPERPAIR_PROPERTY ||
              propertyName == ISREVERSESTRAND_PROPERTY ||
-             propertyName == ISSECONDMATE_PROPERTY
+             propertyName == ISSECONDMATE_PROPERTY ||
+             propertyName == ISSINGLETON_PROPERTY
            ) 
         {
             FilterEngine<BamAlignmentChecker>::parseToken(token, boolValue, type);
@@ -444,7 +453,7 @@ bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const string& filt
         
         // string conversion
         else if ( propertyName == CIGAR_PROPERTY || 
-	          propertyName == MATEREFERENCE_PROPERTY ||
+                  propertyName == MATEREFERENCE_PROPERTY ||
                   propertyName == NAME_PROPERTY ||
                   propertyName == QUERYBASES_PROPERTY ||
                   propertyName == REFERENCE_PROPERTY 
@@ -480,7 +489,7 @@ const string FilterTool::FilterToolPrivate::GetScriptContents(void) {
     if ( !inFile ) {
         cerr << "bamtools filter ERROR: could not open script: "
              << m_settings->ScriptFilename << " for reading" << endl;
-        return false;
+        return string();
     }
     
     // read in entire script contents  
@@ -496,7 +505,7 @@ const string FilterTool::FilterToolPrivate::GetScriptContents(void) {
         // read next block of data
         if ( fgets(buffer, 1024, inFile) == 0 ) {
             cerr << "bamtools filter ERROR: could not read script contents" << endl;
-            return false;
+            return string();
         }
         
         docStream << buffer;
@@ -506,8 +515,7 @@ const string FilterTool::FilterToolPrivate::GetScriptContents(void) {
     fclose(inFile);
     
     // import buffer contents to document, return
-    string document = docStream.str();
-    return document;
+    return docStream.str();
 }
 
 void FilterTool::FilterToolPrivate::InitProperties(void) {
@@ -527,6 +535,7 @@ void FilterTool::FilterToolPrivate::InitProperties(void) {
     m_propertyNames.push_back(ISPROPERPAIR_PROPERTY);
     m_propertyNames.push_back(ISREVERSESTRAND_PROPERTY);
     m_propertyNames.push_back(ISSECONDMATE_PROPERTY);
+    m_propertyNames.push_back(ISSINGLETON_PROPERTY);
     m_propertyNames.push_back(MAPQUALITY_PROPERTY);
     m_propertyNames.push_back(MATEPOSITION_PROPERTY);
     m_propertyNames.push_back(MATEREFERENCE_PROPERTY);
@@ -564,6 +573,7 @@ bool FilterTool::FilterToolPrivate::ParseCommandLine(void) {
     if ( m_settings->HasIsProperPairFilter )        propertyTokens.insert( make_pair(ISPROPERPAIR_PROPERTY,        m_settings->IsProperPairFilter) );
     if ( m_settings->HasIsReverseStrandFilter )     propertyTokens.insert( make_pair(ISREVERSESTRAND_PROPERTY,     m_settings->IsReverseStrandFilter) );
     if ( m_settings->HasIsSecondMateFilter )        propertyTokens.insert( make_pair(ISSECONDMATE_PROPERTY,        m_settings->IsSecondMateFilter) );
+    if ( m_settings->HasIsSingletonFilter )         propertyTokens.insert( make_pair(ISSINGLETON_PROPERTY,         m_settings->IsSingletonFilter) );
     if ( m_settings->HasMapQualityFilter )          propertyTokens.insert( make_pair(MAPQUALITY_PROPERTY,          m_settings->MapQualityFilter) );
     if ( m_settings->HasNameFilter )                propertyTokens.insert( make_pair(NAME_PROPERTY,                m_settings->NameFilter) );
     if ( m_settings->HasQueryBasesFilter )          propertyTokens.insert( make_pair(QUERYBASES_PROPERTY,          m_settings->QueryBasesFilter) );
@@ -791,36 +801,83 @@ FilterTool::FilterTool(void)
     , m_settings(new FilterSettings)
     , m_impl(0)
 {
+    // ----------------------------------
     // set program details
-    Options::SetProgramInfo("bamtools filter", "filters BAM file(s)", "[-in <filename> -in <filename> ...] [-out <filename> | [-forceCompression]] [-region <REGION>] [ [-script <filename] | [filterOptions] ]");
+
+    const string usage = "[-in <filename> -in <filename> ...] "
+                         "[-out <filename> | [-forceCompression]] [-region <REGION>] "
+                         "[ [-script <filename] | [filterOptions] ]";
+    Options::SetProgramInfo("bamtools filter", "filters BAM file(s)", usage );
+
+    // ----------------------------------
+    // I/O options
 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInputBamFilename,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());
-    Options::AddValueOption("-out",    "BAM filename", "the output BAM file",   "", m_settings->HasOutputBamFilename, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
-    Options::AddValueOption("-region", "REGION",       "only read data from this genomic region (see documentation for more details)", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
-    Options::AddValueOption("-script", "filename",     "the filter script file (see documentation for more details)", "", m_settings->HasScriptFilename, m_settings->ScriptFilename, IO_Opts);
-    Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
+
+    const string inDesc     = "the input BAM file(s)";
+    const string outDesc    = "the output BAM file";
+    const string regionDesc = "only read data from this genomic region (see documentation for more details)";
+    const string scriptDesc = "the filter script file (see documentation for more details)";
+    const string forceDesc  = "if results are sent to stdout (like when piping to another tool), "
+                              "default behavior is to leave output uncompressed. Use this flag to "
+                              "override and force compression";
+
+    Options::AddValueOption("-in",     "BAM filename", inDesc,     "", m_settings->HasInputBamFilename,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-out",    "BAM filename", outDesc,    "", m_settings->HasOutputBamFilename, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
+    Options::AddValueOption("-region", "REGION",       regionDesc, "", m_settings->HasRegion,            m_settings->Region,         IO_Opts);
+    Options::AddValueOption("-script", "filename",     scriptDesc, "", m_settings->HasScriptFilename,    m_settings->ScriptFilename, IO_Opts);
+    Options::AddOption("-forceCompression",forceDesc, m_settings->IsForceCompression, IO_Opts);
+
+    // ----------------------------------
+    // general filter options
 
     OptionGroup* FilterOpts = Options::CreateOptionGroup("General Filters");
-    Options::AddValueOption("-alignmentFlag", "int",        "keep reads with this *exact* alignment flag (for more detailed queries, see below)", "", m_settings->HasAlignmentFlagFilter, m_settings->AlignmentFlagFilter, FilterOpts);
-    Options::AddValueOption("-insertSize",    "int",        "keep reads with insert size that mathces pattern",             "", m_settings->HasInsertSizeFilter, m_settings->InsertSizeFilter, FilterOpts);
-    Options::AddValueOption("-mapQuality",    "[0-255]",    "keep reads with map quality that matches pattern",             "", m_settings->HasMapQualityFilter, m_settings->MapQualityFilter, FilterOpts);
-    Options::AddValueOption("-name",          "string",     "keep reads with name that matches pattern",                    "", m_settings->HasNameFilter,       m_settings->NameFilter,       FilterOpts);
-    Options::AddValueOption("-queryBases",    "string",     "keep reads with motif that mathces pattern",                   "", m_settings->HasQueryBasesFilter, m_settings->QueryBasesFilter, FilterOpts);
-    Options::AddValueOption("-tag",           "TAG:VALUE",  "keep reads with this key=>value pair",                         "", m_settings->HasTagFilter,        m_settings->TagFilter,        FilterOpts);
+
+    const string flagDesc    = "keep reads with this *exact* alignment flag (for more detailed queries, see below)";
+    const string insertDesc  = "keep reads with insert size that matches pattern";
+    const string mapQualDesc = "keep reads with map quality that matches pattern";
+    const string nameDesc    = "keep reads with name that matches pattern";
+    const string queryDesc   = "keep reads with motif that matches pattern";
+    const string tagDesc     = "keep reads with this key=>value pair";
+
+    Options::AddValueOption("-alignmentFlag", "int",       flagDesc,    "", m_settings->HasAlignmentFlagFilter, m_settings->AlignmentFlagFilter, FilterOpts);
+    Options::AddValueOption("-insertSize",    "int",       insertDesc,  "", m_settings->HasInsertSizeFilter,    m_settings->InsertSizeFilter,    FilterOpts);
+    Options::AddValueOption("-mapQuality",    "[0-255]",   mapQualDesc, "", m_settings->HasMapQualityFilter,    m_settings->MapQualityFilter,    FilterOpts);
+    Options::AddValueOption("-name",          "string",    nameDesc,    "", m_settings->HasNameFilter,          m_settings->NameFilter,          FilterOpts);
+    Options::AddValueOption("-queryBases",    "string",    queryDesc,   "", m_settings->HasQueryBasesFilter,    m_settings->QueryBasesFilter,    FilterOpts);
+    Options::AddValueOption("-tag",           "TAG:VALUE", tagDesc,     "", m_settings->HasTagFilter,           m_settings->TagFilter,           FilterOpts);
+
+    // ----------------------------------
+    // alignment flag filter options
 
     OptionGroup* AlignmentFlagOpts = Options::CreateOptionGroup("Alignment Flag Filters");
-    Options::AddValueOption("-isDuplicate",         "true/false", "keep only alignments that are marked as duplicate?", "", m_settings->HasIsDuplicateFilter,         m_settings->IsDuplicateFilter,         AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isFailedQC",          "true/false", "keep only alignments that failed QC?",               "", m_settings->HasIsFailedQCFilter,          m_settings->IsFailedQCFilter,          AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isFirstMate",         "true/false", "keep only alignments marked as first mate?",         "", m_settings->HasIsFirstMateFilter,         m_settings->IsFirstMateFilter,         AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isMapped",            "true/false", "keep only alignments that were mapped?",             "", m_settings->HasIsMappedFilter,            m_settings->IsMappedFilter,            AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isMateMapped",        "true/false", "keep only alignments with mates that mapped",        "", m_settings->HasIsMateMappedFilter,        m_settings->IsMateMappedFilter,        AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isMateReverseStrand", "true/false", "keep only alignments with mate on reverese strand?", "", m_settings->HasIsMateReverseStrandFilter, m_settings->IsMateReverseStrandFilter, AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isPaired",            "true/false", "keep only alignments that were sequenced as paired?","", m_settings->HasIsPairedFilter,            m_settings->IsPairedFilter,            AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isPrimaryAlignment",  "true/false", "keep only alignments marked as primary?",            "", m_settings->HasIsPrimaryAlignmentFilter,  m_settings->IsPrimaryAlignmentFilter,  AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isProperPair",        "true/false", "keep only alignments that passed PE resolution?",    "", m_settings->HasIsProperPairFilter,        m_settings->IsProperPairFilter,        AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isReverseStrand",     "true/false", "keep only alignments on reverse strand?",            "", m_settings->HasIsReverseStrandFilter,     m_settings->IsReverseStrandFilter,     AlignmentFlagOpts, TRUE_STR);
-    Options::AddValueOption("-isSecondMate",        "true/false", "keep only alignments marked as second mate?",        "", m_settings->HasIsSecondMateFilter,        m_settings->IsSecondMateFilter,        AlignmentFlagOpts, TRUE_STR);
+
+    const string boolArg           = "true/false";
+    const string isDupDesc         = "keep only alignments that are marked as duplicate?";
+    const string isFailQcDesc      = "keep only alignments that failed QC?";
+    const string isFirstMateDesc   = "keep only alignments marked as first mate?";
+    const string isMappedDesc      = "keep only alignments that were mapped?";
+    const string isMateMappedDesc  = "keep only alignments with mates that mapped";
+    const string isMateReverseDesc = "keep only alignments with mate on reverese strand?";
+    const string isPairedDesc      = "keep only alignments that were sequenced as paired?";
+    const string isPrimaryDesc     = "keep only alignments marked as primary?";
+    const string isProperPairDesc  = "keep only alignments that passed PE resolution?";
+    const string isReverseDesc     = "keep only alignments on reverse strand?";
+    const string isSecondMateDesc  = "keep only alignments marked as second mate?";
+    const string isSingletonDesc   = "keep only singletons";
+
+    Options::AddValueOption("-isDuplicate",         boolArg, isDupDesc,         "", m_settings->HasIsDuplicateFilter,         m_settings->IsDuplicateFilter,         AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isFailedQC",          boolArg, isFailQcDesc,      "", m_settings->HasIsFailedQCFilter,          m_settings->IsFailedQCFilter,          AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isFirstMate",         boolArg, isFirstMateDesc,   "", m_settings->HasIsFirstMateFilter,         m_settings->IsFirstMateFilter,         AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isMapped",            boolArg, isMappedDesc,      "", m_settings->HasIsMappedFilter,            m_settings->IsMappedFilter,            AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isMateMapped",        boolArg, isMateMappedDesc,  "", m_settings->HasIsMateMappedFilter,        m_settings->IsMateMappedFilter,        AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isMateReverseStrand", boolArg, isMateReverseDesc, "", m_settings->HasIsMateReverseStrandFilter, m_settings->IsMateReverseStrandFilter, AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isPaired",            boolArg, isPairedDesc,      "", m_settings->HasIsPairedFilter,            m_settings->IsPairedFilter,            AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isPrimaryAlignment",  boolArg, isPrimaryDesc,     "", m_settings->HasIsPrimaryAlignmentFilter,  m_settings->IsPrimaryAlignmentFilter,  AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isProperPair",        boolArg, isProperPairDesc,  "", m_settings->HasIsProperPairFilter,        m_settings->IsProperPairFilter,        AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isReverseStrand",     boolArg, isReverseDesc,     "", m_settings->HasIsReverseStrandFilter,     m_settings->IsReverseStrandFilter,     AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isSecondMate",        boolArg, isSecondMateDesc,  "", m_settings->HasIsSecondMateFilter,        m_settings->IsSecondMateFilter,        AlignmentFlagOpts, TRUE_STR);
+    Options::AddValueOption("-isSingleton",         boolArg, isSingletonDesc,   "", m_settings->HasIsSingletonFilter,         m_settings->IsSingletonFilter,         AlignmentFlagOpts, TRUE_STR);
 }
 
 FilterTool::~FilterTool(void) {

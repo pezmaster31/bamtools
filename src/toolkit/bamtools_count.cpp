@@ -1,7 +1,6 @@
 // ***************************************************************************
 // bamtools_count.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
 // Last modified: 7 April 2011
 // ---------------------------------------------------------------------------
@@ -10,6 +9,7 @@
 
 #include "bamtools_count.h"
 
+#include <api/BamAlgorithms.h>
 #include <api/BamMultiReader.h>
 #include <utils/bamtools_options.h>
 #include <utils/bamtools_utilities.h>
@@ -96,7 +96,7 @@ bool CountTool::CountToolPrivate::Run(void) {
             reader.LocateIndexes();
 
             // if index data available for all BAM files, we can use SetRegion
-            if ( reader.IsIndexLoaded() ) {
+            if ( reader.HasIndexes() ) {
 
                 // attempt to set region on reader
                 if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {

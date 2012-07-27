@@ -1,9 +1,8 @@
 // ***************************************************************************
 // bamtools_filter_engine.h (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010
+// Last modified: 10 October 2011
 // ---------------------------------------------------------------------------
 // Provides a generic filter engine based on filter-sets of properties,
 // with possible "rules" (compound logical expressions) to create more complex
@@ -42,10 +41,11 @@
 #ifndef BAMTOOLS_FILTER_ENGINE_H
 #define BAMTOOLS_FILTER_ENGINE_H
 
-#include <utils/bamtools_filter_properties.h>
-#include <utils/bamtools_filter_ruleparser.h>
-#include <utils/bamtools_utilities.h>
-#include <utils/utils_global.h>
+#include "utils/utils_global.h"
+#include "utils/bamtools_filter_properties.h"
+#include "utils/bamtools_filter_ruleparser.h"
+#include "utils/bamtools_utilities.h"
+
 #include <algorithm>
 #include <iostream>
 #include <map>

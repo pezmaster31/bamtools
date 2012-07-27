@@ -1,9 +1,8 @@
 // ***************************************************************************
 // bamtools_resolve.cpp (c) 2011
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 14 June 2011
+// Last modified: 14 October 2011
 // ---------------------------------------------------------------------------
 // Resolves paired-end reads (marking the IsProperPair flag as needed).
 // ***************************************************************************
@@ -19,6 +18,7 @@ using namespace BamTools;
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+#include <cstdio>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -33,10 +33,11 @@ using namespace std;
 // general ResolveTool constants
 // --------------------------------------------------------------------------
 
-static const int NUM_MODELS = 8;
-static const string READ_GROUP_TAG = "RG";
-static const double DEFAULT_CONFIDENCE_INTERVAL = 0.9973;
-static const double DEFAULT_UNUSEDMODEL_THRESHOLD = 0.1;
+static const int      NUM_MODELS = 8;
+static const string   READ_GROUP_TAG = "RG";
+static const double   DEFAULT_CONFIDENCE_INTERVAL = 0.9973;
+static const uint16_t DEFAULT_MIN_MAPQUALITY = 1;
+static const double   DEFAULT_UNUSEDMODEL_THRESHOLD = 0.1;
 
 // --------------------------------------------------------------------------
 // stats file constants
@@ -64,12 +65,20 @@ static const string READGROUPS_TOKEN = "[ReadGroups]";
 
 // option keywords
 static const string OPTION_CONFIDENCEINTERVAL   = "ConfidenceInterval";
+static const string OPTION_MINIMUMMAPQUALITY    = "MinimumMapQuality";
 static const string OPTION_UNUSEDMODELTHRESHOLD = "UnusedModelThreshold";
 static const string OPTION_FORCEMARKREADGROUPS  = "ForceMarkReadGroups";
 
 // other string constants
 static const string RG_FIELD_DESCRIPTION =
     "#<name> <medianFL> <minFL> <maxFL> <topModelID> <nextTopModelID> <isAmbiguous?>";
+
+// --------------------------------------------------------------------------
+// unique readname file constants
+// --------------------------------------------------------------------------
+
+static const string READNAME_FILE_SUFFIX = ".uniq_names.txt";
+static const string DEFAULT_READNAME_FILE = "bt_resolve_TEMP" + READNAME_FILE_SUFFIX;
 
 // --------------------------------------------------------------------------
 // ModelType implementation
@@ -146,6 +155,7 @@ struct ReadGroupResolver {
     bool IsAmbiguous;
     bool HasData;
     vector<ModelType> Models;
+    map<string, bool> ReadNames;
 
     // ctor
     ReadGroupResolver(void);
@@ -277,46 +287,164 @@ void ReadGroupResolver::SetUnusedModelThreshold(const double& umt) {
 
 struct ResolveTool::ResolveSettings {
 
-    // flags
-    bool HasInputBamFile;
-    bool HasOutputBamFile;
-    bool IsForceCompression;
-    bool HasStatsFile;
+    // modes
     bool IsMakeStats;
     bool IsMarkPairs;
     bool IsTwoPass;
+
+    // I/O flags
+    bool HasInputBamFile;
+    bool HasOutputBamFile;
+    bool HasStatsFile;
+    bool IsForceCompression;
+
+    // resolve option flags
     bool HasConfidenceInterval;
+    bool HasForceMarkReadGroups;
+    bool HasMinimumMapQuality;
     bool HasUnusedModelThreshold;
 
-    // filenames
+    // I/O filenames
     string InputBamFilename;
     string OutputBamFilename;
     string StatsFilename;
+    string ReadNamesFilename; //  ** N.B. - Only used internally, not set from cmdline **
 
-    // 'resolve options'
-    double ConfidenceInterval;
-    double UnusedModelThreshold;
-    bool HasForceMarkReadGroups;
+    // resolve options
+    double   ConfidenceInterval;
+    uint16_t MinimumMapQuality;
+    double   UnusedModelThreshold;
 
     // constructor
     ResolveSettings(void)
-        : HasInputBamFile(false)
-        , HasOutputBamFile(false)
-        , IsForceCompression(false)
-        , HasStatsFile(false)
-        , IsMakeStats(false)
+        : IsMakeStats(false)
         , IsMarkPairs(false)
         , IsTwoPass(false)
+        , HasInputBamFile(false)
+        , HasOutputBamFile(false)
+        , HasStatsFile(false)
+        , IsForceCompression(false)
         , HasConfidenceInterval(false)
+        , HasForceMarkReadGroups(false)
+        , HasMinimumMapQuality(false)
         , HasUnusedModelThreshold(false)
         , InputBamFilename(Options::StandardIn())
         , OutputBamFilename(Options::StandardOut())
         , StatsFilename("")
+        , ReadNamesFilename(DEFAULT_READNAME_FILE)
         , ConfidenceInterval(DEFAULT_CONFIDENCE_INTERVAL)
+        , MinimumMapQuality(DEFAULT_MIN_MAPQUALITY)
         , UnusedModelThreshold(DEFAULT_UNUSEDMODEL_THRESHOLD)
-        , HasForceMarkReadGroups(false)
     { }
 };
+
+// --------------------------------------------------------------------------
+// ReadNamesFileReader implementation
+
+struct ResolveTool::ReadNamesFileReader {
+
+    // ctor & dtor
+    ReadNamesFileReader(void) { }
+    ~ReadNamesFileReader(void) { Close(); }
+
+    // main reader interface
+    public:
+        void Close(void);
+        bool Open(const string& filename);
+        bool Read(map<string, ReadGroupResolver>& readGroups);
+
+    // data members
+    private:
+        ifstream m_stream;
+};
+
+void ResolveTool::ReadNamesFileReader::Close(void) {
+    if ( m_stream.is_open() )
+        m_stream.close();
+}
+
+bool ResolveTool::ReadNamesFileReader::Open(const string& filename) {
+
+    // make sure stream is fresh
+    Close();
+
+    // attempt to open filename, return status
+    m_stream.open(filename.c_str(), ifstream::in);
+    return m_stream.good();
+}
+
+bool ResolveTool::ReadNamesFileReader::Read(map<string, ReadGroupResolver>& readGroups) {
+
+    // up-front sanity check
+    if ( !m_stream.is_open() ) return false;
+
+    // parse read names file
+    string line;
+    vector<string> fields;
+    map<string, ReadGroupResolver>::iterator rgIter;
+    map<string, ReadGroupResolver>::iterator rgEnd = readGroups.end();
+    while ( getline(m_stream, line) ) {
+
+        // skip if empty line
+        if ( line.empty() ) continue;
+
+        // split line on '\t'
+        fields = Utilities::Split(line, TAB_CHAR);
+        if ( fields.size() != 2 ) continue;
+
+        // look up resolver for read group
+        rgIter = readGroups.find( fields[0] );
+        if ( rgIter == rgEnd ) return false;
+        ReadGroupResolver& resolver = (*rgIter).second;
+
+        // store read name with resolver
+        resolver.ReadNames.insert( make_pair<string,bool>(fields[1], true) ) ;
+    }
+
+    // if here, return success
+    return true;
+}
+
+// --------------------------------------------------------------------------
+// ReadNamesFileWriter implementation
+
+struct ResolveTool::ReadNamesFileWriter {
+
+    // ctor & dtor
+    ReadNamesFileWriter(void) { }
+    ~ReadNamesFileWriter(void) { Close(); }
+
+    // main reader interface
+    public:
+        void Close(void);
+        bool Open(const string& filename);
+        void Write(const string& readGroupName, const string& readName);
+
+    // data members
+    private:
+        ofstream m_stream;
+};
+
+void ResolveTool::ReadNamesFileWriter::Close(void) {
+    if ( m_stream.is_open() )
+        m_stream.close();
+}
+
+bool ResolveTool::ReadNamesFileWriter::Open(const string& filename) {
+
+    // make sure stream is fresh
+    Close();
+
+    // attempt to open filename, return status
+    m_stream.open(filename.c_str(), ofstream::out);
+    return m_stream.good();
+}
+
+void ResolveTool::ReadNamesFileWriter::Write(const string& readGroupName,
+                                             const string& readName)
+{
+    m_stream << readGroupName << TAB_CHAR << readName << endl;
+}
 
 // --------------------------------------------------------------------------
 // StatsFileReader implementation
@@ -331,7 +459,7 @@ struct ResolveTool::StatsFileReader {
     // main reader interface
     public:
         void Close(void);
-        bool Open(const std::string& filename);
+        bool Open(const string& filename);
         bool Read(ResolveTool::ResolveSettings* settings,
                   map<string, ReadGroupResolver>& readGroups);
 
@@ -405,16 +533,23 @@ bool ResolveTool::StatsFileReader::ParseOptionLine(const string& line,
         return true;
     }
 
+    // ForceMarkReadGroups
+    if ( option == OPTION_FORCEMARKREADGROUPS ) {
+        value >> settings->HasForceMarkReadGroups;
+        return true;
+    }
+
+    // MinimumMapQuality
+    if ( option == OPTION_MINIMUMMAPQUALITY ) {
+        value >> settings->MinimumMapQuality;
+        settings->HasMinimumMapQuality = true;
+        return true;
+    }
+
     // UnusedModelThreshold
     if ( option == OPTION_UNUSEDMODELTHRESHOLD ) {
         value >> settings->UnusedModelThreshold;
         settings->HasUnusedModelThreshold = true;
-        return true;
-    }
-
-    // ForceMarkReadGroups
-    if ( option == OPTION_FORCEMARKREADGROUPS ) {
-        value >> settings->HasForceMarkReadGroups;
         return true;
     }
 
@@ -538,7 +673,7 @@ struct ResolveTool::StatsFileWriter {
     // main reader interface
     public:
         void Close(void);
-        bool Open(const std::string& filename);
+        bool Open(const string& filename);
         bool Write(ResolveTool::ResolveSettings* settings,
                    const map<string, ReadGroupResolver>& readGroups);
 
@@ -617,14 +752,16 @@ void ResolveTool::StatsFileWriter::WriteOptions(ResolveTool::ResolveSettings* se
 
     // [Options]
     // ConfidenceInterval=<double>
-    // UnusedModelThreshold=<double>
     // ForceMarkReadGroups=<true|false>
+    // MinimumMapQuality=<uint16_t>
+    // UnusedModelThreshold=<double>
     // \n
 
     m_stream << OPTIONS_TOKEN << endl
              << OPTION_CONFIDENCEINTERVAL   << EQUAL_CHAR << settings->ConfidenceInterval << endl
-             << OPTION_UNUSEDMODELTHRESHOLD << EQUAL_CHAR << settings->UnusedModelThreshold << endl
              << OPTION_FORCEMARKREADGROUPS  << EQUAL_CHAR << boolalpha << settings->HasForceMarkReadGroups << endl
+             << OPTION_MINIMUMMAPQUALITY    << EQUAL_CHAR << settings->MinimumMapQuality << endl
+             << OPTION_UNUSEDMODELTHRESHOLD << EQUAL_CHAR << settings->UnusedModelThreshold << endl
              << endl;
 }
 
@@ -763,6 +900,10 @@ bool ResolveTool::ResolveToolPrivate::CheckSettings(vector<string>& errors) {
         if ( m_settings->ConfidenceInterval < 0.0 || m_settings->ConfidenceInterval > 1.0 )
             errors.push_back("Invalid confidence interval. Must be between 0 and 1");
     }
+    if ( m_settings->HasMinimumMapQuality ) {
+        if ( m_settings->MinimumMapQuality >= 256 )
+            errors.push_back("Invalid minimum map quality. Must be between 0 and 255");
+    }
     if ( m_settings->HasUnusedModelThreshold ) {
         if ( m_settings->UnusedModelThreshold < 0.0 || m_settings->UnusedModelThreshold > 1.0 )
             errors.push_back("Invalid unused model threshold. Must be between 0 and 1");
@@ -779,22 +920,32 @@ bool ResolveTool::ResolveToolPrivate::MakeStats(void) {
     ReadGroupResolver::SetUnusedModelThreshold(m_settings->UnusedModelThreshold);
 
     // open our BAM reader
-    BamReader reader;
-    if ( !reader.Open(m_settings->InputBamFilename) ) {
+    BamReader bamReader;
+    if ( !bamReader.Open(m_settings->InputBamFilename) ) {
         cerr << "bamtools resolve ERROR: could not open input BAM file: "
              << m_settings->InputBamFilename << endl;
         return false;
     }
 
     // retrieve header & parse for read groups
-    const SamHeader& header = reader.GetHeader();
+    const SamHeader& header = bamReader.GetHeader();
     ParseHeader(header);
+
+    // open ReadNamesFileWriter
+    ResolveTool::ReadNamesFileWriter readNamesWriter;
+    if ( !readNamesWriter.Open(m_settings->ReadNamesFilename) ) {
+        cerr << "bamtools resolve ERROR: could not open (temp) output read names file: "
+             << m_settings->ReadNamesFilename << endl;
+        bamReader.Close();
+        return false;
+    }
 
     // read through BAM file
     BamAlignment al;
     string readGroup("");
     map<string, ReadGroupResolver>::iterator rgIter;
-    while ( reader.GetNextAlignmentCore(al) ) {
+    map<string, bool>::iterator readNameIter;
+    while ( bamReader.GetNextAlignmentCore(al) ) {
 
         // skip if alignment is not paired, mapped, nor mate is mapped
         if ( !al.IsPaired() || !al.IsMapped() || !al.IsMateMapped() )
@@ -802,17 +953,6 @@ bool ResolveTool::ResolveToolPrivate::MakeStats(void) {
 
         // skip if alignment & mate not on same reference sequence
         if ( al.RefID != al.MateRefID ) continue;
-
-        // skip if map quality is 0
-        if ( al.MapQuality == 0 ) continue;
-
-        // skip if insert size is less than (we'll count its mate)
-        // or equal to zero (single-end or missing data)
-        if ( al.InsertSize <= 0 ) continue;
-
-        // determine model type, skip if model unknown
-        const uint16_t currentModelType = CalculateModelType(al);
-        assert( currentModelType != ModelType::DUMMY_ID );
 
         // flesh out the char data, so we can retrieve its read group ID
         al.BuildCharData();
@@ -826,14 +966,44 @@ bool ResolveTool::ResolveToolPrivate::MakeStats(void) {
         if ( rgIter == m_readGroups.end() )  {
             cerr << "bamtools resolve ERROR - unable to calculate stats, unknown read group encountered: "
                  << readGroup << endl;
-            reader.Close();
+            bamReader.Close();
             return false;
         }
         ReadGroupResolver& resolver = (*rgIter).second;
 
-        // update stats for current read group, current model type
-        resolver.Models[currentModelType].push_back(al.InsertSize);
+        // determine unique-ness of current alignment
+        const bool isCurrentMateUnique = ( al.MapQuality >= m_settings->MinimumMapQuality );
+
+        // look up read name
+        readNameIter = resolver.ReadNames.find(al.Name);
+
+        // if read name found (current alignment's mate already parsed)
+        if ( readNameIter != resolver.ReadNames.end() ) {
+
+            // if both unique mates are unique, store read name & insert size for later
+            const bool isStoredMateUnique  = (*readNameIter).second;
+            if ( isCurrentMateUnique && isStoredMateUnique ) {
+
+                // save read name in temp file as candidates for later pair marking
+                readNamesWriter.Write(readGroup, al.Name);
+
+                // determine model type & store fragment length for stats calculation
+                const uint16_t currentModelType = CalculateModelType(al);
+                assert( currentModelType != ModelType::DUMMY_ID );
+                resolver.Models[currentModelType].push_back( abs(al.InsertSize) );
+            }
+
+            // unique or not, remove read name from map
+            resolver.ReadNames.erase(readNameIter);
+        }
+
+        // if read name not found, store new entry
+        else resolver.ReadNames.insert( make_pair<string, bool>(al.Name, isCurrentMateUnique) );
     }
+
+    // close files
+    readNamesWriter.Close();
+    bamReader.Close();
 
     // iterate back through read groups
     map<string, ReadGroupResolver>::iterator rgEnd  = m_readGroups.end();
@@ -843,10 +1013,13 @@ bool ResolveTool::ResolveToolPrivate::MakeStats(void) {
 
         // calculate acceptable orientation & insert sizes for this read group
         resolver.DetermineTopModels(name);
+
+        // clear out left over read names
+        // (these have mates that did not pass filters or were already removed as non-unique)
+        resolver.ReadNames.clear();
     }
 
-    // close reader & return success
-    reader.Close();
+    // if we get here, return success
     return true;
 }
 
@@ -900,8 +1073,8 @@ void ResolveTool::ResolveToolPrivate::ResolveAlignment(BamAlignment& al) {
     // quit check if alignment & its mate are on differenct references
     if ( al.RefID != al.MateRefID ) return;
 
-    // quit check if map quality is 0
-    if ( al.MapQuality == 0 ) return;
+    // quit check if map quality less than cutoff
+    if ( al.MapQuality < m_settings->MinimumMapQuality ) return;
 
     // get read group from alignment
     // empty string if not found, this is OK - we handle empty read group case
@@ -923,11 +1096,40 @@ void ResolveTool::ResolveToolPrivate::ResolveAlignment(BamAlignment& al) {
     // quit check if pairs are not within "reasonable" distance (can differ for each RG)
     if ( !resolver.IsValidInsertSize(al) ) return;
 
+    // quit check if alignment is not a "candidate proper pair"
+    map<string, bool>::const_iterator readNameIter;
+    readNameIter = resolver.ReadNames.find(al.Name);
+    if ( readNameIter == resolver.ReadNames.end() )
+        return;
+
     // if we get here, alignment is OK - set 'proper pair' flag
     al.SetIsProperPair(true);
 }
 
 bool ResolveTool::ResolveToolPrivate::ResolvePairs(void) {
+
+    // open file containing read names of candidate proper pairs
+    ResolveTool::ReadNamesFileReader readNamesReader;
+    if ( !readNamesReader.Open(m_settings->ReadNamesFilename) ) {
+        cerr << "bamtools resolve ERROR: could not open (temp) inputput read names file: "
+             << m_settings->ReadNamesFilename << endl;
+        return false;
+    }
+
+    // parse read names (matching with corresponding read groups)
+    if ( !readNamesReader.Read(m_readGroups) ) {
+        cerr << "bamtools resolve ERROR: could not read candidate read names from file: "
+             << m_settings->ReadNamesFilename << endl;
+        readNamesReader.Close();
+        return false;
+    }
+
+    // close read name file reader & delete temp file
+    readNamesReader.Close();
+    if ( remove(m_settings->ReadNamesFilename.c_str()) != 0 ) {
+        cerr << "bamtools resolve WARNING: could not delete temp file: "
+             << m_settings->ReadNamesFilename << endl;
+    }
 
     // open our BAM reader
     BamReader reader;
@@ -986,6 +1188,12 @@ bool ResolveTool::ResolveToolPrivate::Run(void) {
 
     // initialize read group map with default (empty name) read group
     m_readGroups.insert( make_pair<string, ReadGroupResolver>("", ReadGroupResolver()) );
+
+    // init readname filename
+    // uses (adjusted) stats filename if provided (req'd for makeStats, markPairs modes; optional for twoPass)
+    // else keep default filename
+    if ( m_settings->HasStatsFile )
+        m_settings->ReadNamesFilename = m_settings->StatsFilename + READNAME_FILE_SUFFIX;
 
     // -makeStats mode
     if ( m_settings->IsMakeStats ) {
@@ -1107,6 +1315,8 @@ ResolveTool::ResolveTool(void)
             "All MakeStats & MarkPairs Mode Settings are available. "
             "The intermediate stats file is not necessary, but if the -stats options is used, then one will be generated. "
             "You may find this useful for documentation purposes.";
+    const string minMapQualDescription = "minimum map quality. Used in -makeStats mode as a heuristic for determining a mate's "
+            "uniqueness. Used in -markPairs mode as a filter for marking candidate proper pairs.";
     const string confidenceIntervalDescription = "confidence interval. Set min/max fragment lengths such that we capture "
             "this fraction of pairs";
     const string unusedModelThresholdDescription = "unused model threshold. The resolve tool considers 8 possible orientation models "
@@ -1141,6 +1351,10 @@ ResolveTool::ResolveTool(void)
     Options::AddOption("-makeStats", makeStatsDescription, m_settings->IsMakeStats, ModeOpts);
     Options::AddOption("-markPairs", markPairsDescription, m_settings->IsMarkPairs, ModeOpts);
     Options::AddOption("-twoPass",   twoPassDescription,   m_settings->IsTwoPass,   ModeOpts);
+
+    OptionGroup* GeneralOpts = Options::CreateOptionGroup("General Resolve Options (available in all modes)");
+    Options::AddValueOption("-minMQ", "unsigned short", minMapQualDescription, "",
+                            m_settings->HasMinimumMapQuality, m_settings->MinimumMapQuality, GeneralOpts);
 
     OptionGroup* MakeStatsOpts = Options::CreateOptionGroup("MakeStats Mode Options (disabled in -markPairs mode)");
     Options::AddValueOption("-ci", "double", confidenceIntervalDescription, "",

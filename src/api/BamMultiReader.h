@@ -1,9 +1,8 @@
 // ***************************************************************************
 // BamMultiReader.h (c) 2010 Erik Garrison, Derek Barnett
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 15 March 2011 (DB)
+// Last modified: 25 October 2011 (DB)
 // ---------------------------------------------------------------------------
 // Convenience class for reading multiple BAM files.
 // ***************************************************************************
@@ -11,8 +10,8 @@
 #ifndef BAMMULTIREADER_H
 #define BAMMULTIREADER_H
 
-#include <api/api_global.h>
-#include <api/BamReader.h>
+#include "api/api_global.h"
+#include "api/BamReader.h"
 #include <map>
 #include <sstream>
 #include <string>
@@ -25,12 +24,6 @@ namespace Internal {
 } // namespace Internal
 
 class API_EXPORT BamMultiReader {
-
-    public:
-        enum SortOrder { SortedByPosition = 0
-                       , SortedByReadName
-                       , Unsorted
-                       };
 
     // constructor / destructor
     public:
@@ -45,9 +38,9 @@ class API_EXPORT BamMultiReader {
         // ----------------------
 
         // closes all open BAM files
-        void Close(void);
+        bool Close(void);
         // close only the requested BAM file
-        void CloseFile(const std::string& filename);
+        bool CloseFile(const std::string& filename);
         // returns list of filenames for all open BAM files
         const std::vector<std::string> Filenames(void) const;
         // returns true if multireader has any open BAM files
@@ -74,11 +67,8 @@ class API_EXPORT BamMultiReader {
 
         // retrieves next available alignment
         bool GetNextAlignment(BamAlignment& alignment);
-        // retrieves next available alignmnet (without populating the alignment's string data fields)
+        // retrieves next available alignment (without populating the alignment's string data fields)
         bool GetNextAlignmentCore(BamAlignment& alignment);
-
-        // sets the expected sorting order for reading across multiple BAM files
-        void SetSortOrder(const SortOrder& order);
 
         // ----------------------
         // access auxiliary data
@@ -107,15 +97,13 @@ class API_EXPORT BamMultiReader {
         bool LocateIndexes(const BamIndex::IndexType& preferredType = BamIndex::STANDARD);
         // opens index files for current BAM files.
         bool OpenIndexes(const std::vector<std::string>& indexFilenames);
-        // changes the caching behavior of the index data
-        void SetIndexCacheMode(const BamIndex::IndexCacheMode& mode);
 
-    // deprecated methods
-    public:
-        // returns \c true if all BAM files have index data available.
-        bool IsIndexLoaded(void) const;
-        // convenience method for printing filenames to stdout
-        void PrintFilenames(void) const;
+        // ----------------------
+        // error handling
+        // ----------------------
+
+        // returns a human-readable description of the last error that occurred
+        std::string GetErrorString(void) const;
 
     // private implementation
     private:

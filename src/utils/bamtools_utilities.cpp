@@ -1,9 +1,8 @@
 // ***************************************************************************
 // bamtools_utilities.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 9 June 2011
+// Last modified: 8 October 2011
 // ---------------------------------------------------------------------------
 // Provides general utilities used by BamTools sub-tools.
 // ***************************************************************************
@@ -89,7 +88,7 @@ bool Utilities::ParseRegionString(const string& regionString,
         startChrom = regionString;
         startPos   = 0;
         stopChrom  = regionString;
-        stopPos    = -1;
+        stopPos    = 0;
     }
     
     // colon found, so we at least have some sort of startPos requested
@@ -142,17 +141,17 @@ bool Utilities::ParseRegionString(const string& regionString,
     
     // if startRefID not found, return false
     int startRefID = reader.GetReferenceID(startChrom);
-    if ( startRefID == (int)references.size() ) return false;  
+    if ( startRefID == -1 ) return false;
     
-    // if startPos is larger than reference, return false
+    // startPos cannot be greater than or equal to reference length
     const RefData& startReference = references.at(startRefID);
-    if ( startPos > startReference.RefLength ) return false;
+    if ( startPos >= startReference.RefLength ) return false;
     
     // if stopRefID not found, return false
     int stopRefID = reader.GetReferenceID(stopChrom);
-    if ( stopRefID == (int)references.size() ) return false;
+    if ( stopRefID == -1 ) return false;
     
-    // if stopPosition larger than reference, return false
+    // stopPosition cannot be larger than reference length
     const RefData& stopReference = references.at(stopRefID);
     if ( stopPos > stopReference.RefLength ) return false;
     
@@ -162,9 +161,9 @@ bool Utilities::ParseRegionString(const string& regionString,
     // -------------------------------
     // set up Region struct & return
     
-    region.LeftRefID = startRefID;
-    region.LeftPosition = startPos;
-    region.RightRefID = stopRefID;;
+    region.LeftRefID     = startRefID;
+    region.LeftPosition  = startPos;
+    region.RightRefID    = stopRefID;;
     region.RightPosition = stopPos;
     return true;
 }
@@ -246,34 +245,34 @@ bool Utilities::ParseRegionString(const string& regionString,
 
     // -------------------------------
     // validate reference IDs & genomic positions
-    
+
     const RefVector references = reader.GetReferenceData();
-    
+
     // if startRefID not found, return false
     int startRefID = reader.GetReferenceID(startChrom);
-    if ( startRefID == (int)references.size() ) return false;  
-    
-    // if startPos is larger than reference, return false
+    if ( startRefID == -1 ) return false;
+
+    // startPos cannot be greater than or equal to reference length
     const RefData& startReference = references.at(startRefID);
-    if ( startPos > startReference.RefLength ) return false;
-    
+    if ( startPos >= startReference.RefLength ) return false;
+
     // if stopRefID not found, return false
     int stopRefID = reader.GetReferenceID(stopChrom);
-    if ( stopRefID == (int)references.size() ) return false;
-    
-    // if stopPosition larger than reference, return false
+    if ( stopRefID == -1 ) return false;
+
+    // stopPosition cannot be larger than reference length
     const RefData& stopReference = references.at(stopRefID);
     if ( stopPos > stopReference.RefLength ) return false;
-    
+
     // if no stopPosition specified, set to reference end
-    if ( stopPos == -1 ) stopPos = stopReference.RefLength;  
-    
+    if ( stopPos == -1 ) stopPos = stopReference.RefLength;
+
     // -------------------------------
     // set up Region struct & return
-    
-    region.LeftRefID = startRefID;
-    region.LeftPosition = startPos;
-    region.RightRefID = stopRefID;;
+
+    region.LeftRefID     = startRefID;
+    region.LeftPosition  = startPos;
+    region.RightRefID    = stopRefID;;
     region.RightPosition = stopPos;
     return true;
 }
@@ -309,7 +308,7 @@ vector<string> Utilities::Split(const string& source, const string& delims) {
     vector<string> fields;
 
     char* tok;
-    char cchars [source.size()+1];
+    char* cchars = new char[source.size()+1];
     char* cstr = &cchars[0];
     strcpy(cstr, source.c_str());
     tok = strtok(cstr, delims.c_str());
@@ -317,6 +316,8 @@ vector<string> Utilities::Split(const string& source, const string& delims) {
         fields.push_back(tok);
         tok = strtok(NULL, delims.c_str());
     }
+
+    delete[] cchars;
 
     return fields;
 }

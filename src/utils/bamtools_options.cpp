@@ -1,9 +1,8 @@
 // ***************************************************************************
 // bamtools_options.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 11 June 2011
+// Last modified: 10 October 2011
 // ---------------------------------------------------------------------------
 // Parses command line arguments and creates a help menu
 // ---------------------------------------------------------------------------
@@ -17,7 +16,7 @@
 // *  (BamTools namespace, added stdin/stdout) (DB)
 // ***************************************************************************
 
-#include <utils/bamtools_options.h>
+#include "utils/bamtools_options.h"
 using namespace BamTools;
 
 #include <cstdio>

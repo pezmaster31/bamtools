@@ -1,14 +1,13 @@
 // ***************************************************************************
 // bamtools_fasta.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 13 July 2010
+// Last modified: 9 March 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides FASTA reading/indexing functionality.
 // ***************************************************************************
 
-#include <utils/bamtools_fasta.h>
+#include "utils/bamtools_fasta.h"
 using namespace BamTools;
 
 #include <cstdio>
@@ -246,22 +245,18 @@ bool Fasta::FastaPrivate::GetBase(const int& refId, const int& position, char& b
             cerr << "FASTA error: invalid position specified: " << position << endl;
             return false;
         }
-        
-        // seek to beginning of sequence data
-        if ( fseeko(Stream, referenceData.Offset, SEEK_SET) != 0 ) {
-            cerr << "FASTA error : could not sek in file" << endl;
-            return false;
-        }
-      
-        // retrieve sequence
-        string sequence = "";
-        if ( !GetNextSequence(sequence) ) {
-            cerr << "FASTA error : could not retrieve base from FASTA file" << endl;
+
+        // calculate seek position & attempt jump
+        const int64_t lines = position / referenceData.LineLength;
+        const int64_t lineOffset = position % referenceData.LineLength;
+        const int64_t seekTo = referenceData.Offset + (lines*referenceData.ByteLength) + lineOffset;
+        if ( fseek64(Stream, seekTo, SEEK_SET) != 0 ) {
+            cerr << "FASTA error : could not seek in file" << endl;
             return false;
         }
         
         // set base & return success
-        base = sequence.at(position);
+        base = getc(Stream);
         return true;
     }
     

@@ -1,9 +1,8 @@
 // ***************************************************************************
 // bamtools_variant.h (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
-// All rights reserved.
 // ---------------------------------------------------------------------------
-// Last modified: 19 November 2010
+// Last modified: 10 October 2011
 // ---------------------------------------------------------------------------
 // Provides a template-based variant type
 // ---------------------------------------------------------------------------
@@ -18,7 +17,7 @@
 #ifndef BAMTOOLS_VARIANT_H
 #define BAMTOOLS_VARIANT_H
 
-#include <utils/utils_global.h>
+#include "utils/utils_global.h"
 #include <stdexcept>
 #include <string>
 #include <typeinfo>

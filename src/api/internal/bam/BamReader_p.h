@@ -62,7 +62,10 @@ class BamReaderPrivate {
         int GetReferenceID(const std::string& refName) const;
 
         // index operations
-        bool CreateIndex(const BamIndex::IndexType& type);
+        bool CreateIndex(const BamIndex::IndexType& type,
+                         std::string* indexFileName,
+                         CreateIndexProgressCallback cb,
+                         void* cbData);
         bool HasIndex(void) const;
         bool LocateIndex(const BamIndex::IndexType& preferredType);
         bool OpenIndex(const std::string& indexFilename);

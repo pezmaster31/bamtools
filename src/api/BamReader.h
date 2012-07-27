@@ -90,7 +90,10 @@ class API_EXPORT BamReader {
         // ----------------------
 
         // creates an index file for current BAM file, using the requested index type
-        bool CreateIndex(const BamIndex::IndexType& type = BamIndex::STANDARD);
+        bool CreateIndex(const BamIndex::IndexType& type = BamIndex::STANDARD,
+                         std::string* indexFileName=0,
+                         CreateIndexProgressCallback cb=0,
+                         void* cbData=0);
         // returns true if index data is available
         bool HasIndex(void) const;
         // looks in BAM file's directory for a matching index file

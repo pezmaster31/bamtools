@@ -127,7 +127,7 @@ struct API_EXPORT BamAlignment {
 
     //! \internal
     // internal utility methods
-    private:
+    //private: Still useful
         bool FindTag(const std::string& tag,
                      char*& pTagData,
                      const unsigned int& tagDataLength,
@@ -150,6 +150,7 @@ struct API_EXPORT BamAlignment {
             uint32_t    QueryNameLength;
             uint32_t    QuerySequenceLength;
             bool        HasCoreOnly;
+            int64_t     FileOffset;
             
             // constructor
             BamAlignmentSupportData(void)
@@ -160,7 +161,9 @@ struct API_EXPORT BamAlignment {
                 , HasCoreOnly(false)
             { }
         };
+    public: //Sometimes useful publicly
         BamAlignmentSupportData SupportData;
+    private:
         friend class Internal::BamReaderPrivate;
         friend class Internal::BamWriterPrivate;
 

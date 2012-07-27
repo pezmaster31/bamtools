@@ -108,7 +108,9 @@ class BamToolsIndex : public BamIndex {
     // BamIndex implementation
     public:
         // builds index from associated BAM file & writes out to index file
-        bool Create(void);
+        bool Create(std::string* indexFileName=0,
+                    CreateIndexProgressCallback cb=0,
+                    void* cbData=0);
         // returns whether reference has alignments or no
         bool HasAlignments(const int& referenceID) const;
         // attempts to use index data to jump to @region, returns success/fail

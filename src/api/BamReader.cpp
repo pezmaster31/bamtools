@@ -57,8 +57,11 @@ bool BamReader::Close(void) {
     \return \c true if index created OK
     \sa LocateIndex(), OpenIndex()
 */
-bool BamReader::CreateIndex(const BamIndex::IndexType& type) {
-    return d->CreateIndex(type);
+bool BamReader::CreateIndex(const BamIndex::IndexType& type,
+                            std::string* indexFileName,
+                            CreateIndexProgressCallback cb,
+                            void* cbData) {
+  return d->CreateIndex(type, indexFileName, cb, cbData);
 }
 
 /*! \fn std::string BamReader::GetErrorString(void) const

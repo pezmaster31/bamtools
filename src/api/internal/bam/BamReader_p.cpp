@@ -70,8 +70,10 @@ bool BamReaderPrivate::Close(void) {
 }
 
 // creates an index file of requested type on current BAM file
-bool BamReaderPrivate::CreateIndex(const BamIndex::IndexType& type) {
-
+bool BamReaderPrivate::CreateIndex(const BamIndex::IndexType& type,
+                                   std::string* indexFileName,
+                                   CreateIndexProgressCallback cb,
+                                   void* cbData) {
     // skip if BAM file not open
     if ( !IsOpen() ) {
         SetErrorString("BamReader::CreateIndex", "cannot create index on unopened BAM file");
@@ -79,7 +81,7 @@ bool BamReaderPrivate::CreateIndex(const BamIndex::IndexType& type) {
     }
 
     // attempt to create index
-    if ( m_randomAccessController.CreateIndex(this, type) )
+    if ( m_randomAccessController.CreateIndex(this, type, indexFileName, cb, cbData) )
         return true;
     else {
         const string bracError = m_randomAccessController.GetErrorString();
@@ -230,10 +232,13 @@ void BamReaderPrivate::LoadHeaderData(void) {
 // populates BamAlignment with alignment data under file pointer, returns success/fail
 bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment) {
 
+    alignment.SupportData.FileOffset = m_stream.Tell(); //Get the offset before we progress the stream
+    
     // read in the 'block length' value, make sure it's not zero
     char buffer[sizeof(uint32_t)];
     fill_n(buffer, sizeof(uint32_t), 0);
-    m_stream.Read(buffer, sizeof(uint32_t));
+    if(m_stream.Read(buffer, sizeof(uint32_t)) < sizeof(uint32_t))
+      return false;
     alignment.SupportData.BlockLength = BamTools::UnpackUnsignedInt(buffer);
     if ( m_isBigEndian ) BamTools::SwapEndian_32(alignment.SupportData.BlockLength);
     if ( alignment.SupportData.BlockLength == 0 )

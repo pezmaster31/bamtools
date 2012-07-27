@@ -262,7 +262,9 @@ void BamStandardIndex::CloseFile(void) {
 }
 
 // builds index from associated BAM file & writes out to index file
-bool BamStandardIndex::Create(void) {
+bool BamStandardIndex::Create(std::string* indexFileNamePreferred,
+                              CreateIndexProgressCallback progressCB,
+                              void* progressCBData) {
 
     // skip if BamReader is invalid or not open
     if ( m_reader == 0 || !m_reader->IsOpen() ) {
@@ -281,7 +283,11 @@ bool BamStandardIndex::Create(void) {
     try {
 
         // open new index file (read & write)
-        string indexFilename = m_reader->Filename() + Extension();
+        string indexFilename;
+        if(indexFileNamePreferred != 0)
+          indexFilename = *indexFileNamePreferred;
+        else
+          indexFilename = m_reader->Filename() + Extension();
         OpenFile(indexFilename, IBamIODevice::ReadWrite);
 
         // initialize BaiFileSummary with number of references
@@ -305,6 +311,17 @@ bool BamStandardIndex::Create(void) {
         BamAlignment al;
         BaiReferenceEntry refEntry;
         while ( m_reader->LoadNextAlignment(al) ) {
+
+            if(progressCB){
+              //Call progress CB for every read
+              if(!progressCB(al, progressCBData)){
+                //progressCB can return false indicating user canceled the index operation
+                CloseFile();
+                remove(indexFilename.c_str());
+                m_reader->Rewind();
+                return false;
+              }
+            }
 
             // changed to new reference
             if ( lastRefID != al.RefID ) {

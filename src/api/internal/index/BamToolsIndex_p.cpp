@@ -131,7 +131,9 @@ void BamToolsIndex::CloseFile(void) {
 }
 
 // builds index from associated BAM file & writes out to index file
-bool BamToolsIndex::Create(void) {
+bool BamToolsIndex::Create(std::string* indexFileNamePreferred,
+                           CreateIndexProgressCallback progressCB,
+                           void* progressCBData) {
 
     // skip if BamReader is invalid or not open
     if ( m_reader == 0 || !m_reader->IsOpen() ) {
@@ -149,7 +151,11 @@ bool BamToolsIndex::Create(void) {
 
     try {
         // open new index file (read & write)
-        const string indexFilename = m_reader->Filename() + Extension();
+        string indexFilename;
+        if(indexFileNamePreferred != 0)
+          indexFilename = *indexFileNamePreferred;
+        else
+          indexFilename = m_reader->Filename() + Extension();
         OpenFile(indexFilename, IBamIODevice::ReadWrite);
 
         // initialize BtiFileSummary with number of references
@@ -171,6 +177,17 @@ bool BamToolsIndex::Create(void) {
         BamAlignment al;
         BtiReferenceEntry refEntry;
         while ( m_reader->LoadNextAlignment(al) ) {
+
+            if(progressCB){
+              //Call progress CB every read
+              if(!progressCB(al, progressCBData)){
+                //progressCB can return false indicating user canceled the index operation
+                CloseFile();
+                remove(indexFilename.c_str());
+                m_reader->Rewind();
+                return false;
+              }
+            }
 
             // if moved to new reference
             if ( al.RefID != blockRefId ) {

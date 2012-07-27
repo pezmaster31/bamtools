@@ -1,3 +1,4 @@
+
 // ***************************************************************************
 // BamException_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
@@ -23,6 +24,7 @@
 #include <exception>
 #include <string>
 
+#define EX_SEPARATOR ": " //Use this instead of a static const std::string class member which creates nasty link dependencies
 namespace BamTools {
 namespace Internal {
 
@@ -31,7 +33,7 @@ class BamException : public std::exception {
     public:
         inline BamException(const std::string& where, const std::string& message)
             : std::exception()
-            , m_errorString(where + SEPARATOR + message)
+            , m_errorString(where + std::string(EX_SEPARATOR) + message)
         { }
 
         inline ~BamException(void) throw() { }
@@ -42,7 +44,6 @@ class BamException : public std::exception {
 
     private:
         std::string m_errorString;
-        static const std::string SEPARATOR;
 };
 
 } // namespace Internal

@@ -11,7 +11,6 @@ set ( InternalPBGZFDir "${InternalIODir}/pbgzf" )
 # platform-independent PBGZF
 #--------------------------
 set ( CommonPBGZFSources
-	    ${InternalPBGZFDir}/PBgzfStream_p.cpp
 		${InternalPBGZFDir}/bgzf.c
 		${InternalPBGZFDir}/knetfile.c
 		${InternalPBGZFDir}/block.c

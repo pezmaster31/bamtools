@@ -24,7 +24,9 @@ set ( CommonIOSources
         ${InternalIODir}/HostInfo_p.cpp
         ${InternalIODir}/HttpHeader_p.cpp
         ${InternalIODir}/ILocalIODevice_p.cpp
+		${InternalIODir}/ParallelBgzfStream_p.cpp
         ${InternalIODir}/RollingBuffer_p.cpp
+		${InternalIODir}/SerialBgzfStream_p.cpp
         ${InternalIODir}/TcpSocket_p.cpp
         ${InternalIODir}/TcpSocketEngine_p.cpp
 )

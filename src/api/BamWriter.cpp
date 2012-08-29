@@ -37,6 +37,7 @@ using namespace std;
 */
 BamWriter::BamWriter(void)
     : d(new BamWriterPrivate)
+    , m_numThreads(0)
 { }
 
 /*! \fn BamWriter::~BamWriter(void)
@@ -93,6 +94,7 @@ bool BamWriter::Open(const std::string& filename,
                      const std::string& samHeaderText,
                      const RefVector& referenceSequences)
 {
+    d->SetParallel(m_numThreads);
     return d->Open(filename, samHeaderText, referenceSequences);
 }
 
@@ -116,6 +118,7 @@ bool BamWriter::Open(const std::string& filename,
                      const SamHeader& samHeader,
                      const RefVector& referenceSequences)
 {
+    d->SetParallel(m_numThreads);
     return d->Open(filename, samHeader.ToString(), referenceSequences);
 }
 
@@ -149,4 +152,8 @@ bool BamWriter::SaveAlignment(const BamAlignment& alignment) {
 */
 void BamWriter::SetCompressionMode(const BamWriter::CompressionMode& compressionMode) {
     d->SetWriteCompressed( compressionMode == BamWriter::Compressed );
+}
+
+void BamWriter::SetNumThreads(int32_t numThreads) {
+    m_numThreads = numThreads;
 }

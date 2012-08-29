@@ -58,10 +58,13 @@ class API_EXPORT BamWriter {
         bool SaveAlignment(const BamAlignment& alignment);
         // sets the output compression mode
         void SetCompressionMode(const BamWriter::CompressionMode& compressionMode);
+        // sets the number of threads
+        void SetNumThreads(int32_t numThreads);
 
     // private implementation
     private:
         Internal::BamWriterPrivate* d;
+        int32_t m_numThreads;
 };
 
 } // namespace BamTools

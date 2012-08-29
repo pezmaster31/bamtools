@@ -16,6 +16,9 @@
 #include "api/internal/index/BamStandardIndex_p.h"
 #include "api/internal/index/BamToolsIndex_p.h"
 #include "api/internal/io/BamDeviceFactory_p.h"
+#include "api/internal/io/BgzfStream_p.h"
+#include "api/internal/io/SerialBgzfStream_p.h"
+#include "api/internal/io/ParallelBgzfStream_p.h"
 #include "api/internal/utils/BamException_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
@@ -31,6 +34,8 @@ using namespace std;
 BamReaderPrivate::BamReaderPrivate(BamReader* parent)
     : m_alignmentsBeginOffset(0)
     , m_parent(parent)
+    , m_stream(NULL)
+    , m_numThreads(0)
 {
     m_isBigEndian = BamTools::SystemIsBigEndian();
 }
@@ -56,13 +61,15 @@ bool BamReaderPrivate::Close(void) {
     // if stream is open, attempt close
     if ( IsOpen() ) {
         try {
-            m_stream.Close();
+            m_stream->Close();
         } catch ( BamException& e ) {
             const string streamError = e.what();
             const string message = string("encountered error closing BAM file: \n\t") + streamError;
             SetErrorString("BamReader::Close", message);
             return false;
         }
+        delete m_stream;
+        m_stream = NULL;
     }
 
     // return success
@@ -139,7 +146,7 @@ bool BamReaderPrivate::GetNextAlignment(BamAlignment& alignment) {
 bool BamReaderPrivate::GetNextAlignmentCore(BamAlignment& alignment) {
 
     // skip if stream not opened
-    if ( !m_stream.IsOpen() )
+    if ( NULL == m_stream || !m_stream->IsOpen() )
         return false;
 
     try {
@@ -219,12 +226,12 @@ bool BamReaderPrivate::HasIndex(void) const {
 }
 
 bool BamReaderPrivate::IsOpen(void) const {
-    return m_stream.IsOpen();
+    return ( NULL != m_stream && m_stream->IsOpen() );
 }
 
 // load BAM header data
 void BamReaderPrivate::LoadHeaderData(void) {
-    m_header.Load(&m_stream);
+    m_header.Load(m_stream);
 }
 
 // populates BamAlignment with alignment data under file pointer, returns success/fail
@@ -233,7 +240,7 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment) {
     // read in the 'block length' value, make sure it's not zero
     char buffer[sizeof(uint32_t)];
     fill_n(buffer, sizeof(uint32_t), 0);
-    m_stream.Read(buffer, sizeof(uint32_t));
+    m_stream->Read(buffer, sizeof(uint32_t));
     alignment.SupportData.BlockLength = BamTools::UnpackUnsignedInt(buffer);
     if ( m_isBigEndian ) BamTools::SwapEndian_32(alignment.SupportData.BlockLength);
     if ( alignment.SupportData.BlockLength == 0 )
@@ -241,7 +248,7 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment) {
 
     // read in core alignment data, make sure the right size of data was read
     char x[Constants::BAM_CORE_SIZE];
-    if ( m_stream.Read(x, Constants::BAM_CORE_SIZE) != Constants::BAM_CORE_SIZE )
+    if ( m_stream->Read(x, Constants::BAM_CORE_SIZE) != Constants::BAM_CORE_SIZE )
         return false;
 
     // swap core endian-ness if necessary
@@ -276,7 +283,7 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment) {
     const unsigned int dataLength = alignment.SupportData.BlockLength - Constants::BAM_CORE_SIZE;
     RaiiBuffer allCharData(dataLength);
 
-    if ( m_stream.Read(allCharData.Buffer, dataLength) == dataLength ) {
+    if ( m_stream->Read(allCharData.Buffer, dataLength) == dataLength ) {
 
         // store 'allCharData' in supportData structure
         alignment.SupportData.AllCharData.assign((const char*)allCharData.Buffer, dataLength);
@@ -315,7 +322,7 @@ bool BamReaderPrivate::LoadReferenceData(void) {
 
     // get number of reference sequences
     char buffer[sizeof(uint32_t)];
-    m_stream.Read(buffer, sizeof(uint32_t));
+    m_stream->Read(buffer, sizeof(uint32_t));
     uint32_t numberRefSeqs = BamTools::UnpackUnsignedInt(buffer);
     if ( m_isBigEndian ) BamTools::SwapEndian_32(numberRefSeqs);
     m_references.reserve((int)numberRefSeqs);
@@ -324,14 +331,14 @@ bool BamReaderPrivate::LoadReferenceData(void) {
     for ( unsigned int i = 0; i != numberRefSeqs; ++i ) {
 
         // get length of reference name
-        m_stream.Read(buffer, sizeof(uint32_t));
+        m_stream->Read(buffer, sizeof(uint32_t));
         uint32_t refNameLength = BamTools::UnpackUnsignedInt(buffer);
         if ( m_isBigEndian ) BamTools::SwapEndian_32(refNameLength);
         RaiiBuffer refName(refNameLength);
 
         // get reference name and reference sequence length
-        m_stream.Read(refName.Buffer, refNameLength);
-        m_stream.Read(buffer, sizeof(int32_t));
+        m_stream->Read(refName.Buffer, refNameLength);
+        m_stream->Read(buffer, sizeof(int32_t));
         int32_t refLength = BamTools::UnpackSignedInt(buffer);
         if ( m_isBigEndian ) BamTools::SwapEndian_32(refLength);
 
@@ -366,8 +373,13 @@ bool BamReaderPrivate::Open(const string& filename) {
         // make sure we're starting with fresh state
         Close();
 
+        if ( 0 == m_numThreads )
+            m_stream = new SerialBgzfStream();
+        else
+            m_stream = new ParallelBgzfStream(m_numThreads);
+
         // open BgzfStream
-        m_stream.Open(filename, IBamIODevice::ReadOnly);
+        m_stream->Open(filename, IBamIODevice::ReadOnly);
 
         // load BAM metadata
         LoadHeaderData();
@@ -375,7 +387,7 @@ bool BamReaderPrivate::Open(const string& filename) {
 
         // store filename & offset of first alignment
         m_filename = filename;
-        m_alignmentsBeginOffset = m_stream.Tell();
+        m_alignmentsBeginOffset = m_stream->Tell();
 
         // return success
         return true;
@@ -427,7 +439,7 @@ bool BamReaderPrivate::Seek(const int64_t& position) {
     }
 
     try {
-        m_stream.Seek(position);
+        m_stream->Seek(position);
         return true;
     }
     catch ( BamException& e ) {
@@ -462,5 +474,9 @@ bool BamReaderPrivate::SetRegion(const BamRegion& region) {
 }
 
 int64_t BamReaderPrivate::Tell(void) const {
-    return m_stream.Tell();
+    return m_stream->Tell();
+}
+
+void BamReaderPrivate::SetParallel(int numThreads) {
+    m_numThreads = numThreads;
 }

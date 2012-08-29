@@ -11,6 +11,9 @@
 #include "api/BamConstants.h"
 #include "api/IBamIODevice.h"
 #include "api/internal/bam/BamWriter_p.h"
+#include "api/internal/io/BgzfStream_p.h"
+#include "api/internal/io/SerialBgzfStream_p.h"
+#include "api/internal/io/ParallelBgzfStream_p.h"
 #include "api/internal/utils/BamException_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
@@ -22,6 +25,8 @@ using namespace std;
 // ctor
 BamWriterPrivate::BamWriterPrivate(void)
     : m_isBigEndian( BamTools::SystemIsBigEndian() )
+    , m_stream(NULL)
+    , m_numThreads(0)
 { }
 
 // dtor
@@ -48,10 +53,13 @@ void BamWriterPrivate::Close(void) {
 
     // close output stream
     try {
-        m_stream.Close();
+        m_stream->Close();
     } catch ( BamException& e ) {
         m_errorString = e.what();
     }
+
+    delete m_stream;
+    m_stream = NULL;
 }
 
 // creates a cigar string from the supplied alignment
@@ -149,7 +157,9 @@ std::string BamWriterPrivate::GetErrorString(void) const {
 
 // returns whether BAM file is open for writing or not
 bool BamWriterPrivate::IsOpen(void) const {
-    return m_stream.IsOpen();
+    if ( NULL == m_stream )
+      return false;
+    return m_stream->IsOpen();
 }
 
 // opens the alignment archive
@@ -159,8 +169,15 @@ bool BamWriterPrivate::Open(const string& filename,
 {
     try {
 
+        if ( 1 <  m_numThreads )
+            m_stream = new ParallelBgzfStream(m_numThreads);
+        else
+            m_stream = new SerialBgzfStream();
+
         // open the BGZF file for writing
-        m_stream.Open(filename, IBamIODevice::WriteOnly);
+        m_stream->Open(filename, IBamIODevice::WriteOnly);
+
+        m_stream->SetWriteCompressed(m_writeCompressed);
 
         // write BAM file 'metadata' components
         WriteMagicNumber();
@@ -202,7 +219,7 @@ bool BamWriterPrivate::SaveAlignment(const BamAlignment& al) {
 void BamWriterPrivate::SetWriteCompressed(bool ok) {
     // modifying compression is not allowed if BAM file is open
     if ( !IsOpen() )
-        m_stream.SetWriteCompressed(ok);
+        m_writeCompressed = ok;
 }
 
 void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
@@ -238,7 +255,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
                                        tagDataLength;
     unsigned int blockSize = Constants::BAM_CORE_SIZE + dataBlockSize;
     if ( m_isBigEndian ) BamTools::SwapEndian_32(blockSize);
-    m_stream.Write((char*)&blockSize, Constants::BAM_SIZEOF_INT);
+    m_stream->Write((char*)&blockSize, Constants::BAM_SIZEOF_INT);
 
     // assign the BAM core data
     uint32_t buffer[Constants::BAM_CORE_BUFFER_SIZE];
@@ -258,10 +275,10 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
     }
 
     // write the BAM core
-    m_stream.Write((char*)&buffer, Constants::BAM_CORE_SIZE);
+    m_stream->Write((char*)&buffer, Constants::BAM_CORE_SIZE);
 
     // write the query name
-    m_stream.Write(al.Name.c_str(), nameLength);
+    m_stream->Write(al.Name.c_str(), nameLength);
 
     // write the packed cigar
     if ( m_isBigEndian ) {
@@ -271,16 +288,16 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
             for ( size_t i = 0; i < packedCigarLength; ++i )
                 BamTools::SwapEndian_32p(&cigarData[i]);
         }
-        m_stream.Write(cigarData, packedCigarLength);
+        m_stream->Write(cigarData, packedCigarLength);
         delete[] cigarData; // TODO: cleanup on Write exception thrown?
     }
     else
-        m_stream.Write(packedCigar.data(), packedCigarLength);
+        m_stream->Write(packedCigar.data(), packedCigarLength);
 
     if ( queryLength > 0 ) {
 
         // write the encoded query sequence
-        m_stream.Write(encodedQuery.data(), encodedQueryLength);
+        m_stream->Write(encodedQuery.data(), encodedQueryLength);
 
         // write the base qualities
         char* pBaseQualities = new char[queryLength]();
@@ -290,7 +307,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
             for ( size_t i = 0; i < queryLength; ++i )
                 pBaseQualities[i] = al.Qualities.at(i) - 33; // FASTQ ASCII -> phred score conversion
         }
-        m_stream.Write(pBaseQualities, queryLength);
+        m_stream->Write(pBaseQualities, queryLength);
         delete[] pBaseQualities;
     }
 
@@ -386,11 +403,11 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
             }
         }
 
-        m_stream.Write(tagData, tagDataLength);
+        m_stream->Write(tagData, tagDataLength);
         delete[] tagData; // TODO: cleanup on Write exception thrown?
     }
     else
-        m_stream.Write(al.TagData.data(), tagDataLength);
+        m_stream->Write(al.TagData.data(), tagDataLength);
 }
 
 void BamWriterPrivate::WriteCoreAlignment(const BamAlignment& al) {
@@ -398,7 +415,7 @@ void BamWriterPrivate::WriteCoreAlignment(const BamAlignment& al) {
     // write the block size
     unsigned int blockSize = al.SupportData.BlockLength;
     if ( m_isBigEndian ) BamTools::SwapEndian_32(blockSize);
-    m_stream.Write((char*)&blockSize, Constants::BAM_SIZEOF_INT);
+    m_stream->Write((char*)&blockSize, Constants::BAM_SIZEOF_INT);
 
     // re-calculate bin (in case BamAlignment's position has been previously modified)
     const uint32_t alignmentBin = CalculateMinimumBin(al.Position, al.GetEndPosition());
@@ -421,16 +438,16 @@ void BamWriterPrivate::WriteCoreAlignment(const BamAlignment& al) {
     }
 
     // write the BAM core
-    m_stream.Write((char*)&buffer, Constants::BAM_CORE_SIZE);
+    m_stream->Write((char*)&buffer, Constants::BAM_CORE_SIZE);
 
     // write the raw char data
-    m_stream.Write((char*)al.SupportData.AllCharData.data(),
+    m_stream->Write((char*)al.SupportData.AllCharData.data(),
                    al.SupportData.BlockLength-Constants::BAM_CORE_SIZE);
 }
 
 void BamWriterPrivate::WriteMagicNumber(void) {
     // write BAM file 'magic number'
-    m_stream.Write(Constants::BAM_HEADER_MAGIC, Constants::BAM_HEADER_MAGIC_LENGTH);
+    m_stream->Write(Constants::BAM_HEADER_MAGIC, Constants::BAM_HEADER_MAGIC_LENGTH);
 }
 
 void BamWriterPrivate::WriteReferences(const BamTools::RefVector& referenceSequences) {
@@ -438,7 +455,7 @@ void BamWriterPrivate::WriteReferences(const BamTools::RefVector& referenceSeque
     // write the number of reference sequences
     uint32_t numReferenceSequences = referenceSequences.size();
     if ( m_isBigEndian ) BamTools::SwapEndian_32(numReferenceSequences);
-    m_stream.Write((char*)&numReferenceSequences, Constants::BAM_SIZEOF_INT);
+    m_stream->Write((char*)&numReferenceSequences, Constants::BAM_SIZEOF_INT);
 
     // foreach reference sequence
     RefVector::const_iterator rsIter = referenceSequences.begin();
@@ -449,15 +466,15 @@ void BamWriterPrivate::WriteReferences(const BamTools::RefVector& referenceSeque
         const uint32_t actualNameLen = rsIter->RefName.size() + 1;
         uint32_t maybeSwappedNameLen = actualNameLen;
         if ( m_isBigEndian ) BamTools::SwapEndian_32(maybeSwappedNameLen);
-        m_stream.Write((char*)&maybeSwappedNameLen, Constants::BAM_SIZEOF_INT);
+        m_stream->Write((char*)&maybeSwappedNameLen, Constants::BAM_SIZEOF_INT);
 
         // write the reference sequence name
-        m_stream.Write(rsIter->RefName.c_str(), actualNameLen);
+        m_stream->Write(rsIter->RefName.c_str(), actualNameLen);
 
         // write the reference sequence length
         int32_t referenceLength = rsIter->RefLength;
         if ( m_isBigEndian ) BamTools::SwapEndian_32(referenceLength);
-        m_stream.Write((char*)&referenceLength, Constants::BAM_SIZEOF_INT);
+        m_stream->Write((char*)&referenceLength, Constants::BAM_SIZEOF_INT);
     }
 }
 
@@ -467,9 +484,13 @@ void BamWriterPrivate::WriteSamHeaderText(const std::string& samHeaderText) {
     const uint32_t actualHeaderLen = samHeaderText.size();
     uint32_t maybeSwappedHeaderLen = samHeaderText.size();
     if ( m_isBigEndian ) BamTools::SwapEndian_32(maybeSwappedHeaderLen);
-    m_stream.Write((char*)&maybeSwappedHeaderLen, Constants::BAM_SIZEOF_INT);
+    m_stream->Write((char*)&maybeSwappedHeaderLen, Constants::BAM_SIZEOF_INT);
 
     // write the SAM header text
     if ( actualHeaderLen > 0 )
-        m_stream.Write(samHeaderText.data(), actualHeaderLen);
+        m_stream->Write(samHeaderText.data(), actualHeaderLen);
+}
+
+void BamWriterPrivate::SetParallel(int numThreads) {
+    m_numThreads = numThreads;
 }

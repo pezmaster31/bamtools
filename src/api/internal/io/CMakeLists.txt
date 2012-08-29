@@ -7,6 +7,8 @@
 
 set ( InternalIODir "${InternalDir}/io" )
 
+add_subdirectory( pbgzf )
+
 #--------------------------
 # platform-independent IO
 #--------------------------
@@ -46,6 +48,7 @@ endif ( _WIN32 )
 set ( InternalIOSources 
         ${CommonIOSources} 
         ${PlatformIOSources} 
+		${InternalPBGZFSources}
 
         PARENT_SCOPE # <-- leave this last
 )

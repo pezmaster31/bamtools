@@ -59,7 +59,6 @@ window.onload = initDynSections;
   <div class="tabs">
     <ul>
       <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
       <li class="current"><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -92,9 +91,14 @@ window.onload = initDynSections;
 <a href="#_details">More...</a></p>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td colspan="2"><h2>Namespaces</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">namespace &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools_1_1_algorithms.html">Algorithms</a></td></tr>
+
+<p><tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight"><p>Provides convenient classes &amp; methods for working with BAM data. </p>
+<br/></td></tr>
+</p>
 <tr><td class="memItemLeft" align="right" valign="top">namespace &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools_1_1_constants.html">Constants</a></td></tr>
 
-<p><tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight"><p>Contains most of the constants used throughout <a class="el" href="namespace_bam_tools.html" title="Contains all BamTools classes &amp; methods.">BamTools</a>. </p>
+<p><tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight"><p>Provides basic constants for handling BAM files. </p>
 <br/></td></tr>
 </p>
 <tr><td colspan="2"><h2>Classes</h2></td></tr>
@@ -106,15 +110,22 @@ window.onload = initDynSections;
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Represents a reference sequence entry.  <a href="struct_bam_tools_1_1_ref_data.html#_details">More...</a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_bam_region.html">BamRegion</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Represents a sequential genomic region.  <a href="struct_bam_tools_1_1_bam_region.html#_details">More...</a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><b>RaiiBuffer</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_bam_index.html">BamIndex</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Provides methods for generating &amp; loading BAM index files.  <a href="class_bam_tools_1_1_bam_index.html#_details">More...</a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_bam_multi_reader.html">BamMultiReader</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convenience class for reading multiple BAM files.  <a href="class_bam_tools_1_1_bam_multi_reader.html#_details">More...</a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_bam_reader.html">BamReader</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Convenience class for reading multiple BAM files.  <a href="class_bam_tools_1_1_bam_reader.html#_details">More...</a><br/></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Provides read access to BAM files.  <a href="class_bam_tools_1_1_bam_reader.html#_details">More...</a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_bam_writer.html">BamWriter</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Provides write access for generating BAM files.  <a href="class_bam_tools_1_1_bam_writer.html#_details">More...</a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_i_bam_i_o_device.html">IBamIODevice</a></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_header.html">SamHeader</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Represents the SAM-formatted text header that is part of the BAM file header.  <a href="struct_bam_tools_1_1_sam_header.html#_details">More...</a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_program.html">SamProgram</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Represents a SAM program record.  <a href="struct_bam_tools_1_1_sam_program.html#_details">More...</a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_sam_program_chain.html">SamProgramChain</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Sorted container "chain" of <a class="el" href="struct_bam_tools_1_1_sam_program.html" title="Represents a SAM program record.">SamProgram</a> records.  <a href="class_bam_tools_1_1_sam_program_chain.html#_details">More...</a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_read_group.html">SamReadGroup</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Represents a SAM read group entry.  <a href="struct_bam_tools_1_1_sam_read_group.html#_details">More...</a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">class &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_sam_read_group_dictionary.html">SamReadGroupDictionary</a></td></tr>
@@ -127,6 +138,11 @@ window.onload = initDynSections;
 <tr><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; <a class="el" href="struct_bam_tools_1_1_bam_alignment.html">BamAlignment</a> &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#a5ec8c1bc89a0c5979696a4a124fcbaeb">BamAlignmentVector</a></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; <a class="el" href="struct_bam_tools_1_1_ref_data.html">RefData</a> &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#abf3564b867a24092bf6575fdda87d573">RefVector</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">convenience typedef for vector of <a class="el" href="struct_bam_tools_1_1_ref_data.html" title="Represents a reference sequence entry.">RefData</a> entries  <a href="#abf3564b867a24092bf6575fdda87d573"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; <a class="el" href="struct_bam_tools_1_1_sam_program.html">SamProgram</a> &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#a493a4923ef031f18420dd522987aa849">SamProgramContainer</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">typedef <br class="typebreak"/>
+SamProgramContainer::iterator&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#a4f05bf39c3fa968ad9ceebfac3bfcd26">SamProgramIterator</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">typedef <br class="typebreak"/>
+SamProgramContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#a65243649ecb469540f711d6849eebbbc">SamProgramConstIterator</a></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; <a class="el" href="struct_bam_tools_1_1_sam_read_group.html">SamReadGroup</a> &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#a65d72324945d02c05115772904745e92">SamReadGroupContainer</a></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">typedef <br class="typebreak"/>
 SamReadGroupContainer::iterator&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#aa01a6a0367d3a90968ae9065ecf5bb2a">SamReadGroupIterator</a></td></tr>
@@ -138,8 +154,12 @@ SamSequenceContainer::iterator&nbsp;</td><td class="memItemRight" valign="bottom
 <tr><td class="memItemLeft" align="right" valign="top">typedef <br class="typebreak"/>
 SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#a6a7821c6bf43e5e9b3ea2b2216554360">SamSequenceConstIterator</a></td></tr>
 <tr><td colspan="2"><h2>Functions</h2></td></tr>
+<tr><td class="memTemplParams" colspan="2">template&lt;&gt; </td></tr>
+<tr><td class="memTemplItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#a754635cdce66cf9adecfa2a8f2ca0604">BamAlignment::AddTag&lt; std::string &gt;</a> (const std::string &amp;tag, const std::string &amp;type, const std::string &amp;value)</td></tr>
+<tr><td class="memTemplParams" colspan="2">template&lt;&gt; </td></tr>
+<tr><td class="memTemplItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#a95d327aa2b5d8dc3a4b68491e216a977">BamAlignment::GetTag&lt; std::string &gt;</a> (const std::string &amp;tag, std::string &amp;destination) const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">API_EXPORT bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#a5c866cd2fe41ae6ae22be9d544abcdeb">FileExists</a> (const std::string &amp;filename)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">checks if file exists  <a href="#a5c866cd2fe41ae6ae22be9d544abcdeb"></a><br/></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">returns true if the file exists  <a href="#a5c866cd2fe41ae6ae22be9d544abcdeb"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">API_EXPORT void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#af8c7d17bddec46961e82dc5bfd009c55">SwapEndian_16</a> (int16_t &amp;x)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">swaps endianness of signed 16-bit integer, in place  <a href="#af8c7d17bddec46961e82dc5bfd009c55"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">API_EXPORT void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#abebe62e0746f698db30b1681ef27b64a">SwapEndian_16</a> (uint16_t &amp;x)</td></tr>
@@ -188,6 +208,8 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">reads an unsigned short integer value from byte buffer  <a href="#aa8dccd65248544654a8cee1dc521c2d2"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">API_EXPORT unsigned short&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#a4d44d4ccf1c4d76d678ef670e205c684">UnpackUnsignedShort</a> (char *buffer)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">reads an unsigned short integer value from byte buffer  <a href="#a4d44d4ccf1c4d76d678ef670e205c684"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">API_EXPORT bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#ada5374e28a46d3d386a7d3e22af41574">operator==</a> (const <a class="el" href="struct_bam_tools_1_1_sam_program.html">SamProgram</a> &amp;lhs, const <a class="el" href="struct_bam_tools_1_1_sam_program.html">SamProgram</a> &amp;rhs)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">tests equality by comparing program IDs  <a href="#ada5374e28a46d3d386a7d3e22af41574"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">API_EXPORT bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#a42811321651bf17b4b3bbcd6913b6c08">operator==</a> (const <a class="el" href="struct_bam_tools_1_1_sam_read_group.html">SamReadGroup</a> &amp;lhs, const <a class="el" href="struct_bam_tools_1_1_sam_read_group.html">SamReadGroup</a> &amp;rhs)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">tests equality by comparing read group IDs  <a href="#a42811321651bf17b4b3bbcd6913b6c08"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">API_EXPORT bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespace_bam_tools.html#a5c61673680fe1e8d1bc876e380ac5780">operator==</a> (const <a class="el" href="struct_bam_tools_1_1_sam_sequence.html">SamSequence</a> &amp;lhs, const <a class="el" href="struct_bam_tools_1_1_sam_sequence.html">SamSequence</a> &amp;rhs)</td></tr>
@@ -222,6 +244,45 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <div class="memdoc">
 
 <p>convenience typedef for vector of <a class="el" href="struct_bam_tools_1_1_ref_data.html" title="Represents a reference sequence entry.">RefData</a> entries </p>
+
+</div>
+</div>
+<a class="anchor" id="a65243649ecb469540f711d6849eebbbc"></a><!-- doxytag: member="BamTools::SamProgramConstIterator" ref="a65243649ecb469540f711d6849eebbbc" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef SamProgramContainer::const_iterator <a class="el" href="namespace_bam_tools.html#a65243649ecb469540f711d6849eebbbc">BamTools::SamProgramConstIterator</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a493a4923ef031f18420dd522987aa849"></a><!-- doxytag: member="BamTools::SamProgramContainer" ref="a493a4923ef031f18420dd522987aa849" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef std::vector&lt;<a class="el" href="struct_bam_tools_1_1_sam_program.html">SamProgram</a>&gt; <a class="el" href="namespace_bam_tools.html#a493a4923ef031f18420dd522987aa849">BamTools::SamProgramContainer</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a4f05bf39c3fa968ad9ceebfac3bfcd26"></a><!-- doxytag: member="BamTools::SamProgramIterator" ref="a4f05bf39c3fa968ad9ceebfac3bfcd26" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef SamProgramContainer::iterator <a class="el" href="namespace_bam_tools.html#a4f05bf39c3fa968ad9ceebfac3bfcd26">BamTools::SamProgramIterator</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
 
 </div>
 </div>
@@ -304,6 +365,70 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 </div>
 </div>
 <hr/><h2>Function Documentation</h2>
+<a class="anchor" id="a754635cdce66cf9adecfa2a8f2ca0604"></a><!-- doxytag: member="BamTools::BamAlignment::AddTag&lt; std::string &gt;" ref="a754635cdce66cf9adecfa2a8f2ca0604" args="(const std::string &amp;tag, const std::string &amp;type, const std::string &amp;value)" -->
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">bool BamTools::BamAlignment::AddTag&lt; std::string &gt; </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&nbsp;</td>
+          <td class="paramname"> <em>tag</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&nbsp;</td>
+          <td class="paramname"> <em>type</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&nbsp;</td>
+          <td class="paramname"> <em>value</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td><code> [inline]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a95d327aa2b5d8dc3a4b68491e216a977"></a><!-- doxytag: member="BamTools::BamAlignment::GetTag&lt; std::string &gt;" ref="a95d327aa2b5d8dc3a4b68491e216a977" args="(const std::string &amp;tag, std::string &amp;destination) const " -->
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">bool BamTools::BamAlignment::GetTag&lt; std::string &gt; </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&nbsp;</td>
+          <td class="paramname"> <em>tag</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::string &amp;&nbsp;</td>
+          <td class="paramname"> <em>destination</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td> const<code> [inline]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="a5c866cd2fe41ae6ae22be9d544abcdeb"></a><!-- doxytag: member="BamTools::FileExists" ref="a5c866cd2fe41ae6ae22be9d544abcdeb" args="(const std::string &amp;filename)" -->
 <div class="memitem">
 <div class="memproto">
@@ -320,9 +445,7 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 </div>
 <div class="memdoc">
 
-<p>checks if file exists </p>
-<p>Attempts to open file in a read-only mode.</p>
-<dl class="return"><dt><b>Returns:</b></dt><dd><code>true</code> if file can be opened successfully </dd></dl>
+<p>returns true if the file exists </p>
 
 </div>
 </div>
@@ -384,6 +507,35 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 
 </div>
 </div>
+<a class="anchor" id="ada5374e28a46d3d386a7d3e22af41574"></a><!-- doxytag: member="BamTools::operator==" ref="ada5374e28a46d3d386a7d3e22af41574" args="(const SamProgram &amp;lhs, const SamProgram &amp;rhs)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool BamTools::operator== </td>
+          <td>(</td>
+          <td class="paramtype">const SamProgram &amp;&nbsp;</td>
+          <td class="paramname"> <em>lhs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const SamProgram &amp;&nbsp;</td>
+          <td class="paramname"> <em>rhs</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td><code> [inline]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>tests equality by comparing program IDs </p>
+
+</div>
+</div>
 <a class="anchor" id="a53750928dd60a51f81fd89c050f1fc27"></a><!-- doxytag: member="BamTools::PackUnsignedInt" ref="a53750928dd60a51f81fd89c050f1fc27" args="(char *buffer, unsigned int value)" -->
 <div class="memitem">
 <div class="memproto">
@@ -412,8 +564,8 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <p>stores unsigned integer value in a byte buffer </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>buffer</em>&nbsp;</td><td>destination buffer </td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>value</em>&nbsp;</td><td>unsigned integer to 'pack' in buffer </td></tr>
+    <tr><td valign="top"><tt>[out]</tt>&nbsp;</td><td valign="top"><em>buffer</em>&nbsp;</td><td>destination buffer </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>value</em>&nbsp;</td><td>value to 'pack' in buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -448,8 +600,8 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <p>stores unsigned short integer value in a byte buffer </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>buffer</em>&nbsp;</td><td>destination buffer </td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>value</em>&nbsp;</td><td>unsigned short integer to 'pack' in buffer </td></tr>
+    <tr><td valign="top"><tt>[out]</tt>&nbsp;</td><td valign="top"><em>buffer</em>&nbsp;</td><td>destination buffer </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>value</em>&nbsp;</td><td>value to 'pack' in buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -473,7 +625,6 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <div class="memdoc">
 
 <p>swaps endianness of unsigned 16-bit integer, in place </p>
-<p>Swaps endian representation of value in <em>x</em>. </p>
 
 </div>
 </div>
@@ -494,7 +645,6 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <div class="memdoc">
 
 <p>swaps endianness of signed 16-bit integer, in place </p>
-<p>Swaps endian representation of value in <em>x</em>. </p>
 
 </div>
 </div>
@@ -515,7 +665,6 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <div class="memdoc">
 
 <p>swaps endianness of the next 2 bytes in a buffer, in place </p>
-<p>Swaps endian representation the next 2 bytes in <em>data</em>. </p>
 
 </div>
 </div>
@@ -536,7 +685,6 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <div class="memdoc">
 
 <p>swaps endianness of unsigned 32-bit integer, in place </p>
-<p>Swaps endian representation of value in <em>x</em>. </p>
 
 </div>
 </div>
@@ -557,7 +705,6 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <div class="memdoc">
 
 <p>swaps endianness of signed 32-bit integer, in place </p>
-<p>Swaps endian representation of value in <em>x</em>. </p>
 
 </div>
 </div>
@@ -578,7 +725,6 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <div class="memdoc">
 
 <p>swaps endianness of the next 4 bytes in a buffer, in place </p>
-<p>Swaps endian representation the next 4 bytes in <em>data</em>. </p>
 
 </div>
 </div>
@@ -599,7 +745,6 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <div class="memdoc">
 
 <p>swaps endianness of unsigned 64-bit integer, in place </p>
-<p>Swaps endian representation of value in <em>x</em>. </p>
 
 </div>
 </div>
@@ -620,7 +765,6 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <div class="memdoc">
 
 <p>swaps endianness of signed 64-bit integer, in place </p>
-<p>Swaps endian representation of value in <em>x</em>. </p>
 
 </div>
 </div>
@@ -641,7 +785,6 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <div class="memdoc">
 
 <p>swaps endianness of the next 8 bytes in a buffer, in place </p>
-<p>Swaps endian representation the next 8 bytes in <em>data</em>. </p>
 
 </div>
 </div>
@@ -686,7 +829,7 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <p>This is an overloaded function.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -713,7 +856,7 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <p>reads a double value from byte buffer </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -741,7 +884,7 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <p>This is an overloaded function.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -768,7 +911,7 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <p>reads a float value from byte buffer </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -796,7 +939,7 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <p>This is an overloaded function.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -823,7 +966,7 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <p>reads a signed integer value from byte buffer </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -851,7 +994,7 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <p>This is an overloaded function.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -878,7 +1021,7 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <p>reads a signed short integer value from byte buffer </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -906,7 +1049,7 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <p>This is an overloaded function.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -933,7 +1076,7 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <p>reads an unsigned integer value from byte buffer </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -961,7 +1104,7 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <p>This is an overloaded function.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -988,7 +1131,7 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 <p>reads an unsigned short integer value from byte buffer </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>buffer</em>&nbsp;</td><td>source byte buffer </td></tr>
   </table>
   </dd>
 </dl>
@@ -1002,7 +1145,7 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&nbsp;</span>Friends</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(10)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -1011,7 +1154,7 @@ SamSequenceContainer::const_iterator&nbsp;</td><td class="memItemRight" valign="
 </iframe>
 </div>
 
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Mar 23 02:54:32 2011 for BamTools by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Aug 29 17:28:09 2012 for BamTools by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

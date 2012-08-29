@@ -59,7 +59,6 @@ window.onload = initDynSections;
   <div class="tabs">
     <ul>
       <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -92,6 +91,7 @@ window.onload = initDynSections;
       <li class="current"><a href="functions_vars.html"><span>Variables</span></a></li>
       <li><a href="functions_enum.html"><span>Enumerations</span></a></li>
       <li><a href="functions_eval.html"><span>Enumerator</span></a></li>
+      <li><a href="functions_rela.html"><span>Related&nbsp;Functions</span></a></li>
     </ul>
   </div>
   <div class="tabs">
@@ -103,6 +103,7 @@ window.onload = initDynSections;
       <li><a href="#index_f"><span>f</span></a></li>
       <li><a href="#index_g"><span>g</span></a></li>
       <li><a href="#index_i"><span>i</span></a></li>
+      <li><a href="#index_k"><span>k</span></a></li>
       <li><a href="#index_l"><span>l</span></a></li>
       <li><a href="#index_m"><span>m</span></a></li>
       <li><a href="#index_n"><span>n</span></a></li>
@@ -146,6 +147,9 @@ window.onload = initDynSections;
 <li>CigarData
 : <a class="el" href="struct_bam_tools_1_1_bam_alignment.html#ac7ad2244a0e268abdcdf09e97fadee3e">BamTools::BamAlignment</a>
 </li>
+<li>CommandLine
+: <a class="el" href="struct_bam_tools_1_1_sam_program.html#ad1754d9c2a563f5ad3db72b84e42d03d">BamTools::SamProgram</a>
+</li>
 <li>Comments
 : <a class="el" href="struct_bam_tools_1_1_sam_header.html#a4892d51db975564d20b2df39dda4369e">BamTools::SamHeader</a>
 </li>
@@ -163,6 +167,9 @@ window.onload = initDynSections;
 <li>Filename
 : <a class="el" href="struct_bam_tools_1_1_bam_alignment.html#abbac2cbd8b0508c36a6be13ab1aa53c4">BamTools::BamAlignment</a>
 </li>
+<li>FlowOrder
+: <a class="el" href="struct_bam_tools_1_1_sam_read_group.html#a51e27ae1aa984c83393024d12e54a2ea">BamTools::SamReadGroup</a>
+</li>
 </ul>
 
 
@@ -175,10 +182,18 @@ window.onload = initDynSections;
 
 <h3><a class="anchor" id="index_i">- i -</a></h3><ul>
 <li>ID
-: <a class="el" href="struct_bam_tools_1_1_sam_read_group.html#a8e646f2dae01515c65b9f481bdf41576">BamTools::SamReadGroup</a>
+: <a class="el" href="struct_bam_tools_1_1_sam_program.html#ae589e95036e7163e7363593de540d340">BamTools::SamProgram</a>
+, <a class="el" href="struct_bam_tools_1_1_sam_read_group.html#a8e646f2dae01515c65b9f481bdf41576">BamTools::SamReadGroup</a>
 </li>
 <li>InsertSize
 : <a class="el" href="struct_bam_tools_1_1_bam_alignment.html#a19c45c67919fb8d22d3487b3f1fcd79d">BamTools::BamAlignment</a>
+</li>
+</ul>
+
+
+<h3><a class="anchor" id="index_k">- k -</a></h3><ul>
+<li>KeySequence
+: <a class="el" href="struct_bam_tools_1_1_sam_read_group.html#ad5ae3343b14a03a779c88079a08bc11f">BamTools::SamReadGroup</a>
 </li>
 </ul>
 
@@ -202,14 +217,11 @@ window.onload = initDynSections;
 
 
 <h3><a class="anchor" id="index_m">- m -</a></h3><ul>
-<li>m_cacheMode
-: <a class="el" href="class_bam_tools_1_1_bam_index.html#a837e60b99f3a0be1011412aa795fbe2e">BamTools::BamIndex</a>
+<li>m_errorString
+: <a class="el" href="class_bam_tools_1_1_i_bam_i_o_device.html#a27212a1126cc9f0134539cb5e1288c0b">BamTools::IBamIODevice</a>
 </li>
-<li>m_indexFilename
-: <a class="el" href="class_bam_tools_1_1_bam_index.html#a21cc0db9f63d51a0778147aa445b7361">BamTools::BamIndex</a>
-</li>
-<li>m_indexStream
-: <a class="el" href="class_bam_tools_1_1_bam_index.html#aacc3dedc4f772aa32807ab740adf3bdd">BamTools::BamIndex</a>
+<li>m_mode
+: <a class="el" href="class_bam_tools_1_1_i_bam_i_o_device.html#a56e09712e67ebbaf6e203fa13182bef4">BamTools::IBamIODevice</a>
 </li>
 <li>MapQuality
 : <a class="el" href="struct_bam_tools_1_1_bam_alignment.html#a96c235eb7645c6e0fcf5da5bfb16a2aa">BamTools::BamAlignment</a>
@@ -227,6 +239,7 @@ window.onload = initDynSections;
 <li>Name
 : <a class="el" href="struct_bam_tools_1_1_bam_alignment.html#a723d7d4ff011c2e8cb612f96cbc53daf">BamTools::BamAlignment</a>
 , <a class="el" href="struct_bam_tools_1_1_sam_sequence.html#a5fb630155946f6bf5fb8d6cbd7ec0aa6">BamTools::SamSequence</a>
+, <a class="el" href="struct_bam_tools_1_1_sam_program.html#a1db41b0088eaf6d97477fa3f6104c40a">BamTools::SamProgram</a>
 </li>
 </ul>
 
@@ -241,17 +254,17 @@ window.onload = initDynSections;
 <li>PredictedInsertSize
 : <a class="el" href="struct_bam_tools_1_1_sam_read_group.html#a25c5521c2398d29d07bebefce64cfc13">BamTools::SamReadGroup</a>
 </li>
+<li>PreviousProgramID
+: <a class="el" href="struct_bam_tools_1_1_sam_program.html#a7890f0688e0da803c272d7dfa0c3fd0c">BamTools::SamProgram</a>
+</li>
 <li>ProductionDate
 : <a class="el" href="struct_bam_tools_1_1_sam_read_group.html#a41ef6e3f744ba7a0bab0e8bab421a524">BamTools::SamReadGroup</a>
 </li>
-<li>ProgramCommandLine
-: <a class="el" href="struct_bam_tools_1_1_sam_header.html#af7eda7af787f7568a86760a47ee5fb4f">BamTools::SamHeader</a>
+<li>Program
+: <a class="el" href="struct_bam_tools_1_1_sam_read_group.html#a3f4f9215ff456dc8a82040bbdd5385e8">BamTools::SamReadGroup</a>
 </li>
-<li>ProgramName
-: <a class="el" href="struct_bam_tools_1_1_sam_header.html#a8d7b22f01a54131569d2de3a46cdce21">BamTools::SamHeader</a>
-</li>
-<li>ProgramVersion
-: <a class="el" href="struct_bam_tools_1_1_sam_header.html#ab6ee6a43944d8516c599e8f9eaaa6892">BamTools::SamHeader</a>
+<li>Programs
+: <a class="el" href="struct_bam_tools_1_1_sam_header.html#aad689b9b4dbbd211664c08f89f745b1d">BamTools::SamHeader</a>
 </li>
 </ul>
 
@@ -330,6 +343,7 @@ window.onload = initDynSections;
 <h3><a class="anchor" id="index_v">- v -</a></h3><ul>
 <li>Version
 : <a class="el" href="struct_bam_tools_1_1_sam_header.html#aab5d0a3271fba147105ef018587f7508">BamTools::SamHeader</a>
+, <a class="el" href="struct_bam_tools_1_1_sam_program.html#a672d66422c5304713d07a53e4701ccae">BamTools::SamProgram</a>
 </li>
 </ul>
 </div>
@@ -338,7 +352,7 @@ window.onload = initDynSections;
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&nbsp;</span>Friends</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(10)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -347,7 +361,7 @@ window.onload = initDynSections;
 </iframe>
 </div>
 
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Mar 23 02:54:32 2011 for BamTools by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Aug 29 17:28:09 2012 for BamTools by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

@@ -59,7 +59,6 @@ window.onload = initDynSections;
   <div class="tabs">
     <ul>
       <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -102,42 +101,44 @@ window.onload = initDynSections;
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">default constructor  <a href="#a714190de4522e6f06ecad62dc18c0453"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#ab28d29dda7369ab8bbd97fa13cd9aaf8">SamSequence</a> (const std::string &amp;name, const int &amp;length)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">constructs sequence with <em>name</em> and <em>length</em>  <a href="#ab28d29dda7369ab8bbd97fa13cd9aaf8"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#a812d834ee9a08fafd00b3d70b66cd7fd">SamSequence</a> (const std::string &amp;name, const std::string &amp;length)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">constructs sequence with <em>name</em> and <em>length</em>  <a href="#a812d834ee9a08fafd00b3d70b66cd7fd"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#a2b81f1e396c98a5a674247045981ff7b">SamSequence</a> (const <a class="el" href="struct_bam_tools_1_1_sam_sequence.html">SamSequence</a> &amp;other)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">copy constructor  <a href="#a2b81f1e396c98a5a674247045981ff7b"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#a5f0b1a3707cb56575161dadd18e51146">~SamSequence</a> (void)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">destructor  <a href="#a5f0b1a3707cb56575161dadd18e51146"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#aca697aca0035a41323667d11fec0ca4a">Clear</a> (void)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Clears all data fields.  <a href="#aca697aca0035a41323667d11fec0ca4a"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#ae42e12a9b623006729cccb67527b8ccc">HasName</a> (void) const </td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns <code>true</code> if sequence contains @SQ SN:&lt;Name&gt;  <a href="#ae42e12a9b623006729cccb67527b8ccc"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#ab363f3b15b112deba8d315eda20957aa">HasLength</a> (void) const </td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns <code>true</code> if sequence contains @SQ LN:&lt;Length&gt;  <a href="#ab363f3b15b112deba8d315eda20957aa"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#a9826c3512a60215eb43cd0cb2a42e174">HasAssemblyID</a> (void) const </td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns <code>true</code> if sequence contains @SQ AS:&lt;AssemblyID&gt;  <a href="#a9826c3512a60215eb43cd0cb2a42e174"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#aa048cd8dda71df5e56332f290ecff710">HasChecksum</a> (void) const </td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns <code>true</code> if sequence contains @SQ M5:&lt;Checksum&gt;  <a href="#aa048cd8dda71df5e56332f290ecff710"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#af3ef9e896e08228f820925885d561661">HasURI</a> (void) const </td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns <code>true</code> if sequence contains @SQ UR:&lt;URI&gt;  <a href="#af3ef9e896e08228f820925885d561661"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#ab363f3b15b112deba8d315eda20957aa">HasLength</a> (void) const </td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns <code>true</code> if sequence contains @SQ LN:&lt;Length&gt;  <a href="#ab363f3b15b112deba8d315eda20957aa"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#ae42e12a9b623006729cccb67527b8ccc">HasName</a> (void) const </td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns <code>true</code> if sequence contains @SQ SN:&lt;Name&gt;  <a href="#ae42e12a9b623006729cccb67527b8ccc"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#a3d8173c67e58f37af82fa764f8a9673b">HasSpecies</a> (void) const </td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns <code>true</code> if sequence contains @SQ SP:&lt;Species&gt;  <a href="#a3d8173c67e58f37af82fa764f8a9673b"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#af3ef9e896e08228f820925885d561661">HasURI</a> (void) const </td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns <code>true</code> if sequence contains @SQ UR:&lt;URI&gt;  <a href="#af3ef9e896e08228f820925885d561661"></a><br/></td></tr>
 <tr><td colspan="2"><h2>Public Attributes</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#a5fb630155946f6bf5fb8d6cbd7ec0aa6">Name</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">corresponds to @SQ SN:&lt;Name&gt;  <a href="#a5fb630155946f6bf5fb8d6cbd7ec0aa6"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#a3e6a804ea1c8ddf848148dbc2835393a">Length</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">corresponds to @SQ LN:&lt;Length&gt;  <a href="#a3e6a804ea1c8ddf848148dbc2835393a"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#adb1f36a9ea5880a2b41645dc50ea913a">AssemblyID</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">corresponds to @SQ AS:&lt;AssemblyID&gt;  <a href="#adb1f36a9ea5880a2b41645dc50ea913a"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#a3ce6a3616e28add448bdd2c81cebe14b">Checksum</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">corresponds to @SQ M5:&lt;Checksum&gt;  <a href="#a3ce6a3616e28add448bdd2c81cebe14b"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#af499d5b85d972cc9597d451ca539c183">URI</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">corresponds to @SQ UR:&lt;URI&gt;  <a href="#af499d5b85d972cc9597d451ca539c183"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#a3e6a804ea1c8ddf848148dbc2835393a">Length</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">corresponds to @SQ LN:&lt;Length&gt;  <a href="#a3e6a804ea1c8ddf848148dbc2835393a"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#a5fb630155946f6bf5fb8d6cbd7ec0aa6">Name</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">corresponds to @SQ SN:&lt;Name&gt;  <a href="#a5fb630155946f6bf5fb8d6cbd7ec0aa6"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#a1309fe847cf7426a3b89f77e7b093ed6">Species</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">corresponds to @SQ SP:&lt;Species&gt;  <a href="#a1309fe847cf7426a3b89f77e7b093ed6"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_bam_tools_1_1_sam_sequence.html#af499d5b85d972cc9597d451ca539c183">URI</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">corresponds to @SQ UR:&lt;URI&gt;  <a href="#af499d5b85d972cc9597d451ca539c183"></a><br/></td></tr>
 </table>
 <hr/><a name="_details"></a><h2>Detailed Description</h2>
 <p>Represents a SAM sequence entry. </p>
 <p>Provides direct read/write access to the SAM sequence data fields.</p>
-<dl class="see"><dt><b>See also:</b></dt><dd><a href="http://samtools.sourceforge.net/SAM-1.3.pdf">http://samtools.sourceforge.net/SAM-1.3.pdf</a> </dd></dl>
+<dl class="see"><dt><b>See also:</b></dt><dd><a href="http://samtools.sourceforge.net/SAM1.pdf">http://samtools.sourceforge.net/SAM1.pdf</a> </dd></dl>
 <hr/><h2>Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="a714190de4522e6f06ecad62dc18c0453"></a><!-- doxytag: member="BamTools::SamSequence::SamSequence" ref="a714190de4522e6f06ecad62dc18c0453" args="(void)" -->
 <div class="memitem">
@@ -189,6 +190,42 @@ window.onload = initDynSections;
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>name</em>&nbsp;</td><td>desired sequence name </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>length</em>&nbsp;</td><td>desired sequence length (numeric value) </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a class="anchor" id="a812d834ee9a08fafd00b3d70b66cd7fd"></a><!-- doxytag: member="BamTools::SamSequence::SamSequence" ref="a812d834ee9a08fafd00b3d70b66cd7fd" args="(const std::string &amp;name, const std::string &amp;length)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">SamSequence::SamSequence </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&nbsp;</td>
+          <td class="paramname"> <em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&nbsp;</td>
+          <td class="paramname"> <em>length</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>constructs sequence with <em>name</em> and <em>length</em> </p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>name</em>&nbsp;</td><td>desired sequence name </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>length</em>&nbsp;</td><td>desired sequence length (string value) </td></tr>
   </table>
   </dd>
 </dl>
@@ -419,6 +456,7 @@ window.onload = initDynSections;
 <div class="memdoc">
 
 <p>corresponds to @SQ LN:&lt;Length&gt; </p>
+<p>Required for valid SAM header. </p>
 
 </div>
 </div>
@@ -434,6 +472,7 @@ window.onload = initDynSections;
 <div class="memdoc">
 
 <p>corresponds to @SQ SN:&lt;Name&gt; </p>
+<p>Required for valid SAM header. </p>
 
 </div>
 </div>
@@ -477,7 +516,7 @@ window.onload = initDynSections;
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&nbsp;</span>Friends</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(10)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -486,7 +525,7 @@ window.onload = initDynSections;
 </iframe>
 </div>
 
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Mar 23 02:54:32 2011 for BamTools by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Aug 29 17:28:09 2012 for BamTools by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

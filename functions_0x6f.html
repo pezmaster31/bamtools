@@ -59,7 +59,6 @@ window.onload = initDynSections;
   <div class="tabs">
     <ul>
       <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -92,6 +91,7 @@ window.onload = initDynSections;
       <li><a href="functions_vars.html"><span>Variables</span></a></li>
       <li><a href="functions_enum.html"><span>Enumerations</span></a></li>
       <li><a href="functions_eval.html"><span>Enumerator</span></a></li>
+      <li><a href="functions_rela.html"><span>Related&nbsp;Functions</span></a></li>
     </ul>
   </div>
   <div class="tabs">
@@ -131,6 +131,8 @@ Here is a list of all class members with links to the classes they belong to:
 : <a class="el" href="class_bam_tools_1_1_bam_multi_reader.html#a35475e3480ef6886b440deb4e30e9964">BamTools::BamMultiReader</a>
 , <a class="el" href="class_bam_tools_1_1_bam_reader.html#a9a863a20a48b960a94b9b9c16471cc02">BamTools::BamReader</a>
 , <a class="el" href="class_bam_tools_1_1_bam_writer.html#a6106772d6ff8c66e8703cbb55060fb09">BamTools::BamWriter</a>
+, <a class="el" href="class_bam_tools_1_1_i_bam_i_o_device.html#af996bf97ed4e3c4b56f3f6e33b64c709">BamTools::IBamIODevice</a>
+, <a class="el" href="class_bam_tools_1_1_bam_writer.html#afb0f6e04c32f60a92210be99ba1219a7">BamTools::BamWriter</a>
 </li>
 <li>OpenFile()
 : <a class="el" href="class_bam_tools_1_1_bam_multi_reader.html#a11ff4c569409990b0a6e3fcdaeaf629e">BamTools::BamMultiReader</a>
@@ -141,9 +143,22 @@ Here is a list of all class members with links to the classes they belong to:
 <li>OpenIndexes()
 : <a class="el" href="class_bam_tools_1_1_bam_multi_reader.html#a527fabdd80d8dc7788abd60520048b13">BamTools::BamMultiReader</a>
 </li>
+<li>OpenMode
+: <a class="el" href="class_bam_tools_1_1_i_bam_i_o_device.html#a97309e79d2a827f02b748ebbfbe0363f">BamTools::IBamIODevice</a>
+</li>
+<li>operator()()
+: <a class="el" href="struct_bam_tools_1_1_algorithms_1_1_sort_1_1_by_position.html#a5e20ac05eb7a1b3ebe83725334770ff4">BamTools::Algorithms::Sort::ByPosition</a>
+, <a class="el" href="struct_bam_tools_1_1_algorithms_1_1_sort_1_1_by_name.html#a50c6514c7c650bb34466ff235117040b">BamTools::Algorithms::Sort::ByName</a>
+, <a class="el" href="struct_bam_tools_1_1_algorithms_1_1_sort_1_1_unsorted.html#ae7d272c34af22496ef4aa8233cd34b0e">BamTools::Algorithms::Sort::Unsorted</a>
+, <a class="el" href="struct_bam_tools_1_1_algorithms_1_1_sort_1_1_by_tag.html#af6359624c1749b75615a098d2fc8f1c4">BamTools::Algorithms::Sort::ByTag&lt; T &gt;</a>
+</li>
 <li>operator[]()
 : <a class="el" href="class_bam_tools_1_1_sam_read_group_dictionary.html#a047ec69b52588094ac2c6c1eae9adf40">BamTools::SamReadGroupDictionary</a>
 , <a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#ac1a53cc4e0499d5e548993a902a5aa32">BamTools::SamSequenceDictionary</a>
+, <a class="el" href="class_bam_tools_1_1_sam_program_chain.html#a0c84a94130a31560cea62785b42d50f8">BamTools::SamProgramChain</a>
+</li>
+<li>Order
+: <a class="el" href="struct_bam_tools_1_1_algorithms_1_1_sort.html#ab00bd07c176b33933717ca362b716f61">BamTools::Algorithms::Sort</a>
 </li>
 </ul>
 </div>
@@ -152,7 +167,7 @@ Here is a list of all class members with links to the classes they belong to:
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&nbsp;</span>Friends</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(10)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -161,7 +176,7 @@ Here is a list of all class members with links to the classes they belong to:
 </iframe>
 </div>
 
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Mar 23 02:54:32 2011 for BamTools by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Aug 29 17:28:09 2012 for BamTools by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

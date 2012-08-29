@@ -59,7 +59,6 @@ window.onload = initDynSections;
   <div class="tabs">
     <ul>
       <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -90,6 +89,7 @@ window.onload = initDynSections;
 <h1>BamTools::SamReadGroupDictionary Member List</h1>This is the complete list of members for <a class="el" href="class_bam_tools_1_1_sam_read_group_dictionary.html">BamTools::SamReadGroupDictionary</a>, including all inherited members.<table>
   <tr class="memlist"><td><a class="el" href="class_bam_tools_1_1_sam_read_group_dictionary.html#aff2519ef4e2e43b42ca228946a71ab97">Add</a>(const SamReadGroup &amp;readGroup)</td><td><a class="el" href="class_bam_tools_1_1_sam_read_group_dictionary.html">BamTools::SamReadGroupDictionary</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="class_bam_tools_1_1_sam_read_group_dictionary.html#a45530ebe8d372f580f422079aab92d4f">Add</a>(const std::string &amp;readGroupId)</td><td><a class="el" href="class_bam_tools_1_1_sam_read_group_dictionary.html">BamTools::SamReadGroupDictionary</a></td><td></td></tr>
+  <tr class="memlist"><td><a class="el" href="class_bam_tools_1_1_sam_read_group_dictionary.html#ae7f449c0365d999001e905f709c8a766">Add</a>(const SamReadGroupDictionary &amp;readGroups)</td><td><a class="el" href="class_bam_tools_1_1_sam_read_group_dictionary.html">BamTools::SamReadGroupDictionary</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="class_bam_tools_1_1_sam_read_group_dictionary.html#abc6329d488d5b850673ce5dc38b7b681">Add</a>(const std::vector&lt; SamReadGroup &gt; &amp;readGroups)</td><td><a class="el" href="class_bam_tools_1_1_sam_read_group_dictionary.html">BamTools::SamReadGroupDictionary</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="class_bam_tools_1_1_sam_read_group_dictionary.html#ad262cd4ac61c060bcf70ae20b1f87a9d">Add</a>(const std::vector&lt; std::string &gt; &amp;readGroupIds)</td><td><a class="el" href="class_bam_tools_1_1_sam_read_group_dictionary.html">BamTools::SamReadGroupDictionary</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="class_bam_tools_1_1_sam_read_group_dictionary.html#a20ed952ccb94ec23d809355328beca99">Begin</a>(void)</td><td><a class="el" href="class_bam_tools_1_1_sam_read_group_dictionary.html">BamTools::SamReadGroupDictionary</a></td><td></td></tr>
@@ -117,7 +117,7 @@ window.onload = initDynSections;
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&nbsp;</span>Friends</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(10)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -126,7 +126,7 @@ window.onload = initDynSections;
 </iframe>
 </div>
 
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Mar 23 02:54:32 2011 for BamTools by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Aug 29 17:28:09 2012 for BamTools by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

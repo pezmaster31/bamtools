@@ -59,7 +59,6 @@ window.onload = initDynSections;
   <div class="tabs">
     <ul>
       <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -92,6 +91,7 @@ window.onload = initDynSections;
       <li><a href="functions_vars.html"><span>Variables</span></a></li>
       <li><a href="functions_enum.html"><span>Enumerations</span></a></li>
       <li><a href="functions_eval.html"><span>Enumerator</span></a></li>
+      <li><a href="functions_rela.html"><span>Related&nbsp;Functions</span></a></li>
     </ul>
   </div>
   <div class="tabs">
@@ -131,7 +131,7 @@ Here is a list of all class members with links to the classes they belong to:
 : <a class="el" href="struct_bam_tools_1_1_bam_alignment.html#a1341749fe3dcb1801126dcaee72e0817">BamTools::BamAlignment</a>
 </li>
 <li>~BamIndex()
-: <a class="el" href="class_bam_tools_1_1_bam_index.html#aa89f35c1b27f0b741267241ba8fb63b5">BamTools::BamIndex</a>
+: <a class="el" href="class_bam_tools_1_1_bam_index.html#a891299c6f89d3c7d1da5286e612f9a96">BamTools::BamIndex</a>
 </li>
 <li>~BamMultiReader()
 : <a class="el" href="class_bam_tools_1_1_bam_multi_reader.html#aa655801419aeeca519109ebac5242722">BamTools::BamMultiReader</a>
@@ -142,8 +142,17 @@ Here is a list of all class members with links to the classes they belong to:
 <li>~BamWriter()
 : <a class="el" href="class_bam_tools_1_1_bam_writer.html#a6d16ab6622a12d03e76f06f9f80c4535">BamTools::BamWriter</a>
 </li>
+<li>~IBamIODevice()
+: <a class="el" href="class_bam_tools_1_1_i_bam_i_o_device.html#acc675a3d613b2f03bfe1717548d648b2">BamTools::IBamIODevice</a>
+</li>
 <li>~SamHeader()
 : <a class="el" href="struct_bam_tools_1_1_sam_header.html#a548ddce257c5ef7afc4466fecbde3cde">BamTools::SamHeader</a>
+</li>
+<li>~SamProgram()
+: <a class="el" href="struct_bam_tools_1_1_sam_program.html#ad66eb82956991afa5cceee6c0d147760">BamTools::SamProgram</a>
+</li>
+<li>~SamProgramChain()
+: <a class="el" href="class_bam_tools_1_1_sam_program_chain.html#ab31ee039ebf98d65fba3d6d8435389a2">BamTools::SamProgramChain</a>
 </li>
 <li>~SamReadGroup()
 : <a class="el" href="struct_bam_tools_1_1_sam_read_group.html#a1d80120fe799d626776de081cd0af11f">BamTools::SamReadGroup</a>
@@ -164,7 +173,7 @@ Here is a list of all class members with links to the classes they belong to:
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&nbsp;</span>Friends</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(10)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -173,7 +182,7 @@ Here is a list of all class members with links to the classes they belong to:
 </iframe>
 </div>
 
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Mar 23 02:54:32 2011 for BamTools by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Aug 29 17:28:09 2012 for BamTools by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

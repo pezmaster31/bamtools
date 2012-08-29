@@ -59,7 +59,6 @@ window.onload = initDynSections;
   <div class="tabs">
     <ul>
       <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -90,7 +89,7 @@ window.onload = initDynSections;
 </div>
 <div class="contents">
 <h1>BamTools::BamReader Class Reference</h1><!-- doxytag: class="BamTools::BamReader" -->
-<p>Convenience class for reading multiple BAM files.  
+<p>Provides read access to BAM files.  
 <a href="#_details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="_bam_reader_8h_source.html">BamReader.h</a>&gt;</code></p>
@@ -102,8 +101,8 @@ window.onload = initDynSections;
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">constructor  <a href="#ab3902f9802bd9e9b8960d44abe302a58"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_bam_reader.html#a81b83ee41a37e94b0228125e0b082499">~BamReader</a> (void)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">destructor  <a href="#a81b83ee41a37e94b0228125e0b082499"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_bam_reader.html#aa1cf6a578654873c2c549a599a95c844">Close</a> (void)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Closes the current BAM file.  <a href="#aa1cf6a578654873c2c549a599a95c844"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_bam_reader.html#a9bedadbb878c84d3674eea1c11f981ec">Close</a> (void)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Closes the current BAM file.  <a href="#a9bedadbb878c84d3674eea1c11f981ec"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">const std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_bam_reader.html#a6088dfe8bb02db582a7aeb7f67489e2d">GetFilename</a> (void) const </td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns name of current BAM file.  <a href="#a6088dfe8bb02db582a7aeb7f67489e2d"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_bam_reader.html#a994d15ef2ee00feaab4f87b7c548c1b9">IsOpen</a> (void) const </td></tr>
@@ -142,13 +141,10 @@ window.onload = initDynSections;
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Opens a BAM index file.  <a href="#ab62b5f370b91e225fd7684d0180bd41d"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_bam_reader.html#a89712324427d42091c3a979a426871d5">SetIndex</a> (<a class="el" href="class_bam_tools_1_1_bam_index.html">BamIndex</a> *index)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Sets a custom <a class="el" href="class_bam_tools_1_1_bam_index.html" title="Provides methods for generating &amp; loading BAM index files.">BamIndex</a> on this reader.  <a href="#a89712324427d42091c3a979a426871d5"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_bam_reader.html#ab5ea6affa3ed602028c55f5efe99b6a0">SetIndexCacheMode</a> (const <a class="el" href="class_bam_tools_1_1_bam_index.html#a7b0a0a1acd3293307a22cec3e333411a">BamIndex::IndexCacheMode</a> &amp;mode)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Changes the caching behavior of the index data.  <a href="#ab5ea6affa3ed602028c55f5efe99b6a0"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_bam_reader.html#ae9354d2abddd30ce345906f01060798d">IsIndexLoaded</a> (void) const </td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns <code>true</code> if index data is available.  <a href="#ae9354d2abddd30ce345906f01060798d"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">std::string&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_bam_reader.html#a301b93989445275abd75e8ae33638037">GetErrorString</a> (void) const </td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns a human-readable description of the last error that occurred.  <a href="#a301b93989445275abd75e8ae33638037"></a><br/></td></tr>
 </table>
 <hr/><a name="_details"></a><h2>Detailed Description</h2>
-<p>Convenience class for reading multiple BAM files. </p>
 <p>Provides read access to BAM files. </p>
 <hr/><h2>Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="ab3902f9802bd9e9b8960d44abe302a58"></a><!-- doxytag: member="BamTools::BamReader::BamReader" ref="ab3902f9802bd9e9b8960d44abe302a58" args="(void)" -->
@@ -192,12 +188,12 @@ window.onload = initDynSections;
 </div>
 </div>
 <hr/><h2>Member Function Documentation</h2>
-<a class="anchor" id="aa1cf6a578654873c2c549a599a95c844"></a><!-- doxytag: member="BamTools::BamReader::Close" ref="aa1cf6a578654873c2c549a599a95c844" args="(void)" -->
+<a class="anchor" id="a9bedadbb878c84d3674eea1c11f981ec"></a><!-- doxytag: member="BamTools::BamReader::Close" ref="a9bedadbb878c84d3674eea1c11f981ec" args="(void)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void BamReader::Close </td>
+          <td class="memname">bool BamReader::Close </td>
           <td>(</td>
           <td class="paramtype">void&nbsp;</td>
           <td class="paramname"></td>
@@ -210,6 +206,7 @@ window.onload = initDynSections;
 
 <p>Closes the current BAM file. </p>
 <p>Also clears out all header and reference data.</p>
+<dl class="return"><dt><b>Returns:</b></dt><dd><code>true</code> if file closed OK </dd></dl>
 <dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_bam_reader.html#a994d15ef2ee00feaab4f87b7c548c1b9" title="Returns true if a BAM file is open for reading.">IsOpen()</a>, <a class="el" href="class_bam_tools_1_1_bam_reader.html#a9a863a20a48b960a94b9b9c16471cc02" title="Opens a BAM file.">Open()</a> </dd></dl>
 
 </div>
@@ -233,12 +230,34 @@ window.onload = initDynSections;
 <p>Creates an index file for current BAM file. </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>type</em>&nbsp;</td><td>file format to create, see <a class="el" href="class_bam_tools_1_1_bam_index.html#a3bd9db935c5805ab8dea473c2819058a">BamIndex::IndexType</a> for available formats </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>type</em>&nbsp;</td><td>file format to create, see <a class="el" href="class_bam_tools_1_1_bam_index.html#a3bd9db935c5805ab8dea473c2819058a">BamIndex::IndexType</a> for available formats </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="return"><dt><b>Returns:</b></dt><dd><code>true</code> if index created OK </dd></dl>
 <dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_bam_reader.html#a86dfc39a2d57eb3b665e641e6436b5ee" title="Looks in BAM file&#39;s directory for a matching index file.">LocateIndex()</a>, <a class="el" href="class_bam_tools_1_1_bam_reader.html#ab62b5f370b91e225fd7684d0180bd41d" title="Opens a BAM index file.">OpenIndex()</a> </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a301b93989445275abd75e8ae33638037"></a><!-- doxytag: member="BamTools::BamReader::GetErrorString" ref="a301b93989445275abd75e8ae33638037" args="(void) const " -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">string BamReader::GetErrorString </td>
+          <td>(</td>
+          <td class="paramtype">void&nbsp;</td>
+          <td class="paramname"></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Returns a human-readable description of the last error that occurred. </p>
+<p>This method allows elimination of STDERR pollution. Developers of client code may choose how the messages are displayed to the user, if at all.</p>
+<dl class="return"><dt><b>Returns:</b></dt><dd>error description </dd></dl>
 
 </div>
 </div>
@@ -283,7 +302,7 @@ window.onload = initDynSections;
 
 <p>Returns SAM header data. </p>
 <p>Header data is wrapped in a <a class="el" href="struct_bam_tools_1_1_sam_header.html" title="Represents the SAM-formatted text header that is part of the BAM file header.">SamHeader</a> object that can be conveniently queried &amp; modified.</p>
-<p>N.B. - Modifying the retrieved <a class="el" href="struct_bam_tools_1_1_sam_header.html" title="Represents the SAM-formatted text header that is part of the BAM file header.">SamHeader</a> object does NOT affect the current BAM file. This file has been opened in a read-only mode. However, your modified <a class="el" href="struct_bam_tools_1_1_sam_header.html" title="Represents the SAM-formatted text header that is part of the BAM file header.">SamHeader</a> object can be used in conjunction with <a class="el" href="class_bam_tools_1_1_bam_writer.html" title="Provides write access for generating BAM files.">BamWriter</a> to generate a new BAM file with the appropriate header information.</p>
+<dl class="note"><dt><b>Note:</b></dt><dd>Modifying the retrieved <a class="el" href="struct_bam_tools_1_1_sam_header.html" title="Represents the SAM-formatted text header that is part of the BAM file header.">SamHeader</a> object does NOT affect the current BAM file. This file has been opened in a read-only mode. However, your modified <a class="el" href="struct_bam_tools_1_1_sam_header.html" title="Represents the SAM-formatted text header that is part of the BAM file header.">SamHeader</a> object can be used in conjunction with <a class="el" href="class_bam_tools_1_1_bam_writer.html" title="Provides write access for generating BAM files.">BamWriter</a> to generate a new BAM file with the appropriate header information.</dd></dl>
 <dl class="return"><dt><b>Returns:</b></dt><dd>header data object </dd></dl>
 <dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_bam_reader.html#a1d70e68afdbb504c9afcfd1bfefd03bc" title="Returns SAM header data, as SAM-formatted text.">GetHeaderText()</a> </dd></dl>
 
@@ -306,7 +325,7 @@ window.onload = initDynSections;
 <div class="memdoc">
 
 <p>Returns SAM header data, as SAM-formatted text. </p>
-<p>N.B. - Modifying the retrieved text does NOT affect the current BAM file. This file has been opened in a read-only mode. However, your modified header text can be used in conjunction with <a class="el" href="class_bam_tools_1_1_bam_writer.html" title="Provides write access for generating BAM files.">BamWriter</a> to generate a new BAM file with the appropriate header information.</p>
+<dl class="note"><dt><b>Note:</b></dt><dd>Modifying the retrieved text does NOT affect the current BAM file. This file has been opened in a read-only mode. However, your modified header text can be used in conjunction with <a class="el" href="class_bam_tools_1_1_bam_writer.html" title="Provides write access for generating BAM files.">BamWriter</a> to generate a new BAM file with the appropriate header information.</dd></dl>
 <dl class="return"><dt><b>Returns:</b></dt><dd>SAM-formatted header text </dd></dl>
 <dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_bam_reader.html#adf9b998252359cbf76257f11c4fe98ad" title="Returns SAM header data.">GetHeader()</a> </dd></dl>
 
@@ -334,7 +353,7 @@ window.onload = initDynSections;
 <p>This function fully populates all of the alignment's available data fields, including the string data fields (read name, bases, qualities, tags, filename). If only positional data (refID, position, CIGAR ops, alignment flags, etc.) are required, consider using <a class="el" href="class_bam_tools_1_1_bam_reader.html#ac95d20470a02a104990f5a8cf9868f95" title="Retrieves next available alignment, without populating the alignment&#39;s string...">GetNextAlignmentCore()</a> for a significant performance boost.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>alignment</em>&nbsp;</td><td>destination for alignment record data </td></tr>
+    <tr><td valign="top"><tt>[out]</tt>&nbsp;</td><td valign="top"><em>alignment</em>&nbsp;</td><td>destination for alignment record data </td></tr>
   </table>
   </dd>
 </dl>
@@ -363,7 +382,7 @@ window.onload = initDynSections;
 <p>However, this method does NOT populate the alignment's string data fields (read name, bases, qualities, tags, filename). This provides a boost in speed when these fields are not required for every alignment. These fields can be populated 'lazily' (as needed) by calling <a class="el" href="struct_bam_tools_1_1_bam_alignment.html#a1ea231426b422a70242a44c010894af9" title="Populates alignment string fields (read name, bases, qualities, tag data).">BamAlignment::BuildCharData()</a> later.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>alignment</em>&nbsp;</td><td>destination for alignment record data </td></tr>
+    <tr><td valign="top"><tt>[out]</tt>&nbsp;</td><td valign="top"><em>alignment</em>&nbsp;</td><td>destination for alignment record data </td></tr>
   </table>
   </dd>
 </dl>
@@ -430,7 +449,13 @@ window.onload = initDynSections;
 <div class="memdoc">
 
 <p>Returns the ID of the reference with this name. </p>
-<p>If <em>refName</em> is not found, returns -1. </p>
+<p>If <em>refName</em> is not found, returns -1.</p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>refName</em>&nbsp;</td><td>name of reference to look up </td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
@@ -451,27 +476,6 @@ window.onload = initDynSections;
 <div class="memdoc">
 
 <p>Returns <code>true</code> if index data is available. </p>
-
-</div>
-</div>
-<a class="anchor" id="ae9354d2abddd30ce345906f01060798d"></a><!-- doxytag: member="BamTools::BamReader::IsIndexLoaded" ref="ae9354d2abddd30ce345906f01060798d" args="(void) const " -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool BamReader::IsIndexLoaded </td>
-          <td>(</td>
-          <td class="paramtype">void&nbsp;</td>
-          <td class="paramname"></td>
-          <td>&nbsp;)&nbsp;</td>
-          <td> const</td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>Returns <code>true</code> if index data is available. </p>
-<dl class="deprecated"><dt><b><a class="el" href="deprecated.html#_deprecated000008">Deprecated:</a></b></dt><dd>Instead use <a class="el" href="class_bam_tools_1_1_bam_reader.html#ab372b7295be8f7c4e08dcdb000f4ebba" title="Returns true if index data is available.">HasIndex()</a> </dd></dl>
 
 </div>
 </div>
@@ -522,6 +526,13 @@ window.onload = initDynSections;
 
 <p>Performs a random-access jump within BAM file. </p>
 <p>This is a convenience method, equivalent to calling <a class="el" href="class_bam_tools_1_1_bam_reader.html#a1273d2e1da19861ffdc1bddeb9152420" title="Sets a target region of interest.">SetRegion()</a> with only a left boundary specified.</p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>refID</em>&nbsp;</td><td>left-bound reference ID </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>position</em>&nbsp;</td><td>left-bound position</td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="return"><dt><b>Returns:</b></dt><dd><code>true</code> if jump was successful </dd></dl>
 <dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_bam_reader.html#ab372b7295be8f7c4e08dcdb000f4ebba" title="Returns true if index data is available.">HasIndex()</a> </dd></dl>
 
@@ -549,7 +560,7 @@ window.onload = initDynSections;
 <p>If you want precise control over which index file is loaded, use <a class="el" href="class_bam_tools_1_1_bam_reader.html#ab62b5f370b91e225fd7684d0180bd41d" title="Opens a BAM index file.">OpenIndex()</a> with the desired index filename. If that function returns false, you can use <a class="el" href="class_bam_tools_1_1_bam_reader.html#a050af09369dd60bf0db3168727a201b4" title="Creates an index file for current BAM file.">CreateIndex()</a> to then build an index of the exact requested format.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>preferredType</em>&nbsp;</td><td>desired index file format, see <a class="el" href="class_bam_tools_1_1_bam_index.html#a3bd9db935c5805ab8dea473c2819058a">BamIndex::IndexType</a> for available formats </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>preferredType</em>&nbsp;</td><td>desired index file format, see <a class="el" href="class_bam_tools_1_1_bam_index.html#a3bd9db935c5805ab8dea473c2819058a">BamIndex::IndexType</a> for available formats</td></tr>
   </table>
   </dd>
 </dl>
@@ -574,15 +585,15 @@ window.onload = initDynSections;
 <div class="memdoc">
 
 <p>Opens a BAM file. </p>
-<p>If <a class="el" href="class_bam_tools_1_1_bam_reader.html" title="Convenience class for reading multiple BAM files.">BamReader</a> is already opened on another file, this function closes that file, then attempts to open requested <em>filename</em>.</p>
+<p>If <a class="el" href="class_bam_tools_1_1_bam_reader.html" title="Provides read access to BAM files.">BamReader</a> is already opened on another file, this function closes that file, then attempts to open requested <em>filename</em>.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>filename</em>&nbsp;</td><td>name of BAM file to open </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>filename</em>&nbsp;</td><td>name of BAM file to open</td></tr>
   </table>
   </dd>
 </dl>
 <dl class="return"><dt><b>Returns:</b></dt><dd><code>true</code> if BAM file was opened successfully </dd></dl>
-<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_bam_reader.html#aa1cf6a578654873c2c549a599a95c844" title="Closes the current BAM file.">Close()</a>, <a class="el" href="class_bam_tools_1_1_bam_reader.html#a994d15ef2ee00feaab4f87b7c548c1b9" title="Returns true if a BAM file is open for reading.">IsOpen()</a>, <a class="el" href="class_bam_tools_1_1_bam_reader.html#ab62b5f370b91e225fd7684d0180bd41d" title="Opens a BAM index file.">OpenIndex()</a> </dd></dl>
+<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_bam_reader.html#a9bedadbb878c84d3674eea1c11f981ec" title="Closes the current BAM file.">Close()</a>, <a class="el" href="class_bam_tools_1_1_bam_reader.html#a994d15ef2ee00feaab4f87b7c548c1b9" title="Returns true if a BAM file is open for reading.">IsOpen()</a>, <a class="el" href="class_bam_tools_1_1_bam_reader.html#ab62b5f370b91e225fd7684d0180bd41d" title="Opens a BAM index file.">OpenIndex()</a> </dd></dl>
 
 </div>
 </div>
@@ -605,7 +616,7 @@ window.onload = initDynSections;
 <p>Opens a BAM index file. </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>indexFilename</em>&nbsp;</td><td>name of BAM index file</td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>indexFilename</em>&nbsp;</td><td>name of BAM index file to open</td></tr>
   </table>
   </dd>
 </dl>
@@ -632,7 +643,7 @@ window.onload = initDynSections;
 
 <p>Returns the internal file pointer to the first alignment record. </p>
 <p>Useful for performing multiple sequential passes through a BAM file. Calling this function clears any prior region that may have been set.</p>
-<p>N.B. - Note that this function sets the file pointer to first alignment record in the BAM file, NOT the beginning of the file.</p>
+<dl class="note"><dt><b>Note:</b></dt><dd>This function sets the file pointer to first alignment record in the BAM file, NOT the beginning of the file.</dd></dl>
 <dl class="return"><dt><b>Returns:</b></dt><dd><code>true</code> if rewind operation was successful </dd></dl>
 <dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_bam_reader.html#aa62d784c8348662064fe363de2b40381" title="Performs a random-access jump within BAM file.">Jump()</a>, <a class="el" href="class_bam_tools_1_1_bam_reader.html#a1273d2e1da19861ffdc1bddeb9152420" title="Sets a target region of interest.">SetRegion()</a> </dd></dl>
 
@@ -659,42 +670,14 @@ window.onload = initDynSections;
 <p>Example: </p>
 <div class="fragment"><pre class="fragment">        <a class="code" href="class_bam_tools_1_1_bam_reader.html#ab3902f9802bd9e9b8960d44abe302a58" title="constructor">BamReader</a> reader;
         reader.SetIndex(<span class="keyword">new</span> MyCustomBamIndex);
-</pre></div><p>N.B. - <a class="el" href="class_bam_tools_1_1_bam_reader.html" title="Convenience class for reading multiple BAM files.">BamReader</a> takes ownership of <em>index</em> - i.e. <a class="el" href="class_bam_tools_1_1_bam_reader.html" title="Convenience class for reading multiple BAM files.">BamReader</a> will take care of deleting the pointer when the reader is destructed, when the current BAM file is closed, or when a new index is requested.</p>
+</pre></div><dl class="note"><dt><b>Note:</b></dt><dd><a class="el" href="class_bam_tools_1_1_bam_reader.html" title="Provides read access to BAM files.">BamReader</a> takes ownership of <em>index</em> - i.e. the <a class="el" href="class_bam_tools_1_1_bam_reader.html" title="Provides read access to BAM files.">BamReader</a> will take care of deleting it when the reader is destructed, when the current BAM file is closed, or when a new index is requested.</dd></dl>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>index</em>&nbsp;</td><td>custom <a class="el" href="class_bam_tools_1_1_bam_index.html" title="Provides methods for generating &amp; loading BAM index files.">BamIndex</a> subclass created by client </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>index</em>&nbsp;</td><td>custom <a class="el" href="class_bam_tools_1_1_bam_index.html" title="Provides methods for generating &amp; loading BAM index files.">BamIndex</a> subclass created by client </td></tr>
   </table>
   </dd>
 </dl>
 <dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_bam_reader.html#a050af09369dd60bf0db3168727a201b4" title="Creates an index file for current BAM file.">CreateIndex()</a>, <a class="el" href="class_bam_tools_1_1_bam_reader.html#a86dfc39a2d57eb3b665e641e6436b5ee" title="Looks in BAM file&#39;s directory for a matching index file.">LocateIndex()</a>, <a class="el" href="class_bam_tools_1_1_bam_reader.html#ab62b5f370b91e225fd7684d0180bd41d" title="Opens a BAM index file.">OpenIndex()</a> </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="ab5ea6affa3ed602028c55f5efe99b6a0"></a><!-- doxytag: member="BamTools::BamReader::SetIndexCacheMode" ref="ab5ea6affa3ed602028c55f5efe99b6a0" args="(const BamIndex::IndexCacheMode &amp;mode)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void BamReader::SetIndexCacheMode </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="class_bam_tools_1_1_bam_index.html#a7b0a0a1acd3293307a22cec3e333411a">BamIndex::IndexCacheMode</a> &amp;&nbsp;</td>
-          <td class="paramname"> <em>mode</em></td>
-          <td>&nbsp;)&nbsp;</td>
-          <td></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-
-<p>Changes the caching behavior of the index data. </p>
-<p>Default mode is <a class="el" href="class_bam_tools_1_1_bam_index.html#a7b0a0a1acd3293307a22cec3e333411aa3d8592bc398f69442a88f9224beae23f">BamIndex::LimitedIndexCaching</a>.</p>
-<dl><dt><b>Parameters:</b></dt><dd>
-  <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>mode</em>&nbsp;</td><td>desired cache mode for index, see <a class="el" href="class_bam_tools_1_1_bam_index.html#a7b0a0a1acd3293307a22cec3e333411a">BamIndex::IndexCacheMode</a> for description of the available cache modes </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_bam_reader.html#ab372b7295be8f7c4e08dcdb000f4ebba" title="Returns true if index data is available.">HasIndex()</a> </dd></dl>
 
 </div>
 </div>
@@ -737,12 +720,13 @@ window.onload = initDynSections;
 
 <p>Sets a target region of interest. </p>
 <p>This is an overloaded function.</p>
+<dl class="warning"><dt><b>Warning:</b></dt><dd>This function expects a zero-based, HALF-OPEN interval. In previous versions of <a class="el" href="namespace_bam_tools.html" title="Contains all BamTools classes &amp; methods.">BamTools</a> (0.x &amp; 1.x) all intervals were treated as zero-based, CLOSED.</dd></dl>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>leftRefID</em>&nbsp;</td><td>referenceID of region's left boundary </td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>leftPosition</em>&nbsp;</td><td>position of region's left boundary </td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>rightRefID</em>&nbsp;</td><td>reference ID of region's right boundary </td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>rightPosition</em>&nbsp;</td><td>position of region's right boundary</td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>leftRefID</em>&nbsp;</td><td>referenceID of region's left boundary </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>leftPosition</em>&nbsp;</td><td>position of region's left boundary </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>rightRefID</em>&nbsp;</td><td>reference ID of region's right boundary </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>rightPosition</em>&nbsp;</td><td>position of region's right boundary</td></tr>
   </table>
   </dd>
 </dl>
@@ -771,9 +755,10 @@ window.onload = initDynSections;
 <p>Requires that index data be available. Attempts a random-access jump in the BAM file, near <em>region</em> left boundary position.</p>
 <p>Subsequent calls to <a class="el" href="class_bam_tools_1_1_bam_reader.html#aa19d6b5effb5b840946a611b7ae039ae" title="Retrieves next available alignment.">GetNextAlignment()</a> or <a class="el" href="class_bam_tools_1_1_bam_reader.html#ac95d20470a02a104990f5a8cf9868f95" title="Retrieves next available alignment, without populating the alignment&#39;s string...">GetNextAlignmentCore()</a> will only return <code>true</code> when alignments can be found that overlap this <em>region</em>.</p>
 <p>A <em>region</em> with no right boundary is considered open-ended, meaning that all alignments that lie downstream of the left boundary are considered valid, continuing to the end of the BAM file.</p>
+<dl class="warning"><dt><b>Warning:</b></dt><dd><a class="el" href="struct_bam_tools_1_1_bam_region.html" title="Represents a sequential genomic region.">BamRegion</a> now represents a zero-based, HALF-OPEN interval. In previous versions of <a class="el" href="namespace_bam_tools.html" title="Contains all BamTools classes &amp; methods.">BamTools</a> (0.x &amp; 1.x) all intervals were treated as zero-based, CLOSED.</dd></dl>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>region</em>&nbsp;</td><td>desired region-of-interest to activate </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>region</em>&nbsp;</td><td>desired region-of-interest to activate</td></tr>
   </table>
   </dd>
 </dl>
@@ -792,7 +777,7 @@ window.onload = initDynSections;
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&nbsp;</span>Friends</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(10)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -801,7 +786,7 @@ window.onload = initDynSections;
 </iframe>
 </div>
 
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Mar 23 02:54:32 2011 for BamTools by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Aug 29 17:28:09 2012 for BamTools by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

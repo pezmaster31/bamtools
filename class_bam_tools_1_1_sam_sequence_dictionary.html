@@ -59,7 +59,6 @@ window.onload = initDynSections;
   <div class="tabs">
     <ul>
       <li><a href="index.html"><span>Main&nbsp;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&nbsp;Pages</span></a></li>
       <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
@@ -105,23 +104,25 @@ window.onload = initDynSections;
 <tr><td class="memItemLeft" align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#aac6817f77a73450387eb9c1eefda361a">~SamSequenceDictionary</a> (void)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">destructor  <a href="#aac6817f77a73450387eb9c1eefda361a"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a8923d4d50ecae78117387369c3c01e80">Add</a> (const <a class="el" href="struct_bam_tools_1_1_sam_sequence.html">SamSequence</a> &amp;sequence)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Adds a sequence to the dictionary.  <a href="#a8923d4d50ecae78117387369c3c01e80"></a><br/></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Appends a sequence to the dictionary.  <a href="#a8923d4d50ecae78117387369c3c01e80"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a2ffecfe6dd28cb56e1fb65d81221730e">Add</a> (const std::string &amp;name, const int &amp;length)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Adds a sequence to the dictionary.  <a href="#a2ffecfe6dd28cb56e1fb65d81221730e"></a><br/></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Appends a sequence to the dictionary.  <a href="#a2ffecfe6dd28cb56e1fb65d81221730e"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a8d2bfed8df28aeb053c2156528dfc271">Add</a> (const <a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html">SamSequenceDictionary</a> &amp;sequences)</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Appends another sequence dictionary to this one.  <a href="#a8d2bfed8df28aeb053c2156528dfc271"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a5722d0129d953534f7874ed80630c35b">Add</a> (const std::vector&lt; <a class="el" href="struct_bam_tools_1_1_sam_sequence.html">SamSequence</a> &gt; &amp;sequences)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Adds multiple sequences to the dictionary.  <a href="#a5722d0129d953534f7874ed80630c35b"></a><br/></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Appends multiple sequences to the dictionary.  <a href="#a5722d0129d953534f7874ed80630c35b"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a969636fd9c2422c2704d3ff010b50255">Add</a> (const std::map&lt; std::string, int &gt; &amp;sequenceMap)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Adds multiple sequences to the dictionary.  <a href="#a969636fd9c2422c2704d3ff010b50255"></a><br/></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Appends multiple sequences to the dictionary.  <a href="#a969636fd9c2422c2704d3ff010b50255"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#ab5f1c55fa25c85a6b112fef669644f15">Clear</a> (void)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Clears all sequence entries.  <a href="#ab5f1c55fa25c85a6b112fef669644f15"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a5e54ce865cb4bb26e01fe935ca61d001">Contains</a> (const <a class="el" href="struct_bam_tools_1_1_sam_sequence.html">SamSequence</a> &amp;sequence) const </td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns true if dictionary contains sequence.  <a href="#a5e54ce865cb4bb26e01fe935ca61d001"></a><br/></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns true if dictionary contains sequence (matches on name).  <a href="#a5e54ce865cb4bb26e01fe935ca61d001"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a497561058dba6a55c08e0dffa9bcbcd1">Contains</a> (const std::string &amp;sequenceName) const </td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns true if dictionary contains sequence.  <a href="#a497561058dba6a55c08e0dffa9bcbcd1"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#ad0216f4a14a6a59f33b795631d61d964">IsEmpty</a> (void) const </td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Returns <code>true</code> if dictionary contains no sequences.  <a href="#ad0216f4a14a6a59f33b795631d61d964"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a415299173023d7960b0d539eaeebee07">Remove</a> (const <a class="el" href="struct_bam_tools_1_1_sam_sequence.html">SamSequence</a> &amp;sequence)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Removes sequence from dictionary, if found.  <a href="#a415299173023d7960b0d539eaeebee07"></a><br/></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Removes sequence from dictionary, if found (matches on name).  <a href="#a415299173023d7960b0d539eaeebee07"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#ad1de8f1c41355973678506853ee088ca">Remove</a> (const std::string &amp;sequenceName)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Removes sequence from dictionary, if found.  <a href="#ad1de8f1c41355973678506853ee088ca"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a1cf18da743407b1d3d562a71a56ef09e">Remove</a> (const std::vector&lt; <a class="el" href="struct_bam_tools_1_1_sam_sequence.html">SamSequence</a> &gt; &amp;sequences)</td></tr>
@@ -220,15 +221,15 @@ window.onload = initDynSections;
 </div>
 <div class="memdoc">
 
-<p>Adds multiple sequences to the dictionary. </p>
+<p>Appends multiple sequences to the dictionary. </p>
 <p>This is an overloaded function.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>sequenceMap</em>&nbsp;</td><td>map of sequence entries (name =&gt; length) to be added </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>sequenceMap</em>&nbsp;</td><td>map of sequence entries (name =&gt; length) to be added </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a8923d4d50ecae78117387369c3c01e80" title="Adds a sequence to the dictionary.">Add()</a> </dd></dl>
+<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a8923d4d50ecae78117387369c3c01e80" title="Appends a sequence to the dictionary.">Add()</a> </dd></dl>
 
 </div>
 </div>
@@ -248,15 +249,43 @@ window.onload = initDynSections;
 </div>
 <div class="memdoc">
 
-<p>Adds multiple sequences to the dictionary. </p>
+<p>Appends multiple sequences to the dictionary. </p>
 <p>This is an overloaded function.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>sequences</em>&nbsp;</td><td>entries to be added </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>sequences</em>&nbsp;</td><td>entries to be added </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a8923d4d50ecae78117387369c3c01e80" title="Adds a sequence to the dictionary.">Add()</a> </dd></dl>
+<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a8923d4d50ecae78117387369c3c01e80" title="Appends a sequence to the dictionary.">Add()</a> </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a8d2bfed8df28aeb053c2156528dfc271"></a><!-- doxytag: member="BamTools::SamSequenceDictionary::Add" ref="a8d2bfed8df28aeb053c2156528dfc271" args="(const SamSequenceDictionary &amp;sequences)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SamSequenceDictionary::Add </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html">SamSequenceDictionary</a> &amp;&nbsp;</td>
+          <td class="paramname"> <em>sequences</em></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Appends another sequence dictionary to this one. </p>
+<p>This is an overloaded function.</p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>sequences</em>&nbsp;</td><td>sequence dictionary to be appended </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a8923d4d50ecae78117387369c3c01e80" title="Appends a sequence to the dictionary.">Add()</a> </dd></dl>
 
 </div>
 </div>
@@ -285,16 +314,16 @@ window.onload = initDynSections;
 </div>
 <div class="memdoc">
 
-<p>Adds a sequence to the dictionary. </p>
+<p>Appends a sequence to the dictionary. </p>
 <p>This is an overloaded function.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>name</em>&nbsp;</td><td>name of sequence entry to be added </td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>length</em>&nbsp;</td><td>length of sequence entry to be added </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>name</em>&nbsp;</td><td>name of sequence entry to be added </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>length</em>&nbsp;</td><td>length of sequence entry to be added </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a8923d4d50ecae78117387369c3c01e80" title="Adds a sequence to the dictionary.">Add()</a> </dd></dl>
+<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a8923d4d50ecae78117387369c3c01e80" title="Appends a sequence to the dictionary.">Add()</a> </dd></dl>
 
 </div>
 </div>
@@ -314,11 +343,11 @@ window.onload = initDynSections;
 </div>
 <div class="memdoc">
 
-<p>Adds a sequence to the dictionary. </p>
-<p>Duplicate entries are discarded.</p>
+<p>Appends a sequence to the dictionary. </p>
+<p>Duplicate entries are silently discarded.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>sequence</em>&nbsp;</td><td>entry to be added </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>sequence</em>&nbsp;</td><td>entry to be added </td></tr>
   </table>
   </dd>
 </dl>
@@ -340,8 +369,8 @@ window.onload = initDynSections;
       </table>
 </div>
 <div class="memdoc">
+<dl class="return"><dt><b>Returns:</b></dt><dd>an STL const_iterator pointing to the first sequence</dd></dl>
 <p>This is an overloaded function.</p>
-<dl class="return"><dt><b>Returns:</b></dt><dd>a const STL iterator pointing to the first sequence </dd></dl>
 <dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a14fb31911fafd2ab4e45a2eeae9b9612">ConstBegin()</a>, <a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a5ec55747eeb43d2c9684b21c4fb54cac">End()</a> </dd></dl>
 
 </div>
@@ -401,7 +430,7 @@ window.onload = initDynSections;
       </table>
 </div>
 <div class="memdoc">
-<dl class="return"><dt><b>Returns:</b></dt><dd>a const STL iterator pointing to the first sequence </dd></dl>
+<dl class="return"><dt><b>Returns:</b></dt><dd>an STL const_iterator pointing to the first sequence </dd></dl>
 <dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#aa751a16ecf3363966a0e06f28dd163dc">Begin()</a>, <a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a645a22f23d473c167156b09083e6a516">ConstEnd()</a> </dd></dl>
 
 </div>
@@ -421,7 +450,7 @@ window.onload = initDynSections;
       </table>
 </div>
 <div class="memdoc">
-<dl class="return"><dt><b>Returns:</b></dt><dd>a const STL iterator pointing to the imaginary entry after the last sequence </dd></dl>
+<dl class="return"><dt><b>Returns:</b></dt><dd>an STL const_iterator pointing to the imaginary entry after the last sequence </dd></dl>
 <dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a5ec55747eeb43d2c9684b21c4fb54cac">End()</a>, <a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a14fb31911fafd2ab4e45a2eeae9b9612">ConstBegin()</a> </dd></dl>
 
 </div>
@@ -445,7 +474,7 @@ window.onload = initDynSections;
 <p>Returns true if dictionary contains sequence. </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>sequenceName</em>&nbsp;</td><td>search for sequence matching this name </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>sequenceName</em>&nbsp;</td><td>search for sequence matching this name </td></tr>
   </table>
   </dd>
 </dl>
@@ -469,14 +498,15 @@ window.onload = initDynSections;
 </div>
 <div class="memdoc">
 
-<p>Returns true if dictionary contains sequence. </p>
+<p>Returns true if dictionary contains sequence (matches on name). </p>
+<p>This is an overloaded function.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>sequence</em>&nbsp;</td><td>search for this sequence </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>sequence</em>&nbsp;</td><td>search for this sequence </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="return"><dt><b>Returns:</b></dt><dd><code>true</code> if dictionary contains sequence </dd></dl>
+<dl class="return"><dt><b>Returns:</b></dt><dd><code>true</code> if dictionary contains sequence (matching on name) </dd></dl>
 
 </div>
 </div>
@@ -495,8 +525,8 @@ window.onload = initDynSections;
       </table>
 </div>
 <div class="memdoc">
+<dl class="return"><dt><b>Returns:</b></dt><dd>an STL const_iterator pointing to the imaginary entry after the last sequence</dd></dl>
 <p>This is an overloaded function.</p>
-<dl class="return"><dt><b>Returns:</b></dt><dd>a const STL iterator pointing to the imaginary entry after the last sequence </dd></dl>
 <dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#aa751a16ecf3363966a0e06f28dd163dc">Begin()</a>, <a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a645a22f23d473c167156b09083e6a516">ConstEnd()</a> </dd></dl>
 
 </div>
@@ -559,11 +589,10 @@ window.onload = initDynSections;
 <div class="memdoc">
 
 <p>Retrieves the modifiable <a class="el" href="struct_bam_tools_1_1_sam_sequence.html" title="Represents a SAM sequence entry.">SamSequence</a> that matches <em>sequenceName</em>. </p>
-<p>NOTE - If the dictionary contains no sequence matching this name, this function inserts a new one with this name, and returns a reference to it.</p>
-<p>If you want to avoid this insertion behavior, check the result of <a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a5e54ce865cb4bb26e01fe935ca61d001" title="Returns true if dictionary contains sequence.">Contains()</a> before using this operator.</p>
+<dl class="note"><dt><b>Note:</b></dt><dd>If the dictionary contains no sequence matching this name, this function inserts a new one with this name (length:0), and returns a reference to it. If you want to avoid this insertion behavior, check the result of <a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a5e54ce865cb4bb26e01fe935ca61d001" title="Returns true if dictionary contains sequence (matches on name).">Contains()</a> before using this operator.</dd></dl>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>sequenceName</em>&nbsp;</td><td>name of sequence to retrieve </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>sequenceName</em>&nbsp;</td><td>name of sequence to retrieve </td></tr>
   </table>
   </dd>
 </dl>
@@ -591,11 +620,11 @@ window.onload = initDynSections;
 <p>This is an overloaded function.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>sequenceNames</em>&nbsp;</td><td>names of the sequences to remove </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>sequenceNames</em>&nbsp;</td><td>names of the sequences to remove </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a415299173023d7960b0d539eaeebee07" title="Removes sequence from dictionary, if found.">Remove()</a> </dd></dl>
+<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a415299173023d7960b0d539eaeebee07" title="Removes sequence from dictionary, if found (matches on name).">Remove()</a> </dd></dl>
 
 </div>
 </div>
@@ -619,11 +648,11 @@ window.onload = initDynSections;
 <p>This is an overloaded function.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>sequences</em>&nbsp;</td><td>sequences to remove </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>sequences</em>&nbsp;</td><td>sequences to remove </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a415299173023d7960b0d539eaeebee07" title="Removes sequence from dictionary, if found.">Remove()</a> </dd></dl>
+<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a415299173023d7960b0d539eaeebee07" title="Removes sequence from dictionary, if found (matches on name).">Remove()</a> </dd></dl>
 
 </div>
 </div>
@@ -646,11 +675,11 @@ window.onload = initDynSections;
 <p>Removes sequence from dictionary, if found. </p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>sequenceName</em>&nbsp;</td><td>name of sequence to remove </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>sequenceName</em>&nbsp;</td><td>name of sequence to remove </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a415299173023d7960b0d539eaeebee07" title="Removes sequence from dictionary, if found.">Remove()</a> </dd></dl>
+<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="class_bam_tools_1_1_sam_sequence_dictionary.html#a415299173023d7960b0d539eaeebee07" title="Removes sequence from dictionary, if found (matches on name).">Remove()</a> </dd></dl>
 
 </div>
 </div>
@@ -670,10 +699,11 @@ window.onload = initDynSections;
 </div>
 <div class="memdoc">
 
-<p>Removes sequence from dictionary, if found. </p>
+<p>Removes sequence from dictionary, if found (matches on name). </p>
+<p>This is an overloaded function.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>sequence</em>&nbsp;</td><td>sequence to remove </td></tr>
+    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>sequence</em>&nbsp;</td><td><a class="el" href="struct_bam_tools_1_1_sam_sequence.html" title="Represents a SAM sequence entry.">SamSequence</a> to remove (matching on name) </td></tr>
   </table>
   </dd>
 </dl>
@@ -711,7 +741,7 @@ window.onload = initDynSections;
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&nbsp;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&nbsp;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&nbsp;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&nbsp;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&nbsp;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&nbsp;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&nbsp;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&nbsp;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&nbsp;</span>Enumerator</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&nbsp;</span>Friends</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(10)"><span class="SelectionMark">&nbsp;</span>Defines</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -720,7 +750,7 @@ window.onload = initDynSections;
 </iframe>
 </div>
 
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Mar 23 02:54:32 2011 for BamTools by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Aug 29 17:28:09 2012 for BamTools by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

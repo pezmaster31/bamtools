@@ -38,7 +38,7 @@ ParallelBgzfStream::ParallelBgzfStream(void)
 
 ParallelBgzfStream::ParallelBgzfStream(int32_t numThreads) 
   : m_pbgzf(NULL)
-  , m_numThreads(0)
+  , m_numThreads(numThreads)
 { }
 
 // destructor

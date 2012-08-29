@@ -169,7 +169,7 @@ bool BamWriterPrivate::Open(const string& filename,
 {
     try {
 
-        if ( 1 <  m_numThreads )
+        if ( 1 <= m_numThreads )
             m_stream = new ParallelBgzfStream(m_numThreads);
         else
             m_stream = new SerialBgzfStream();

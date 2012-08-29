@@ -373,10 +373,10 @@ bool BamReaderPrivate::Open(const string& filename) {
         // make sure we're starting with fresh state
         Close();
 
-        if ( 0 == m_numThreads )
-            m_stream = new SerialBgzfStream();
-        else
+        if ( 1 <= m_numThreads )
             m_stream = new ParallelBgzfStream(m_numThreads);
+        else
+            m_stream = new SerialBgzfStream();
 
         // open BgzfStream
         m_stream->Open(filename, IBamIODevice::ReadOnly);

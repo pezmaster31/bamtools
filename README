@@ -1,3 +1,13 @@
+Love bamtools API, and I want to roll it up with a tool that uses it.  I'd prefer
+to fork and port future improvements into here as required.
+
+TODO:
+--- Use standard Makefile
+--- Build only bamtools API/library, statically
+--- Make it 'drop-in-able' to existing projects
+
+---below is the original bamtools README
+
 --------------------------------------------------------------------------------
 README : BAMTOOLS
 --------------------------------------------------------------------------------

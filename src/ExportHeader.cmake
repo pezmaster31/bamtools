@@ -18,7 +18,7 @@ function( ExportHeader MODULE FILE DEST )
     add_custom_command( TARGET ${MODULE} COMMAND
         ${CMAKE_COMMAND} -E copy_if_different
         "${CMAKE_CURRENT_SOURCE_DIR}/${FILE}"
-        "${CMAKE_SOURCE_DIR}/include/${DEST}/${FILENAME}" )
+        "${CMAKE_BINARY_DIR}/include/${DEST}/${FILENAME}" )
 
     # make sure files are properly 'installed'
     install( FILES "${FILE}" DESTINATION "include/bamtools/${DEST}" )

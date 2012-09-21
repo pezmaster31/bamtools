@@ -35,8 +35,8 @@ set( BamTools_VERSION_MINOR 1 )
 set( BamTools_VERSION_BUILD 1 )
 
 # set our library and executable destination dirs
-set( EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin" )
-set( LIBRARY_OUTPUT_PATH    "${CMAKE_SOURCE_DIR}/lib" )
+set( EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin" )
+set( LIBRARY_OUTPUT_PATH    "${CMAKE_BINARY_DIR}/lib" )
 
 # define compiler flags for all code
 set( CMAKE_BUILD_TYPE Release )
@@ -47,6 +47,7 @@ endif()
 
 # add our includes root path
 include_directories( src )
+include_directories("${CMAKE_BINARY_DIR}/include")
 
 # list subdirectories to build in
 add_subdirectory( src )

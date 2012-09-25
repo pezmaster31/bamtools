@@ -104,6 +104,11 @@ string BamReaderPrivate::GetHeaderText(void) const {
 }
 
 // return header data as SamHeader object
+const SamHeader& BamReaderPrivate::GetSamHeaderRef(void) const {
+    return m_header.ToSamHeaderRef();
+}
+
+// return header data as SamHeader object
 SamHeader BamReaderPrivate::GetSamHeader(void) const {
     return m_header.ToSamHeader();
 }

@@ -69,6 +69,8 @@ class API_EXPORT BamReader {
         // access header data
         // ----------------------
 
+        // returns const reference to SAM header data
+        const SamHeader& GetHeaderRef(void) const;
         // returns SAM header data
         SamHeader GetHeader(void) const;
         // returns SAM header data, as SAM-formatted text

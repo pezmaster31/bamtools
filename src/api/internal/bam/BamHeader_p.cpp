@@ -109,6 +109,11 @@ void BamHeader::ReadHeaderText(BgzfStream* stream, const uint32_t& length) {
     free(headerText);
 }
 
+// returns *reference* to SamHeader data object
+const SamHeader& BamHeader::ToSamHeaderRef(void) const {
+    return m_header;
+}
+
 // returns *copy* of SamHeader data object
 SamHeader BamHeader::ToSamHeader(void) const {
     return m_header;

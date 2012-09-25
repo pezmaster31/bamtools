@@ -56,6 +56,7 @@ class BamReaderPrivate {
 
         // access auxiliary data
         std::string GetHeaderText(void) const;
+        const SamHeader& GetSamHeaderRef(void) const;
         SamHeader GetSamHeader(void) const;
         int GetReferenceCount(void) const;
         const RefVector& GetReferenceData(void) const;

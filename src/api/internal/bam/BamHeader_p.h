@@ -44,6 +44,8 @@ class BamHeader {
         // load BAM header ('magic number' and SAM header text) from BGZF stream
         // returns true if all OK
         void Load(BgzfStream* stream);
+        // returns (const) reference to SamHeader data object
+        const SamHeader& ToSamHeaderRef(void) const;
         // returns (editable) copy of SamHeader data object
         SamHeader ToSamHeader(void) const;
         // returns SAM-formatted string of header data

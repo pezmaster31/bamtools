@@ -2,7 +2,7 @@
 // bamtools_convert.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 8 October 2011
+// Last modified: 26 September 2012
 // ---------------------------------------------------------------------------
 // Converts between BAM and a number of other formats
 // ***************************************************************************
@@ -434,9 +434,13 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a) {
                     ++index; 
                     break;
                 
-                case (Constants::BAM_TAG_TYPE_INT8)  :
+                case (Constants::BAM_TAG_TYPE_INT8) :
+                    m_out << (int8_t)tagData[index];
+                    ++index;
+                    break;
+
                 case (Constants::BAM_TAG_TYPE_UINT8) :
-                    m_out << (int)tagData[index]; 
+                    m_out << (uint8_t)tagData[index];
                     ++index; 
                     break;
                 
@@ -566,8 +570,12 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
                 break;
 
             case (Constants::BAM_TAG_TYPE_INT8)  :
+                m_out << "i:" << (int8_t)tagData[index];
+                ++index;
+                break;
+
             case (Constants::BAM_TAG_TYPE_UINT8) :
-                m_out << "i:" << (int)tagData[index];
+                m_out << "i:" << (uint8_t)tagData[index];
                 ++index;
                 break;
 

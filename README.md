@@ -10,14 +10,14 @@ I added the methods
 ```c++
 const SamHeader& BamReader::GetConstSamHeader() const { }
 ```
-to the public interface for BamReader,
+to the public interface for `BamReader`,
 ```c++
 const SamHeader& BamReaderPrivate::GetConstSamHeader() const { }
 ```
-to the public interface for Internal::BamReaderPrivate and
+to the public interface for `Internal::BamReaderPrivate` and
 ```c++
 const SamHeader& BamHeader::ToConstSamHeader() const { }
 ```
 to the Internal::BamHeader class, this is the method that ultimately provides
-the reference requested by BamReader::GetConstSamHeader().
+the reference requested by `BamReader::GetConstSamHeader()`.
 

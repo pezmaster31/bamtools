@@ -87,19 +87,6 @@ const std::string BamReader::GetFilename(void) const {
     return d->Filename();
 }
 
-/*! \fn const SamHeader& BamReader::GetHeaderRef(void) const
-    \brief Returns const reference to SAM header data.
-
-    Header data is wrapped in a reference to the internal SamHeader object that can
-    be queried but cannot be modified.
-
-    \returns const reference to header data object
-    \sa GetHeaderRef()
-*/
-const SamHeader& BamReader::GetHeaderRef(void) const {
-    return d->GetSamHeaderRef();
-}
-
 /*! \fn SamHeader BamReader::GetHeader(void) const
     \brief Returns SAM header data.
 
@@ -115,6 +102,19 @@ const SamHeader& BamReader::GetHeaderRef(void) const {
 */
 SamHeader BamReader::GetHeader(void) const {
     return d->GetSamHeader();
+}
+
+/*! \fn const SamHeader& BamReader::GetConstSamHeader(void) const
+    \brief Returns const reference to SAM header data.
+
+    Header data is wrapped in a reference to the internal SamHeader object that can
+    be queried but cannot be modified.
+
+    \returns const reference to header data object
+    \sa GetConstSamHeader()
+*/
+const SamHeader& BamReader::GetConstSamHeader(void) const {
+    return d->GetConstSamHeader();
 }
 
 /*! \fn std::string BamReader::GetHeaderText(void) const

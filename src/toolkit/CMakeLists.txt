@@ -36,6 +36,9 @@ set_target_properties( bamtools_cmd PROPERTIES
                      )
 # make version info available in application
 configure_file( bamtools_version.h.in ${BamTools_BINARY_DIR}/include/bamtools_version.h )
+install( FILES ${BamTools_BINARY_DIR}/include/bamtools_version.h
+         DESTINATION "include/bamtools"
+         COMPONENT Development )
 
 # define libraries to link
 target_link_libraries( bamtools_cmd BamTools BamTools-utils jsoncpp )

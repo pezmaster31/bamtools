@@ -45,9 +45,6 @@ if( "${CMAKE_SYSTEM_NAME}" MATCHES "SunOS" )
 	add_definitions( -DSUN_OS )
 endif()
 
-set( CMAKE_CXX_FLAGS_RELEASE "-g -pthread" )
-set( CMAKE_C_FLAGS_RELEASE "-g -pthread" )
-
 # add our includes root path
 include_directories( src )
 include_directories("${CMAKE_BINARY_DIR}/include")

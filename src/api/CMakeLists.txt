@@ -50,8 +50,8 @@ else( _WIN32 )
     set( APILibs z )
 endif( _WIN32 )
 
-target_link_libraries( BamTools ${APILibs} )
-target_link_libraries( BamTools-static ${APILibs} )
+target_link_libraries( BamTools ${APILibs} pthread )
+target_link_libraries( BamTools-static ${APILibs} pthread )
 
 # set library install destinations
 install( TARGETS BamTools

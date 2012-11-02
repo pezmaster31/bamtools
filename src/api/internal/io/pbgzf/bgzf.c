@@ -153,7 +153,7 @@ int bgzf_compress(void *_dst, int *dlen, void *src, int slen, int level)
 	zs.next_in  = src;
 	zs.avail_in = slen;
 	zs.next_out = dst + BLOCK_HEADER_LENGTH;
-	zs.avail_out = *dlen - BLOCK_HEADER_LENGTH - BLOCK_FOOTER_LENGTH;
+	zs.avail_out = BGZF_MAX_BLOCK_SIZE - BLOCK_HEADER_LENGTH - BLOCK_FOOTER_LENGTH;
 	if (deflateInit2(&zs, level, Z_DEFLATED, -15, 8, Z_DEFAULT_STRATEGY) != Z_OK) return -1; // -15 to disable zlib header/footer
 	if (deflate(&zs, Z_FINISH) != Z_STREAM_END) return -1;
 	if (deflateEnd(&zs) != Z_OK) return -1;

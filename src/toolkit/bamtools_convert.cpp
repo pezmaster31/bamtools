@@ -2,7 +2,7 @@
 // bamtools_convert.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 26 September 2012
+// Last modified: 11 November 2012
 // ---------------------------------------------------------------------------
 // Converts between BAM and a number of other formats
 // ***************************************************************************
@@ -435,12 +435,14 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a) {
                     break;
                 
                 case (Constants::BAM_TAG_TYPE_INT8) :
-                    m_out << (int8_t)tagData[index];
+                    // force value into integer-type (instead of char value)
+                    m_out << static_cast<int16_t>(tagData[index]);
                     ++index;
                     break;
 
                 case (Constants::BAM_TAG_TYPE_UINT8) :
-                    m_out << (uint8_t)tagData[index];
+                    // force value into integer-type (instead of char value)
+                    m_out << static_cast<uint16_t>(tagData[index]);
                     ++index; 
                     break;
                 
@@ -501,8 +503,8 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
     // <QNAME> <FLAG> <RNAME> <POS> <MAPQ> <CIGAR> <MRNM> <MPOS> <ISIZE> <SEQ> <QUAL> [ <TAG>:<VTYPE>:<VALUE> [...] ]
   
     // write name & alignment flag
-    m_out << a.Name << "\t" << a.AlignmentFlag << "\t";
-    
+   m_out << a.Name << "\t" << a.AlignmentFlag << "\t";
+
     // write reference name
     if ( (a.RefID >= 0) && (a.RefID < (int)m_references.size()) ) 
         m_out << m_references[a.RefID].RefName << "\t";
@@ -530,7 +532,7 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
         if ( a.MateRefID == a.RefID )
             m_out << "=\t";
         else
-            m_out << m_references[a.MateRefID].RefName << "\t";
+           m_out << m_references[a.MateRefID].RefName << "\t";
         m_out << a.MatePosition+1 << "\t" << a.InsertSize << "\t";
     } 
     else
@@ -569,13 +571,15 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
                 ++index;
                 break;
 
-            case (Constants::BAM_TAG_TYPE_INT8)  :
-                m_out << "i:" << (int8_t)tagData[index];
+            case (Constants::BAM_TAG_TYPE_INT8) :
+                // force value into integer-type (instead of char value)
+                m_out << "i:" << static_cast<int16_t>(tagData[index]);
                 ++index;
                 break;
 
             case (Constants::BAM_TAG_TYPE_UINT8) :
-                m_out << "i:" << (uint8_t)tagData[index];
+                // force value into integer-type (instead of char value)
+                m_out << "i:" << static_cast<uint16_t>(tagData[index]);
                 ++index;
                 break;
 
@@ -604,7 +608,7 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
                 index += sizeof(float);
                 break;
 
-            case (Constants::BAM_TAG_TYPE_HEX)    :
+            case (Constants::BAM_TAG_TYPE_HEX)    : // fall-through
             case (Constants::BAM_TAG_TYPE_STRING) :
                 m_out << type << ":";
                 while (tagData[index]) {
@@ -615,7 +619,7 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
                 break;
         }
 
-        if ( tagData[index] == '\0') 
+        if ( tagData[index] == '\0' )
             break;
     }
 

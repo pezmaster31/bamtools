@@ -70,7 +70,7 @@ class API_EXPORT BamReader {
         // ----------------------
 
         // returns a read-only reference to SAM header data
-        const SamHeader& BamReader::GetConstSamHeader(void) const;
+        const SamHeader& GetConstSamHeader(void) const;
         // returns an editable copy of SAM header data
         SamHeader GetHeader(void) const;
         // returns SAM header data, as SAM-formatted text

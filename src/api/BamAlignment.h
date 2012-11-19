@@ -2,7 +2,7 @@
 // BamAlignment.h (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 16 October 2011 (DB)
+// Last modified: 18 November 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -79,6 +79,9 @@ struct API_EXPORT BamAlignment {
         // retrieves tag data
         template<typename T> bool GetTag(const std::string& tag, T& destination) const;
         template<typename T> bool GetTag(const std::string& tag, std::vector<T>& destination) const;
+
+        // retrieves all current tag names
+        std::vector<std::string> GetTagNames(void) const;
 
         // retrieves the SAM/BAM type-code for requested tag name
         bool GetTagType(const std::string& tag, char& type) const;

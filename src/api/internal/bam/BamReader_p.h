@@ -2,7 +2,7 @@
 // BamReader_p.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 25 October 2011 (DB)
+// Last modified: 18 November 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for reading BAM files
 // ***************************************************************************
@@ -56,6 +56,7 @@ class BamReaderPrivate {
 
         // access auxiliary data
         std::string GetHeaderText(void) const;
+        const SamHeader& GetConstSamHeader(void) const;
         SamHeader GetSamHeader(void) const;
         int GetReferenceCount(void) const;
         const RefVector& GetReferenceData(void) const;

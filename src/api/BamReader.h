@@ -2,7 +2,7 @@
 // BamReader.h (c) 2009 Derek Barnett, Michael Str�mberg
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011 (DB)
+// Last modified: 18 November 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides read access to BAM files.
 // ***************************************************************************
@@ -69,7 +69,9 @@ class API_EXPORT BamReader {
         // access header data
         // ----------------------
 
-        // returns SAM header data
+        // returns a read-only reference to SAM header data
+        const SamHeader& BamReader::GetConstSamHeader(void) const;
+        // returns an editable copy of SAM header data
         SamHeader GetHeader(void) const;
         // returns SAM header data, as SAM-formatted text
         std::string GetHeaderText(void) const;

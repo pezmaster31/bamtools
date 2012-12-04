@@ -2,7 +2,7 @@
 // BamAlignment.h (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 18 November 2012 (DB)
+// Last modified: 4 December 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -85,6 +85,9 @@ struct API_EXPORT BamAlignment {
 
         // retrieves the SAM/BAM type-code for requested tag name
         bool GetTagType(const std::string& tag, char& type) const;
+
+        // retrieves the SAM/BAM type-code for the data elements in an array tag
+        bool GetArrayTagType(const std::string& tag, char& type) const;
 
         // returns true if alignment has a record for this tag name
         bool HasTag(const std::string& tag) const;

@@ -2,7 +2,7 @@
 // bamtools_convert.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 11 November 2012
+// Last modified: 10 December 2012
 // ---------------------------------------------------------------------------
 // Converts between BAM and a number of other formats
 // ***************************************************************************
@@ -76,6 +76,7 @@ struct ConvertTool::ConvertSettings {
 
     // flag
     bool HasInput;
+    bool HasInputFilelist;
     bool HasOutput;
     bool HasFormat;
     bool HasRegion;
@@ -87,6 +88,7 @@ struct ConvertTool::ConvertSettings {
     
     // options
     vector<string> InputFiles;
+    string InputFilelist;
     string OutputFilename;
     string Format;
     string Region;
@@ -97,6 +99,7 @@ struct ConvertTool::ConvertSettings {
     // constructor
     ConvertSettings(void)
         : HasInput(false)
+        , HasInputFilelist(false)
         , HasOutput(false)
         , HasFormat(false)
         , HasRegion(false)
@@ -151,9 +154,23 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
     // initialize conversion input/output
         
     // set to default input if none provided
-    if ( !m_settings->HasInput ) 
+    if ( !m_settings->HasInput && !m_settings->HasInputFilelist )
         m_settings->InputFiles.push_back(Options::StandardIn());
     
+    // add files in the filelist to the input file list
+    if ( m_settings->HasInputFilelist ) {
+
+        ifstream filelist(m_settings->InputFilelist.c_str(), ios::in);
+        if ( !filelist.is_open() ) {
+            cerr << "bamtools convert ERROR: could not open input BAM file list... Aborting." << endl;
+            return false;
+        }
+
+        string line;
+        while ( getline(filelist, line) )
+            m_settings->InputFiles.push_back(line);
+    }
+
     // open input files
     BamMultiReader reader;
     if ( !reader.Open(m_settings->InputFiles) ) {
@@ -703,11 +720,13 @@ ConvertTool::ConvertTool(void)
     , m_impl(0)
 {
     // set program details
-    Options::SetProgramInfo("bamtools convert", "converts BAM to a number of other formats", "-format <FORMAT> [-in <filename> -in <filename> ...] [-out <filename>] [-region <REGION>] [format-specific options]");
+    Options::SetProgramInfo("bamtools convert", "converts BAM to a number of other formats",
+                            "-format <FORMAT> [-in <filename> -in <filename> ... | -list <filelist>] [-out <filename>] [-region <REGION>] [format-specific options]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInput,   m_settings->InputFiles,     IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-list",   "filename", "the input BAM file list, one line per file", "", m_settings->HasInputFilelist,  m_settings->InputFilelist, IO_Opts);
     Options::AddValueOption("-out",    "BAM filename", "the output BAM file",   "", m_settings->HasOutput,  m_settings->OutputFilename, IO_Opts, Options::StandardOut());
     Options::AddValueOption("-format", "FORMAT", "the output file format - see README for recognized formats", "", m_settings->HasFormat, m_settings->Format, IO_Opts);
     Options::AddValueOption("-region", "REGION", "genomic region. Index file is recommended for better performance, and is used automatically if it exists. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, IO_Opts);

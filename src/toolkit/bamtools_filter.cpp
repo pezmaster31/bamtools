@@ -2,7 +2,7 @@
 // bamtools_filter.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 14 October 2011
+// Last modified: 10 December 2012
 // ---------------------------------------------------------------------------
 // Filters BAM file(s) according to some user-specified criteria
 // ***************************************************************************
@@ -20,6 +20,7 @@ using namespace BamTools;
 using namespace Json;
 
 #include <cstdio>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -236,14 +237,16 @@ struct FilterTool::FilterSettings {
     // IO opts
 
     // flags
-    bool HasInputBamFilename;
-    bool HasOutputBamFilename;
+    bool HasInput;
+    bool HasInputFilelist;
+    bool HasOutput;
     bool HasRegion;
-    bool HasScriptFilename;
+    bool HasScript;
     bool IsForceCompression;
 
     // filenames
     vector<string> InputFiles;
+    string InputFilelist;
     string OutputFilename;
     string Region;
     string ScriptFilename;
@@ -302,10 +305,11 @@ struct FilterTool::FilterSettings {
     // constructor
 
     FilterSettings(void)
-        : HasInputBamFilename(false)
-        , HasOutputBamFilename(false)
+        : HasInput(false)
+        , HasInputFilelist(false)
+        , HasOutput(false)
         , HasRegion(false)
-        , HasScriptFilename(false)
+        , HasScript(false)
         , IsForceCompression(false)
         , OutputFilename(Options::StandardOut())
         , HasAlignmentFlagFilter(false)
@@ -463,11 +467,11 @@ bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const string& filt
             m_filterEngine.setProperty(filterName, propertyName, stringValue, type);
         }
       
-    else if ( propertyName == TAG_PROPERTY ) {
-	    // this will be stored directly as the TAG:VALUE token 
-	    // (VALUE may contain compare ops, will be parsed out later)
-	    m_filterEngine.setProperty(filterName, propertyName, token, PropertyFilterValue::EXACT);
-	}
+        else if ( propertyName == TAG_PROPERTY ) {
+            // this will be stored directly as the TAG:VALUE token
+            // (VALUE may contain compare ops, will be parsed out later)
+            m_filterEngine.setProperty(filterName, propertyName, token, PropertyFilterValue::EXACT);
+        }
       
         // else unknown property 
         else {
@@ -500,7 +504,8 @@ const string FilterTool::FilterToolPrivate::GetScriptContents(void) {
         // peek ahead, make sure there is data available
         char ch = fgetc(inFile);
         ungetc(ch, inFile);
-        if( feof(inFile) ) break;       
+        if( feof(inFile) )
+            break;
         
         // read next block of data
         if ( fgets(buffer, 1024, inFile) == 0 ) {
@@ -682,12 +687,27 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
 bool FilterTool::FilterToolPrivate::Run(void) {
     
     // set to default input if none provided
-    if ( !m_settings->HasInputBamFilename ) 
+    if ( !m_settings->HasInput && !m_settings->HasInputFilelist )
         m_settings->InputFiles.push_back(Options::StandardIn());
+
+    // add files in the filelist to the input file list
+    if ( m_settings->HasInputFilelist ) {
+
+        ifstream filelist(m_settings->InputFilelist.c_str(), ios::in);
+        if ( !filelist.is_open() ) {
+            cerr << "bamtools filter ERROR: could not open input BAM file list... Aborting." << endl;
+            return false;
+        }
+
+        string line;
+        while ( getline(filelist, line) )
+            m_settings->InputFiles.push_back(line);
+    }
 
     // initialize defined properties & user-specified filters
     // quit if failed
-    if ( !SetupFilters() ) return false;
+    if ( !SetupFilters() )
+        return false;
 
     // open reader without index
     BamMultiReader reader;
@@ -786,7 +806,7 @@ bool FilterTool::FilterToolPrivate::SetupFilters(void) {
     InitProperties();
     
     // parse script for filter rules, if given
-    if ( m_settings->HasScriptFilename )
+    if ( m_settings->HasScript )
         return ParseScript();
     
     // otherwise check command line for filters
@@ -804,9 +824,10 @@ FilterTool::FilterTool(void)
     // ----------------------------------
     // set program details
 
-    const string usage = "[-in <filename> -in <filename> ...] "
+    const string usage = "[-in <filename> -in <filename> ... | -list <filelist>] "
                          "[-out <filename> | [-forceCompression]] [-region <REGION>] "
                          "[ [-script <filename] | [filterOptions] ]";
+
     Options::SetProgramInfo("bamtools filter", "filters BAM file(s)", usage );
 
     // ----------------------------------
@@ -815,6 +836,7 @@ FilterTool::FilterTool(void)
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
 
     const string inDesc     = "the input BAM file(s)";
+    const string listDesc   = "the input BAM file list, one line per file";
     const string outDesc    = "the output BAM file";
     const string regionDesc = "only read data from this genomic region (see documentation for more details)";
     const string scriptDesc = "the filter script file (see documentation for more details)";
@@ -822,10 +844,11 @@ FilterTool::FilterTool(void)
                               "default behavior is to leave output uncompressed. Use this flag to "
                               "override and force compression";
 
-    Options::AddValueOption("-in",     "BAM filename", inDesc,     "", m_settings->HasInputBamFilename,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());
-    Options::AddValueOption("-out",    "BAM filename", outDesc,    "", m_settings->HasOutputBamFilename, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
-    Options::AddValueOption("-region", "REGION",       regionDesc, "", m_settings->HasRegion,            m_settings->Region,         IO_Opts);
-    Options::AddValueOption("-script", "filename",     scriptDesc, "", m_settings->HasScriptFilename,    m_settings->ScriptFilename, IO_Opts);
+    Options::AddValueOption("-in",     "BAM filename", inDesc,     "", m_settings->HasInput,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-list",   "filename",     listDesc,   "", m_settings->HasInputFilelist,  m_settings->InputFilelist, IO_Opts);
+    Options::AddValueOption("-out",    "BAM filename", outDesc,    "", m_settings->HasOutput, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
+    Options::AddValueOption("-region", "REGION",       regionDesc, "", m_settings->HasRegion, m_settings->Region,         IO_Opts);
+    Options::AddValueOption("-script", "filename",     scriptDesc, "", m_settings->HasScript, m_settings->ScriptFilename, IO_Opts);
     Options::AddOption("-forceCompression",forceDesc, m_settings->IsForceCompression, IO_Opts);
 
     // ----------------------------------

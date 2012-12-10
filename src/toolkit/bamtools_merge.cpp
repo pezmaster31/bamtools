@@ -27,12 +27,14 @@ struct MergeTool::MergeSettings {
 
     // flags
     bool HasInputBamFilename;
+    bool HasInputBamFilelist;
     bool HasOutputBamFilename;
     bool IsForceCompression;
     bool HasRegion;
     
     // filenames
     vector<string> InputFiles;
+    string InputFilelist;
     
     // other parameters
     string OutputFilename;
@@ -41,6 +43,7 @@ struct MergeTool::MergeSettings {
     // constructor
     MergeSettings(void)
         : HasInputBamFilename(false)
+	, HasInputBamFilelist(false)
         , HasOutputBamFilename(false)
         , IsForceCompression(false)
         , HasRegion(false)
@@ -73,8 +76,21 @@ struct MergeTool::MergeToolPrivate {
 bool MergeTool::MergeToolPrivate::Run(void) {
 
     // set to default input if none provided
-    if ( !m_settings->HasInputBamFilename )
+    if ( !m_settings->HasInputBamFilename && !m_settings->HasInputBamFilelist )
         m_settings->InputFiles.push_back(Options::StandardIn());
+
+    // add files in the filelist to the input file list
+    if ( m_settings->HasInputBamFilelist ) {
+	ifstream filelist(m_settings->InputFilelist.c_str(), ios::in);
+	if ( !filelist.is_open() ) {
+	    cerr << "bamtools merge ERROR: could not open input BAM file list... Aborting." << endl;
+	    return false;
+	}
+	string line;
+	while ( getline(filelist, line) ) {
+	    m_settings->InputFiles.push_back(line);
+	}
+    }
 
     // opens the BAM files (by default without checking for indexes)
     BamMultiReader reader;
@@ -181,11 +197,12 @@ MergeTool::MergeTool(void)
     , m_impl(0)
 {
     // set program details
-    Options::SetProgramInfo("bamtools merge", "merges multiple BAM files into one", "[-in <filename> -in <filename> ...] [-out <filename> | [-forceCompression]] [-region <REGION>]");
+    Options::SetProgramInfo("bamtools merge", "merges multiple BAM files into one", "[ [-in <filename> -in <filename> ...] | [-list <filelist>] ] [-out <filename> | [-forceCompression]] [-region <REGION>]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in",  "BAM filename", "the input BAM file(s)", "", m_settings->HasInputBamFilename,  m_settings->InputFiles,     IO_Opts);
+    Options::AddValueOption("-list",  "BAM filename", "the input BAM file list, one line per file", "", m_settings->HasInputBamFilelist,  m_settings->InputFilelist, IO_Opts);
     Options::AddValueOption("-out", "BAM filename", "the output BAM file",   "", m_settings->HasOutputBamFilename, m_settings->OutputFilename, IO_Opts);
     Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
     Options::AddValueOption("-region", "REGION", "genomic region. See README for more details", "", m_settings->HasRegion, m_settings->Region, IO_Opts);

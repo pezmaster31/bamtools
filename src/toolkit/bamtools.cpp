@@ -2,7 +2,7 @@
 // bamtools.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 18 May 2011 (DB)
+// Last modified: 12 October 2012 (DB)
 // ---------------------------------------------------------------------------
 // Integrates a number of BamTools functionalities into a single executable.
 // ***************************************************************************
@@ -137,7 +137,7 @@ int Version(void) {
     cout << "bamtools " << versionStream.str() << endl;
     cout << "Part of BamTools API and toolkit" << endl;
     cout << "Primary authors: Derek Barnett, Erik Garrison, Michael Stromberg" << endl;
-    cout << "(c) 2009-2011 Marth Lab, Biology Dept., Boston College" << endl;
+    cout << "(c) 2009-2012 Marth Lab, Biology Dept., Boston College" << endl;
     cout << endl;
     return EXIT_SUCCESS;
 }

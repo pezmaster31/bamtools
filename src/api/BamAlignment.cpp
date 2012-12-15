@@ -2,7 +2,7 @@
 // BamAlignment.cpp (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 4 April 2012 (DB)
+// Last modified: 4 December 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -394,6 +394,72 @@ bool BamAlignment::FindTag(const std::string& tag,
     return false;
 }
 
+/*! \fn bool BamAlignment::GetArrayTagType(const std::string& tag, char& type) const
+    \brief Retrieves the BAM tag type-code for the array elements associated with requested tag name.
+
+    \param[in]  tag  2-character tag name
+    \param[out] type retrieved (1-character) type-code
+
+    \return \c true if found. False if not found, or if tag is not an array type.
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+bool BamAlignment::GetArrayTagType(const std::string& tag, char& type) const {
+
+    // skip if alignment is core-only
+    if ( SupportData.HasCoreOnly ) {
+        // TODO: set error string?
+        return false;
+    }
+
+    // skip if no tags present
+    if ( TagData.empty() ) {
+        // TODO: set error string?
+        return false;
+    }
+
+    // localize the tag data
+    char* pTagData = (char*)TagData.data();
+    const unsigned int tagDataLength = TagData.size();
+    unsigned int numBytesParsed = 0;
+
+    // if tag not found, return failure
+    if ( !FindTag(tag, pTagData, tagDataLength, numBytesParsed) ){
+        // TODO: set error string?
+        return false;
+    }
+
+    // check that tag type code is array
+    type = *(pTagData - 1);
+    if ( type != Constants::BAM_TAG_TYPE_ARRAY ) {
+        // TODO: set error string
+        return false;
+    }
+
+    // fetch element type
+    const char elementType = *pTagData;
+    switch ( elementType ) {
+
+        // allowable types
+        case (Constants::BAM_TAG_TYPE_INT8)   :
+        case (Constants::BAM_TAG_TYPE_UINT8)  :
+        case (Constants::BAM_TAG_TYPE_INT16)  :
+        case (Constants::BAM_TAG_TYPE_UINT16) :
+        case (Constants::BAM_TAG_TYPE_INT32)  :
+        case (Constants::BAM_TAG_TYPE_UINT32) :
+        case (Constants::BAM_TAG_TYPE_FLOAT)  :
+            type = elementType;
+            break;
+
+        default:
+            //TODO: set error string
+            return false;
+    }
+
+    // if we get here, return success
+    return true;
+}
+
+
 /*! \fn int BamAlignment::GetEndPosition(bool usePadded = false, bool closedInterval = false) const
     \brief Calculates alignment end position, based on its starting position and CIGAR data.
 
@@ -549,6 +615,45 @@ bool BamAlignment::GetSoftClips(vector<int>& clipSizes,
 
     // return whether any soft clips found
     return softClipFound;
+}
+
+/*! \fn std::vector<std::string> BamAlignment::GetTagNames(void) const
+    \brief Retrieves the BAM tag names.
+
+    When paired with GetTagType() and GetTag(), this method allows you
+    to iterate over an alignment's tag data without knowing the names (or types)
+    beforehand.
+
+    \return \c vector containing all tag names found (empty if none available)
+    \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
+*/
+std::vector<std::string> BamAlignment::GetTagNames(void) const {
+
+    std::vector<std::string> result;
+    if ( SupportData.HasCoreOnly || TagData.empty() )
+        return result;
+
+    char* pTagData = (char*)TagData.data();
+    const unsigned int tagDataLength = TagData.size();
+    unsigned int numBytesParsed = 0;
+    while ( numBytesParsed < tagDataLength ) {
+
+        // get current tag name & type
+        const char* pTagName = pTagData;
+        const char* pTagType = pTagData + 2;
+        pTagData       += 3;
+        numBytesParsed +=3;
+
+        // store tag name
+        result.push_back( std::string(pTagName, 2)  );
+
+        // find the next tag
+        if ( *pTagType == '\0' ) break;
+        if ( !SkipToNextTag(*pTagType, pTagData, numBytesParsed) ) break;
+        if ( *pTagData == '\0' ) break;
+    }
+
+    return result;
 }
 
 /*! \fn bool BamAlignment::GetTagType(const std::string& tag, char& type) const

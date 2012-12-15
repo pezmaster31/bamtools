@@ -2,7 +2,7 @@
 // bamtools_cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 April 2011
+// Last modified: 10 December 2012
 // ---------------------------------------------------------------------------
 // Prints general alignment statistics for BAM file(s).
 // ***************************************************************************
@@ -15,6 +15,7 @@ using namespace BamTools;
 
 #include <cmath>
 #include <algorithm>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <numeric>
@@ -29,14 +30,17 @@ struct StatsTool::StatsSettings {
 
     // flags
     bool HasInput;
+    bool HasInputFilelist;
     bool IsShowingInsertSizeSummary;
 
     // filenames
     vector<string> InputFiles;
+    string InputFilelist;
     
     // constructor
     StatsSettings(void)
         : HasInput(false)
+        , HasInputFilelist(false)
         , IsShowingInsertSizeSummary(false)
     { }
 };  
@@ -102,7 +106,8 @@ StatsTool::StatsToolPrivate::StatsToolPrivate(StatsTool::StatsSettings* settings
 bool StatsTool::StatsToolPrivate::CalculateMedian(vector<int>& data, double& median) { 
   
     // skip if data empty
-    if ( data.empty() ) return false;
+    if ( data.empty() )
+        return false;
 
     // find middle element
     size_t middleIndex = data.size() / 2;
@@ -202,7 +207,8 @@ void StatsTool::StatsToolPrivate::ProcessAlignment(const BamAlignment& al) {
         }
         
         // check for explicit proper pair flag
-        if ( al.IsProperPair() ) ++m_numProperPair;
+        if ( al.IsProperPair() )
+            ++m_numProperPair;
         
         // store insert size for first mate 
         if ( m_settings->IsShowingInsertSizeSummary && al.IsFirstMate() && (al.InsertSize != 0) ) {
@@ -215,8 +221,22 @@ void StatsTool::StatsToolPrivate::ProcessAlignment(const BamAlignment& al) {
 bool StatsTool::StatsToolPrivate::Run() {
   
     // set to default input if none provided
-    if ( !m_settings->HasInput )
+    if ( !m_settings->HasInput && !m_settings->HasInputFilelist )
         m_settings->InputFiles.push_back(Options::StandardIn());
+
+    // add files in the filelist to the input file list
+    if ( m_settings->HasInputFilelist ) {
+
+        ifstream filelist(m_settings->InputFilelist.c_str(), ios::in);
+        if ( !filelist.is_open() ) {
+            cerr << "bamtools stats ERROR: could not open input BAM file list... Aborting." << endl;
+            return false;
+        }
+
+        string line;
+        while ( getline(filelist, line) )
+            m_settings->InputFiles.push_back(line);
+    }
 
     // open the BAM files
     BamMultiReader reader;
@@ -246,11 +266,12 @@ StatsTool::StatsTool(void)
     , m_impl(0)
 {
     // set program details
-    Options::SetProgramInfo("bamtools stats", "prints general alignment statistics", "[-in <filename> -in <filename> ...] [statsOptions]");
+    Options::SetProgramInfo("bamtools stats", "prints general alignment statistics", "[-in <filename> -in <filename> ... | -list <filelist>] [statsOptions]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in", "BAM filename", "the input BAM file", "", m_settings->HasInput,  m_settings->InputFiles,  IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-list",  "filename", "the input BAM file list, one line per file", "", m_settings->HasInputFilelist,  m_settings->InputFilelist, IO_Opts);
     
     OptionGroup* AdditionalOpts = Options::CreateOptionGroup("Additional Stats");
     Options::AddOption("-insert", "summarize insert size data", m_settings->IsShowingInsertSizeSummary, AdditionalOpts);

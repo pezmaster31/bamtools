@@ -23,18 +23,21 @@ using namespace std;
 /*! \class BamTools::BamMultiReader
     \brief Convenience class for reading multiple BAM files.
 */
-
 /*! \enum BamMultiReader::MergeOrder
-    \brief A description of the enum type.
+    \brief Used to describe the merge strategy of the BamMultiReader.
+
+    The merge strategy determines which alignment is 'next' from across
+    all opened BAM files.
+*/
+/*! \var BamMultiReader::MergeOrder BamMultiReader::RoundRobinMerge
+    \brief Merge strategy when BAM files are unsorted, or their sorted status is either unknown or ignored
 */
 /*! \var BamMultiReader::MergeOrder BamMultiReader::MergeByCoordinate
-    \brief The description of the first enum value.
+    \brief Merge strategy when BAM files are sorted by position ('coordinate')
 */
 /*! \var BamMultiReader::MergeOrder BamMultiReader::MergeByName
-    \brief BAM files are
+    \brief Merge strategy when BAM files are sorted by read name ('queryname')
 */
-
-
 
 /*! \fn BamMultiReader::BamMultiReader(void)
     \brief constructor

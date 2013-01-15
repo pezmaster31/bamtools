@@ -64,7 +64,7 @@ class API_EXPORT BamMultiReader {
         // returns file pointers to beginning of alignments
         bool Rewind(void);
         // sets an explicit merge order, regardless of the BAM files' SO header tag
-        void SetExplicitMergeOrder(BamMultiReader::MergeOrder order);
+        bool SetExplicitMergeOrder(BamMultiReader::MergeOrder order);
         // sets the target region of interest
         bool SetRegion(const BamRegion& region);
         // sets the target region of interest

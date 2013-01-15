@@ -58,7 +58,7 @@ class BamMultiReaderPrivate {
         bool GetNextAlignment(BamAlignment& al);
         bool GetNextAlignmentCore(BamAlignment& al);
         bool HasOpenReaders(void);
-        void SetExplicitMergeOrder(BamMultiReader::MergeOrder order);
+        bool SetExplicitMergeOrder(BamMultiReader::MergeOrder order);
 
         // access auxiliary data
         SamHeader GetHeader(void) const;

@@ -368,10 +368,11 @@ bool BamMultiReader::Rewind(void) {
     nothing in the API to prevent you from doing so, but the results may be
     unexpected.
 
+    \returns \c true if merge order could be successfully applied
     \sa BamMultiReader::MergeOrder, GetMergeOrder(), GetNextAlignment(), GetNextAlignmentCore()
 */
-void BamMultiReader::SetExplicitMergeOrder(BamMultiReader::MergeOrder order) {
-    d->SetExplicitMergeOrder(order);
+bool BamMultiReader::SetExplicitMergeOrder(BamMultiReader::MergeOrder order) {
+    return d->SetExplicitMergeOrder(order);
 }
 
 /*! \fn bool BamMultiReader::SetRegion(const BamRegion& region)

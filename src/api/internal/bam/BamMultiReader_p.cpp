@@ -661,21 +661,38 @@ void BamMultiReaderPrivate::SaveNextAlignment(BamReader* reader, BamAlignment* a
         m_alignmentCache->Add( MergeItem(reader, alignment) );
 }
 
-void BamMultiReaderPrivate::SetExplicitMergeOrder(BamMultiReader::MergeOrder order) {
+bool BamMultiReaderPrivate::SetExplicitMergeOrder(BamMultiReader::MergeOrder order) {
 
     // set new merge flags
     m_hasUserMergeOrder = true;
     m_mergeOrder = order;
 
-    // remove any existing merger
-    if ( m_alignmentCache ) {
-        m_alignmentCache->Clear();
+    // remove any existing merger (storing any existing data sitting in the cache)
+    vector<MergeItem> currentCacheData;
+    if ( m_alignmentCache ) {        
+        while ( !m_alignmentCache->IsEmpty() )
+            currentCacheData.push_back( m_alignmentCache->TakeFirst() );
         delete m_alignmentCache;
         m_alignmentCache = 0;
     }
 
-    // update cache with new strategy
-    UpdateAlignmentCache();
+    // create new cache using the new merge flags
+    m_alignmentCache = CreateAlignmentCache();
+    if ( m_alignmentCache == 0 ) {
+        SetErrorString("BamMultiReader::SetExplicitMergeOrder", "requested order is unrecognized");
+        return false;
+    }
+
+    // push current data onto new cache
+    vector<MergeItem>::const_iterator readerIter = currentCacheData.begin();
+    vector<MergeItem>::const_iterator readerEnd  = currentCacheData.end();
+    for ( ; readerIter != readerEnd; ++readerIter ) {
+        const MergeItem& item = (*readerIter);
+        m_alignmentCache->Add(item);
+    }
+
+    // return success
+    return true;
 }
 
 void BamMultiReaderPrivate::SetErrorString(const string& where, const string& what) const {

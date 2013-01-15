@@ -2,7 +2,7 @@
 // BamMultiReader_p.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 25 October 2011 (DB)
+// Last modified: 14 January 2013 (DB)
 // ---------------------------------------------------------------------------
 // Functionality for simultaneously reading multiple BAM files
 // *************************************************************************
@@ -25,6 +25,8 @@ using namespace std;
 // ctor
 BamMultiReaderPrivate::BamMultiReaderPrivate(void)
     : m_alignmentCache(0)
+    , m_hasUserMergeOrder(false)
+    , m_mergeOrder(BamMultiReader::RoundRobinMerge)
 { }
 
 // dtor
@@ -115,11 +117,19 @@ bool BamMultiReaderPrivate::CloseFiles(const vector<string>& filenames) {
         }
     }
 
-    // make sure alignment cache is cleaned up if all readers closed
-    if ( m_readers.empty() && m_alignmentCache ) {
-        m_alignmentCache->Clear();
-        delete m_alignmentCache;
-        m_alignmentCache = 0;
+    // make sure we clean up properly if all readers were closed
+    if ( m_readers.empty() ) {
+
+        // clean up merger
+        if ( m_alignmentCache ) {
+            m_alignmentCache->Clear();
+            delete m_alignmentCache;
+            m_alignmentCache = 0;
+        }
+
+        // reset merge flags
+        m_hasUserMergeOrder = false;
+        m_mergeOrder = BamMultiReader::RoundRobinMerge;
     }
 
     // return whether all readers closed OK
@@ -161,21 +171,46 @@ bool BamMultiReaderPrivate::CreateIndexes(const BamIndex::IndexType& type) {
         return true;
 }
 
-IMultiMerger* BamMultiReaderPrivate::CreateAlignmentCache(void) const {
+IMultiMerger* BamMultiReaderPrivate::CreateAlignmentCache(void) {
 
-    // fetch SamHeader
-    SamHeader header = GetHeader();
+    // if no merge order set explicitly, use SAM header to lookup proper order
+    if ( !m_hasUserMergeOrder ) {
 
-    // if BAM files are sorted by position
-    if ( header.SortOrder == Constants::SAM_HD_SORTORDER_COORDINATE )
-        return new MultiMerger<Algorithms::Sort::ByPosition>();
+        // fetch SamHeader from BAM files
+        SamHeader header = GetHeader();
 
-    // if BAM files are sorted by read name
-    if ( header.SortOrder == Constants::SAM_HD_SORTORDER_QUERYNAME )
-        return new MultiMerger<Algorithms::Sort::ByName>();
+        // if BAM files are sorted by position
+        if ( header.SortOrder == Constants::SAM_HD_SORTORDER_COORDINATE )
+            m_mergeOrder = BamMultiReader::MergeByCoordinate;
 
-    // otherwise "unknown" or "unsorted", use unsorted merger and just read in
-    return new MultiMerger<Algorithms::Sort::Unsorted>();
+        // if BAM files are sorted by read name
+        if ( header.SortOrder == Constants::SAM_HD_SORTORDER_QUERYNAME )
+            m_mergeOrder = BamMultiReader::MergeByName;
+
+        // otherwise, sorting is either "unknown" or marked as "unsorted"
+        else
+            m_mergeOrder = BamMultiReader::RoundRobinMerge;
+    }
+
+    // use current merge order to create proper 'multi-merger'
+    switch ( m_mergeOrder ) {
+
+        // merge BAM files by position
+        case BamMultiReader::MergeByCoordinate :
+            return new MultiMerger<Algorithms::Sort::ByPosition>();
+
+        // merge BAM files by read name
+        case BamMultiReader::MergeByName :
+            return new MultiMerger<Algorithms::Sort::ByName>();
+
+        // sorting is "unknown", "unsorted" or "ignored"... so use unsorted merger
+        case BamMultiReader::RoundRobinMerge :
+            return new MultiMerger<Algorithms::Sort::Unsorted>();
+
+        // unknown merge order, can't create merger
+        default:
+            return 0;
+    }
 }
 
 const vector<string> BamMultiReaderPrivate::Filenames(void) const {
@@ -246,6 +281,10 @@ string BamMultiReaderPrivate::GetHeaderText(void) const {
 
     // return stringified header
     return mergedHeader.ToString();
+}
+
+BamMultiReader::MergeOrder BamMultiReaderPrivate::GetMergeOrder(void) const {
+    return m_mergeOrder;
 }
 
 // get next alignment among all files
@@ -620,6 +659,23 @@ void BamMultiReaderPrivate::SaveNextAlignment(BamReader* reader, BamAlignment* a
 
     if ( reader->GetNextAlignmentCore(*alignment) )
         m_alignmentCache->Add( MergeItem(reader, alignment) );
+}
+
+void BamMultiReaderPrivate::SetExplicitMergeOrder(BamMultiReader::MergeOrder order) {
+
+    // set new merge flags
+    m_hasUserMergeOrder = true;
+    m_mergeOrder = order;
+
+    // remove any existing merger
+    if ( m_alignmentCache ) {
+        m_alignmentCache->Clear();
+        delete m_alignmentCache;
+        m_alignmentCache = 0;
+    }
+
+    // update cache with new strategy
+    UpdateAlignmentCache();
 }
 
 void BamMultiReaderPrivate::SetErrorString(const string& where, const string& what) const {

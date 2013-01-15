@@ -2,7 +2,7 @@
 // BamMultiReader_p.h (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 25 October 2011 (DB)
+// Last modified: 14 January 2013 (DB)
 // ---------------------------------------------------------------------------
 // Functionality for simultaneously reading multiple BAM files
 // *************************************************************************
@@ -54,9 +54,11 @@ class BamMultiReaderPrivate {
         bool SetRegion(const BamRegion& region);
 
         // access alignment data
+        BamMultiReader::MergeOrder GetMergeOrder(void) const;
         bool GetNextAlignment(BamAlignment& al);
         bool GetNextAlignmentCore(BamAlignment& al);
         bool HasOpenReaders(void);
+        void SetExplicitMergeOrder(BamMultiReader::MergeOrder order);
 
         // access auxiliary data
         SamHeader GetHeader(void) const;
@@ -78,7 +80,7 @@ class BamMultiReaderPrivate {
     public:
 
         bool CloseFiles(const std::vector<std::string>& filenames);
-        IMultiMerger* CreateAlignmentCache(void) const;
+        IMultiMerger* CreateAlignmentCache(void);
         bool PopNextCachedAlignment(BamAlignment& al, const bool needCharData);
         bool RewindReaders(void);
         void SaveNextAlignment(BamReader* reader, BamAlignment* alignment);
@@ -90,6 +92,10 @@ class BamMultiReaderPrivate {
     public:
         std::vector<MergeItem> m_readers;
         IMultiMerger* m_alignmentCache;
+
+        bool m_hasUserMergeOrder;
+        BamMultiReader::MergeOrder m_mergeOrder;
+
         mutable std::string m_errorString;
 };
 

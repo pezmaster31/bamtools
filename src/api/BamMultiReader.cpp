@@ -2,7 +2,7 @@
 // BamMultiReader.cpp (c) 2010 Erik Garrison, Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 25 October 2011 (DB)
+// Last modified: 14 January 2013 (DB)
 // ---------------------------------------------------------------------------
 // Convenience class for reading multiple BAM files.
 //
@@ -23,6 +23,18 @@ using namespace std;
 /*! \class BamTools::BamMultiReader
     \brief Convenience class for reading multiple BAM files.
 */
+
+/*! \enum BamMultiReader::MergeOrder
+    \brief A description of the enum type.
+*/
+/*! \var BamMultiReader::MergeOrder BamMultiReader::MergeByCoordinate
+    \brief The description of the first enum value.
+*/
+/*! \var BamMultiReader::MergeOrder BamMultiReader::MergeByName
+    \brief BAM files are
+*/
+
+
 
 /*! \fn BamMultiReader::BamMultiReader(void)
     \brief constructor
@@ -130,6 +142,16 @@ std::string BamMultiReader::GetHeaderText(void) const {
     return d->GetHeaderText();
 }
 
+/*! \fn BamMultiReader::MergeOrder BamMultiReader::GetMergeOrder(void) const
+    \brief Returns curent merge order strategy.
+
+    \returns current merge order enum value
+    \sa BamMultiReader::MergeOrder, SetExplicitMergeOrder()
+*/
+BamMultiReader::MergeOrder BamMultiReader::GetMergeOrder(void) const {
+    return d->GetMergeOrder();
+}
+
 /*! \fn bool BamMultiReader::GetNextAlignment(BamAlignment& alignment)
     \brief Retrieves next available alignment.
 
@@ -141,7 +163,7 @@ std::string BamMultiReader::GetHeaderText(void) const {
 
     \param[out] alignment destination for alignment record data
     \returns \c true if a valid alignment was found
-    \sa GetNextAlignmentCore(), SetRegion(), BamReader::GetNextAlignment()
+    \sa GetNextAlignmentCore(), SetExplicitMergeOrder(), SetRegion(), BamReader::GetNextAlignment()
 */
 bool BamMultiReader::GetNextAlignment(BamAlignment& nextAlignment) {
     return d->GetNextAlignment(nextAlignment);
@@ -158,7 +180,7 @@ bool BamMultiReader::GetNextAlignment(BamAlignment& nextAlignment) {
 
     \param[out] alignment destination for alignment record data
     \returns \c true if a valid alignment was found
-    \sa GetNextAlignment(), SetRegion(), BamReader::GetNextAlignmentCore()
+    \sa GetNextAlignment(), SetExplicitMergeOrder(), SetRegion(), BamReader::GetNextAlignmentCore()
 */
 bool BamMultiReader::GetNextAlignmentCore(BamAlignment& nextAlignment) {
     return d->GetNextAlignmentCore(nextAlignment);
@@ -319,6 +341,34 @@ bool BamMultiReader::OpenIndexes(const std::vector<std::string>& indexFilenames)
 */
 bool BamMultiReader::Rewind(void) {
     return d->Rewind();
+}
+
+/*! \fn void BamMultiReader::SetExplicitMergeOrder(BamMultiReader::MergeOrder order)
+    \brief Sets an explicit merge order, regardless of the BAM files' SO header tag.
+
+    The default behavior of the BamMultiReader is to check the SO tag in the BAM files'
+    SAM header text to determine the merge strategy". The merge strategy is used to
+    determine from which BAM file the next alignment should come when either
+    GetNextAlignment() or GetNextAlignmentCore() are called. If files share a
+    'coordinate' or 'queryname' value for this tag, then the merge strategy is
+    selected accordingly. If any of them do not match, or if any fileis marked as
+    'unsorted', then the merge strategy is simply a round-robin.
+
+    This method allows client code to explicitly override the lookup behavior. This
+    method can be useful when you know, for example, that your BAM files are sorted
+    by coordinate but upstream processes did not set the header tag properly.
+
+    \note This method should \bold not be called while reading alignments via
+    GetNextAlignment() or GetNextAlignmentCore(). For proper results, you should
+    call this method before (or immediately after) opening files, rewinding,
+    jumping, etc. but \bold not once alignment fetching has started. There is
+    nothing in the API to prevent you from doing so, but the results may be
+    unexpected.
+
+    \sa BamMultiReader::MergeOrder, GetMergeOrder(), GetNextAlignment(), GetNextAlignmentCore()
+*/
+void BamMultiReader::SetExplicitMergeOrder(BamMultiReader::MergeOrder order) {
+    d->SetExplicitMergeOrder(order);
 }
 
 /*! \fn bool BamMultiReader::SetRegion(const BamRegion& region)

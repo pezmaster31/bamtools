@@ -2,7 +2,7 @@
 // BamMultiReader.h (c) 2010 Erik Garrison, Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 25 October 2011 (DB)
+// Last modified: 14 January 2013 (DB)
 // ---------------------------------------------------------------------------
 // Convenience class for reading multiple BAM files.
 // ***************************************************************************
@@ -25,6 +25,14 @@ namespace Internal {
 
 class API_EXPORT BamMultiReader {
 
+    // enums
+    public:
+        // possible merge order strategies
+        enum MergeOrder { RoundRobinMerge = 0
+                        , MergeByCoordinate
+                        , MergeByName
+                        };
+
     // constructor / destructor
     public:
         BamMultiReader(void);
@@ -43,6 +51,8 @@ class API_EXPORT BamMultiReader {
         bool CloseFile(const std::string& filename);
         // returns list of filenames for all open BAM files
         const std::vector<std::string> Filenames(void) const;
+        // returns curent merge order strategy
+        BamMultiReader::MergeOrder GetMergeOrder(void) const;
         // returns true if multireader has any open BAM files
         bool HasOpenReaders(void) const;
         // performs random-access jump within current BAM files
@@ -53,6 +63,8 @@ class API_EXPORT BamMultiReader {
         bool OpenFile(const std::string& filename);
         // returns file pointers to beginning of alignments
         bool Rewind(void);
+        // sets an explicit merge order, regardless of the BAM files' SO header tag
+        bool SetExplicitMergeOrder(BamMultiReader::MergeOrder order);
         // sets the target region of interest
         bool SetRegion(const BamRegion& region);
         // sets the target region of interest

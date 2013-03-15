@@ -32,6 +32,7 @@ struct MergeTool::MergeSettings {
     bool HasOutput;
     bool IsForceCompression;
     bool HasRegion;
+    bool HasNumThreads;
     
     // filenames
     vector<string> InputFiles;
@@ -40,6 +41,7 @@ struct MergeTool::MergeSettings {
     // other parameters
     string OutputFilename;
     string Region;
+    unsigned int numThreads;
     
     // constructor
     MergeSettings(void)
@@ -48,7 +50,9 @@ struct MergeTool::MergeSettings {
         , HasOutput(false)
         , IsForceCompression(false)
         , HasRegion(false)
+        , HasNumThreads(false)
         , OutputFilename(Options::StandardOut())
+        , numThreads(0)
     { }
 };  
 
@@ -114,6 +118,8 @@ bool MergeTool::MergeToolPrivate::Run(void) {
     // open BamWriter
     BamWriter writer;
     writer.SetCompressionMode(compressionMode);
+    if ( m_settings->HasNumThreads )
+        writer.SetNumThreads(m_settings->numThreads);
     if ( !writer.Open(m_settings->OutputFilename, mergedHeader, references) ) {
         cerr << "bamtools merge ERROR: could not open "
              << m_settings->OutputFilename << " for writing." << endl;
@@ -200,7 +206,7 @@ MergeTool::MergeTool(void)
 {
     // set program details
     Options::SetProgramInfo("bamtools merge", "merges multiple BAM files into one",
-                            "[-in <filename> -in <filename> ... | -list <filelist>] [-out <filename> | [-forceCompression]] [-region <REGION>]");
+                            "[-in <filename> -in <filename> ... | -list <filelist>] [-out <filename> | [-forceCompression]] [-region <REGION>] [-threads <integer>]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
@@ -209,6 +215,7 @@ MergeTool::MergeTool(void)
     Options::AddValueOption("-out", "BAM filename", "the output BAM file",   "", m_settings->HasOutput, m_settings->OutputFilename, IO_Opts);
     Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
     Options::AddValueOption("-region", "REGION", "genomic region. See README for more details", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
+    Options::AddValueOption("-threads", "unsigned int", "number of threads", "", m_settings->HasNumThreads, m_settings->numThreads, IO_Opts);
 }
 
 MergeTool::~MergeTool(void) {

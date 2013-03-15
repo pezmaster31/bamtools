@@ -48,6 +48,7 @@ class BamWriterPrivate {
                   const BamTools::RefVector& referenceSequences);
         bool SaveAlignment(const BamAlignment& al);
         void SetWriteCompressed(bool ok);
+        void SetParallel(int32_t);
 
     // 'internal' methods
     public:
@@ -62,9 +63,11 @@ class BamWriterPrivate {
 
     // data members
     private:
-        BgzfStream m_stream;
+        BgzfStream *m_stream;
         bool m_isBigEndian;
         std::string m_errorString;
+        int32_t m_numThreads;
+        int32_t m_writeCompressed;
 };
 
 } // namespace Internal

@@ -1,5 +1,5 @@
 // ***************************************************************************
-// BgzfStream_p.h (c) 2011 Derek Barnett
+// SerialBgzfStream_p.h (c) 2011 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
 // Last modified: 17 January 2012(DB)
@@ -9,8 +9,8 @@
 // Replaces the old BGZF.* files to avoid clashing with other toolkits
 // ***************************************************************************
 
-#ifndef BGZFSTREAM_P_H
-#define BGZFSTREAM_P_H
+#ifndef SERIALBGZFSTREAM_P_H
+#define SERIALBGZFSTREAM_P_H
 
 //  -------------
 //  W A R N I N G
@@ -25,46 +25,68 @@
 #include "api/api_global.h"
 #include "api/BamAux.h"
 #include "api/IBamIODevice.h"
+#include "api/internal/io/BgzfStream_p.h"
 #include <string>
 
 namespace BamTools {
 namespace Internal {
 
-// abstract class
-class BgzfStream {
+class SerialBgzfStream : public BgzfStream {
+
+    // constructor & destructor
+    public:
+        SerialBgzfStream(void);
+        ~SerialBgzfStream(void);
 
     // main interface methods
     public:
         // closes BGZF file
-        virtual void Close(void) = 0;
-        // returns true if BgzfStream open for IO
-        virtual bool IsOpen(void) const = 0;
+        void Close(void);
+        // returns true if SerialBgzfStream open for IO
+        bool IsOpen(void) const;
         // opens the BGZF file
-        virtual void Open(const std::string& filename, const IBamIODevice::OpenMode mode) = 0;
+        void Open(const std::string& filename, const IBamIODevice::OpenMode mode);
         // reads BGZF data into a byte buffer
-        virtual size_t Read(char* data, const size_t dataLength) = 0;
+        size_t Read(char* data, const size_t dataLength);
         // seek to position in BGZF file
-        virtual void Seek(const int64_t& position) = 0;
-        // sets IO device (closes previous, if any, but does not attempt to open)
-        //void SetIODevice(IBamIODevice* device) = { return; };
+        void Seek(const int64_t& position);
         // enable/disable compressed output
-        void SetWriteCompressed(bool ok) { m_isWriteCompressed = ok; };
+        void SetWriteCompressed(bool ok);
         // get file position in BGZF file
-        virtual int64_t Tell(void) const = 0;
+        int64_t Tell(void) const;
         // writes the supplied data into the BGZF buffer
-        virtual size_t Write(const char* data, const size_t dataLength) = 0;
+        size_t Write(const char* data, const size_t dataLength);
 
+    // internal methods
+    private:
+        // compresses the current block
+        size_t DeflateBlock(int32_t blockLength);
+        // flushes the data in the BGZF block
+        void FlushBlock(void);
+        // de-compresses the current block
+        size_t InflateBlock(const size_t& blockLength);
+        // reads a BGZF block
+        void ReadBlock(void);
 
     // static 'utility' methods
     public:
         // checks BGZF block header
         static bool CheckBlockHeader(char* header);
 
-    protected:
+    // data members
+    public:
+        int32_t m_blockLength;
+        int32_t m_blockOffset;
+        int64_t m_blockAddress;
+
         bool m_isWriteCompressed;
+        IBamIODevice* m_device;
+
+        RaiiBuffer m_uncompressedBlock;
+        RaiiBuffer m_compressedBlock;
 };
 
 } // namespace Internal
 } // namespace BamTools
 
-#endif // BGZFSTREAM_P_H
+#endif // SERIALBGZFSTREAM_P_H

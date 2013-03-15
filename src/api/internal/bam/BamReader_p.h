@@ -73,6 +73,8 @@ class BamReaderPrivate {
         std::string GetErrorString(void) const;
         void SetErrorString(const std::string& where, const std::string& what);
 
+        void SetParallel(int32_t);
+
     // internal methods, but available as a BamReaderPrivate 'interface'
     //
     // these methods should only be used by BamTools::Internal classes
@@ -107,10 +109,12 @@ class BamReaderPrivate {
         // BamReaderPrivate components
         BamHeader m_header;
         BamRandomAccessController m_randomAccessController;
-        BgzfStream m_stream;
+        BgzfStream *m_stream;
 
         // error handling
         std::string m_errorString;
+
+        int32_t m_numThreads;
 };
 
 } // namespace Internal

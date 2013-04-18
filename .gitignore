@@ -4,4 +4,6 @@ lib
 include
 bamtools_version.h
 *.swp
+.DS_Store
+._.*
 

@@ -18,6 +18,6 @@ to the public interface for `Internal::BamReaderPrivate` and
 ```c++
 const SamHeader& BamHeader::ToConstSamHeader() const { }
 ```
-to the Internal::BamHeader class, this is the method that ultimately provides
+to the `Internal::BamHeader` class, this is the method that ultimately provides
 the reference requested by `BamReader::GetConstSamHeader()`.
 

@@ -2,7 +2,7 @@
 // bamtools_filter.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 December 2012
+// Last modified: 27 April 2013
 // ---------------------------------------------------------------------------
 // Filters BAM file(s) according to some user-specified criteria
 // ***************************************************************************
@@ -157,6 +157,7 @@ struct BamAlignmentChecker {
         string tagFilterString = entireTagFilterString.substr(3);
 
         // switch on tag type to set tag query value & parse filter token
+        int8_t   asciiFilterValue,   asciiQueryValue;
         int32_t  intFilterValue,    intQueryValue;
         uint32_t uintFilterValue,   uintQueryValue;
         float    realFilterValue,   realQueryValue;
@@ -166,6 +167,17 @@ struct BamAlignmentChecker {
         PropertyFilterValue::ValueCompareType compareType;
         bool keepAlignment = false;
         switch (tagType) {
+
+            // ASCII tag type
+            case 'A':
+                if ( al.GetTag(tagName, asciiQueryValue) ) {
+                    if ( FilterEngine<BamAlignmentChecker>::parseToken(tagFilterString, asciiFilterValue, compareType) ) {
+                        tagFilter.Value = asciiFilterValue;
+                        tagFilter.Type  = compareType;
+                        keepAlignment   = tagFilter.check(asciiQueryValue);
+                    }
+                }
+                break;
 
             // signed int tag type
             case 'c' :
@@ -205,7 +217,7 @@ struct BamAlignmentChecker {
                 break;
 
             // string tag type
-            case 'A':
+
             case 'Z':
             case 'H':
                 if ( al.GetTag(tagName, stringQueryValue) ) {

@@ -2,7 +2,7 @@
 // bamtools_filter.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 27 April 2013
+// Last modified: 3 May 2013
 // ---------------------------------------------------------------------------
 // Filters BAM file(s) according to some user-specified criteria
 // ***************************************************************************
@@ -48,6 +48,7 @@ const string ISPROPERPAIR_PROPERTY        = "isProperPair";
 const string ISREVERSESTRAND_PROPERTY     = "isReverseStrand";
 const string ISSECONDMATE_PROPERTY        = "isSecondMate";
 const string ISSINGLETON_PROPERTY         = "isSingleton";
+const string LENGTH_PROPERTY              = "length";
 const string MAPQUALITY_PROPERTY          = "mapQuality";
 const string MATEPOSITION_PROPERTY        = "matePosition";
 const string MATEREFERENCE_PROPERTY       = "mateReference";
@@ -107,6 +108,7 @@ struct BamAlignmentChecker {
                 const bool isSingleton = al.IsPaired() && al.IsMapped() && !al.IsMateMapped();
                 keepAlignment &= valueFilter.check(isSingleton);
             }
+            else if ( propertyName == LENGTH_PROPERTY )               keepAlignment &= valueFilter.check(al.Length);
             else if ( propertyName == MAPQUALITY_PROPERTY )           keepAlignment &= valueFilter.check(al.MapQuality);
             else if ( propertyName == MATEPOSITION_PROPERTY )         keepAlignment &= ( al.IsPaired() && al.IsMateMapped() && valueFilter.check(al.MateRefID) );
             else if ( propertyName == MATEREFERENCE_PROPERTY ) {
@@ -269,6 +271,7 @@ struct FilterTool::FilterSettings {
     // flags
     bool HasAlignmentFlagFilter;
     bool HasInsertSizeFilter;
+    bool HasLengthFilter;
     bool HasMapQualityFilter;
     bool HasNameFilter;
     bool HasQueryBasesFilter;
@@ -277,8 +280,9 @@ struct FilterTool::FilterSettings {
     // filters
     string AlignmentFlagFilter;
     string InsertSizeFilter;
-    string NameFilter;
+    string LengthFilter;
     string MapQualityFilter;
+    string NameFilter;
     string QueryBasesFilter;
     string TagFilter;  // support multiple ?
 
@@ -326,6 +330,7 @@ struct FilterTool::FilterSettings {
         , OutputFilename(Options::StandardOut())
         , HasAlignmentFlagFilter(false)
         , HasInsertSizeFilter(false)
+        , HasLengthFilter(false)
         , HasMapQualityFilter(false)
         , HasNameFilter(false)
         , HasQueryBasesFilter(false)
@@ -445,6 +450,7 @@ bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const string& filt
         
         // int32_t conversion
         else if ( propertyName == INSERTSIZE_PROPERTY ||
+                  propertyName == LENGTH_PROPERTY ||
                   propertyName == MATEPOSITION_PROPERTY ||
                   propertyName == POSITION_PROPERTY 
                 ) 
@@ -553,6 +559,7 @@ void FilterTool::FilterToolPrivate::InitProperties(void) {
     m_propertyNames.push_back(ISREVERSESTRAND_PROPERTY);
     m_propertyNames.push_back(ISSECONDMATE_PROPERTY);
     m_propertyNames.push_back(ISSINGLETON_PROPERTY);
+    m_propertyNames.push_back(LENGTH_PROPERTY);
     m_propertyNames.push_back(MAPQUALITY_PROPERTY);
     m_propertyNames.push_back(MATEPOSITION_PROPERTY);
     m_propertyNames.push_back(MATEREFERENCE_PROPERTY);
@@ -591,6 +598,7 @@ bool FilterTool::FilterToolPrivate::ParseCommandLine(void) {
     if ( m_settings->HasIsReverseStrandFilter )     propertyTokens.insert( make_pair(ISREVERSESTRAND_PROPERTY,     m_settings->IsReverseStrandFilter) );
     if ( m_settings->HasIsSecondMateFilter )        propertyTokens.insert( make_pair(ISSECONDMATE_PROPERTY,        m_settings->IsSecondMateFilter) );
     if ( m_settings->HasIsSingletonFilter )         propertyTokens.insert( make_pair(ISSINGLETON_PROPERTY,         m_settings->IsSingletonFilter) );
+    if ( m_settings->HasLengthFilter )              propertyTokens.insert( make_pair(LENGTH_PROPERTY,              m_settings->LengthFilter) );
     if ( m_settings->HasMapQualityFilter )          propertyTokens.insert( make_pair(MAPQUALITY_PROPERTY,          m_settings->MapQualityFilter) );
     if ( m_settings->HasNameFilter )                propertyTokens.insert( make_pair(NAME_PROPERTY,                m_settings->NameFilter) );
     if ( m_settings->HasQueryBasesFilter )          propertyTokens.insert( make_pair(QUERYBASES_PROPERTY,          m_settings->QueryBasesFilter) );
@@ -870,6 +878,7 @@ FilterTool::FilterTool(void)
 
     const string flagDesc    = "keep reads with this *exact* alignment flag (for more detailed queries, see below)";
     const string insertDesc  = "keep reads with insert size that matches pattern";
+    const string lengthDesc  = "keep reads with length that matches pattern";
     const string mapQualDesc = "keep reads with map quality that matches pattern";
     const string nameDesc    = "keep reads with name that matches pattern";
     const string queryDesc   = "keep reads with motif that matches pattern";
@@ -877,6 +886,7 @@ FilterTool::FilterTool(void)
 
     Options::AddValueOption("-alignmentFlag", "int",       flagDesc,    "", m_settings->HasAlignmentFlagFilter, m_settings->AlignmentFlagFilter, FilterOpts);
     Options::AddValueOption("-insertSize",    "int",       insertDesc,  "", m_settings->HasInsertSizeFilter,    m_settings->InsertSizeFilter,    FilterOpts);
+    Options::AddValueOption("-length",        "int",       lengthDesc,  "", m_settings->HasLengthFilter,        m_settings->LengthFilter,        FilterOpts);
     Options::AddValueOption("-mapQuality",    "[0-255]",   mapQualDesc, "", m_settings->HasMapQualityFilter,    m_settings->MapQualityFilter,    FilterOpts);
     Options::AddValueOption("-name",          "string",    nameDesc,    "", m_settings->HasNameFilter,          m_settings->NameFilter,          FilterOpts);
     Options::AddValueOption("-queryBases",    "string",    queryDesc,   "", m_settings->HasQueryBasesFilter,    m_settings->QueryBasesFilter,    FilterOpts);

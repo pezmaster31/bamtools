@@ -31,8 +31,8 @@ ensure_out_of_source_build( "
 
 # set BamTools version information
 set( BamTools_VERSION_MAJOR 2 )
-set( BamTools_VERSION_MINOR 1 )
-set( BamTools_VERSION_BUILD 1 )
+set( BamTools_VERSION_MINOR 2 )
+set( BamTools_VERSION_BUILD 3 )
 
 # set our library and executable destination dirs
 set( EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin" )
@@ -40,10 +40,23 @@ set( LIBRARY_OUTPUT_PATH    "${CMAKE_SOURCE_DIR}/lib" )
 
 # define compiler flags for all code
 set( CMAKE_BUILD_TYPE Release )
-add_definitions( -g3 -ggdb -Wall -D_FILE_OFFSET_BITS=64 )
-if( "${CMAKE_SYSTEM_NAME}" MATCHES "SunOS" )
-	add_definitions( -DSUN_OS )
+add_definitions( -Wall -D_FILE_OFFSET_BITS=64 )
+
+# -----------------------------------------------
+# handle platform-/environment-specific defines
+
+# If planning to run in Node.js environment, run:
+# cmake -DEnableNodeJS=true
+if( EnableNodeJS )
+    add_definitions( -DSYSTEM_NODEJS=1 )
 endif()
+
+# If running on SunOS
+if( "${CMAKE_SYSTEM_NAME}" MATCHES "SunOS" )
+    add_definitions( -DSUN_OS )
+endif()
+
+# -------------------------------------------
 
 # add our includes root path
 include_directories( src )

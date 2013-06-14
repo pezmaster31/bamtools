@@ -2,7 +2,7 @@
 // bamtools_count.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 April 2011
+// Last modified: 10 December 2012
 // ---------------------------------------------------------------------------
 // Prints alignment count for BAM file(s)
 // ***************************************************************************
@@ -15,6 +15,7 @@
 #include <utils/bamtools_utilities.h>
 using namespace BamTools;
 
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -27,15 +28,18 @@ struct CountTool::CountSettings {
 
     // flags
     bool HasInput;
+    bool HasInputFilelist;
     bool HasRegion;
 
     // filenames
     vector<string> InputFiles;
+    string InputFilelist;
     string Region;
     
     // constructor
     CountSettings(void)
         : HasInput(false)
+        , HasInputFilelist(false)
         , HasRegion(false)
     { }  
 }; 
@@ -64,9 +68,23 @@ struct CountTool::CountToolPrivate {
 
 bool CountTool::CountToolPrivate::Run(void) {
 
-    // if no '-in' args supplied, default to stdin
-    if ( !m_settings->HasInput )
+    // set to default input if none provided
+    if ( !m_settings->HasInput && !m_settings->HasInputFilelist )
         m_settings->InputFiles.push_back(Options::StandardIn());
+
+    // add files in the filelist to the input file list
+    if ( m_settings->HasInputFilelist ) {
+
+        ifstream filelist(m_settings->InputFilelist.c_str(), ios::in);
+        if ( !filelist.is_open() ) {
+            cerr << "bamtools count ERROR: could not open input BAM file list... Aborting." << endl;
+            return false;
+        }
+
+        string line;
+        while ( getline(filelist, line) )
+            m_settings->InputFiles.push_back(line);
+    }
 
     // open reader without index
     BamMultiReader reader;
@@ -150,12 +168,16 @@ CountTool::CountTool(void)
     , m_impl(0)
 { 
     // set program details
-    Options::SetProgramInfo("bamtools count", "prints number of alignments in BAM file(s)", "[-in <filename> -in <filename> ...] [-region <REGION>]");
+    Options::SetProgramInfo("bamtools count", "prints number of alignments in BAM file(s)",
+                            "[-in <filename> -in <filename> ... | -list <filelist>] [-region <REGION>]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInput,  m_settings->InputFiles, IO_Opts, Options::StandardIn());
-    Options::AddValueOption("-region", "REGION",       "genomic region. Index file is recommended for better performance, and is used automatically if it exists. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
+    Options::AddValueOption("-list",   "filename", "the input BAM file list, one line per file", "", m_settings->HasInputFilelist,  m_settings->InputFilelist, IO_Opts);
+    Options::AddValueOption("-region", "REGION",
+                            "genomic region. Index file is recommended for better performance, and is used automatically if it exists. See \'bamtools help index\' for more details on creating one",
+                            "", m_settings->HasRegion, m_settings->Region, IO_Opts);
 }
 
 CountTool::~CountTool(void) { 

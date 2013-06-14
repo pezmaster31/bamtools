@@ -2,7 +2,7 @@
 // BamWriter_p.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 4 April 2012 (DB)
+// Last modified: 18 November 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
@@ -284,7 +284,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
 
         // write the base qualities
         char* pBaseQualities = new char[queryLength]();
-        if ( al.Qualities.empty() || al.Qualities == "*" )
+        if ( al.Qualities.empty() || ( al.Qualities.size() == 1 && al.Qualities[0] == '*' ) || al.Qualities[0] == (char)0xFF )
             memset(pBaseQualities, 0xFF, queryLength); // if missing or '*', fill with invalid qual
         else {
             for ( size_t i = 0; i < queryLength; ++i )

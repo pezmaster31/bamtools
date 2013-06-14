@@ -2,7 +2,7 @@
 // bamtools_random.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 April 2011 (DB)
+// Last modified: 10 December 2012 (DB)
 // ---------------------------------------------------------------------------
 // Grab a random subset of alignments (testing tool)
 // ***************************************************************************
@@ -17,6 +17,7 @@ using namespace BamTools;
 
 #include <ctime>
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -43,6 +44,7 @@ struct RandomTool::RandomSettings {
     // flags
     bool HasAlignmentCount;
     bool HasInput;
+    bool HasInputFilelist;
     bool HasOutput;
     bool HasRegion;
     bool IsForceCompression;
@@ -50,6 +52,7 @@ struct RandomTool::RandomSettings {
     // parameters
     unsigned int AlignmentCount;
     vector<string> InputFiles;
+    string InputFilelist;
     string OutputFilename;
     string Region;
     
@@ -57,6 +60,7 @@ struct RandomTool::RandomSettings {
     RandomSettings(void)
         : HasAlignmentCount(false)
         , HasInput(false)
+        , HasInputFilelist(false)
         , HasOutput(false)
         , HasRegion(false)
         , IsForceCompression(false)
@@ -90,8 +94,22 @@ struct RandomTool::RandomToolPrivate {
 bool RandomTool::RandomToolPrivate::Run(void) {
 
     // set to default stdin if no input files provided
-    if ( !m_settings->HasInput )
+    if ( !m_settings->HasInput && !m_settings->HasInputFilelist )
         m_settings->InputFiles.push_back(Options::StandardIn());
+
+    // add files in the filelist to the input file list
+    if ( m_settings->HasInputFilelist ) {
+
+        ifstream filelist(m_settings->InputFilelist.c_str(), ios::in);
+        if ( !filelist.is_open() ) {
+            cerr << "bamtools random ERROR: could not open input BAM file list... Aborting." << endl;
+            return false;
+        }
+
+        string line;
+        while ( getline(filelist, line) )
+            m_settings->InputFiles.push_back(line);
+    }
 
     // open our reader
     BamMultiReader reader;
@@ -212,11 +230,13 @@ RandomTool::RandomTool(void)
     , m_impl(0)
 { 
     // set program details
-    Options::SetProgramInfo("bamtools random", "grab a random subset of alignments", "[-in <filename> -in <filename> ...] [-out <filename>] [-forceCompression] [-n] [-region <REGION>]");
+    Options::SetProgramInfo("bamtools random", "grab a random subset of alignments",
+                            "[-in <filename> -in <filename> ... | -list <filelist>] [-out <filename>] [-forceCompression] [-n] [-region <REGION>]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in",  "BAM filename", "the input BAM file",  "", m_settings->HasInput,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-list",  "filename", "the input BAM file list, one line per file", "", m_settings->HasInputFilelist,  m_settings->InputFilelist, IO_Opts);
     Options::AddValueOption("-out", "BAM filename", "the output BAM file", "", m_settings->HasOutput, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
     Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
     Options::AddValueOption("-region", "REGION", "only pull random alignments from within this genomic region. Index file is recommended for better performance, and is used automatically if it exists. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, IO_Opts);

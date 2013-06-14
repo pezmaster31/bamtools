@@ -2,7 +2,7 @@
 // BamHeader_p.cpp (c) 2010 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 25 October 2011 (DB)
+// Last modified: 18 November 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides the basic functionality for handling BAM headers.
 // ***************************************************************************
@@ -107,6 +107,11 @@ void BamHeader::ReadHeaderText(BgzfStream* stream, const uint32_t& length) {
     // store & cleanup
     m_header.SetHeaderText( (string)((const char*)headerText) );
     free(headerText);
+}
+
+// returns const-reference to SamHeader data object
+const SamHeader& BamHeader::ToConstSamHeader(void) const {
+    return m_header;
 }
 
 // returns *copy* of SamHeader data object

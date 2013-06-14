@@ -2,7 +2,7 @@
 // BamReader.cpp (c) 2009 Derek Barnett, Michael Str�mberg
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 25 October 2011 (DB)
+// Last modified: 18 November 2012 (DB)
 // ---------------------------------------------------------------------------
 // Provides read access to BAM files.
 // ***************************************************************************
@@ -61,6 +61,22 @@ bool BamReader::CreateIndex(const BamIndex::IndexType& type) {
     return d->CreateIndex(type);
 }
 
+/*! \fn const SamHeader& BamReader::GetConstSamHeader(void) const
+    \brief Returns const reference to SAM header data.
+
+    Allows for read-only queries of SAM header data.
+
+    If you do not need to modify the SAM header, use this method to avoid the
+    potentially expensive copy used by GetHeader().
+
+    \note
+    \returns const reference to header data object
+    \sa GetHeader(), GetHeaderText()
+*/
+const SamHeader& BamReader::GetConstSamHeader(void) const {
+    return d->GetConstSamHeader();
+}
+
 /*! \fn std::string BamReader::GetErrorString(void) const
     \brief Returns a human-readable description of the last error that occurred
 
@@ -90,7 +106,8 @@ const std::string BamReader::GetFilename(void) const {
 /*! \fn SamHeader BamReader::GetHeader(void) const
     \brief Returns SAM header data.
 
-    Header data is wrapped in a SamHeader object that can be conveniently queried & modified.
+    Header data is wrapped in a SamHeader object that can be conveniently queried and/or modified.
+    If you only need read access, consider using GetConstSamHeader() instead.
 
     \note Modifying the retrieved SamHeader object does NOT affect the
     current BAM file. This file has been opened in a read-only mode.
@@ -98,7 +115,7 @@ const std::string BamReader::GetFilename(void) const {
     BamWriter to generate a new BAM file with the appropriate header information.
 
     \returns header data object
-    \sa GetHeaderText()
+    \sa GetConstSamHeader(), GetHeaderText()
 */
 SamHeader BamReader::GetHeader(void) const {
     return d->GetSamHeader();

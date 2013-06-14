@@ -2,7 +2,7 @@
 // bamtools_header.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 April 2011
+// Last modified: 10 December 2012
 // ---------------------------------------------------------------------------
 // Prints the SAM-style header from a single BAM file ( or merged header from
 // multiple BAM files) to stdout
@@ -14,6 +14,7 @@
 #include <utils/bamtools_options.h>
 using namespace BamTools;
 
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -25,14 +26,17 @@ using namespace std;
 struct HeaderTool::HeaderSettings {
 
     // flags
-    bool HasInputBamFilename;
+    bool HasInput;
+    bool HasInputFilelist;
 
     // filenames
     vector<string> InputFiles;
+    string InputFilelist;
     
     // constructor
     HeaderSettings(void)
-        : HasInputBamFilename(false)
+        : HasInput(false)
+        , HasInputFilelist(false)
     { }
 };  
 
@@ -58,8 +62,22 @@ struct HeaderTool::HeaderToolPrivate {
 bool HeaderTool::HeaderToolPrivate::Run(void) {
 
     // set to default input if none provided
-    if ( !m_settings->HasInputBamFilename )
+    if ( !m_settings->HasInput && !m_settings->HasInputFilelist )
         m_settings->InputFiles.push_back(Options::StandardIn());
+
+    // add files in the filelist to the input file list
+    if ( m_settings->HasInputFilelist ) {
+
+        ifstream filelist(m_settings->InputFilelist.c_str(), ios::in);
+        if ( !filelist.is_open() ) {
+            cerr << "bamtools header ERROR: could not open input BAM file list... Aborting." << endl;
+            return false;
+        }
+
+        string line;
+        while ( getline(filelist, line) )
+            m_settings->InputFiles.push_back(line);
+    }
 
     // attemp to open BAM files
     BamMultiReader reader;
@@ -85,11 +103,12 @@ HeaderTool::HeaderTool(void)
     , m_impl(0)
 {
     // set program details
-    Options::SetProgramInfo("bamtools header", "prints header from BAM file(s)", "[-in <filename> -in <filename> ...] ");
+    Options::SetProgramInfo("bamtools header", "prints header from BAM file(s)", "[-in <filename> -in <filename> ... | -list <filelist>]");
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in", "BAM filename", "the input BAM file(s)", "", m_settings->HasInputBamFilename, m_settings->InputFiles, IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-in", "BAM filename", "the input BAM file(s)", "", m_settings->HasInput, m_settings->InputFiles, IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-list", "filename", "the input BAM file list, one line per file", "", m_settings->HasInputFilelist,  m_settings->InputFilelist, IO_Opts);
 }
 
 HeaderTool::~HeaderTool(void) {

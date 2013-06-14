@@ -2,7 +2,7 @@
 // bamtools_filter_engine.h (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 October 2011
+// Last modified: 3 May 2013
 // ---------------------------------------------------------------------------
 // Provides a generic filter engine based on filter-sets of properties,
 // with possible "rules" (compound logical expressions) to create more complex
@@ -294,7 +294,6 @@ bool FilterEngine<FilterChecker>::evaluateFilterRules(const T& query) {
     
     std::stack<bool> resultStack;
     FilterMap::const_iterator filterIter;
-    FilterMap::const_iterator filterEnd  = m_filters.end();
     std::queue<std::string> ruleQueueCopy = m_ruleQueue;
     while ( !ruleQueueCopy.empty() ) {
         const std::string& token = ruleQueueCopy.front();
@@ -325,7 +324,7 @@ bool FilterEngine<FilterChecker>::evaluateFilterRules(const T& query) {
         else {
             // look up PropertyFilter that matches this token 
             filterIter = m_filters.find(token);
-            BAMTOOLS_ASSERT_MESSAGE( (filterIter != filterEnd), "Filter mentioned in rule, not found in FilterEngine" );
+            BAMTOOLS_ASSERT_MESSAGE( (filterIter != m_filters.end() ), "Filter mentioned in rule, not found in FilterEngine" );
             const PropertyFilter& filter = (*filterIter).second;
             bool result = m_checker.check(filter, query);
             resultStack.push( result );

@@ -2,7 +2,7 @@
 // bamtools_filter.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 14 October 2011
+// Last modified: 3 May 2013
 // ---------------------------------------------------------------------------
 // Filters BAM file(s) according to some user-specified criteria
 // ***************************************************************************
@@ -20,6 +20,7 @@ using namespace BamTools;
 using namespace Json;
 
 #include <cstdio>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -47,6 +48,7 @@ const string ISPROPERPAIR_PROPERTY        = "isProperPair";
 const string ISREVERSESTRAND_PROPERTY     = "isReverseStrand";
 const string ISSECONDMATE_PROPERTY        = "isSecondMate";
 const string ISSINGLETON_PROPERTY         = "isSingleton";
+const string LENGTH_PROPERTY              = "length";
 const string MAPQUALITY_PROPERTY          = "mapQuality";
 const string MATEPOSITION_PROPERTY        = "matePosition";
 const string MATEREFERENCE_PROPERTY       = "mateReference";
@@ -106,6 +108,7 @@ struct BamAlignmentChecker {
                 const bool isSingleton = al.IsPaired() && al.IsMapped() && !al.IsMateMapped();
                 keepAlignment &= valueFilter.check(isSingleton);
             }
+            else if ( propertyName == LENGTH_PROPERTY )               keepAlignment &= valueFilter.check(al.Length);
             else if ( propertyName == MAPQUALITY_PROPERTY )           keepAlignment &= valueFilter.check(al.MapQuality);
             else if ( propertyName == MATEPOSITION_PROPERTY )         keepAlignment &= ( al.IsPaired() && al.IsMateMapped() && valueFilter.check(al.MateRefID) );
             else if ( propertyName == MATEREFERENCE_PROPERTY ) {
@@ -156,6 +159,7 @@ struct BamAlignmentChecker {
         string tagFilterString = entireTagFilterString.substr(3);
 
         // switch on tag type to set tag query value & parse filter token
+        int8_t   asciiFilterValue,   asciiQueryValue;
         int32_t  intFilterValue,    intQueryValue;
         uint32_t uintFilterValue,   uintQueryValue;
         float    realFilterValue,   realQueryValue;
@@ -165,6 +169,17 @@ struct BamAlignmentChecker {
         PropertyFilterValue::ValueCompareType compareType;
         bool keepAlignment = false;
         switch (tagType) {
+
+            // ASCII tag type
+            case 'A':
+                if ( al.GetTag(tagName, asciiQueryValue) ) {
+                    if ( FilterEngine<BamAlignmentChecker>::parseToken(tagFilterString, asciiFilterValue, compareType) ) {
+                        tagFilter.Value = asciiFilterValue;
+                        tagFilter.Type  = compareType;
+                        keepAlignment   = tagFilter.check(asciiQueryValue);
+                    }
+                }
+                break;
 
             // signed int tag type
             case 'c' :
@@ -204,7 +219,7 @@ struct BamAlignmentChecker {
                 break;
 
             // string tag type
-            case 'A':
+
             case 'Z':
             case 'H':
                 if ( al.GetTag(tagName, stringQueryValue) ) {
@@ -236,14 +251,16 @@ struct FilterTool::FilterSettings {
     // IO opts
 
     // flags
-    bool HasInputBamFilename;
-    bool HasOutputBamFilename;
+    bool HasInput;
+    bool HasInputFilelist;
+    bool HasOutput;
     bool HasRegion;
-    bool HasScriptFilename;
+    bool HasScript;
     bool IsForceCompression;
 
     // filenames
     vector<string> InputFiles;
+    string InputFilelist;
     string OutputFilename;
     string Region;
     string ScriptFilename;
@@ -254,6 +271,7 @@ struct FilterTool::FilterSettings {
     // flags
     bool HasAlignmentFlagFilter;
     bool HasInsertSizeFilter;
+    bool HasLengthFilter;
     bool HasMapQualityFilter;
     bool HasNameFilter;
     bool HasQueryBasesFilter;
@@ -262,8 +280,9 @@ struct FilterTool::FilterSettings {
     // filters
     string AlignmentFlagFilter;
     string InsertSizeFilter;
-    string NameFilter;
+    string LengthFilter;
     string MapQualityFilter;
+    string NameFilter;
     string QueryBasesFilter;
     string TagFilter;  // support multiple ?
 
@@ -302,14 +321,16 @@ struct FilterTool::FilterSettings {
     // constructor
 
     FilterSettings(void)
-        : HasInputBamFilename(false)
-        , HasOutputBamFilename(false)
+        : HasInput(false)
+        , HasInputFilelist(false)
+        , HasOutput(false)
         , HasRegion(false)
-        , HasScriptFilename(false)
+        , HasScript(false)
         , IsForceCompression(false)
         , OutputFilename(Options::StandardOut())
         , HasAlignmentFlagFilter(false)
         , HasInsertSizeFilter(false)
+        , HasLengthFilter(false)
         , HasMapQualityFilter(false)
         , HasNameFilter(false)
         , HasQueryBasesFilter(false)
@@ -429,6 +450,7 @@ bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const string& filt
         
         // int32_t conversion
         else if ( propertyName == INSERTSIZE_PROPERTY ||
+                  propertyName == LENGTH_PROPERTY ||
                   propertyName == MATEPOSITION_PROPERTY ||
                   propertyName == POSITION_PROPERTY 
                 ) 
@@ -463,11 +485,11 @@ bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const string& filt
             m_filterEngine.setProperty(filterName, propertyName, stringValue, type);
         }
       
-    else if ( propertyName == TAG_PROPERTY ) {
-	    // this will be stored directly as the TAG:VALUE token 
-	    // (VALUE may contain compare ops, will be parsed out later)
-	    m_filterEngine.setProperty(filterName, propertyName, token, PropertyFilterValue::EXACT);
-	}
+        else if ( propertyName == TAG_PROPERTY ) {
+            // this will be stored directly as the TAG:VALUE token
+            // (VALUE may contain compare ops, will be parsed out later)
+            m_filterEngine.setProperty(filterName, propertyName, token, PropertyFilterValue::EXACT);
+        }
       
         // else unknown property 
         else {
@@ -500,7 +522,8 @@ const string FilterTool::FilterToolPrivate::GetScriptContents(void) {
         // peek ahead, make sure there is data available
         char ch = fgetc(inFile);
         ungetc(ch, inFile);
-        if( feof(inFile) ) break;       
+        if( feof(inFile) )
+            break;
         
         // read next block of data
         if ( fgets(buffer, 1024, inFile) == 0 ) {
@@ -536,6 +559,7 @@ void FilterTool::FilterToolPrivate::InitProperties(void) {
     m_propertyNames.push_back(ISREVERSESTRAND_PROPERTY);
     m_propertyNames.push_back(ISSECONDMATE_PROPERTY);
     m_propertyNames.push_back(ISSINGLETON_PROPERTY);
+    m_propertyNames.push_back(LENGTH_PROPERTY);
     m_propertyNames.push_back(MAPQUALITY_PROPERTY);
     m_propertyNames.push_back(MATEPOSITION_PROPERTY);
     m_propertyNames.push_back(MATEREFERENCE_PROPERTY);
@@ -574,6 +598,7 @@ bool FilterTool::FilterToolPrivate::ParseCommandLine(void) {
     if ( m_settings->HasIsReverseStrandFilter )     propertyTokens.insert( make_pair(ISREVERSESTRAND_PROPERTY,     m_settings->IsReverseStrandFilter) );
     if ( m_settings->HasIsSecondMateFilter )        propertyTokens.insert( make_pair(ISSECONDMATE_PROPERTY,        m_settings->IsSecondMateFilter) );
     if ( m_settings->HasIsSingletonFilter )         propertyTokens.insert( make_pair(ISSINGLETON_PROPERTY,         m_settings->IsSingletonFilter) );
+    if ( m_settings->HasLengthFilter )              propertyTokens.insert( make_pair(LENGTH_PROPERTY,              m_settings->LengthFilter) );
     if ( m_settings->HasMapQualityFilter )          propertyTokens.insert( make_pair(MAPQUALITY_PROPERTY,          m_settings->MapQualityFilter) );
     if ( m_settings->HasNameFilter )                propertyTokens.insert( make_pair(NAME_PROPERTY,                m_settings->NameFilter) );
     if ( m_settings->HasQueryBasesFilter )          propertyTokens.insert( make_pair(QUERYBASES_PROPERTY,          m_settings->QueryBasesFilter) );
@@ -682,12 +707,27 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
 bool FilterTool::FilterToolPrivate::Run(void) {
     
     // set to default input if none provided
-    if ( !m_settings->HasInputBamFilename ) 
+    if ( !m_settings->HasInput && !m_settings->HasInputFilelist )
         m_settings->InputFiles.push_back(Options::StandardIn());
+
+    // add files in the filelist to the input file list
+    if ( m_settings->HasInputFilelist ) {
+
+        ifstream filelist(m_settings->InputFilelist.c_str(), ios::in);
+        if ( !filelist.is_open() ) {
+            cerr << "bamtools filter ERROR: could not open input BAM file list... Aborting." << endl;
+            return false;
+        }
+
+        string line;
+        while ( getline(filelist, line) )
+            m_settings->InputFiles.push_back(line);
+    }
 
     // initialize defined properties & user-specified filters
     // quit if failed
-    if ( !SetupFilters() ) return false;
+    if ( !SetupFilters() )
+        return false;
 
     // open reader without index
     BamMultiReader reader;
@@ -786,7 +826,7 @@ bool FilterTool::FilterToolPrivate::SetupFilters(void) {
     InitProperties();
     
     // parse script for filter rules, if given
-    if ( m_settings->HasScriptFilename )
+    if ( m_settings->HasScript )
         return ParseScript();
     
     // otherwise check command line for filters
@@ -804,9 +844,10 @@ FilterTool::FilterTool(void)
     // ----------------------------------
     // set program details
 
-    const string usage = "[-in <filename> -in <filename> ...] "
+    const string usage = "[-in <filename> -in <filename> ... | -list <filelist>] "
                          "[-out <filename> | [-forceCompression]] [-region <REGION>] "
                          "[ [-script <filename] | [filterOptions] ]";
+
     Options::SetProgramInfo("bamtools filter", "filters BAM file(s)", usage );
 
     // ----------------------------------
@@ -815,6 +856,7 @@ FilterTool::FilterTool(void)
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
 
     const string inDesc     = "the input BAM file(s)";
+    const string listDesc   = "the input BAM file list, one line per file";
     const string outDesc    = "the output BAM file";
     const string regionDesc = "only read data from this genomic region (see documentation for more details)";
     const string scriptDesc = "the filter script file (see documentation for more details)";
@@ -822,10 +864,11 @@ FilterTool::FilterTool(void)
                               "default behavior is to leave output uncompressed. Use this flag to "
                               "override and force compression";
 
-    Options::AddValueOption("-in",     "BAM filename", inDesc,     "", m_settings->HasInputBamFilename,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());
-    Options::AddValueOption("-out",    "BAM filename", outDesc,    "", m_settings->HasOutputBamFilename, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
-    Options::AddValueOption("-region", "REGION",       regionDesc, "", m_settings->HasRegion,            m_settings->Region,         IO_Opts);
-    Options::AddValueOption("-script", "filename",     scriptDesc, "", m_settings->HasScriptFilename,    m_settings->ScriptFilename, IO_Opts);
+    Options::AddValueOption("-in",     "BAM filename", inDesc,     "", m_settings->HasInput,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-list",   "filename",     listDesc,   "", m_settings->HasInputFilelist,  m_settings->InputFilelist, IO_Opts);
+    Options::AddValueOption("-out",    "BAM filename", outDesc,    "", m_settings->HasOutput, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
+    Options::AddValueOption("-region", "REGION",       regionDesc, "", m_settings->HasRegion, m_settings->Region,         IO_Opts);
+    Options::AddValueOption("-script", "filename",     scriptDesc, "", m_settings->HasScript, m_settings->ScriptFilename, IO_Opts);
     Options::AddOption("-forceCompression",forceDesc, m_settings->IsForceCompression, IO_Opts);
 
     // ----------------------------------
@@ -835,6 +878,7 @@ FilterTool::FilterTool(void)
 
     const string flagDesc    = "keep reads with this *exact* alignment flag (for more detailed queries, see below)";
     const string insertDesc  = "keep reads with insert size that matches pattern";
+    const string lengthDesc  = "keep reads with length that matches pattern";
     const string mapQualDesc = "keep reads with map quality that matches pattern";
     const string nameDesc    = "keep reads with name that matches pattern";
     const string queryDesc   = "keep reads with motif that matches pattern";
@@ -842,6 +886,7 @@ FilterTool::FilterTool(void)
 
     Options::AddValueOption("-alignmentFlag", "int",       flagDesc,    "", m_settings->HasAlignmentFlagFilter, m_settings->AlignmentFlagFilter, FilterOpts);
     Options::AddValueOption("-insertSize",    "int",       insertDesc,  "", m_settings->HasInsertSizeFilter,    m_settings->InsertSizeFilter,    FilterOpts);
+    Options::AddValueOption("-length",        "int",       lengthDesc,  "", m_settings->HasLengthFilter,        m_settings->LengthFilter,        FilterOpts);
     Options::AddValueOption("-mapQuality",    "[0-255]",   mapQualDesc, "", m_settings->HasMapQualityFilter,    m_settings->MapQualityFilter,    FilterOpts);
     Options::AddValueOption("-name",          "string",    nameDesc,    "", m_settings->HasNameFilter,          m_settings->NameFilter,          FilterOpts);
     Options::AddValueOption("-queryBases",    "string",    queryDesc,   "", m_settings->HasQueryBasesFilter,    m_settings->QueryBasesFilter,    FilterOpts);

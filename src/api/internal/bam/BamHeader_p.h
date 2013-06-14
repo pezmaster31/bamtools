@@ -48,8 +48,6 @@ class BamHeader {
         const SamHeader& ToConstSamHeader(void) const;
         // returns (editable) copy of SamHeader data object
         SamHeader ToSamHeader(void) const;
-        // returns const reference to SamHeader data object
-        const SamHeader& ToConstSamHeader(void) const;
         // returns SAM-formatted string of header data
         std::string ToString(void) const;
 

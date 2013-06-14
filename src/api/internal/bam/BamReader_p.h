@@ -58,7 +58,6 @@ class BamReaderPrivate {
         std::string GetHeaderText(void) const;
         const SamHeader& GetConstSamHeader(void) const;
         SamHeader GetSamHeader(void) const;
-        const SamHeader& GetConstSamHeader(void) const;
         int GetReferenceCount(void) const;
         const RefVector& GetReferenceData(void) const;
         int GetReferenceID(const std::string& refName) const;

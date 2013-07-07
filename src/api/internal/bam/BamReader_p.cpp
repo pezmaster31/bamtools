@@ -112,11 +112,6 @@ SamHeader BamReaderPrivate::GetSamHeader(void) const {
     return m_header.ToSamHeader();
 }
 
-// return header data as const reference to SamHeader object
-const SamHeader& BamReaderPrivate::GetConstSamHeader(void) const {
-    return m_header.ToConstSamHeader();
-}
-
 // get next alignment (with character data fully parsed)
 bool BamReaderPrivate::GetNextAlignment(BamAlignment& alignment) {
 

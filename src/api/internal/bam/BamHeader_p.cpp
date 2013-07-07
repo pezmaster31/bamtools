@@ -119,11 +119,6 @@ SamHeader BamHeader::ToSamHeader(void) const {
     return m_header;
 }
 
-// returns *reference* to SamHeader data object
-const SamHeader& BamHeader::ToConstSamHeader(void) const {
-    return m_header;
-}
-
 // returns SAM-formatted string of header data
 string BamHeader::ToString(void) const {
     return m_header.ToString();

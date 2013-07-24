@@ -28,13 +28,15 @@
 namespace BamTools {
 namespace Internal {
 
+class BamHttp;
 class TcpSocketEngine;
 
 class TcpSocket {
 
     // enums
     public:
-        enum SocketError { UnknownSocketError     = -1
+        enum SocketError { NoError                = -2
+                         , UnknownSocketError     = -1
                          , ConnectionRefusedError = 0
                          , RemoteHostClosedError
                          , HostNotFoundError
@@ -116,6 +118,8 @@ class TcpSocket {
         TcpSocket::SocketError m_error;
         TcpSocket::SocketState m_state;
         std::string m_errorString;
+
+        friend class BamHttp;
 };
 
 } // namespace Internal

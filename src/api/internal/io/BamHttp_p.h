@@ -50,12 +50,15 @@ class BamHttp : public IBamIODevice {
 
     // internal methods
     private:
+        void ClearResponse(void);
         bool ConnectSocket(void);
+        void DisconnectSocket(void);
         bool EnsureSocketConnection(void);
         void ParseUrl(const std::string& url);
         int64_t ReadFromSocket(char* data, const unsigned int numBytes);
         bool ReceiveResponse(void);
-        bool SendRequest(const size_t numBytes = 0);
+        bool SendGetRequest(const size_t numBytes = 0x10000);
+        bool SendHeadRequest(void);
         int64_t WriteToSocket(const char* data, const unsigned int numBytes);
 
     // data members
@@ -78,7 +81,8 @@ class BamHttp : public IBamIODevice {
 
         // file position
         int64_t m_filePosition;
-        int64_t m_endRangeFilePosition;
+        int64_t m_fileEndPosition;
+        int64_t m_rangeEndPosition;
 };
 
 } // namespace Internal

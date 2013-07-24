@@ -237,7 +237,7 @@ size_t RollingBuffer::ReadLine(char* dest, size_t max) {
         bytesReadSoFar += bytesToRead;
         Free(bytesToRead);
 
-        if ( !((bytesReadSoFar < index+1)&&(bytesReadSoFar < max-1)) )
+        if ( !((bytesReadSoFar < index+1) && (bytesReadSoFar < max-1)) )
             finished = true;
     }
 
@@ -274,7 +274,7 @@ char* RollingBuffer::Reserve(size_t n) {
     if ( (m_tail + n) <= m_data.at(m_tailBufferIndex).Size() ) {
 
         // fetch write pointer at current 'tail', increment tail by @n & return
-        char* ptr = m_data[m_tailBufferIndex].Data() + m_tail;
+        char* ptr = m_data[m_tailBufferIndex].Data(); //+ m_tail;
         m_tail += n;
         return ptr;
     }
@@ -286,7 +286,7 @@ char* RollingBuffer::Reserve(size_t n) {
         m_data[m_tailBufferIndex].Resize(m_tail + n);
 
         // fetch write pointer at current 'tail', increment tail by @n & return
-        char* ptr = m_data[m_tailBufferIndex].Data() + m_tail;
+        char* ptr = m_data[m_tailBufferIndex].Data(); //+ m_tail;
         m_tail += n;
         return ptr;
     }

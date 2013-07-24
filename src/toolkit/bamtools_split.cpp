@@ -2,7 +2,7 @@
 // bamtools_split.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 8 December 2011 (DB)
+// Last modified: 24 July 2013 (DB)
 // ---------------------------------------------------------------------------
 // Splits a BAM file on user-specified property, creating a new BAM output
 // file for each value found
@@ -33,6 +33,7 @@ static const string SPLIT_UNMAPPED_TOKEN  = ".UNMAPPED";
 static const string SPLIT_PAIRED_TOKEN    = ".PAIRED_END";
 static const string SPLIT_SINGLE_TOKEN    = ".SINGLE_END";
 static const string SPLIT_REFERENCE_TOKEN = ".REF_";
+static const string SPLIT_TAG_TOKEN       = ".TAG_";
 
 string GetTimestampString(void) {
 
@@ -70,6 +71,7 @@ struct SplitTool::SplitSettings {
     bool HasInputFilename;
     bool HasCustomOutputStub;
     bool HasCustomRefPrefix;
+    bool HasCustomTagPrefix;
     bool IsSplittingMapped;
     bool IsSplittingPaired;
     bool IsSplittingReference;
@@ -78,6 +80,7 @@ struct SplitTool::SplitSettings {
     // string args
     string CustomOutputStub;
     string CustomRefPrefix;
+    string CustomTagPrefix;
     string InputFilename;
     string TagToSplit;
     
@@ -86,12 +89,14 @@ struct SplitTool::SplitSettings {
         : HasInputFilename(false)
         , HasCustomOutputStub(false)
         , HasCustomRefPrefix(false)
+        , HasCustomTagPrefix(false)
         , IsSplittingMapped(false)
         , IsSplittingPaired(false)
         , IsSplittingReference(false)
         , IsSplittingTag(false)
         , CustomOutputStub("")
         , CustomRefPrefix("")
+        , CustomTagPrefix("")
         , InputFilename(Options::StandardIn())
         , TagToSplit("")
     { } 
@@ -454,6 +459,16 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al) {
     WriterMap outputFiles;
     WriterMapIterator writerIter;
 
+    // determine tag prefix
+    string tagPrefix = SPLIT_TAG_TOKEN;
+    if ( m_settings->HasCustomTagPrefix )
+        tagPrefix = m_settings->CustomTagPrefix;
+
+    // make sure prefix starts with '.'
+    const size_t dotFound = tagPrefix.find('.');
+    if ( dotFound != 0 )
+        tagPrefix = string(".") + tagPrefix;
+
     // local variables
     const string tag = m_settings->TagToSplit;
     BamWriter* writer;
@@ -464,7 +479,7 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al) {
     if ( al.GetTag(tag, currentValue) ) {
       
         // open new BamWriter, save first alignment
-        outputFilenameStream << m_outputFilenameStub << ".TAG_" << tag << "_" << currentValue << ".bam";
+        outputFilenameStream << m_outputFilenameStub << tagPrefix << tag << "_" << currentValue << ".bam";
         writer = new BamWriter;
         if ( !writer->Open(outputFilenameStream.str(), m_header, m_references) ) {
             cerr << "bamtools split ERROR: could not open " << outputFilenameStream.str()
@@ -493,7 +508,7 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al) {
         if ( writerIter == outputFiles.end() ) {
         
             // open new BamWriter
-            outputFilenameStream << m_outputFilenameStub << ".TAG_" << tag << "_" << currentValue << ".bam";
+            outputFilenameStream << m_outputFilenameStub << tagPrefix << tag << "_" << currentValue << ".bam";
             writer = new BamWriter;
             if ( !writer->Open(outputFilenameStream.str(), m_header, m_references) ) {
                 cerr << "bamtool split ERROR: could not open " << outputFilenameStream.str()
@@ -542,6 +557,8 @@ SplitTool::SplitTool(void)
     Options::AddValueOption("-in",   "BAM filename",  "the input BAM file",  "", m_settings->HasInputFilename,  m_settings->InputFilename,  IO_Opts, Options::StandardIn());
     Options::AddValueOption("-refPrefix", "string", "custom prefix for splitting by references. Currently files end with REF_<refName>.bam. This option allows you to replace \"REF_\" with a prefix of your choosing.", "",
                             m_settings->HasCustomRefPrefix, m_settings->CustomRefPrefix, IO_Opts);
+    Options::AddValueOption("-tagPrefix", "string", "custom prefix for splitting by tags. Current files end with TAG_<tagname>_<tagvalue>.bam. This option allows you to replace \"TAG_\" with a prefix of your choosing.", "",
+                            m_settings->HasCustomTagPrefix, m_settings->CustomTagPrefix, IO_Opts);
     Options::AddValueOption("-stub", "filename stub", "prefix stub for output BAM files (default behavior is to use input filename, without .bam extension, as stub). If input is stdin and no stub provided, a timestamp is generated as the stub.", "",
                             m_settings->HasCustomOutputStub, m_settings->CustomOutputStub, IO_Opts);
     

@@ -7,7 +7,7 @@
 
 set( InternalUtilsDir "${InternalDir}/utils" )
 
-se( InternalUtilsSources
+set( InternalUtilsSources
         ${InternalUtilsDir}/BamException_p.cpp
 
         PARENT_SCOPE # <-- leave this last

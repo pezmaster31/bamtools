@@ -2,7 +2,7 @@
 // bamtools_random.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 10 December 2012 (DB)
+// Last modified: 24 July 2013 (DB)
 // ---------------------------------------------------------------------------
 // Grab a random subset of alignments (testing tool)
 // ***************************************************************************
@@ -46,6 +46,7 @@ struct RandomTool::RandomSettings {
     bool HasInput;
     bool HasInputFilelist;
     bool HasOutput;
+    bool HasRandomNumberSeed;
     bool HasRegion;
     bool IsForceCompression;
 
@@ -54,6 +55,7 @@ struct RandomTool::RandomSettings {
     vector<string> InputFiles;
     string InputFilelist;
     string OutputFilename;
+    unsigned int RandomNumberSeed;
     string Region;
     
     // constructor
@@ -62,10 +64,12 @@ struct RandomTool::RandomSettings {
         , HasInput(false)
         , HasInputFilelist(false)
         , HasOutput(false)
+        , HasRandomNumberSeed(false)
         , HasRegion(false)
         , IsForceCompression(false)
         , AlignmentCount(RANDOM_MAX_ALIGNMENT_COUNT)
         , OutputFilename(Options::StandardOut())
+        , RandomNumberSeed(0)
     { }  
 };  
 
@@ -165,7 +169,10 @@ bool RandomTool::RandomToolPrivate::Run(void) {
     }
 
     // seed our random number generator
-    srand( time(NULL) );
+    if ( m_settings->HasRandomNumberSeed )
+        srand( m_settings->RandomNumberSeed );
+    else
+        srand( time(NULL) );
 
     // grab random alignments
     BamAlignment al;
@@ -235,14 +242,17 @@ RandomTool::RandomTool(void)
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",  "BAM filename", "the input BAM file",  "", m_settings->HasInput,  m_settings->InputFiles,     IO_Opts, Options::StandardIn());
-    Options::AddValueOption("-list",  "filename", "the input BAM file list, one line per file", "", m_settings->HasInputFilelist,  m_settings->InputFilelist, IO_Opts);
-    Options::AddValueOption("-out", "BAM filename", "the output BAM file", "", m_settings->HasOutput, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
+    Options::AddValueOption("-in",     "BAM filename", "the input BAM file",                         "", m_settings->HasInput,          m_settings->InputFiles,     IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-list",   "filename",     "the input BAM file list, one line per file", "", m_settings->HasInputFilelist,  m_settings->InputFilelist,  IO_Opts);
+    Options::AddValueOption("-out",    "BAM filename", "the output BAM file",                        "", m_settings->HasOutput,         m_settings->OutputFilename, IO_Opts, Options::StandardOut());
+    Options::AddValueOption("-region", "REGION",       "only pull random alignments from within this genomic region. Index file is recommended for better performance, and is used automatically if it exists. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
     Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
-    Options::AddValueOption("-region", "REGION", "only pull random alignments from within this genomic region. Index file is recommended for better performance, and is used automatically if it exists. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
     
     OptionGroup* SettingsOpts = Options::CreateOptionGroup("Settings");
-    Options::AddValueOption("-n", "count", "number of alignments to grab. Note - no duplicate checking is performed", "", m_settings->HasAlignmentCount, m_settings->AlignmentCount, SettingsOpts, RANDOM_MAX_ALIGNMENT_COUNT);
+    Options::AddValueOption("-n", "count", "number of alignments to grab. Note - no duplicate checking is performed", "",
+                            m_settings->HasAlignmentCount, m_settings->AlignmentCount, SettingsOpts, RANDOM_MAX_ALIGNMENT_COUNT);
+    Options::AddValueOption("-seed", "unsigned integer", "random number generator seed (for repeatable results). Current time is used if no seed value is provided.", "",
+                            m_settings->HasRandomNumberSeed, m_settings->RandomNumberSeed, SettingsOpts);
 }
 
 RandomTool::~RandomTool(void) { 

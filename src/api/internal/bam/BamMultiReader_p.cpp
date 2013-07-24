@@ -2,7 +2,7 @@
 // BamMultiReader_p.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 14 January 2013 (DB)
+// Last modified: 24 July 2013 (DB)
 // ---------------------------------------------------------------------------
 // Functionality for simultaneously reading multiple BAM files
 // *************************************************************************
@@ -184,7 +184,7 @@ IMultiMerger* BamMultiReaderPrivate::CreateAlignmentCache(void) {
             m_mergeOrder = BamMultiReader::MergeByCoordinate;
 
         // if BAM files are sorted by read name
-        if ( header.SortOrder == Constants::SAM_HD_SORTORDER_QUERYNAME )
+        else if ( header.SortOrder == Constants::SAM_HD_SORTORDER_QUERYNAME )
             m_mergeOrder = BamMultiReader::MergeByName;
 
         // otherwise, sorting is either "unknown" or marked as "unsorted"

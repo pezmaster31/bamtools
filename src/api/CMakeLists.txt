@@ -34,7 +34,7 @@ set( BamToolsAPISources
 # create main BamTools API shared library
 add_library( BamTools SHARED ${BamToolsAPISources} )
 set_target_properties( BamTools PROPERTIES
-                       SOVERSION "2.2.3"
+                       SOVERSION "2.3.0"
                        OUTPUT_NAME "bamtools" )
 
 # create main BamTools API static library
@@ -50,11 +50,11 @@ else()
     set( APILibs z )
 endif()
 
-target_link_libraries( BamTools ${APILibs} )
+target_link_libraries( BamTools        ${APILibs} )
 target_link_libraries( BamTools-static ${APILibs} )
 
 # set library install destinations
-install( TARGETS BamTools LIBRARY DESTINATION "lib/bamtools" RUNTIME DESTINATION "bin")
+install( TARGETS BamTools        LIBRARY DESTINATION "lib/bamtools" RUNTIME DESTINATION "bin")
 install( TARGETS BamTools-static ARCHIVE DESTINATION "lib/bamtools")
 
 # export API headers

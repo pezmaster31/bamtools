@@ -10,7 +10,7 @@ add_definitions( -DBAMTOOLS_JSONCPP_LIBRARY ) # (for proper exporting of library
 add_definitions( -fPIC ) # (attempt to force PIC compiling on CentOS, not being set on shared libs by CMake)
 
 # create jsoncpp library
-add_library( jsoncpp SHARED
+add_library( jsoncpp STATIC
              json_reader.cpp
              json_value.cpp
              json_writer.cpp

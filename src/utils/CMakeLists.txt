@@ -13,7 +13,7 @@ add_definitions( -DBAMTOOLS_UTILS_LIBRARY ) # (for proper exporting of library s
 add_definitions( -fPIC ) # (attempt to force PIC compiling on CentOS, not being set on shared libs by CMake)
 
 # create BamTools utils library
-add_library( BamTools-utils SHARED
+add_library( BamTools-utils STATIC
              bamtools_fasta.cpp
              bamtools_options.cpp
              bamtools_pileup_engine.cpp

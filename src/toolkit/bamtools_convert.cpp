@@ -423,7 +423,7 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a) {
     }
     
     // write alignment's source BAM file
-    m_out << "\"filename\":" << a.Filename << ",";
+    m_out << "\"filename\":\"" << a.Filename << "\",";
 
     // write tag data
     const char* tagData = a.TagData.c_str();

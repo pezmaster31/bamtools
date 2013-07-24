@@ -2,7 +2,7 @@
 // bamtools_coverage.cpp (c) 2010 Derek Barnett, Erik Garrison
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 7 April 2011
+// Last modified: 24 July 2013
 // ---------------------------------------------------------------------------
 // Prints coverage data for a single BAM file 
 // ***************************************************************************
@@ -137,6 +137,7 @@ bool CoverageTool::CoverageToolPrivate::Run(void) {
     BamAlignment al;    
     while ( reader.GetNextAlignment(al) ) 
         pileup.AddAlignment(al);
+    pileup.Flush();
     
     // clean up 
     reader.Close();

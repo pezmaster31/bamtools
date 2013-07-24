@@ -13,7 +13,7 @@ add_definitions( -DBAMTOOLS_API_LIBRARY ) # (for proper exporting of library sym
 add_definitions( -fPIC ) # (attempt to force PIC compiling on CentOS, not being set on shared libs by CMake)
 
 # fetch all internal source files
-add_subdirectory ( internal )
+add_subdirectory( internal )
 
 # make list of all API source files
 set( BamToolsAPISources
@@ -44,11 +44,11 @@ set_target_properties( BamTools-static PROPERTIES
                        PREFIX "lib" )
 
 # link libraries automatically with zlib (and Winsock2, if applicable)
-if( _WIN32 )
+if( WIN32 )
     set( APILibs z ws2_32 )
-else( _WIN32 )
+else()
     set( APILibs z )
-endif( _WIN32 )
+endif()
 
 target_link_libraries( BamTools ${APILibs} )
 target_link_libraries( BamTools-static ${APILibs} )

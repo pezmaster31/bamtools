@@ -2,7 +2,7 @@
 // BamAlignment.h (c) 2009 Derek Barnett
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 4 December 2012 (DB)
+// Last modified: 25 July 2013 (DB)
 // ---------------------------------------------------------------------------
 // Provides the BamAlignment data structure
 // ***************************************************************************
@@ -116,8 +116,8 @@ struct API_EXPORT BamAlignment {
     public:
         std::string Name;               // read name
         int32_t     Length;             // length of query sequence
-        std::string QueryBases;         // 'original' sequence (as reported from sequencing machine)
-        std::string AlignedBases;       // 'aligned' sequence (includes any indels, padding, clipping)
+        std::string QueryBases;         // 'original' sequence (contained in BAM file)
+        std::string AlignedBases;       // 'aligned' sequence (QueryBases plus deletion, padding, clipping chars)
         std::string Qualities;          // FASTQ qualities (ASCII characters, not numeric values)
         std::string TagData;            // tag data (use provided methods to query/modify)
         int32_t     RefID;              // ID number for reference sequence

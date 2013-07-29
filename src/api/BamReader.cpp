@@ -2,7 +2,7 @@
 // BamReader.cpp (c) 2009 Derek Barnett, Michael Str�mberg
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 18 November 2012 (DB)
+// Last modified: 29 July 2013 (DB)
 // ---------------------------------------------------------------------------
 // Provides read access to BAM files.
 // ***************************************************************************
@@ -171,8 +171,8 @@ bool BamReader::GetNextAlignment(BamAlignment& alignment) {
 
     However, this method does NOT populate the alignment's string data fields
     (read name, bases, qualities, tags, filename). This provides a boost in speed
-    when these fields are not required for every alignment. These fields can be
-    populated 'lazily' (as needed) by calling BamAlignment::BuildCharData() later.
+    when these fields are not required for every alignment. These fields, excluding filename,
+    can be populated 'lazily' (as needed) by calling BamAlignment::BuildCharData() later.
 
     \param[out] alignment destination for alignment record data
     \returns \c true if a valid alignment was found

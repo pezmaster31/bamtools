@@ -73,6 +73,10 @@ class API_EXPORT SamSequenceDictionary {
         SamSequenceIterator      End(void);                 // returns iterator to end()
         SamSequenceConstIterator End(void) const;           // returns const_iterator to end()
         SamSequenceConstIterator ConstEnd(void) const;      // returns const_iterator to end()
+        SamSequenceIterator      Find(const std::string& sequenceName);
+        SamSequenceConstIterator Find(const std::string& sequenceName) const;
+        SamSequenceConstIterator ConstFind(const std::string& sequenceName) const;
+
 
     // data members
     private:

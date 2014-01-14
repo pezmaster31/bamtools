@@ -196,6 +196,45 @@ SamSequenceConstIterator SamSequenceDictionary::End(void) const {
     return m_data.end();
 }
 
+/*! \fn SamSequenceIterator SamSequenceDictionary::Find(const std::string& sequenceName)
+    \return an STL iterator pointing to the sequence having sequenceName, otherwise End()
+    \sa ConstFind(), Begin(), End()
+*/
+SamSequenceIterator SamSequenceDictionary::Find(const std::string& sequenceName) {
+    if ( m_lookupData.find(sequenceName) == m_lookupData.end() )
+        return End();
+    SamSequenceIterator it = m_data.begin();
+    const size_t index = m_lookupData.find(sequenceName)->second;
+    return it + index;
+}
+
+/*! \fn SamSequenceConstIterator SamSequenceDictionary::Find(void) const
+    \return an STL const_iterator pointing to the sequence having sequenceName, otherwise End()
+
+    This is an overloaded function.
+
+    \sa ConstFind(), Begin(), End()
+*/
+SamSequenceConstIterator SamSequenceDictionary::Find(const std::string& sequenceName) const {
+    if ( m_lookupData.find(sequenceName) == m_lookupData.end() )
+        return End();
+    SamSequenceConstIterator it = m_data.begin();
+    const size_t index = m_lookupData.find(sequenceName)->second;
+    return it + index;
+}
+
+/*! \fn SamSequenceConstIterator SamSequenceDictionary::ConstFind(void) const
+    \return an STL const_iterator pointing to the sequence having sequenceName, otherwise End()
+    \sa Find(), ConstBegin(), ConstEnd()
+*/
+SamSequenceConstIterator SamSequenceDictionary::ConstFind(const std::string& sequenceName) const {
+    if ( m_lookupData.find(sequenceName) == m_lookupData.end() )
+        return ConstEnd();
+    SamSequenceConstIterator it = m_data.begin();
+    const size_t index = m_lookupData.find(sequenceName)->second;
+    return it + index;
+}
+
 /*! \fn bool SamSequenceDictionary::IsEmpty(void) const
     \brief Returns \c true if dictionary contains no sequences
     \sa Size()

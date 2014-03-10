@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <netinet/in.h>
 
 #ifndef   BT_SOCKLEN_T
 #  define BT_SOCKLEN_T socklen_t

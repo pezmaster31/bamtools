@@ -28,7 +28,7 @@ class SortTool : public AbstractTool {
         struct SortSettings;
         SortSettings* m_settings;
         
-        struct SortToolPrivate;
+        class SortToolPrivate;
         SortToolPrivate* m_impl;
 };
   

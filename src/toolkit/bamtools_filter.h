@@ -28,7 +28,7 @@ class FilterTool : public AbstractTool {
         struct FilterSettings;
         FilterSettings* m_settings;
         
-        struct FilterToolPrivate;
+        class FilterToolPrivate;
         FilterToolPrivate* m_impl;
 };
   

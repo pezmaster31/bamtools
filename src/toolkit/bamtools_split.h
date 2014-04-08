@@ -29,7 +29,7 @@ class SplitTool : public AbstractTool {
         struct SplitSettings;
         SplitSettings* m_settings;
         
-        struct SplitToolPrivate;
+        class SplitToolPrivate;
         SplitToolPrivate* m_impl;
 };
   

@@ -28,3 +28,6 @@ set_target_properties( BamTools-utils PROPERTIES
                        OUTPUT_NAME bamtools-utils
                        PREFIX "lib"
                      )
+
+# set library install destinations
+install( TARGETS BamTools-utils ARCHIVE DESTINATION "lib/bamtools")

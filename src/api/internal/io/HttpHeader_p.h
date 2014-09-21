@@ -75,7 +75,7 @@ class HttpRequestHeader : public HttpHeader {
 
     // ctor & dtor
     public:
-        HttpRequestHeader(const std::string& method,      // "GET", "PUT", etc
+        HttpRequestHeader(const std::string& method,      // "GET", "HEAD", ...
                           const std::string& resource,    // filename
                           int majorVersion = 1,           // version info
                           int minorVersion = 1);

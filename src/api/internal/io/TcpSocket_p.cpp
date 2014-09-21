@@ -27,7 +27,7 @@ namespace BamTools {
 namespace Internal {
 
 // constants
-static const size_t DEFAULT_BUFFER_SIZE = 0x4000;
+static const size_t DEFAULT_BUFFER_SIZE = 0x10000;
 
 } // namespace Internal
 } // namespace BamTools
@@ -43,7 +43,7 @@ TcpSocket::TcpSocket(void)
     , m_engine(0)
     , m_cachedSocketDescriptor(-1)
     , m_readBuffer(DEFAULT_BUFFER_SIZE)
-    , m_error(TcpSocket::UnknownSocketError)
+    , m_error(TcpSocket::NoError)
     , m_state(TcpSocket::UnconnectedState)
 { }
 
@@ -79,7 +79,7 @@ bool TcpSocket::ConnectImpl(const HostInfo& hostInfo,
     m_hostName   = hostInfo.HostName();
     m_mode       = mode;
     m_state      = TcpSocket::UnconnectedState;
-    m_error      = TcpSocket::UnknownSocketError;
+    m_error      = TcpSocket::NoError;
 //    m_localPort  = 0;
     m_remotePort = 0;
 //    m_localAddress.Clear();

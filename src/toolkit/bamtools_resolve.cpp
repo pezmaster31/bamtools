@@ -2,7 +2,7 @@
 // bamtools_resolve.cpp (c) 2011
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
-// Last modified: 14 October 2011
+// Last modified: 24 July 2013 (DB)
 // ---------------------------------------------------------------------------
 // Resolves paired-end reads (marking the IsProperPair flag as needed).
 // ***************************************************************************
@@ -72,6 +72,20 @@ static const string OPTION_FORCEMARKREADGROUPS  = "ForceMarkReadGroups";
 // other string constants
 static const string RG_FIELD_DESCRIPTION =
     "#<name> <medianFL> <minFL> <maxFL> <topModelID> <nextTopModelID> <isAmbiguous?>";
+
+static const string MODEL_DESCRIPTION =
+    "# ------------- Model Types Description ---------------\n"
+    "#\n"
+    "#   ID     Position              Orientation           \n"
+    "#    1   mate1 < mate2   mate1:forward, mate2:forward  \n"
+    "#    2   mate1 < mate2   mate1:forward, mate2:reverse  \n"
+    "#    3   mate1 < mate2   mate1:reverse, mate2:forward  \n"
+    "#    4   mate1 < mate2   mate1:reverse, mate2:reverse  \n"
+    "#    5   mate2 < mate1   mate2:forward, mate1:forward  \n"
+    "#    6   mate2 < mate1   mate2:forward, mate1:reverse  \n"
+    "#    7   mate2 < mate1   mate2:reverse, mate1:forward  \n"
+    "#    8   mate2 < mate1   mate2:reverse, mate1:reverse  \n"
+    "# -----------------------------------------------------\n";
 
 // --------------------------------------------------------------------------
 // unique readname file constants
@@ -731,9 +745,13 @@ void ResolveTool::StatsFileWriter::WriteHeader(void) {
                   << BAMTOOLS_VERSION_BUILD;
 
     // # bamtools resolve (vX.Y.Z)
+    // #
+    // # MODEL DESCRIPTION - see above for actual text
     // \n
 
     m_stream << COMMENT_CHAR << " bamtools resolve (" << versionStream.str() << ")" << endl
+             << COMMENT_CHAR << endl
+             << MODEL_DESCRIPTION
              << endl;
 }
 

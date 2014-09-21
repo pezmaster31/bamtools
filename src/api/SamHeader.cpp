@@ -73,6 +73,7 @@ SamHeader::SamHeader(const SamHeader& other)
     , ReadGroups(other.ReadGroups)
     , Programs(other.Programs)
     , Comments(other.Comments)
+    , m_errorString(other.GetErrorString())
 { }
 
 /*! \fn SamHeader::~SamHeader(void)

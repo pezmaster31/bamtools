@@ -39,6 +39,7 @@ class API_EXPORT BamIndex {
         // list of supported BamIndex types
         enum IndexType { BAMTOOLS = 0
                        , STANDARD
+                       , PICARD
                        };
   
     // ctor & dtor

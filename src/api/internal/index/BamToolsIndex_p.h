@@ -122,6 +122,7 @@ class BamToolsIndex : public BamIndex {
     public:
         // returns format's file extension
         static const std::string Extension(void);
+        static const std::string BamDotExtension(void);
 
     // internal methods
     private:
@@ -176,6 +177,7 @@ class BamToolsIndex : public BamIndex {
     private:
         static const uint32_t DEFAULT_BLOCK_LENGTH;
         static const std::string BTI_EXTENSION;
+        static const std::string BAM_BTI_EXTENSION;
         static const char* const BTI_MAGIC;
         static const int SIZEOF_BLOCK;
 };

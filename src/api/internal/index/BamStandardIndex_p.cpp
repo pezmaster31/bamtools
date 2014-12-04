@@ -29,6 +29,7 @@ using namespace std;
 const int BamStandardIndex::MAX_BIN               = 37450;  // =(8^6-1)/7+1
 const int BamStandardIndex::BAM_LIDX_SHIFT        = 14;
 const string BamStandardIndex::BAI_EXTENSION      = ".bai";
+const string BamStandardIndex::BAM_BAI_EXTENSION  = ".bam.bai";
 const char* const BamStandardIndex::BAI_MAGIC     = "BAI\1";
 const int BamStandardIndex::SIZEOF_ALIGNMENTCHUNK = sizeof(uint64_t)*2;
 const int BamStandardIndex::SIZEOF_BINCORE        = sizeof(uint32_t) + sizeof(int32_t);
@@ -420,6 +421,11 @@ bool BamStandardIndex::Create(void) {
 }
 
 // returns format's file extension
+const string BamStandardIndex::BamDotExtension(void) {
+    return BamStandardIndex::BAM_BAI_EXTENSION;
+}
+
+// alternative file extension
 const string BamStandardIndex::Extension(void) {
     return BamStandardIndex::BAI_EXTENSION;
 }
@@ -934,7 +940,7 @@ void BamStandardIndex::WriteLinearOffsets(const int& refId, BaiLinearOffsetVecto
     // make sure linear offsets are sorted before writing & saving summary
     SortLinearOffsets(linearOffsets);
 
-    int64_t numBytesWritten = 0;
+    uint64_t numBytesWritten = 0;
 
     // write number of linear offsets
     int32_t offsetCount = linearOffsets.size();

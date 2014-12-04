@@ -127,6 +127,7 @@ class BamStandardIndex : public BamIndex {
     public:
         // returns format's file extension
         static const std::string Extension(void);
+        static const std::string BamDotExtension(void);
 
     // internal methods
     private:
@@ -225,6 +226,7 @@ class BamStandardIndex : public BamIndex {
         static const int MAX_BIN;
         static const int BAM_LIDX_SHIFT;
         static const std::string BAI_EXTENSION;
+        static const std::string BAM_BAI_EXTENSION;
         static const char* const BAI_MAGIC;
         static const int SIZEOF_ALIGNMENTCHUNK;
         static const int SIZEOF_BINCORE;

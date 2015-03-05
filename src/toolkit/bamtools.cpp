@@ -146,7 +146,7 @@ int Version(void) {
 int main(int argc, char* argv[]) {
 
     // just 'bamtools'
-    if ( (argc == 1) ) return Help(argc, argv);
+    if ( argc == 1 ) return Help(argc, argv);
     
     // 'bamtools help', 'bamtools --help', or 'bamtools -h'
     if ( IsHelp(argv[1]) ) return Help(argc, argv); 

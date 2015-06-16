@@ -111,6 +111,7 @@ SamReadGroup::SamReadGroup(const SamReadGroup& other)
     , Sample(other.Sample)
     , SequencingCenter(other.SequencingCenter)
     , SequencingTechnology(other.SequencingTechnology)
+    , CustomTags(other.CustomTags)
 { }
 
 /*! \fn SamReadGroup::~SamReadGroup(void)
@@ -134,6 +135,7 @@ void SamReadGroup::Clear(void) {
     Sample.clear();
     SequencingCenter.clear();
     SequencingTechnology.clear();
+    CustomTags.clear();
 }
 
 /*! \fn bool SamReadGroup::HasDescription(void) const

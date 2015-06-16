@@ -99,6 +99,7 @@ SamSequence::SamSequence(const SamSequence& other)
     , Name(other.Name)
     , Species(other.Species)
     , URI(other.URI)
+    , CustomTags(other.CustomTags)
 { }
 
 /*! \fn SamSequence::~SamSequence(void)
@@ -116,6 +117,7 @@ void SamSequence::Clear(void) {
     Name.clear();
     Species.clear();
     URI.clear();
+    CustomTags.clear();
 }
 
 /*! \fn bool SamSequence::HasAssemblyID(void) const

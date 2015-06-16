@@ -69,6 +69,7 @@ SamHeader::SamHeader(const SamHeader& other)
     : Version(other.Version)
     , SortOrder(other.SortOrder)
     , GroupOrder(other.GroupOrder)
+    , CustomTags(other.CustomTags)
     , Sequences(other.Sequences)
     , ReadGroups(other.ReadGroups)
     , Programs(other.Programs)
@@ -90,6 +91,7 @@ void SamHeader::Clear(void) {
     Version.clear();
     SortOrder.clear();
     GroupOrder.clear();
+    CustomTags.clear();
     Sequences.Clear();
     ReadGroups.Clear();
     Programs.Clear();

@@ -11,6 +11,7 @@
 #define SAM_HEADER_H
 
 #include "api/api_global.h"
+#include "api/BamAux.h"
 #include "api/SamProgramChain.h"
 #include "api/SamReadGroupDictionary.h"
 #include "api/SamSequenceDictionary.h"
@@ -18,6 +19,7 @@
 #include <vector>
 
 namespace BamTools {
+
 
 struct API_EXPORT SamHeader {
 
@@ -51,6 +53,7 @@ struct API_EXPORT SamHeader {
     std::string Version;             // VN:<Version>  *Required, if @HD record is present*
     std::string SortOrder;           // SO:<SortOrder>
     std::string GroupOrder;          // GO:<GroupOrder>
+    std::vector<CustomHeaderTag> CustomTags; // optional custom tags on @HD line
 
     // header sequences (@SQ entries)
     SamSequenceDictionary Sequences;

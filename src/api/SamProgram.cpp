@@ -75,6 +75,7 @@ SamProgram::SamProgram(const SamProgram& other)
     , Name(other.Name)
     , PreviousProgramID(other.PreviousProgramID)
     , Version(other.Version)
+    , CustomTags(other.CustomTags)
     , NextProgramID(other.NextProgramID)
 { }
 

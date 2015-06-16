@@ -11,6 +11,7 @@
 #define SAM_PROGRAM_H
 
 #include "api/api_global.h"
+#include "api/BamAux.h"
 #include <string>
 
 namespace BamTools {
@@ -41,6 +42,7 @@ struct API_EXPORT SamProgram {
     std::string Name;                      // PN:<Name>
     std::string PreviousProgramID;         // PP:<PreviousProgramID>
     std::string Version;                   // VN:<Version>
+    std::vector<CustomHeaderTag> CustomTags;   // optional custom tags
 
     // internal (non-standard) methods & fields
     private:

@@ -77,7 +77,7 @@ void Fasta::FastaPrivate::Chomp(char* sequence) {
     static const int CHAR_LF = 10;
     static const int CHAR_CR = 13;
   
-    size_t seqLength = strlen(sequence);
+    int seqLength = strlen(sequence);
     if ( seqLength == 0 ) return;
     --seqLength; // ignore null terminator
   

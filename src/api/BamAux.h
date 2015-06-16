@@ -133,6 +133,12 @@ struct API_EXPORT BamRegion {
     }
 };
 
+struct CustomHeaderTag {
+  std::string TagName;
+  std::string TagValue;
+};
+
+
 // ----------------------------------------------------------------
 // General utility methods
 

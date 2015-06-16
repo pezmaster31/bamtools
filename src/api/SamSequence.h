@@ -11,7 +11,9 @@
 #define SAM_SEQUENCE_H
 
 #include "api/api_global.h"
+#include "api/BamAux.h"
 #include <string>
+#include <vector>
 
 namespace BamTools {
 
@@ -42,6 +44,7 @@ struct API_EXPORT SamSequence {
     std::string Name;                // SN:<Name>        *Required for valid SAM header*
     std::string Species;             // SP:<Species>
     std::string URI;                 // UR:<URI>
+    std::vector<CustomHeaderTag> CustomTags;   // optional custom tags
 };
 
 /*! \fn bool operator==(const SamSequence& lhs, const SamSequence& rhs)

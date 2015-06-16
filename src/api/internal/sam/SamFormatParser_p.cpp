@@ -74,6 +74,12 @@ void SamFormatParser::ParseHDLine(const string& line) {
         if      ( tokenTag == Constants::SAM_HD_VERSION_TAG    ) m_header.Version    = tokenValue;
         else if ( tokenTag == Constants::SAM_HD_SORTORDER_TAG  ) m_header.SortOrder  = tokenValue;
         else if ( tokenTag == Constants::SAM_HD_GROUPORDER_TAG ) m_header.GroupOrder = tokenValue;
+        else { // custom tag
+            CustomHeaderTag otherTag;
+            otherTag.TagName  = tokenTag;
+            otherTag.TagValue = tokenValue;
+            m_header.CustomTags.push_back(otherTag);
+        }
     }
 
     // check for required tags
@@ -104,6 +110,12 @@ void SamFormatParser::ParseSQLine(const string& line) {
         else if ( tokenTag == Constants::SAM_SQ_CHECKSUM_TAG   ) seq.Checksum = tokenValue;
         else if ( tokenTag == Constants::SAM_SQ_SPECIES_TAG    ) seq.Species = tokenValue;
         else if ( tokenTag == Constants::SAM_SQ_URI_TAG        ) seq.URI = tokenValue;
+        else { // custom tag
+            CustomHeaderTag otherTag;
+            otherTag.TagName  = tokenTag;
+            otherTag.TagValue = tokenValue;
+            seq.CustomTags.push_back(otherTag);
+        }
     }
 
     // check for required tags
@@ -145,6 +157,12 @@ void SamFormatParser::ParseRGLine(const string& line) {
         else if ( tokenTag == Constants::SAM_RG_SAMPLE_TAG              ) rg.Sample = tokenValue;
         else if ( tokenTag == Constants::SAM_RG_SEQCENTER_TAG           ) rg.SequencingCenter = tokenValue;
         else if ( tokenTag == Constants::SAM_RG_SEQTECHNOLOGY_TAG       ) rg.SequencingTechnology = tokenValue;
+        else { // custom tag
+            CustomHeaderTag otherTag;
+            otherTag.TagName  = tokenTag;
+            otherTag.TagValue = tokenValue;
+            rg.CustomTags.push_back(otherTag);
+        }
     }
 
     // check for required tags
@@ -177,6 +195,12 @@ void SamFormatParser::ParsePGLine(const string& line) {
         else if ( tokenTag == Constants::SAM_PG_COMMANDLINE_TAG     ) pg.CommandLine = tokenValue;
         else if ( tokenTag == Constants::SAM_PG_PREVIOUSPROGRAM_TAG ) pg.PreviousProgramID = tokenValue;
         else if ( tokenTag == Constants::SAM_PG_VERSION_TAG         ) pg.Version = tokenValue;
+        else { // custom tag
+            CustomHeaderTag otherTag;
+            otherTag.TagName  = tokenTag;
+            otherTag.TagValue = tokenValue;
+            pg.CustomTags.push_back(otherTag);
+        }
     }
 
     // check for required tags

@@ -45,8 +45,6 @@ static const double   DEFAULT_UNUSEDMODEL_THRESHOLD = 0.1;
 
 // basic char/string constants
 static const char COMMENT_CHAR     = '#';
-static const char OPEN_BRACE_CHAR  = '[';
-static const char CLOSE_BRACE_CHAR = ']';
 static const char EQUAL_CHAR       = '=';
 static const char TAB_CHAR         = '\t';
 

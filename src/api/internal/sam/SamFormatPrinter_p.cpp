@@ -70,6 +70,13 @@ void SamFormatPrinter::PrintHD(std::stringstream& out) const {
         if ( m_header.HasGroupOrder() )
             out << FormatTag(Constants::SAM_HD_GROUPORDER_TAG, m_header.GroupOrder);
 
+        // custom tags
+        if ( !m_header.CustomTags.empty() ) {
+            for (size_t i = 0; i < m_header.CustomTags.size(); ++i) {
+                const CustomHeaderTag& customTag = m_header.CustomTags[i];
+                out << FormatTag(customTag.TagName, customTag.TagValue);
+            }
+        }
         // newline
         out << endl;
     }
@@ -103,6 +110,14 @@ void SamFormatPrinter::PrintSQ(std::stringstream& out) const {
         // UR:<URI>
         if ( seq.HasURI() )
             out << FormatTag(Constants::SAM_SQ_URI_TAG, seq.URI);
+
+        // custom tags
+        if ( !seq.CustomTags.empty() ) {
+            for (size_t i = 0; i < seq.CustomTags.size(); ++i) {
+                const CustomHeaderTag& customTag = seq.CustomTags[i];
+                out << FormatTag(customTag.TagName, customTag.TagValue);
+            }
+        }
 
         // newline
         out << endl;
@@ -165,6 +180,14 @@ void SamFormatPrinter::PrintRG(std::stringstream& out) const {
         if ( rg.HasSample() )
             out << FormatTag(Constants::SAM_RG_SAMPLE_TAG, rg.Sample);
 
+        // custom tags
+        if ( !rg.CustomTags.empty() ) {
+            for (size_t i = 0; i < rg.CustomTags.size(); ++i) {
+                const CustomHeaderTag& customTag = rg.CustomTags[i];
+                out << FormatTag(customTag.TagName, customTag.TagValue);
+            }
+        }
+
         // newline
         out << endl;
     }
@@ -197,6 +220,14 @@ void SamFormatPrinter::PrintPG(std::stringstream& out) const {
         // VN:<Version>
         if ( pg.HasVersion() )
             out << FormatTag(Constants::SAM_PG_VERSION_TAG, pg.Version);
+
+        // custom tags
+        if ( !pg.CustomTags.empty() ) {
+            for (size_t i = 0; i < pg.CustomTags.size(); ++i) {
+                const CustomHeaderTag& customTag = pg.CustomTags[i];
+                out << FormatTag(customTag.TagName, customTag.TagValue);
+            }
+        }
 
         // newline
         out << endl;

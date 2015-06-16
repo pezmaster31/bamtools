@@ -11,7 +11,9 @@
 #define SAM_READGROUP_H
 
 #include "api/api_global.h"
+#include "api/BamAux.h"
 #include <string>
+#include <vector>
 
 namespace BamTools {
 
@@ -54,6 +56,7 @@ struct API_EXPORT SamReadGroup {
     std::string Sample;                        // SM:<Sample>
     std::string SequencingCenter;              // CN:<SequencingCenter>
     std::string SequencingTechnology;          // PL:<SequencingTechnology>
+    std::vector<CustomHeaderTag> CustomTags;   // optional custom tags
 };
 
 /*! \fn bool operator==(const SamReadGroup& lhs, const SamReadGroup& rhs)

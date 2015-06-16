@@ -25,7 +25,7 @@
 
 namespace BamTools {
 
-class SamHeader;
+struct SamHeader;
 
 namespace Internal {
 

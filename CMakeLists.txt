@@ -31,7 +31,7 @@ ensure_out_of_source_build( "
 
 # set BamTools version information
 set( BamTools_VERSION_MAJOR 2 )
-set( BamTools_VERSION_MINOR 3 )
+set( BamTools_VERSION_MINOR 4 )
 set( BamTools_VERSION_BUILD 0 )
 
 # set our library and executable destination dirs

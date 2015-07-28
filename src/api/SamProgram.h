@@ -54,7 +54,7 @@ struct API_EXPORT SamProgram {
 /*! \fn bool operator==(const SamProgram& lhs, const SamProgram& rhs)
     \brief tests equality by comparing program IDs
 */
-API_EXPORT inline bool operator==(const SamProgram& lhs, const SamProgram& rhs) {
+inline bool operator==(const SamProgram& lhs, const SamProgram& rhs) {
     return lhs.ID == rhs.ID;
 }
 

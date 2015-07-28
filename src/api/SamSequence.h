@@ -50,7 +50,7 @@ struct API_EXPORT SamSequence {
 /*! \fn bool operator==(const SamSequence& lhs, const SamSequence& rhs)
     \brief tests equality by comparing sequence names, lengths, & checksums (if available)
 */
-API_EXPORT inline bool operator==(const SamSequence& lhs, const SamSequence& rhs) {
+inline bool operator==(const SamSequence& lhs, const SamSequence& rhs) {
     if ( lhs.Name   != rhs.Name   ) return false;
     if ( lhs.Length != rhs.Length ) return false;
     if ( lhs.HasChecksum() && rhs.HasChecksum() )

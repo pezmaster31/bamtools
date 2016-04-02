@@ -22,6 +22,7 @@
 
 #include "api/BamAux.h"
 #include "api/internal/io/BgzfStream_p.h"
+#include "api/IBamIODevice.h"
 #include <string>
 #include <vector>
 
@@ -45,7 +46,8 @@ class BamWriterPrivate {
         bool IsOpen(void) const;
         bool Open(const std::string& filename,
                   const std::string& samHeaderText,
-                  const BamTools::RefVector& referenceSequences);
+                  const BamTools::RefVector& referenceSequences,
+				  IBamIODevice* device = 0);
         bool SaveAlignment(const BamAlignment& al);
         void SetWriteCompressed(bool ok);
 

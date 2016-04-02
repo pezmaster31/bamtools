@@ -268,15 +268,21 @@ bool BgzfStream::IsOpen(void) const {
     return m_device->IsOpen();
 }
 
-void BgzfStream::Open(const string& filename, const IBamIODevice::OpenMode mode) {
+void BgzfStream::Open(const string& filename, const IBamIODevice::OpenMode mode, IBamIODevice* device) {
 
     // close current device if necessary
     Close();
     BT_ASSERT_X( (m_device == 0), "BgzfStream::Open() - unable to properly close previous IO device" );
 
     // retrieve new IO device depending on filename
-    m_device = BamDeviceFactory::CreateDevice(filename);
-    BT_ASSERT_X( m_device, "BgzfStream::Open() - unable to create IO device from filename" );
+	// or use the device provided by the client
+    if (device == 0) {
+        m_device = BamDeviceFactory::CreateDevice(filename);
+    }
+    else {
+        m_device = device;
+    }
+	BT_ASSERT_X( m_device, "BgzfStream::Open() - unable to create IO device from filename" );
 
     // if device fails to open
     if ( !m_device->Open(mode) ) {

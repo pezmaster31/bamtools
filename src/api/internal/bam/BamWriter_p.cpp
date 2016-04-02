@@ -155,12 +155,13 @@ bool BamWriterPrivate::IsOpen(void) const {
 // opens the alignment archive
 bool BamWriterPrivate::Open(const string& filename,
                             const string& samHeaderText,
-                            const RefVector& referenceSequences)
+                            const RefVector& referenceSequences,
+							IBamIODevice* device)
 {
     try {
 
         // open the BGZF file for writing
-        m_stream.Open(filename, IBamIODevice::WriteOnly);
+        m_stream.Open(filename, IBamIODevice::WriteOnly, device);
 
         // write BAM file 'metadata' components
         WriteMagicNumber();

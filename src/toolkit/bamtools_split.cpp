@@ -199,7 +199,7 @@ bool SplitTool::SplitToolPrivate::Run(void) {
 
     // if we get here, no property was specified 
     cerr << "bamtools split ERROR: no property given to split on... " << endl
-         << "Please use -mapped, -paired, -reference, or -tag TAG to specifiy desired split behavior." << endl;
+         << "Please use -mapped, -paired, -reference, or -tag TAG to specify desired split behavior." << endl;
     return false;
 }    
 

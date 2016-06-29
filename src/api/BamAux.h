@@ -424,8 +424,15 @@ API_EXPORT inline unsigned int UnpackUnsignedInt(char* buffer) {
 API_EXPORT inline unsigned short UnpackUnsignedShort(const char* buffer) {
     union { unsigned short value; unsigned char valueBuffer[sizeof(unsigned short)]; } un;
     un.value = 0;
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
     un.valueBuffer[0] = buffer[0];
     un.valueBuffer[1] = buffer[1];
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    un.valueBuffer[0] = buffer[1];
+    un.valueBuffer[1] = buffer[0];
+#else
+    #error "Unsupported hardware"
+#endif
     return un.value;
 }
 

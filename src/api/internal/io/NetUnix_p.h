@@ -31,6 +31,10 @@
 #include <netdb.h>
 #include <unistd.h>
 
+#ifdef __FreeBSD__
+#  include <netinet/in.h>
+#endif
+
 #ifndef   BT_SOCKLEN_T
 #  define BT_SOCKLEN_T socklen_t
 #endif

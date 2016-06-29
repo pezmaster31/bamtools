@@ -40,6 +40,7 @@ set( LIBRARY_OUTPUT_PATH    "${CMAKE_SOURCE_DIR}/lib" )
 
 # define compiler flags for all code
 set( CMAKE_BUILD_TYPE Release )
+set( CMAKE_CXX_FLAGS_RELEASE "-std=c++98 ${CMAKE_CXX_FLAGS_RELEASE}" )
 add_definitions( -Wall -D_FILE_OFFSET_BITS=64 )
 
 # -----------------------------------------------

@@ -647,7 +647,7 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
     if ( !reader.parse(document, root) ) {
         // use built-in error reporting mechanism to alert user what was wrong with the script
         cerr  << "bamtools filter ERROR: failed to parse script - see error message(s) below" << endl
-              << reader.getFormattedErrorMessages();
+              << reader.getFormatedErrorMessages();
         return false;     
     }
 

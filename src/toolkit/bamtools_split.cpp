@@ -72,6 +72,7 @@ struct SplitTool::SplitSettings {
     bool HasCustomOutputStub;
     bool HasCustomRefPrefix;
     bool HasCustomTagPrefix;
+    bool HasListTagDelimiter;
     bool IsSplittingMapped;
     bool IsSplittingPaired;
     bool IsSplittingReference;
@@ -83,6 +84,7 @@ struct SplitTool::SplitSettings {
     string CustomTagPrefix;
     string InputFilename;
     string TagToSplit;
+    string ListTagDelimiter;
     
     // constructor
     SplitSettings(void)
@@ -90,6 +92,7 @@ struct SplitTool::SplitSettings {
         , HasCustomOutputStub(false)
         , HasCustomRefPrefix(false)
         , HasCustomTagPrefix(false)
+        , HasListTagDelimiter(false)
         , IsSplittingMapped(false)
         , IsSplittingPaired(false)
         , IsSplittingReference(false)
@@ -99,6 +102,7 @@ struct SplitTool::SplitSettings {
         , CustomTagPrefix("")
         , InputFilename(Options::StandardIn())
         , TagToSplit("")
+        , ListTagDelimiter("--")
     { } 
 };  
 
@@ -139,8 +143,14 @@ class SplitTool::SplitToolPrivate {
         // finds first alignment and calls corresponding SplitTagImpl<> 
         // depending on tag type
         bool SplitTag(void);
-        // templated split tag implementation 
-        // handle the various types that are possible for tags
+
+    public:
+
+        // handles list-type tags
+        template<typename T>
+        bool SplitListTagImpl(BamAlignment& al);
+
+        // handles single-value tags
         template<typename T>
         bool SplitTagImpl(BamAlignment& al);    
         
@@ -383,27 +393,37 @@ bool SplitTool::SplitToolPrivate::SplitTag(void) {
         // pass it the current alignment found
         switch ( tagType ) {
           
-            case (Constants::BAM_TAG_TYPE_INT8)  :
-            case (Constants::BAM_TAG_TYPE_INT16) :
-            case (Constants::BAM_TAG_TYPE_INT32) :
-                return SplitTagImpl<int32_t>(al);
-                
-            case (Constants::BAM_TAG_TYPE_UINT8)  :
-            case (Constants::BAM_TAG_TYPE_UINT16) :
-            case (Constants::BAM_TAG_TYPE_UINT32) :
-                return SplitTagImpl<uint32_t>(al);
-              
-            case (Constants::BAM_TAG_TYPE_FLOAT)  :
-                return SplitTagImpl<float>(al);
+            case (Constants::BAM_TAG_TYPE_INT8)   : return SplitTagImpl<int8_t>(al);
+            case (Constants::BAM_TAG_TYPE_INT16)  : return SplitTagImpl<int16_t>(al);
+            case (Constants::BAM_TAG_TYPE_INT32)  : return SplitTagImpl<int32_t>(al);
+            case (Constants::BAM_TAG_TYPE_UINT8)  : return SplitTagImpl<uint8_t>(al);
+            case (Constants::BAM_TAG_TYPE_UINT16) : return SplitTagImpl<uint16_t>(al);
+            case (Constants::BAM_TAG_TYPE_UINT32) : return SplitTagImpl<uint32_t>(al);
+            case (Constants::BAM_TAG_TYPE_FLOAT)  : return SplitTagImpl<float>(al);
             
             case (Constants::BAM_TAG_TYPE_ASCII)  :
             case (Constants::BAM_TAG_TYPE_STRING) :
             case (Constants::BAM_TAG_TYPE_HEX)    :
                 return SplitTagImpl<string>(al);
 
-            case (Constants::BAM_TAG_TYPE_ARRAY) :
-                cerr << "bamtools split ERROR: array tag types are not supported" << endl;
-                return false;
+            case (Constants::BAM_TAG_TYPE_ARRAY) : {
+
+                char arrayTagType(0);
+                if (!al.GetArrayTagType(m_settings->TagToSplit, arrayTagType))
+                    continue;
+                switch(arrayTagType) {
+                    case (Constants::BAM_TAG_TYPE_INT8)   : return SplitListTagImpl<int8_t>(al);
+                    case (Constants::BAM_TAG_TYPE_INT16)  : return SplitListTagImpl<int16_t>(al);
+                    case (Constants::BAM_TAG_TYPE_INT32)  : return SplitListTagImpl<int32_t>(al);
+                    case (Constants::BAM_TAG_TYPE_UINT8)  : return SplitListTagImpl<uint8_t>(al);
+                    case (Constants::BAM_TAG_TYPE_UINT16) : return SplitListTagImpl<uint16_t>(al);
+                    case (Constants::BAM_TAG_TYPE_UINT32) : return SplitListTagImpl<uint32_t>(al);
+                    case (Constants::BAM_TAG_TYPE_FLOAT)  : return SplitListTagImpl<float>(al);
+                    default:
+                        cerr << "bamtools split ERROR: array tag has unsupported element type: " << arrayTagType << endl;
+                        return false;
+                }
+            }
           
             default:
                 cerr << "bamtools split ERROR: unknown tag type encountered: " << tagType << endl;
@@ -447,7 +467,83 @@ void SplitTool::SplitToolPrivate::CloseWriters(map<T, BamWriter*>& writers) {
     writers.clear();
 }
 
-// handle the various types that are possible for tags
+// handle list-type tags
+template<typename T>
+bool SplitTool::SplitToolPrivate::SplitListTagImpl(BamAlignment& al) {
+
+    typedef T         TagElementType;
+    typedef vector<T> TagValueType;
+    typedef map<string, BamWriter*> WriterMap;
+    typedef typename WriterMap::iterator WriterMapIterator;
+
+    // set up splitting data structure
+    WriterMap outputFiles;
+    WriterMapIterator writerIter;
+
+    // determine tag prefix
+    string tagPrefix = SPLIT_TAG_TOKEN;
+    if ( m_settings->HasCustomTagPrefix )
+        tagPrefix = m_settings->CustomTagPrefix;
+
+    // make sure prefix starts with '.'
+    const size_t dotFound = tagPrefix.find('.');
+    if ( dotFound != 0 )
+        tagPrefix = string(".") + tagPrefix;
+
+    const string tag = m_settings->TagToSplit;
+    BamWriter* writer;
+    TagValueType currentValue;
+    while (m_reader.GetNextAlignment(al)) {
+
+        string listTagLabel;
+        if (!al.GetTag(tag, currentValue))
+            listTagLabel = "none";
+        else {
+            // make list label from tag data
+            stringstream listTagLabelStream;
+            typename TagValueType::const_iterator tagValueIter = currentValue.cbegin();
+            typename TagValueType::const_iterator tagValueEnd  = currentValue.cend();
+            for (; tagValueIter != tagValueEnd; ++tagValueIter)
+                listTagLabelStream << (*tagValueIter) << m_settings->ListTagDelimiter;
+            listTagLabel = listTagLabelStream.str();
+            if (!listTagLabel.empty())
+                listTagLabel = listTagLabel.substr(0, listTagLabel.size() - m_settings->ListTagDelimiter.size()); // pop last delimiter
+        }
+
+        // lookup writer for label
+        writerIter = outputFiles.find(listTagLabel);
+
+        // if not found, create one
+        if (writerIter == outputFiles.cend()) {
+
+            // open new BamWriter, save first alignment
+            stringstream outputFilenameStream;
+            outputFilenameStream << m_outputFilenameStub << tagPrefix << tag << "_" << listTagLabel << ".bam";
+            writer = new BamWriter;
+            if ( !writer->Open(outputFilenameStream.str(), m_header, m_references) ) {
+                cerr << "bamtools split ERROR: could not open " << outputFilenameStream.str()
+                     << " for writing." << endl;
+                return false;
+            }
+
+            // store in map
+            outputFiles.insert( make_pair(listTagLabel, writer) );
+        }
+
+        // else grab existing writer
+        else writer = (*writerIter).second;
+
+        // store alignment in proper BAM output file
+        if ( writer )
+            writer->SaveAlignment(al);
+    }
+
+    // clean up & return success
+    CloseWriters(outputFiles);
+    return true;
+}
+
+// handle the single-value tags
 template<typename T>
 bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al) {
   
@@ -554,13 +650,16 @@ SplitTool::SplitTool(void)
     
     // set up options 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",   "BAM filename",  "the input BAM file",  "", m_settings->HasInputFilename,  m_settings->InputFilename,  IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-in",   "BAM filename",  "the input BAM file",  "",
+                            m_settings->HasInputFilename,  m_settings->InputFilename,  IO_Opts, Options::StandardIn());
     Options::AddValueOption("-refPrefix", "string", "custom prefix for splitting by references. Currently files end with REF_<refName>.bam. This option allows you to replace \"REF_\" with a prefix of your choosing.", "",
                             m_settings->HasCustomRefPrefix, m_settings->CustomRefPrefix, IO_Opts);
     Options::AddValueOption("-tagPrefix", "string", "custom prefix for splitting by tags. Current files end with TAG_<tagname>_<tagvalue>.bam. This option allows you to replace \"TAG_\" with a prefix of your choosing.", "",
                             m_settings->HasCustomTagPrefix, m_settings->CustomTagPrefix, IO_Opts);
     Options::AddValueOption("-stub", "filename stub", "prefix stub for output BAM files (default behavior is to use input filename, without .bam extension, as stub). If input is stdin and no stub provided, a timestamp is generated as the stub.", "",
                             m_settings->HasCustomOutputStub, m_settings->CustomOutputStub, IO_Opts);
+    Options::AddValueOption("-tagListDelim", "string", "delimiter used to separate values in the filenames generated from splitting on list-type tags [--]", "",
+                            m_settings->HasListTagDelimiter, m_settings->ListTagDelimiter, IO_Opts);
     
     OptionGroup* SplitOpts = Options::CreateOptionGroup("Split Options");
     Options::AddOption("-mapped",    "split mapped/unmapped alignments",       m_settings->IsSplittingMapped,    SplitOpts);

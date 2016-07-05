@@ -501,8 +501,8 @@ bool SplitTool::SplitToolPrivate::SplitListTagImpl(BamAlignment& al) {
         else {
             // make list label from tag data
             stringstream listTagLabelStream;
-            typename TagValueType::const_iterator tagValueIter = currentValue.cbegin();
-            typename TagValueType::const_iterator tagValueEnd  = currentValue.cend();
+            typename TagValueType::const_iterator tagValueIter = currentValue.begin();
+            typename TagValueType::const_iterator tagValueEnd  = currentValue.end();
             for (; tagValueIter != tagValueEnd; ++tagValueIter)
                 listTagLabelStream << (*tagValueIter) << m_settings->ListTagDelimiter;
             listTagLabel = listTagLabelStream.str();
@@ -514,7 +514,7 @@ bool SplitTool::SplitToolPrivate::SplitListTagImpl(BamAlignment& al) {
         writerIter = outputFiles.find(listTagLabel);
 
         // if not found, create one
-        if (writerIter == outputFiles.cend()) {
+        if (writerIter == outputFiles.end()) {
 
             // open new BamWriter, save first alignment
             stringstream outputFilenameStream;

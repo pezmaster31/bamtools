@@ -361,10 +361,10 @@ bool BamMultiReader::Rewind(void) {
     method can be useful when you know, for example, that your BAM files are sorted
     by coordinate but upstream processes did not set the header tag properly.
 
-    \note This method should \bold not be called while reading alignments via
+    \note This method should \b not be called while reading alignments via
     GetNextAlignment() or GetNextAlignmentCore(). For proper results, you should
     call this method before (or immediately after) opening files, rewinding,
-    jumping, etc. but \bold not once alignment fetching has started. There is
+    jumping, etc. but \b not once alignment fetching has started. There is
     nothing in the API to prevent you from doing so, but the results may be
     unexpected.
 

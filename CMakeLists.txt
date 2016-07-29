@@ -32,7 +32,7 @@ ensure_out_of_source_build( "
 # set BamTools version information
 set( BamTools_VERSION_MAJOR 2 )
 set( BamTools_VERSION_MINOR 4 )
-set( BamTools_VERSION_BUILD 0 )
+set( BamTools_VERSION_BUILD 1 )
 
 # set our library and executable destination dirs
 set( EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin" )
@@ -40,6 +40,7 @@ set( LIBRARY_OUTPUT_PATH    "${CMAKE_SOURCE_DIR}/lib" )
 
 # define compiler flags for all code
 set( CMAKE_BUILD_TYPE Release )
+set( CMAKE_CXX_FLAGS_RELEASE "-std=c++98 ${CMAKE_CXX_FLAGS_RELEASE}" )
 add_definitions( -Wall -D_FILE_OFFSET_BITS=64 )
 
 # -----------------------------------------------

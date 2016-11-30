@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <netinet/in.h>
 
 #ifdef __FreeBSD__
 #  include <netinet/in.h>

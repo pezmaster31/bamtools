@@ -6,4 +6,6 @@
 # ==========================
 
 # list third-party subdirectories to build in
-add_subdirectory( jsoncpp )
+if( NOT JSONCPP_FOUND )
+    add_subdirectory( jsoncpp )
+endif()

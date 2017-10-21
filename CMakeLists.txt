@@ -57,6 +57,14 @@ add_compile_options( -Wall )
 # -----------------------------------------------
 # handle platform-/environment-specific defines
 
+# Make building the static library optional
+option( BUILD_STATIC "Build static libbamtools archive" ON )
+if( BUILD_STATIC )
+    set( BAMTOOLS_CMD_LDFLAGS BamTools-static )
+else()
+    set( BAMTOOLS_CMD_LDFLAGS BamTools )
+endif()
+
 # If planning to run in Node.js environment, run:
 # cmake -DEnableNodeJS=true
 if( EnableNodeJS )

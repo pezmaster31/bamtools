@@ -42,7 +42,7 @@ include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 target_include_directories( bamtools_cmd PRIVATE ${JSONCPP_INCLUDE_DIRS} )
 
 # define libraries to link
-target_link_libraries( bamtools_cmd BamTools BamTools-utils ${JSONCPP_LDFLAGS} )
+target_link_libraries( bamtools_cmd BamTools-utils ${BAMTOOLS_CMD_LDFLAGS} ${JSONCPP_LDFLAGS} )
 
 # set application install destinations
 install( TARGETS bamtools_cmd DESTINATION "${CMAKE_INSTALL_BINDIR}" )

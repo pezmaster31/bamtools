@@ -30,18 +30,6 @@ set( BamToolsAPISources
         ${InternalSources}
 )
 
-# create main BamTools API shared library
-add_library( BamTools SHARED ${BamToolsAPISources} )
-set_target_properties( BamTools PROPERTIES
-                       SOVERSION "2.4.1"
-                       OUTPUT_NAME "bamtools" )
-
-# create main BamTools API static library
-add_library( BamTools-static STATIC ${BamToolsAPISources} )
-set_target_properties( BamTools-static PROPERTIES 
-                       OUTPUT_NAME "bamtools" 
-                       PREFIX "lib" )
-
 # link libraries automatically with zlib (and Winsock2, if applicable)
 if( WIN32 )
     set( APILibs z ws2_32 )
@@ -49,12 +37,23 @@ else()
     set( APILibs z )
 endif()
 
-target_link_libraries( BamTools        ${APILibs} )
-target_link_libraries( BamTools-static ${APILibs} )
+# create main BamTools API shared library
+add_library( BamTools SHARED ${BamToolsAPISources} )
+set_target_properties( BamTools PROPERTIES
+                       SOVERSION "2.4.1"
+                       OUTPUT_NAME "bamtools" )
+target_link_libraries( BamTools ${APILibs} )
+install( TARGETS BamTools LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" )
 
-# set library install destinations
-install( TARGETS BamTools        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" )
-install( TARGETS BamTools-static ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" )
+# create main BamTools API static library
+if( BUILD_STATIC )
+    add_library( BamTools-static STATIC ${BamToolsAPISources} )
+    set_target_properties( BamTools-static PROPERTIES
+                           OUTPUT_NAME "bamtools"
+                           PREFIX "lib" )
+    target_link_libraries( BamTools-static ${APILibs} )
+    install( TARGETS BamTools-static ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" )
+endif()
 
 # export API headers
 include(../ExportHeader.cmake)

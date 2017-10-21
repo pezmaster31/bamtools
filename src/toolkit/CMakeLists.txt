@@ -9,7 +9,6 @@
 include_directories( ${BamTools_SOURCE_DIR}/src/api
                      ${BamTools_SOURCE_DIR}/src/utils
                      ${BamTools_SOURCE_DIR}/src/third_party
-                     ${BamTools_SOURCE_DIR}/src/third_party/jsoncpp
                    )
 
 # compile main bamtools application
@@ -39,8 +38,11 @@ set_target_properties( bamtools_cmd PROPERTIES
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/bamtools_version.h.in ${CMAKE_CURRENT_BINARY_DIR}/bamtools_version.h )
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
+# set include paths for system JsonCpp
+target_include_directories( bamtools_cmd PRIVATE ${JSONCPP_INCLUDE_DIRS} )
+
 # define libraries to link
-target_link_libraries( bamtools_cmd BamTools BamTools-utils jsoncpp )
+target_link_libraries( bamtools_cmd BamTools BamTools-utils ${JSONCPP_LDFLAGS} )
 
 # set application install destinations
 install( TARGETS bamtools_cmd DESTINATION "${CMAKE_INSTALL_BINDIR}" )

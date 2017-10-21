@@ -35,7 +35,8 @@ set_target_properties( bamtools_cmd PROPERTIES
                        OUTPUT_NAME "bamtools"
                      )
 # make version info available in application
-configure_file( bamtools_version.h.in ${BamTools_SOURCE_DIR}/src/toolkit/bamtools_version.h )
+configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/bamtools_version.h.in ${CMAKE_CURRENT_BINARY_DIR}/bamtools_version.h )
+include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
 # define libraries to link
 target_link_libraries( bamtools_cmd BamTools BamTools-utils jsoncpp )

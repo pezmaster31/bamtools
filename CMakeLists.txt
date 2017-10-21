@@ -5,11 +5,27 @@
 # top-level
 # ==========================
 
-# set project name
-project( BamTools )
+# CMake requirements
+cmake_minimum_required( VERSION 3.0 )
 
-# Cmake requirements
-cmake_minimum_required( VERSION 2.6.4 )
+# set project name
+project( BamTools LANGUAGES CXX )
+
+# on macOS, MACOSX_RPATH is enabled by default on more recent versions
+# of CMake. Disable this behaviour, and let user enable it if need be.
+cmake_policy( SET CMP0042 OLD )
+
+# Set Release type for builds where CMAKE_BUILD_TYPE is unset
+# This is usually a good default as this implictly enables
+#
+#   CXXFLAGS = -O3 -DNDEBUG
+#
+if( NOT CMAKE_BUILD_TYPE )
+    set( CMAKE_BUILD_TYPE "Release" )
+endif()
+
+# Adhere to GNU filesystem layout conventions
+include( GNUInstallDirs )
 
 # Force the build directory to be different from source directory
 macro( ENSURE_OUT_OF_SOURCE_BUILD MSG )
@@ -34,14 +50,9 @@ set( BamTools_VERSION_MAJOR 2 )
 set( BamTools_VERSION_MINOR 4 )
 set( BamTools_VERSION_BUILD 1 )
 
-# set our library and executable destination dirs
-set( EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin" )
-set( LIBRARY_OUTPUT_PATH    "${CMAKE_SOURCE_DIR}/lib" )
-
-# define compiler flags for all code
-set( CMAKE_BUILD_TYPE Release )
-set( CMAKE_CXX_FLAGS_RELEASE "-std=c++98 ${CMAKE_CXX_FLAGS_RELEASE}" )
-add_definitions( -Wall -D_FILE_OFFSET_BITS=64 )
+# define compiler flags for all code, copied from Autoconf's AC_SYS_LARGEFILE
+add_definitions( -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE )
+add_compile_options( -Wall )
 
 # -----------------------------------------------
 # handle platform-/environment-specific defines

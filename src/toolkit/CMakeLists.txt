@@ -41,4 +41,4 @@ configure_file( bamtools_version.h.in ${BamTools_SOURCE_DIR}/src/toolkit/bamtool
 target_link_libraries( bamtools_cmd BamTools BamTools-utils jsoncpp )
 
 # set application install destinations
-install( TARGETS bamtools_cmd DESTINATION "bin")
+install( TARGETS bamtools_cmd DESTINATION "${CMAKE_INSTALL_BINDIR}" )

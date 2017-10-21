@@ -10,7 +10,6 @@ include_directories( ${BamTools_SOURCE_DIR}/src )
 
 # add compiler definitions 
 add_definitions( -DBAMTOOLS_API_LIBRARY ) # (for proper exporting of library symbols)
-add_definitions( -fPIC ) # (attempt to force PIC compiling on CentOS, not being set on shared libs by CMake)
 
 # fetch all internal source files
 add_subdirectory( internal )
@@ -54,8 +53,8 @@ target_link_libraries( BamTools        ${APILibs} )
 target_link_libraries( BamTools-static ${APILibs} )
 
 # set library install destinations
-install( TARGETS BamTools        LIBRARY DESTINATION "lib/bamtools" RUNTIME DESTINATION "bin")
-install( TARGETS BamTools-static ARCHIVE DESTINATION "lib/bamtools")
+install( TARGETS BamTools        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" )
+install( TARGETS BamTools-static ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" )
 
 # export API headers
 include(../ExportHeader.cmake)

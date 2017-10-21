@@ -21,7 +21,7 @@ function( ExportHeader MODULE FILE DEST )
         "${CMAKE_SOURCE_DIR}/include/${DEST}/${FILENAME}" )
 
     # make sure files are properly 'installed'
-    install( FILES "${FILE}" DESTINATION "include/bamtools/${DEST}" )
+    install( FILES "${FILE}" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/${DEST}" )
 
 endfunction( ExportHeader )
 

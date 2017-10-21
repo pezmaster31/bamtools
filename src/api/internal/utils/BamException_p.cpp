@@ -12,4 +12,4 @@ using namespace BamTools;
 using namespace BamTools::Internal;
 using namespace std;
 
-const string BamException::SEPARATOR = ": ";
+//const string BamException::SEPARATOR = ": "; //Use EX_SEPARATOR instead

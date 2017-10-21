@@ -12,6 +12,7 @@
 
 #include "api/api_global.h"
 #include "api/BamAux.h"
+#include "api/BamAlignment.h"
 #include <string>
 
 namespace BamTools {
@@ -19,6 +20,8 @@ namespace BamTools {
 namespace Internal {
     class BamReaderPrivate;
 } // namespace Internal
+
+typedef bool (*CreateIndexProgressCallback)(const BamAlignment& alignment, void* cbData);
 
 /*! \class BamTools::BamIndex
     \brief Provides methods for generating & loading BAM index files.
@@ -49,7 +52,9 @@ class API_EXPORT BamIndex {
     // index interface
     public:
         // builds index from associated BAM file & writes out to index file
-        virtual bool Create(void) =0;
+        virtual bool Create(std::string* indexFileName=0,
+                            CreateIndexProgressCallback cb=0,
+                            void* cbData=0) =0; // creates index file from BAM file
 
         // returns a human-readable description of the last error encountered
         std::string GetErrorString(void) { return m_errorString; }

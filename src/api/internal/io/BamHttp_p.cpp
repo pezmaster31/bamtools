@@ -21,6 +21,21 @@ using namespace BamTools::Internal;
 #include <sstream>
 using namespace std;
 
+static BamTools::IBamIODevice* createBamHttpDeviceCb(const std::string& source)
+{
+  if ( source.find("http://") == 0 )
+    return new BamHttp(source);
+  return 0;
+}
+
+struct RegisterBamHttpCallback{
+  RegisterBamHttpCallback(){
+    BamTools::IBamIODevice::RegisterCreatorCallback(createBamHttpDeviceCb);
+  }
+};
+static RegisterBamHttpCallback _cbInitializer; //Global ctor sets up BamHttp as device
+
+
 namespace BamTools {
 namespace Internal {
 

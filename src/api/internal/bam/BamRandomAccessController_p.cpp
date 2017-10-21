@@ -146,8 +146,11 @@ void BamRandomAccessController::ClearRegion(void) {
 }
 
 bool BamRandomAccessController::CreateIndex(BamReaderPrivate* reader,
-                                            const BamIndex::IndexType& type)
-{
+                                            const BamIndex::IndexType& type,
+                                            std::string* indexFileName,
+                                            CreateIndexProgressCallback cb,
+                                            void* cbData) {
+
     // skip if reader is invalid
     assert(reader);
     if ( !reader->IsOpen() ) {
@@ -166,7 +169,7 @@ bool BamRandomAccessController::CreateIndex(BamReaderPrivate* reader,
     }
 
     // attempt to build index from current BamReader file
-    if ( !newIndex->Create() ) {
+    if ( !newIndex->Create(indexFileName, cb, cbData) ) {
         const string indexError = newIndex->GetErrorString();
         const string message = "could not create index: \n\t" + indexError;
         SetErrorString("BamRandomAccessController::CreateIndex", message);

@@ -19,6 +19,21 @@ using namespace BamTools::Internal;
 #include <vector>
 using namespace std;
 
+static BamTools::IBamIODevice* createBamFtpDeviceCb(const std::string& source)
+{
+  if ( source.find("ftp://") == 0 )
+    return new BamFtp(source);
+  return 0;
+}
+
+struct RegisterBamFtpCallback{
+  RegisterBamFtpCallback(){
+    BamTools::IBamIODevice::RegisterCreatorCallback(createBamFtpDeviceCb);
+  }
+};
+static RegisterBamFtpCallback _cbInitializer; //Global ctor sets up BamFtp as device
+
+
 namespace BamTools {
 namespace Internal {
 

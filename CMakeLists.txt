@@ -40,8 +40,7 @@ set( LIBRARY_OUTPUT_PATH    "${CMAKE_SOURCE_DIR}/lib" )
 
 # define compiler flags for all code
 set( CMAKE_BUILD_TYPE Release )
-set( CMAKE_CXX_FLAGS_RELEASE "-std=c++98 ${CMAKE_CXX_FLAGS_RELEASE}" )
-add_definitions( -Wall -D_FILE_OFFSET_BITS=64 )
+add_definitions( -D_FILE_OFFSET_BITS=64 )
 
 # -----------------------------------------------
 # handle platform-/environment-specific defines
@@ -56,6 +55,13 @@ endif()
 if( "${CMAKE_SYSTEM_NAME}" MATCHES "SunOS" )
     add_definitions( -DSUN_OS )
 endif()
+
+# If running on anything else than AIX
+if ( NOT ${CMAKE_SYSTEM_NAME} MATCHES "AIX" )
+    set( CMAKE_CXX_FLAGS_RELEASE "-std=c++98 ${CMAKE_CXX_FLAGS_RELEASE}" )
+    add_definitions( -Wall )
+endif()
+
 
 # -------------------------------------------
 

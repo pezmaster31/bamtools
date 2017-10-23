@@ -68,6 +68,19 @@ if( "${CMAKE_SYSTEM_NAME}" MATCHES "SunOS" )
     add_definitions( -DSUN_OS )
 endif()
 
+# find system JsonCpp
+find_package( PkgConfig )
+pkg_search_module( JSONCPP jsoncpp>=1 )
+
+if( JSONCPP_FOUND )
+    message( "Found system JsonCpp, not using bundled version" )
+else()
+    message( "Did NOT find system JsonCpp, instead using bundled version" )
+    set( JSONCPP_LDFLAGS jsoncpp )
+    set( JSONCPP_INCLUDE_DIRS ${BamTools_SOURCE_DIR}/src/third_party/jsoncpp )
+endif()
+
+
 # -------------------------------------------
 
 # add our includes root path

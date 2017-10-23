@@ -10,9 +10,7 @@ add_definitions( -DBAMTOOLS_JSONCPP_LIBRARY ) # (for proper exporting of library
 
 # create jsoncpp library
 add_library( jsoncpp STATIC
-             json_reader.cpp
-             json_value.cpp
-             json_writer.cpp
+             jsoncpp.cpp
            )
 
 # set jsoncpp library properties

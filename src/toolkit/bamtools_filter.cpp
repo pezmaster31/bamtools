@@ -16,7 +16,7 @@
 #include <utils/bamtools_utilities.h>
 using namespace BamTools;
 
-#include <jsoncpp/json.h>
+#include <json/json.h>
 using namespace Json;
 
 #include <cstdio>
@@ -647,7 +647,7 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
     if ( !reader.parse(document, root) ) {
         // use built-in error reporting mechanism to alert user what was wrong with the script
         cerr  << "bamtools filter ERROR: failed to parse script - see error message(s) below" << endl
-              << reader.getFormatedErrorMessages();
+              << reader.getFormattedErrorMessages();
         return false;     
     }
 

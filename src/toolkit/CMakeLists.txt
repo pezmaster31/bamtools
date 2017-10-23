@@ -9,6 +9,7 @@
 include_directories( ${BamTools_SOURCE_DIR}/src/api
                      ${BamTools_SOURCE_DIR}/src/utils
                      ${BamTools_SOURCE_DIR}/src/third_party
+                     ${BamTools_SOURCE_DIR}/src/third_party/jsoncpp
                    )
 
 # compile main bamtools application

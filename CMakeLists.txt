@@ -57,6 +57,11 @@ add_compile_options( -Wall )
 # -----------------------------------------------
 # handle platform-/environment-specific defines
 
+# By default build bamtools as a static library
+# Most users will prefer static libraries, distributions
+# can always switch the standard CMake variable over to ON.
+set( BUILD_SHARED_LIBS OFF CACHE BOOL "Build all libraries as shared" )
+
 # If planning to run in Node.js environment, run:
 # cmake -DEnableNodeJS=true
 if( EnableNodeJS )

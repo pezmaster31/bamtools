@@ -324,9 +324,9 @@ std::string HostAddress::GetIPString(void) const {
         for ( uint8_t i = 0; i < 8; ++i ) {
             if ( i != 0 )
                 ss << ':';
-                ss << hex << ( (uint16_t(m_ip6Address[2*i]) << 8) |
-                               (uint16_t(m_ip6Address[2*i+1]))
-                             );
+            ss << hex << ( (uint16_t(m_ip6Address[2*i]) << 8) |
+                           (uint16_t(m_ip6Address[2*i+1]))
+                         );
         }
     }
 

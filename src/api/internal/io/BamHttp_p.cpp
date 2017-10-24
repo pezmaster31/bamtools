@@ -405,7 +405,7 @@ bool BamHttp::SendGetRequest(const size_t numBytes) {
 
     // send request
     const string requestHeader = m_request->ToString();
-    const size_t headerSize    = requestHeader.size();
+    const int64_t headerSize   = requestHeader.size();
     if ( WriteToSocket(requestHeader.c_str(), headerSize) != headerSize ) {
         SetErrorString("BamHttp::SendHeadRequest", m_socket->GetErrorString());
         return false;
@@ -497,7 +497,7 @@ bool BamHttp::SendHeadRequest(void) {
 
     // send request
     const string requestHeader = m_request->ToString();
-    const size_t headerSize    = requestHeader.size();
+    const int64_t headerSize   = requestHeader.size();
     if ( WriteToSocket(requestHeader.c_str(), headerSize) != headerSize ) {
         SetErrorString("BamHttp::SendHeadRequest", m_socket->GetErrorString());
         return false;

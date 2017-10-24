@@ -17,7 +17,6 @@ using namespace BamTools::Internal;
 #include <cstdlib>
 #include <sstream>
 #include <vector>
-using namespace std;
 
 namespace BamTools {
 namespace Internal {
@@ -27,21 +26,21 @@ namespace Internal {
 // -----------
 
 static const uint16_t FTP_PORT          = 21;
-static const string   FTP_PREFIX        = "ftp://";
+static const std::string   FTP_PREFIX   = "ftp://";
 static const size_t   FTP_PREFIX_LENGTH = 6;
-static const string   FTP_NEWLINE       = "\r\n";
+static const std::string   FTP_NEWLINE  = "\r\n";
 
-static const string DEFAULT_USER = "anonymous";
-static const string DEFAULT_PASS = "anonymous@";
+static const std::string DEFAULT_USER = "anonymous";
+static const std::string DEFAULT_PASS = "anonymous@";
 
-static const string ABOR_CMD = "ABOR";
-static const string USER_CMD = "USER";
-static const string PASS_CMD = "PASS";
-static const string PASV_CMD = "PASV";
-static const string REIN_CMD = "REIN";
-static const string REST_CMD = "REST";
-static const string RETR_CMD = "RETR";
-static const string TYPE_CMD = "TYPE";
+static const std::string ABOR_CMD = "ABOR";
+static const std::string USER_CMD = "USER";
+static const std::string PASS_CMD = "PASS";
+static const std::string PASV_CMD = "PASV";
+static const std::string REIN_CMD = "REIN";
+static const std::string REST_CMD = "REST";
+static const std::string RETR_CMD = "RETR";
+static const std::string TYPE_CMD = "TYPE";
 
 static const char CMD_SEPARATOR  = ' ';
 static const char HOST_SEPARATOR = '/';
@@ -58,25 +57,25 @@ static const char PASV_REPLY_SUFFIX    = ')';
 // -----------------
 
 static inline
-vector<string> split(const string& source, const char delim) {
+std::vector<std::string> split(const std::string& source, const char delim) {
 
-    stringstream ss(source);
-    string field;
-    vector<string> fields;
+    std::stringstream ss(source);
+    std::string field;
+    std::vector<std::string> fields;
 
-    while ( getline(ss, field, delim) )
+    while ( std::getline(ss, field, delim) )
         fields.push_back(field);
     return fields;
 }
 
 static inline
-bool startsWith(const string& source, const string& pattern) {
+bool startsWith(const std::string& source, const std::string& pattern) {
     return ( source.find(pattern) == 0 );
 }
 
 static inline
-string toLower(const string& s) {
-    string out;
+std::string toLower(const std::string& s) {
+    std::string out;
     const size_t sSize = s.size();
     out.resize(sSize);
     for ( size_t i = 0; i < sSize; ++i )
@@ -91,7 +90,7 @@ string toLower(const string& s) {
 // BamFtp implementation
 // -----------------------
 
-BamFtp::BamFtp(const string& url)
+BamFtp::BamFtp(const std::string& url)
     : IBamIODevice()
     , m_commandSocket(new TcpSocket)
     , m_dataSocket(new TcpSocket)
@@ -147,21 +146,21 @@ bool BamFtp::ConnectCommandSocket(void) {
     }
 
     // send USER command
-    string userCommand = USER_CMD + CMD_SEPARATOR + m_username + FTP_NEWLINE;
+    std::string userCommand = USER_CMD + CMD_SEPARATOR + m_username + FTP_NEWLINE;
     if ( !SendCommand(userCommand, true) ) {
         Close();
         return false;
     }
 
     // send PASS command
-    string passwordCommand = PASS_CMD + CMD_SEPARATOR + m_password + FTP_NEWLINE;
+    std::string passwordCommand = PASS_CMD + CMD_SEPARATOR + m_password + FTP_NEWLINE;
     if ( !SendCommand(passwordCommand, true) ) {
         Close();
         return false;
     }
 
     // send TYPE command
-    string typeCommand = TYPE_CMD + CMD_SEPARATOR + 'I' + FTP_NEWLINE;
+    std::string typeCommand = TYPE_CMD + CMD_SEPARATOR + 'I' + FTP_NEWLINE;
     if ( !SendCommand(typeCommand, true) ) {
         Close();
         return false;
@@ -184,7 +183,7 @@ bool BamFtp::ConnectDataSocket(void) {
         m_dataSocket->DisconnectFromHost();
 
     // send passive connection command
-    const string passiveCommand = PASV_CMD + FTP_NEWLINE;
+    const std::string passiveCommand = PASV_CMD + FTP_NEWLINE;
     if ( !SendCommand(passiveCommand, true) ) {
         // TODO: set error string
         return false;
@@ -199,9 +198,9 @@ bool BamFtp::ConnectDataSocket(void) {
     // set up restart command (tell server where to start fetching bytes from)
     if ( m_filePosition >= 0 ) {
 
-        stringstream fpStream("");
+        std::stringstream fpStream;
         fpStream << m_filePosition;
-        string restartCommand = REST_CMD + CMD_SEPARATOR + fpStream.str() + FTP_NEWLINE;
+        std::string restartCommand = REST_CMD + CMD_SEPARATOR + fpStream.str() + FTP_NEWLINE;
         if ( !SendCommand(restartCommand, true) ) {
             // TODO: set error string
             return false;
@@ -209,7 +208,7 @@ bool BamFtp::ConnectDataSocket(void) {
     }
 
     // main file retrieval request
-    string retrieveCommand = RETR_CMD + CMD_SEPARATOR + m_filename + FTP_NEWLINE;
+    std::string retrieveCommand = RETR_CMD + CMD_SEPARATOR + m_filename + FTP_NEWLINE;
     if ( !SendCommand(retrieveCommand, false) ) {
         // TODO: set error string
         return false;
@@ -272,15 +271,15 @@ bool BamFtp::ParsePassiveResponse(void) {
     // find parentheses
     const size_t leftParenFound  = m_response.find(PASV_REPLY_PREFIX);
     const size_t rightParenFound = m_response.find(PASV_REPLY_SUFFIX);
-    if ( leftParenFound == string::npos || rightParenFound == string::npos )
+    if ( leftParenFound == std::string::npos || rightParenFound == std::string::npos )
         return false;
 
     // grab everything between ( should be "h1,h2,h3,h4,p1,p2" )
-    string::const_iterator responseBegin = m_response.begin();
-    const string hostAndPort(responseBegin+leftParenFound+1, responseBegin+rightParenFound);
+    std::string::const_iterator responseBegin = m_response.begin();
+    const std::string hostAndPort(responseBegin+leftParenFound+1, responseBegin+rightParenFound);
 
     // parse into string fields
-    vector<string> fields = split(hostAndPort, PASV_REPLY_SEPARATOR);
+    std::vector<std::string> fields = split(hostAndPort, PASV_REPLY_SEPARATOR);
     if ( fields.size() != 6 )
         return false;
 
@@ -291,39 +290,39 @@ bool BamFtp::ParsePassiveResponse(void) {
                      fields[3];
 
     // fetch passive connection port
-    const uint8_t portUpper = static_cast<uint8_t>(atoi(fields[4].c_str()));
-    const uint8_t portLower = static_cast<uint8_t>(atoi(fields[5].c_str()));
+    const uint8_t portUpper = static_cast<uint8_t>(std::atoi(fields[4].c_str()));
+    const uint8_t portLower = static_cast<uint8_t>(std::atoi(fields[5].c_str()));
     m_dataPort = ( portUpper<<8 ) + portLower;
 
     // return success
     return true;
 }
 
-void BamFtp::ParseUrl(const string& url) {
+void BamFtp::ParseUrl(const std::string& url) {
 
     // clear flag to start
     m_isUrlParsed = false;
 
     // make sure url starts with "ftp://", case-insensitive
-    string tempUrl(url);
+    std::string tempUrl(url);
     toLower(tempUrl);
     const size_t prefixFound = tempUrl.find(FTP_PREFIX);
-    if ( prefixFound == string::npos )
+    if ( prefixFound == std::string::npos )
         return;
 
     // find end of host name portion (first '/' hit after the prefix)
     const size_t firstSlashFound = tempUrl.find(HOST_SEPARATOR, FTP_PREFIX_LENGTH);
-    if ( firstSlashFound == string::npos ) {
+    if ( firstSlashFound == std::string::npos ) {
         ;  // no slash found... no filename given along with host?
     }
 
     // fetch hostname
-    string hostname = tempUrl.substr(FTP_PREFIX_LENGTH, (firstSlashFound - FTP_PREFIX_LENGTH));
+    std::string hostname = tempUrl.substr(FTP_PREFIX_LENGTH, (firstSlashFound - FTP_PREFIX_LENGTH));
     m_hostname = hostname;
     m_port = FTP_PORT;
 
     // store remainder of URL as filename (must be non-empty)
-    string filename = tempUrl.substr(firstSlashFound);
+    std::string filename = tempUrl.substr(firstSlashFound);
     if ( filename.empty() )
         return;
     m_filename = filename;
@@ -389,7 +388,7 @@ bool BamFtp::ReceiveReply(void) {
     bool headerEnd = false;
     while ( !headerEnd ) {
 
-        const string headerLine = m_commandSocket->ReadLine();
+        const std::string headerLine = m_commandSocket->ReadLine();
         m_response += headerLine;
 
         // if line is of form 'xyz ', quit reading lines
@@ -439,7 +438,7 @@ bool BamFtp::Seek(const int64_t& position, const int origin) {
     return true;
 }
 
-bool BamFtp::SendCommand(const string& command, bool waitForReply) {
+bool BamFtp::SendCommand(const std::string& command, bool waitForReply) {
 
     // failure if not connected
     if ( !m_commandSocket->IsConnected() ) {

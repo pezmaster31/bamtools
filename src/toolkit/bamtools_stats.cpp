@@ -21,7 +21,6 @@ using namespace BamTools;
 #include <numeric>
 #include <string>
 #include <vector>
-using namespace std;
 
 // ---------------------------------------------
 // StatsSettings implementation
@@ -34,8 +33,8 @@ struct StatsTool::StatsSettings {
     bool IsShowingInsertSizeSummary;
 
     // filenames
-    vector<string> InputFiles;
-    string InputFilelist;
+    std::vector<std::string> InputFiles;
+    std::string InputFilelist;
     
     // constructor
     StatsSettings(void)
@@ -61,7 +60,7 @@ struct StatsTool::StatsToolPrivate {
         
     // internal methods
     private:
-        bool CalculateMedian(vector<int>& data, double& median); 
+        bool CalculateMedian(std::vector<int>& data, double& median); 
         void PrintStats(void);
         void ProcessAlignment(const BamAlignment& al);
         
@@ -80,7 +79,7 @@ struct StatsTool::StatsToolPrivate {
         unsigned int m_numSingletons;
         unsigned int m_numFailedQC;
         unsigned int m_numDuplicates;
-        vector<int> m_insertSizes;
+        std::vector<int> m_insertSizes;
 };
 
 StatsTool::StatsToolPrivate::StatsToolPrivate(StatsTool::StatsSettings* settings)
@@ -103,7 +102,7 @@ StatsTool::StatsToolPrivate::StatsToolPrivate(StatsTool::StatsSettings* settings
 
 // median is of type double because in the case of even number of data elements,
 // we need to return the average of middle 2 elements
-bool StatsTool::StatsToolPrivate::CalculateMedian(vector<int>& data, double& median) { 
+bool StatsTool::StatsToolPrivate::CalculateMedian(std::vector<int>& data, double& median) { 
   
     // skip if data empty
     if ( data.empty() )
@@ -111,7 +110,7 @@ bool StatsTool::StatsToolPrivate::CalculateMedian(vector<int>& data, double& med
 
     // find middle element
     size_t middleIndex = data.size() / 2;
-    vector<int>::iterator target = data.begin() + middleIndex;
+    std::vector<int>::iterator target = data.begin() + middleIndex;
     nth_element(data.begin(), target, data.end());
     
     // odd number of elements
@@ -123,7 +122,7 @@ bool StatsTool::StatsToolPrivate::CalculateMedian(vector<int>& data, double& med
     // even number of elements
     else {
         double rightTarget = (double)(*target);
-        vector<int>::iterator leftTarget = target - 1;
+        std::vector<int>::iterator leftTarget = target - 1;
         nth_element(data.begin(), leftTarget, data.end());
         median = (double)((rightTarget+*leftTarget)/2.0);
         return true;
@@ -133,25 +132,25 @@ bool StatsTool::StatsToolPrivate::CalculateMedian(vector<int>& data, double& med
 // print BAM file alignment stats
 void StatsTool::StatsToolPrivate::PrintStats(void) {
   
-    cout << endl;
-    cout << "**********************************************" << endl;
-    cout << "Stats for BAM file(s): " << endl;
-    cout << "**********************************************" << endl;
-    cout << endl;
-    cout << "Total reads:       " << m_numReads << endl;
-    cout << "Mapped reads:      " << m_numMapped << "\t(" << ((float)m_numMapped/m_numReads)*100 << "%)" << endl;
-    cout << "Forward strand:    " << m_numForwardStrand << "\t(" << ((float)m_numForwardStrand/m_numReads)*100 << "%)" << endl;
-    cout << "Reverse strand:    " << m_numReverseStrand << "\t(" << ((float)m_numReverseStrand/m_numReads)*100 << "%)" << endl;
-    cout << "Failed QC:         " << m_numFailedQC << "\t(" << ((float)m_numFailedQC/m_numReads)*100 << "%)" << endl;
-    cout << "Duplicates:        " << m_numDuplicates << "\t(" << ((float)m_numDuplicates/m_numReads)*100 << "%)" << endl;
-    cout << "Paired-end reads:  " << m_numPaired << "\t(" << ((float)m_numPaired/m_numReads)*100 << "%)" << endl;
+    std::cout << std::endl;
+    std::cout << "**********************************************" << std::endl;
+    std::cout << "Stats for BAM file(s): " << std::endl;
+    std::cout << "**********************************************" << std::endl;
+    std::cout << std::endl;
+    std::cout << "Total reads:       " << m_numReads << std::endl;
+    std::cout << "Mapped reads:      " << m_numMapped << "\t(" << ((float)m_numMapped/m_numReads)*100 << "%)" << std::endl;
+    std::cout << "Forward strand:    " << m_numForwardStrand << "\t(" << ((float)m_numForwardStrand/m_numReads)*100 << "%)" << std::endl;
+    std::cout << "Reverse strand:    " << m_numReverseStrand << "\t(" << ((float)m_numReverseStrand/m_numReads)*100 << "%)" << std::endl;
+    std::cout << "Failed QC:         " << m_numFailedQC << "\t(" << ((float)m_numFailedQC/m_numReads)*100 << "%)" << std::endl;
+    std::cout << "Duplicates:        " << m_numDuplicates << "\t(" << ((float)m_numDuplicates/m_numReads)*100 << "%)" << std::endl;
+    std::cout << "Paired-end reads:  " << m_numPaired << "\t(" << ((float)m_numPaired/m_numReads)*100 << "%)" << std::endl;
     
     if ( m_numPaired != 0 ) {
-        cout << "'Proper-pairs':    " << m_numProperPair << "\t(" << ((float)m_numProperPair/m_numPaired)*100 << "%)" << endl;
-        cout << "Both pairs mapped: " << m_numBothMatesMapped << "\t(" << ((float)m_numBothMatesMapped/m_numPaired)*100 << "%)" << endl;
-        cout << "Read 1:            " << m_numFirstMate << endl;
-        cout << "Read 2:            " << m_numSecondMate << endl;
-        cout << "Singletons:        " << m_numSingletons << "\t(" << ((float)m_numSingletons/m_numPaired)*100 << "%)" << endl;
+        std::cout << "'Proper-pairs':    " << m_numProperPair << "\t(" << ((float)m_numProperPair/m_numPaired)*100 << "%)" << std::endl;
+        std::cout << "Both pairs mapped: " << m_numBothMatesMapped << "\t(" << ((float)m_numBothMatesMapped/m_numPaired)*100 << "%)" << std::endl;
+        std::cout << "Read 1:            " << m_numFirstMate << std::endl;
+        std::cout << "Read 2:            " << m_numSecondMate << std::endl;
+        std::cout << "Singletons:        " << m_numSingletons << "\t(" << ((float)m_numSingletons/m_numPaired)*100 << "%)" << std::endl;
     }
     
     if ( m_settings->IsShowingInsertSizeSummary ) {
@@ -159,14 +158,14 @@ void StatsTool::StatsToolPrivate::PrintStats(void) {
         double avgInsertSize = 0.0;
         if ( !m_insertSizes.empty() ) {
             avgInsertSize = ( accumulate(m_insertSizes.begin(), m_insertSizes.end(), 0.0) / (double)m_insertSizes.size() );
-            cout << "Average insert size (absolute value): " << avgInsertSize << endl;
+            std::cout << "Average insert size (absolute value): " << avgInsertSize << std::endl;
         }
         
         double medianInsertSize = 0.0;
         if ( CalculateMedian(m_insertSizes, medianInsertSize) )
-            cout << "Median insert size (absolute value): " << medianInsertSize << endl;
+            std::cout << "Median insert size (absolute value): " << medianInsertSize << std::endl;
     }
-    cout << endl;
+    std::cout << std::endl;
 }
 
 // use current input alignment to update BAM file alignment stats
@@ -227,21 +226,21 @@ bool StatsTool::StatsToolPrivate::Run() {
     // add files in the filelist to the input file list
     if ( m_settings->HasInputFilelist ) {
 
-        ifstream filelist(m_settings->InputFilelist.c_str(), ios::in);
+        std::ifstream filelist(m_settings->InputFilelist.c_str(), std::ios::in);
         if ( !filelist.is_open() ) {
-            cerr << "bamtools stats ERROR: could not open input BAM file list... Aborting." << endl;
+            std::cerr << "bamtools stats ERROR: could not open input BAM file list... Aborting." << std::endl;
             return false;
         }
 
-        string line;
-        while ( getline(filelist, line) )
+        std::string line;
+        while ( std::getline(filelist, line) )
             m_settings->InputFiles.push_back(line);
     }
 
     // open the BAM files
     BamMultiReader reader;
     if ( !reader.Open(m_settings->InputFiles) ) {
-        cerr << "bamtools stats ERROR: could not open input BAM file(s)... Aborting." << endl;
+        std::cerr << "bamtools stats ERROR: could not open input BAM file(s)... Aborting." << std::endl;
         reader.Close();
         return false;
     }

@@ -11,7 +11,6 @@
 using namespace BamTools;
 
 #include <iostream>
-using namespace std;
 
 // ---------------------------------------------
 // PileupEnginePrivate implementation
@@ -21,11 +20,11 @@ struct PileupEngine::PileupEnginePrivate {
     // data members
     int CurrentId;
     int CurrentPosition;
-    vector<BamAlignment> CurrentAlignments;
+    std::vector<BamAlignment> CurrentAlignments;
     PileupPosition CurrentPileupData;
     
     bool IsFirstAlignment;
-    vector<PileupVisitor*> Visitors;
+    std::vector<PileupVisitor*> Visitors;
   
     // ctor & dtor
     PileupEnginePrivate(void)
@@ -74,7 +73,7 @@ bool PileupEngine::PileupEnginePrivate::AddAlignment(const BamAlignment& al) {
         
         // if less than CurrentPosition - sorting error => ABORT
         else if ( al.Position < CurrentPosition ) {
-            cerr << "Pileup::Run() : Data not sorted correctly!" << endl;
+            std::cerr << "Pileup::Run() : Data not sorted correctly!" << std::endl;
             return false;
         }
         
@@ -90,7 +89,7 @@ bool PileupEngine::PileupEnginePrivate::AddAlignment(const BamAlignment& al) {
 
     // if reference ID less than CurrentId - sorting error => ABORT
     else if ( al.RefID < CurrentId ) {
-        cerr << "Pileup::Run() : Data not sorted correctly!" << endl;
+        std::cerr << "Pileup::Run() : Data not sorted correctly!" << std::endl;
         return false;
     }
 
@@ -119,8 +118,8 @@ void PileupEngine::PileupEnginePrivate::ApplyVisitors(void) {
     CreatePileupData();
   
     // apply all visitors to current alignment set
-    vector<PileupVisitor*>::const_iterator visitorIter = Visitors.begin();
-    vector<PileupVisitor*>::const_iterator visitorEnd  = Visitors.end();
+    std::vector<PileupVisitor*>::const_iterator visitorIter = Visitors.begin();
+    std::vector<PileupVisitor*>::const_iterator visitorEnd  = Visitors.end();
     for ( ; visitorIter != visitorEnd; ++visitorIter ) 
         (*visitorIter)->Visit(CurrentPileupData);
 }
@@ -170,8 +169,8 @@ void PileupEngine::PileupEnginePrivate::CreatePileupData(void) {
     CurrentPileupData.PileupAlignments.clear();
     
     // parse CIGAR data in remaining alignments 
-    vector<BamAlignment>::const_iterator alIter = CurrentAlignments.begin();
-    vector<BamAlignment>::const_iterator alEnd  = CurrentAlignments.end(); 
+    std::vector<BamAlignment>::const_iterator alIter = CurrentAlignments.begin();
+    std::vector<BamAlignment>::const_iterator alEnd  = CurrentAlignments.end(); 
     for ( ; alIter != alEnd; ++alIter )
         ParseAlignmentCigar( (*alIter) );
 }

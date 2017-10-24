@@ -13,7 +13,6 @@ using namespace BamTools;
 #include <algorithm>
 #include <iostream>
 #include <cstdlib>
-using namespace std;
 
 /*! \class BamTools::SamProgramChain
     \brief Sorted container "chain" of SamProgram records.
@@ -79,8 +78,8 @@ void SamProgramChain::Add(SamProgram& program) {
     \sa Add()
 */
 void SamProgramChain::Add(std::vector<SamProgram>& programs) {
-    vector<SamProgram>::iterator pgIter = programs.begin();
-    vector<SamProgram>::iterator pgEnd  = programs.end();
+    std::vector<SamProgram>::iterator pgIter = programs.begin();
+    std::vector<SamProgram>::iterator pgEnd  = programs.end();
     for ( ; pgIter != pgEnd; ++pgIter )
         Add(*pgIter);
 }
@@ -189,8 +188,8 @@ SamProgram& SamProgramChain::First(void) {
     }
 
     // otherwise error
-    cerr << "SamProgramChain::First: could not find any record without a PP tag" << endl;
-    exit(1);
+    std::cerr << "SamProgramChain::First: could not find any record without a PP tag" << std::endl;
+    std::exit(EXIT_FAILURE);
 }
 
 /*! \fn const SamProgram& SamProgramChain::First(void) const
@@ -216,8 +215,8 @@ const SamProgram& SamProgramChain::First(void) const {
     }
 
     // otherwise error
-    cerr << "SamProgramChain::First: could not find any record without a PP tag" << endl;
-    exit(1);
+    std::cerr << "SamProgramChain::First: could not find any record without a PP tag" << std::endl;
+    std::exit(EXIT_FAILURE);
 }
 
 /*! \fn int SamProgramChain::IndexOf(const std::string& programId) const
@@ -265,8 +264,8 @@ SamProgram& SamProgramChain::Last(void) {
     }
 
     // otherwise error
-    cerr << "SamProgramChain::Last: could not determine last record" << endl;
-    exit(1);
+    std::cerr << "SamProgramChain::Last: could not determine last record" << std::endl;
+    std::exit(EXIT_FAILURE);
 }
 
 /*! \fn const SamProgram& SamProgramChain::Last(void) const
@@ -291,8 +290,8 @@ const SamProgram& SamProgramChain::Last(void) const {
     }
 
     // otherwise error
-    cerr << "SamProgramChain::Last: could not determine last record" << endl;
-    exit(1);
+    std::cerr << "SamProgramChain::Last: could not determine last record" << std::endl;
+    std::exit(EXIT_FAILURE);
 }
 
 /*! \fn const std::string SamProgramChain::NextIdFor(const std::string& programId) const
@@ -317,7 +316,7 @@ const std::string SamProgramChain::NextIdFor(const std::string& programId) const
     }
 
     // none found
-    return string();
+    return std::string();
 }
 
 /*! \fn int SamProgramChain::Size(void) const
@@ -345,8 +344,8 @@ SamProgram& SamProgramChain::operator[](const std::string& programId) {
 
     // if record not found
     if ( index == (int)m_data.size() ) {
-        cerr << "SamProgramChain::operator[] - unknown programId: " << programId << endl;
-        exit(1);
+        std::cerr << "SamProgramChain::operator[] - unknown programId: " << programId << std::endl;
+        std::exit(EXIT_FAILURE);
     }
 
     // otherwise return program record at index

@@ -16,15 +16,14 @@ using namespace BamTools::Internal;
 #include <iostream>
 #include <sstream>
 #include <vector>
-using namespace std;
 
 // ------------------------
 // static utility methods
 // ------------------------
 
 static inline
-const string FormatTag(const string& tag, const string& value) {
-    return string(Constants::SAM_TAB + tag + Constants::SAM_COLON + value);
+const std::string FormatTag(const std::string& tag, const std::string& value) {
+    return std::string(Constants::SAM_TAB + tag + Constants::SAM_COLON + value);
 }
 
 // ---------------------------------
@@ -37,10 +36,10 @@ SamFormatPrinter::SamFormatPrinter(const SamHeader& header)
 
 SamFormatPrinter::~SamFormatPrinter(void) { }
 
-const string SamFormatPrinter::ToString(void) const {
+const std::string SamFormatPrinter::ToString(void) const {
 
     // clear out stream
-    stringstream out("");
+    std::stringstream out;
 
     // generate formatted header text
     PrintHD(out);
@@ -78,7 +77,7 @@ void SamFormatPrinter::PrintHD(std::stringstream& out) const {
             }
         }
         // newline
-        out << endl;
+        out << std::endl;
     }
 }
 
@@ -120,7 +119,7 @@ void SamFormatPrinter::PrintSQ(std::stringstream& out) const {
         }
 
         // newline
-        out << endl;
+        out << std::endl;
     }
 }
 
@@ -189,7 +188,7 @@ void SamFormatPrinter::PrintRG(std::stringstream& out) const {
         }
 
         // newline
-        out << endl;
+        out << std::endl;
     }
 }
 
@@ -230,21 +229,21 @@ void SamFormatPrinter::PrintPG(std::stringstream& out) const {
         }
 
         // newline
-        out << endl;
+        out << std::endl;
     }
 }
 
 void SamFormatPrinter::PrintCO(std::stringstream& out) const {
 
     // iterate over comments
-    vector<string>::const_iterator commentIter = m_header.Comments.begin();
-    vector<string>::const_iterator commentEnd  = m_header.Comments.end();
+    std::vector<std::string>::const_iterator commentIter = m_header.Comments.begin();
+    std::vector<std::string>::const_iterator commentEnd  = m_header.Comments.end();
     for ( ; commentIter != commentEnd; ++commentIter ) {
 
         // @CO <Comment>
         out << Constants::SAM_CO_BEGIN_TOKEN
             << Constants::SAM_TAB
             << (*commentIter)
-            << endl;
+            << std::endl;
     }
 }

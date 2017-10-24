@@ -20,7 +20,6 @@ using namespace BamTools::Internal;
 #include <iostream>
 #include <iterator>
 #include <sstream>
-using namespace std;
 
 // ctor
 BamMultiReaderPrivate::BamMultiReaderPrivate(void)
@@ -42,45 +41,45 @@ bool BamMultiReaderPrivate::Close(void) {
     if ( CloseFiles(Filenames()) )
         return true;
     else {
-        const string currentError = m_errorString;
-        const string message = string("error encountered while closing all files: \n\t") + currentError;
+        const std::string currentError = m_errorString;
+        const std::string message = std::string("error encountered while closing all files: \n\t") + currentError;
         SetErrorString("BamMultiReader::Close", message);
         return false;
     }
 }
 
 // close requested BAM file
-bool BamMultiReaderPrivate::CloseFile(const string& filename) {
+bool BamMultiReaderPrivate::CloseFile(const std::string& filename) {
 
     m_errorString.clear();
 
-    vector<string> filenames(1, filename);
+    std::vector<std::string> filenames(1, filename);
     if ( CloseFiles(filenames) )
         return true;
     else {
-        const string currentError = m_errorString;
-        const string message = string("error while closing file: ") + filename + "\n" + currentError;
+        const std::string currentError = m_errorString;
+        const std::string message = std::string("error while closing file: ") + filename + "\n" + currentError;
         SetErrorString("BamMultiReader::CloseFile", message);
         return false;
     }
 }
 
 // close requested BAM files
-bool BamMultiReaderPrivate::CloseFiles(const vector<string>& filenames) {
+bool BamMultiReaderPrivate::CloseFiles(const std::vector<std::string>& filenames) {
 
     bool errorsEncountered = false;
     m_errorString.clear();
 
     // iterate over filenames
-    vector<string>::const_iterator filesIter = filenames.begin();
-    vector<string>::const_iterator filesEnd  = filenames.end();
+    std::vector<std::string>::const_iterator filesIter = filenames.begin();
+    std::vector<std::string>::const_iterator filesEnd  = filenames.end();
     for ( ; filesIter != filesEnd; ++filesIter ) {
-        const string& filename = (*filesIter);
+        const std::string& filename = (*filesIter);
         if ( filename.empty() ) continue;
 
         // iterate over readers
-        vector<MergeItem>::iterator readerIter = m_readers.begin();
-        vector<MergeItem>::iterator readerEnd  = m_readers.end();
+        std::vector<MergeItem>::iterator readerIter = m_readers.begin();
+        std::vector<MergeItem>::iterator readerEnd  = m_readers.end();
         for ( ; readerIter != readerEnd; ++readerIter ) {
             MergeItem& item = (*readerIter);
             BamReader* reader = item.Reader;
@@ -143,8 +142,8 @@ bool BamMultiReaderPrivate::CreateIndexes(const BamIndex::IndexType& type) {
     m_errorString.clear();
 
     // iterate over readers
-    vector<MergeItem>::iterator itemIter = m_readers.begin();
-    vector<MergeItem>::iterator itemEnd  = m_readers.end();
+    std::vector<MergeItem>::iterator itemIter = m_readers.begin();
+    std::vector<MergeItem>::iterator itemEnd  = m_readers.end();
     for ( ; itemIter != itemEnd; ++itemIter ) {
         MergeItem& item = (*itemIter);
         BamReader* reader = item.Reader;
@@ -163,8 +162,8 @@ bool BamMultiReaderPrivate::CreateIndexes(const BamIndex::IndexType& type) {
 
     // check for errors encountered before returning success/fail
     if ( errorsEncountered ) {
-        const string currentError = m_errorString;
-        const string message = string("error while creating index files: ") + "\n" + currentError;
+        const std::string currentError = m_errorString;
+        const std::string message = std::string("error while creating index files: \n") + currentError;
         SetErrorString("BamMultiReader::CreateIndexes", message);
         return false;
     } else
@@ -213,22 +212,22 @@ IMultiMerger* BamMultiReaderPrivate::CreateAlignmentCache(void) {
     }
 }
 
-const vector<string> BamMultiReaderPrivate::Filenames(void) const {
+const std::vector<std::string> BamMultiReaderPrivate::Filenames(void) const {
 
     // init filename container
-    vector<string> filenames;
+    std::vector<std::string> filenames;
     filenames.reserve( m_readers.size() );
 
     // iterate over readers
-    vector<MergeItem>::const_iterator itemIter = m_readers.begin();
-    vector<MergeItem>::const_iterator itemEnd  = m_readers.end();
+    std::vector<MergeItem>::const_iterator itemIter = m_readers.begin();
+    std::vector<MergeItem>::const_iterator itemEnd  = m_readers.end();
     for ( ; itemIter != itemEnd; ++itemIter ) {
         const MergeItem& item = (*itemIter);
         const BamReader* reader = item.Reader;
         if ( reader == 0 ) continue;
 
         // store filename if not empty
-        const string& filename = reader->GetFilename();
+        const std::string& filename = reader->GetFilename();
         if ( !filename.empty() )
             filenames.push_back(filename);
     }
@@ -237,17 +236,17 @@ const vector<string> BamMultiReaderPrivate::Filenames(void) const {
     return filenames;
 }
 
-string BamMultiReaderPrivate::GetErrorString(void) const {
+std::string BamMultiReaderPrivate::GetErrorString(void) const {
     return m_errorString;
 }
 
 SamHeader BamMultiReaderPrivate::GetHeader(void) const {
-    const string& text = GetHeaderText();
+    const std::string& text = GetHeaderText();
     return SamHeader(text);
 }
 
 // makes a virtual, unified header for all the bam files in the multireader
-string BamMultiReaderPrivate::GetHeaderText(void) const {
+std::string BamMultiReaderPrivate::GetHeaderText(void) const {
 
     // N.B. - right now, simply copies all header data from first BAM,
     //        and then appends RG's from other BAM files
@@ -255,12 +254,12 @@ string BamMultiReaderPrivate::GetHeaderText(void) const {
 
     // if no readers open
     const size_t numReaders = m_readers.size();
-    if ( numReaders == 0 ) return string();
+    if ( numReaders == 0 ) return std::string();
 
     // retrieve first reader's header
     const MergeItem& firstItem = m_readers.front();
     const BamReader* reader = firstItem.Reader;
-    if ( reader == 0 ) return string();
+    if ( reader == 0 ) return std::string();
     SamHeader mergedHeader = reader->GetHeader();
 
     // iterate over any remaining readers (skipping the first)
@@ -336,7 +335,7 @@ const RefVector BamMultiReaderPrivate::GetReferenceData(void) const {
 }
 
 // returns refID from reference name
-int BamMultiReaderPrivate::GetReferenceID(const string& refName) const {
+int BamMultiReaderPrivate::GetReferenceID(const std::string& refName) const {
 
     // handle empty multireader
     if ( m_readers.empty() ) return -1;
@@ -361,8 +360,8 @@ bool BamMultiReaderPrivate::HasIndexes(void) const {
     bool result = true;
 
     // iterate over readers
-    vector<MergeItem>::const_iterator readerIter = m_readers.begin();
-    vector<MergeItem>::const_iterator readerEnd  = m_readers.end();
+    std::vector<MergeItem>::const_iterator readerIter = m_readers.begin();
+    std::vector<MergeItem>::const_iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
         const MergeItem& item = (*readerIter);
         const BamReader* reader = item.Reader;
@@ -379,8 +378,8 @@ bool BamMultiReaderPrivate::HasIndexes(void) const {
 bool BamMultiReaderPrivate::HasOpenReaders(void) {
 
     // iterate over readers
-    vector<MergeItem>::const_iterator readerIter = m_readers.begin();
-    vector<MergeItem>::const_iterator readerEnd  = m_readers.end();
+    std::vector<MergeItem>::const_iterator readerIter = m_readers.begin();
+    std::vector<MergeItem>::const_iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
         const MergeItem& item = (*readerIter);
         const BamReader* reader = item.Reader;
@@ -403,8 +402,8 @@ bool BamMultiReaderPrivate::Jump(int refID, int position) {
     // UpdateAlignments(), and continue.
 
     // iterate over readers
-    vector<MergeItem>::iterator readerIter = m_readers.begin();
-    vector<MergeItem>::iterator readerEnd  = m_readers.end();
+    std::vector<MergeItem>::iterator readerIter = m_readers.begin();
+    std::vector<MergeItem>::iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
         MergeItem& item = (*readerIter);
         BamReader* reader = item.Reader;
@@ -425,8 +424,8 @@ bool BamMultiReaderPrivate::LocateIndexes(const BamIndex::IndexType& preferredTy
     m_errorString.clear();
 
     // iterate over readers
-    vector<MergeItem>::iterator readerIter = m_readers.begin();
-    vector<MergeItem>::iterator readerEnd  = m_readers.end();
+    std::vector<MergeItem>::iterator readerIter = m_readers.begin();
+    std::vector<MergeItem>::iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
         MergeItem& item = (*readerIter);
         BamReader* reader = item.Reader;
@@ -445,8 +444,8 @@ bool BamMultiReaderPrivate::LocateIndexes(const BamIndex::IndexType& preferredTy
 
     // check for errors encountered before returning success/fail
     if ( errorsEncountered ) {
-        const string currentError = m_errorString;
-        const string message = string("error while locating index files: ") + "\n" + currentError;
+        const std::string currentError = m_errorString;
+        const std::string message = std::string("error while locating index files: \n") + currentError;
         SetErrorString("BamMultiReader::LocatingIndexes", message);
         return false;
     } else
@@ -454,24 +453,24 @@ bool BamMultiReaderPrivate::LocateIndexes(const BamIndex::IndexType& preferredTy
 }
 
 // opens BAM files
-bool BamMultiReaderPrivate::Open(const vector<string>& filenames) {
+bool BamMultiReaderPrivate::Open(const std::vector<std::string>& filenames) {
 
     m_errorString.clear();
 
     // put all current readers back at beginning (refreshes alignment cache)
     if ( !Rewind() ) {
-        const string currentError = m_errorString;
-        const string message = string("unable to rewind existing readers: \n\t") + currentError;
+        const std::string currentError = m_errorString;
+        const std::string message = std::string("unable to rewind existing readers: \n\t") + currentError;
         SetErrorString("BamMultiReader::Open", message);
         return false;
     }
 
     // iterate over filenames
     bool errorsEncountered = false;
-    vector<string>::const_iterator filenameIter = filenames.begin();
-    vector<string>::const_iterator filenameEnd  = filenames.end();
+    std::vector<std::string>::const_iterator filenameIter = filenames.begin();
+    std::vector<std::string>::const_iterator filenameEnd  = filenames.end();
     for ( ; filenameIter != filenameEnd; ++filenameIter ) {
-        const string& filename = (*filenameIter);
+        const std::string& filename = (*filenameIter);
         if ( filename.empty() ) continue;
 
         // attempt to open BamReader
@@ -485,7 +484,7 @@ bool BamMultiReaderPrivate::Open(const vector<string>& filenames) {
         // otherwise store error & clean up invalid reader
         else {
             m_errorString.append(1, '\t');
-            m_errorString += string("unable to open file: ") + filename;
+            m_errorString += std::string("unable to open file: ") + filename;
             m_errorString.append(1, '\n');
             errorsEncountered = true;
 
@@ -496,16 +495,16 @@ bool BamMultiReaderPrivate::Open(const vector<string>& filenames) {
 
     // check for errors while opening
     if ( errorsEncountered ) {
-        const string currentError = m_errorString;
-        const string message = string("unable to open all files: \t\n") + currentError;
+        const std::string currentError = m_errorString;
+        const std::string message = std::string("unable to open all files: \t\n") + currentError;
         SetErrorString("BamMultiReader::Open", message);
         return false;
     }
 
     // check for BAM file consistency
     if ( !ValidateReaders() ) {
-        const string currentError = m_errorString;
-        const string message = string("unable to open inconsistent files: \t\n") + currentError;
+        const std::string currentError = m_errorString;
+        const std::string message = std::string("unable to open inconsistent files: \t\n") + currentError;
         SetErrorString("BamMultiReader::Open", message);
         return false;
     }
@@ -515,18 +514,18 @@ bool BamMultiReaderPrivate::Open(const vector<string>& filenames) {
 }
 
 bool BamMultiReaderPrivate::OpenFile(const std::string& filename) {
-    vector<string> filenames(1, filename);
+    std::vector<std::string> filenames(1, filename);
     if ( Open(filenames) )
         return true;
     else {
-        const string currentError = m_errorString;
-        const string message = string("could not open file: ") + filename + "\n\t" + currentError;
+        const std::string currentError = m_errorString;
+        const std::string message = std::string("could not open file: ") + filename + "\n\t" + currentError;
         SetErrorString("BamMultiReader::OpenFile", message);
         return false;
     }
 }
 
-bool BamMultiReaderPrivate::OpenIndexes(const vector<string>& indexFilenames) {
+bool BamMultiReaderPrivate::OpenIndexes(const std::vector<std::string>& indexFilenames) {
 
     // TODO: This needs to be cleaner - should not assume same order.
     //       And either way, shouldn't start at first reader.  Should start at
@@ -534,7 +533,7 @@ bool BamMultiReaderPrivate::OpenIndexes(const vector<string>& indexFilenames) {
 
     // make sure same number of index filenames as readers
     if ( m_readers.size() != indexFilenames.size() ) {
-        const string message("size of index file list does not match current BAM file count");
+        const std::string message("size of index file list does not match current BAM file count");
         SetErrorString("BamMultiReader::OpenIndexes", message);
         return false;
     }
@@ -543,17 +542,17 @@ bool BamMultiReaderPrivate::OpenIndexes(const vector<string>& indexFilenames) {
     m_errorString.clear();
 
     // iterate over BamReaders
-    vector<string>::const_iterator indexFilenameIter = indexFilenames.begin();
-    vector<string>::const_iterator indexFilenameEnd  = indexFilenames.end();
-    vector<MergeItem>::iterator readerIter = m_readers.begin();
-    vector<MergeItem>::iterator readerEnd  = m_readers.end();
+    std::vector<std::string>::const_iterator indexFilenameIter = indexFilenames.begin();
+    std::vector<std::string>::const_iterator indexFilenameEnd  = indexFilenames.end();
+    std::vector<MergeItem>::iterator readerIter = m_readers.begin();
+    std::vector<MergeItem>::iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
         MergeItem& item = (*readerIter);
         BamReader* reader = item.Reader;
 
         // open index filename on reader
         if ( reader ) {
-            const string& indexFilename = (*indexFilenameIter);
+            const std::string& indexFilename = (*indexFilenameIter);
             if ( !reader->OpenIndex(indexFilename) ) {
                 m_errorString.append(1, '\t');
                 m_errorString += reader->GetErrorString();
@@ -569,8 +568,8 @@ bool BamMultiReaderPrivate::OpenIndexes(const vector<string>& indexFilenames) {
 
     // return success/fail
     if ( errorsEncountered ) {
-        const string currentError = m_errorString;
-        const string message = string("could not open all index files: \n\t") + currentError;
+        const std::string currentError = m_errorString;
+        const std::string message = std::string("could not open all index files: \n\t") + currentError;
         SetErrorString("BamMultiReader::OpenIndexes", message);
         return false;
     } else
@@ -613,8 +612,8 @@ bool BamMultiReaderPrivate::Rewind(void) {
 
     // attempt to rewind files
     if ( !RewindReaders() ) {
-        const string currentError = m_errorString;
-        const string message = string("could not rewind readers: \n\t") + currentError;
+        const std::string currentError = m_errorString;
+        const std::string message = std::string("could not rewind readers: \n\t") + currentError;
         SetErrorString("BamMultiReader::Rewind", message);
         return false;
     }
@@ -630,8 +629,8 @@ bool BamMultiReaderPrivate::RewindReaders(void) {
     bool errorsEncountered = false;
 
     // iterate over readers
-    vector<MergeItem>::iterator readerIter = m_readers.begin();
-    vector<MergeItem>::iterator readerEnd  = m_readers.end();
+    std::vector<MergeItem>::iterator readerIter = m_readers.begin();
+    std::vector<MergeItem>::iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
         MergeItem& item = (*readerIter);
         BamReader* reader = item.Reader;
@@ -668,7 +667,7 @@ bool BamMultiReaderPrivate::SetExplicitMergeOrder(BamMultiReader::MergeOrder ord
     m_mergeOrder = order;
 
     // remove any existing merger (storing any existing data sitting in the cache)
-    vector<MergeItem> currentCacheData;
+    std::vector<MergeItem> currentCacheData;
     if ( m_alignmentCache ) {        
         while ( !m_alignmentCache->IsEmpty() )
             currentCacheData.push_back( m_alignmentCache->TakeFirst() );
@@ -684,8 +683,8 @@ bool BamMultiReaderPrivate::SetExplicitMergeOrder(BamMultiReader::MergeOrder ord
     }
 
     // push current data onto new cache
-    vector<MergeItem>::const_iterator readerIter = currentCacheData.begin();
-    vector<MergeItem>::const_iterator readerEnd  = currentCacheData.end();
+    std::vector<MergeItem>::const_iterator readerIter = currentCacheData.begin();
+    std::vector<MergeItem>::const_iterator readerEnd  = currentCacheData.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
         const MergeItem& item = (*readerIter);
         m_alignmentCache->Add(item);
@@ -695,8 +694,8 @@ bool BamMultiReaderPrivate::SetExplicitMergeOrder(BamMultiReader::MergeOrder ord
     return true;
 }
 
-void BamMultiReaderPrivate::SetErrorString(const string& where, const string& what) const {
-    static const string SEPARATOR = ": ";
+void BamMultiReaderPrivate::SetErrorString(const std::string& where, const std::string& what) const {
+    static const std::string SEPARATOR(": ");
     m_errorString = where + SEPARATOR + what;
 }
 
@@ -708,8 +707,8 @@ bool BamMultiReaderPrivate::SetRegion(const BamRegion& region) {
     // UpdateAlignments(), and continue.
 
     // iterate over alignments
-    vector<MergeItem>::iterator readerIter = m_readers.begin();
-    vector<MergeItem>::iterator readerEnd  = m_readers.end();
+    std::vector<MergeItem>::iterator readerIter = m_readers.begin();
+    std::vector<MergeItem>::iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
         MergeItem& item = (*readerIter);
         BamReader* reader = item.Reader;
@@ -739,8 +738,8 @@ bool BamMultiReaderPrivate::UpdateAlignmentCache(void) {
     m_alignmentCache->Clear();
 
     // iterate over readers
-    vector<MergeItem>::iterator readerIter = m_readers.begin();
-    vector<MergeItem>::iterator readerEnd  = m_readers.end();
+    std::vector<MergeItem>::iterator readerIter = m_readers.begin();
+    std::vector<MergeItem>::iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
         MergeItem& item = (*readerIter);
         BamReader* reader = item.Reader;
@@ -774,7 +773,7 @@ bool BamMultiReaderPrivate::ValidateReaders(void) const {
 
     // retrieve first reader's header data
     const SamHeader& firstReaderHeader = firstReader->GetHeader();
-    const string& firstReaderSortOrder = firstReaderHeader.SortOrder;
+    const std::string& firstReaderSortOrder = firstReaderHeader.SortOrder;
 
     // retrieve first reader's reference data
     const RefVector& firstReaderRefData = firstReader->GetReferenceData();
@@ -782,8 +781,8 @@ bool BamMultiReaderPrivate::ValidateReaders(void) const {
     const int firstReaderRefSize = firstReaderRefData.size();
 
     // iterate over all readers
-    vector<MergeItem>::const_iterator readerIter = m_readers.begin();
-    vector<MergeItem>::const_iterator readerEnd  = m_readers.end();
+    std::vector<MergeItem>::const_iterator readerIter = m_readers.begin();
+    std::vector<MergeItem>::const_iterator readerEnd  = m_readers.end();
     for ( ; readerIter != readerEnd; ++readerIter ) {
         const MergeItem& item = (*readerIter);
         BamReader* reader = item.Reader;
@@ -791,11 +790,11 @@ bool BamMultiReaderPrivate::ValidateReaders(void) const {
 
         // get current reader's header data
         const SamHeader& currentReaderHeader = reader->GetHeader();
-        const string& currentReaderSortOrder = currentReaderHeader.SortOrder;
+        const std::string& currentReaderSortOrder = currentReaderHeader.SortOrder;
 
         // check compatible sort order
         if ( currentReaderSortOrder != firstReaderSortOrder ) {
-            const string message = string("mismatched sort order in ") + reader->GetFilename() +
+            const std::string message = std::string("mismatched sort order in ") + reader->GetFilename() +
                                    ", expected " + firstReaderSortOrder +
                                    ", but found " + currentReaderSortOrder;
             SetErrorString("BamMultiReader::ValidateReaders", message);
@@ -816,7 +815,7 @@ bool BamMultiReaderPrivate::ValidateReaders(void) const {
         if ( (currentReaderRefCount != firstReaderRefCount) ||
              (firstReaderRefSize    != currentReaderRefSize) )
         {
-            stringstream s("");
+            std::stringstream s;
             s << "mismatched reference count in " << reader->GetFilename()
               << ", expected " << firstReaderRefCount
               << ", but found " << currentReaderRefCount;
@@ -834,27 +833,27 @@ bool BamMultiReaderPrivate::ValidateReaders(void) const {
             if ( (firstRef.RefName   != currentRef.RefName) ||
                  (firstRef.RefLength != currentRef.RefLength) )
             {
-                stringstream s("");
+                std::stringstream s;
                 s << "mismatched references found in" << reader->GetFilename()
-                  << "expected: " << endl;
+                  << "expected: " << std::endl;
 
                 // print first reader's reference data
                 RefVector::const_iterator refIter = firstReaderRefData.begin();
                 RefVector::const_iterator refEnd  = firstReaderRefData.end();
                 for ( ; refIter != refEnd; ++refIter ) {
                     const RefData& entry = (*refIter);
-                    stringstream s("");
-                    s << entry.RefName << " " << endl;
+                    std::stringstream s;
+                    s << entry.RefName << " " << std::endl;
                 }
 
-                s << "but found: " << endl;
+                s << "but found: " << std::endl;
 
                 // print current reader's reference data
                 refIter = currentReaderRefData.begin();
                 refEnd  = currentReaderRefData.end();
                 for ( ; refIter != refEnd; ++refIter ) {
                     const RefData& entry = (*refIter);
-                    s << entry.RefName << " " << entry.RefLength << endl;
+                    s << entry.RefName << " " << entry.RefLength << std::endl;
                 }
 
                 SetErrorString("BamMultiReader::ValidateReaders", s.str());

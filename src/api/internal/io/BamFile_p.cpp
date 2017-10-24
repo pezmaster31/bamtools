@@ -13,9 +13,8 @@ using namespace BamTools::Internal;
 
 #include <cstdio>
 #include <iostream>
-using namespace std;
 
-BamFile::BamFile(const string& filename)
+BamFile::BamFile(const std::string& filename)
     : ILocalIODevice()
     , m_filename(filename)
 { }
@@ -52,8 +51,8 @@ bool BamFile::Open(const IBamIODevice::OpenMode mode) {
 
     // check that we obtained a valid FILE*
     if ( m_stream == 0 ) {
-        const string message_base = string("could not open file handle for ");
-        const string message = message_base + ( (m_filename.empty()) ? "empty filename" : m_filename );
+        const std::string message_base = std::string("could not open file handle for ");
+        const std::string message = message_base + ( (m_filename.empty()) ? "empty filename" : m_filename );
         SetErrorString("BamFile::Open", message);
         return false;
     }

@@ -10,7 +10,6 @@
 #include "api/SamSequence.h"
 #include <sstream>
 using namespace BamTools;
-using namespace std;
 
 /*! \struct BamTools::SamSequence
     \brief Represents a SAM sequence entry.
@@ -68,7 +67,7 @@ SamSequence::SamSequence(const std::string& name,
     , Species("")
     , URI("")
 {
-    stringstream s("");
+    std::stringstream s;
     s << length;
     Length = s.str();
 }

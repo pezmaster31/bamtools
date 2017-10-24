@@ -23,7 +23,6 @@ using namespace BamTools::Internal;
 #include <algorithm>
 #include <iostream>
 #include <sstream>
-using namespace std;
 
 // ---------------------------
 // BgzfStream implementation
@@ -210,13 +209,13 @@ void BgzfStream::FlushBlock(void) {
 
         // check for device error
         if ( numBytesWritten < 0 ) {
-            const string message = string("device error: ") + m_device->GetErrorString();
+            const std::string message = std::string("device error: ") + m_device->GetErrorString();
             throw BamException("BgzfStream::FlushBlock", message);
         }
 
         // check that we wrote expected numBytes
         if ( numBytesWritten != static_cast<int64_t>(blockLength) ) {
-            stringstream s("");
+            std::stringstream s;
             s << "expected to write " << blockLength
               << " bytes during flushing, but wrote " << numBytesWritten;
             throw BamException("BgzfStream::FlushBlock", s.str());
@@ -268,7 +267,7 @@ bool BgzfStream::IsOpen(void) const {
     return m_device->IsOpen();
 }
 
-void BgzfStream::Open(const string& filename, const IBamIODevice::OpenMode mode) {
+void BgzfStream::Open(const std::string& filename, const IBamIODevice::OpenMode mode) {
 
     // close current device if necessary
     Close();
@@ -280,8 +279,8 @@ void BgzfStream::Open(const string& filename, const IBamIODevice::OpenMode mode)
 
     // if device fails to open
     if ( !m_device->Open(mode) ) {
-        const string deviceError = m_device->GetErrorString();
-        const string message = string("could not open BGZF stream: \n\t") + deviceError;
+        const std::string deviceError = m_device->GetErrorString();
+        const std::string message = std::string("could not open BGZF stream: \n\t") + deviceError;
         throw BamException("BgzfStream::Open", message);
     }
 }
@@ -314,7 +313,7 @@ size_t BgzfStream::Read(char* data, const size_t dataLength) {
         }
 
         // copy data from uncompressed source buffer into data destination buffer
-        const size_t copyLength = min( (dataLength-numBytesRead), (size_t)bytesAvailable );
+        const size_t copyLength = std::min( (dataLength-numBytesRead), (size_t)bytesAvailable );
         memcpy(output, m_uncompressedBlock.Buffer + m_blockOffset, copyLength);
 
         // update counters
@@ -348,7 +347,7 @@ void BgzfStream::ReadBlock(void) {
 
     // check for device error
     if ( numBytesRead < 0 ) {
-        const string message = string("device error: ") + m_device->GetErrorString();
+        const std::string message = std::string("device error: ") + m_device->GetErrorString();
         throw BamException("BgzfStream::ReadBlock", message);
     }
 
@@ -376,7 +375,7 @@ void BgzfStream::ReadBlock(void) {
 
     // check for device error
     if ( numBytesRead < 0 ) {
-        const string message = string("device error: ") + m_device->GetErrorString();
+        const std::string message = std::string("device error: ") + m_device->GetErrorString();
         throw BamException("BgzfStream::ReadBlock", message);
     }
 
@@ -415,7 +414,7 @@ void BgzfStream::Seek(const int64_t& position) {
         m_blockOffset  = blockOffset;
     }
     else {
-        stringstream s("");
+        std::stringstream s;
         s << "unable to seek to position: " << position;
         throw BamException("BgzfStream::Seek", s.str());
     }
@@ -450,7 +449,7 @@ size_t BgzfStream::Write(const char* data, const size_t dataLength) {
     while ( numBytesWritten < dataLength ) {
 
         // copy data contents to uncompressed output buffer
-        unsigned int copyLength = min(blockLength - m_blockOffset, dataLength - numBytesWritten);
+        unsigned int copyLength = std::min(blockLength - m_blockOffset, dataLength - numBytesWritten);
         char* buffer = m_uncompressedBlock.Buffer;
         memcpy(buffer + m_blockOffset, input, copyLength);
 

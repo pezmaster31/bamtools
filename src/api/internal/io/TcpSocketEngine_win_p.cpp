@@ -15,7 +15,6 @@ using namespace BamTools::Internal;
 #include <cstring>
 #include <iostream>
 #include <sstream>
-using namespace std;
 
 // --------------------------------
 // TcpSocketEngine implementation
@@ -153,7 +152,7 @@ bool TcpSocketEngine::nativeCreateSocket(HostAddress::NetworkProtocol protocol) 
                 break;
             default:
                 m_socketError = TcpSocket::UnknownSocketError;
-                stringstream errStream("");
+                std::stringstream errStream;
                 errStream << "WSA ErrorCode: " << errorCode;
                 m_errorString = errStream.str();
                 break;

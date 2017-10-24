@@ -18,7 +18,6 @@ using namespace BamTools;
 #include <iostream>
 #include <string>
 #include <vector>
-using namespace std;
   
 // ---------------------------------------------
 // HeaderSettings implementation
@@ -30,8 +29,8 @@ struct HeaderTool::HeaderSettings {
     bool HasInputFilelist;
 
     // filenames
-    vector<string> InputFiles;
-    string InputFilelist;
+    std::vector<std::string> InputFiles;
+    std::string InputFilelist;
     
     // constructor
     HeaderSettings(void)
@@ -68,26 +67,26 @@ bool HeaderTool::HeaderToolPrivate::Run(void) {
     // add files in the filelist to the input file list
     if ( m_settings->HasInputFilelist ) {
 
-        ifstream filelist(m_settings->InputFilelist.c_str(), ios::in);
+        std::ifstream filelist(m_settings->InputFilelist.c_str(), std::ios::in);
         if ( !filelist.is_open() ) {
-            cerr << "bamtools header ERROR: could not open input BAM file list... Aborting." << endl;
+            std::cerr << "bamtools header ERROR: could not open input BAM file list... Aborting." << std::endl;
             return false;
         }
 
-        string line;
-        while ( getline(filelist, line) )
+        std::string line;
+        while ( std::getline(filelist, line) )
             m_settings->InputFiles.push_back(line);
     }
 
     // attemp to open BAM files
     BamMultiReader reader;
     if ( !reader.Open(m_settings->InputFiles) ) {
-        cerr << "bamtools header ERROR: could not open BAM file(s) for reading... Aborting." << endl;
+        std::cerr << "bamtools header ERROR: could not open BAM file(s) for reading... Aborting." << std::endl;
         return false;
     }
 
     // dump (merged) header contents to stdout
-    cout << reader.GetHeaderText() << endl;
+    std::cout << reader.GetHeaderText() << std::endl;
 
     // clean up & exit
     reader.Close();

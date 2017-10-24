@@ -19,7 +19,6 @@ using namespace BamTools::Internal;
 #include <cerrno>
 #include <ctime>
 #include <iostream>
-using namespace std;
 
 // ------------------------
 // static utility methods

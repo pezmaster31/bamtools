@@ -27,30 +27,29 @@
 #include <sstream>
 #include <string>
 using namespace BamTools;
-using namespace std;
 
 // bamtools subtool names
-static const string CONVERT  = "convert";
-static const string COUNT    = "count";
-static const string COVERAGE = "coverage";
-static const string FILTER   = "filter";
-static const string HEADER   = "header";
-static const string INDEX    = "index";
-static const string MERGE    = "merge";
-static const string RANDOM   = "random";
-static const string RESOLVE  = "resolve";
-static const string REVERT   = "revert";
-static const string SORT     = "sort";
-static const string SPLIT    = "split";
-static const string STATS    = "stats";
+static const std::string CONVERT  = "convert";
+static const std::string COUNT    = "count";
+static const std::string COVERAGE = "coverage";
+static const std::string FILTER   = "filter";
+static const std::string HEADER   = "header";
+static const std::string INDEX    = "index";
+static const std::string MERGE    = "merge";
+static const std::string RANDOM   = "random";
+static const std::string RESOLVE  = "resolve";
+static const std::string REVERT   = "revert";
+static const std::string SORT     = "sort";
+static const std::string SPLIT    = "split";
+static const std::string STATS    = "stats";
 
 // bamtools help/version constants
-static const string HELP          = "help";
-static const string LONG_HELP     = "--help";
-static const string SHORT_HELP    = "-h";
-static const string VERSION       = "version";
-static const string LONG_VERSION  = "--version";
-static const string SHORT_VERSION = "-v";
+static const std::string HELP          = "help";
+static const std::string LONG_HELP     = "--help";
+static const std::string SHORT_HELP    = "-h";
+static const std::string VERSION       = "version";
+static const std::string LONG_VERSION  = "--version";
+static const std::string SHORT_VERSION = "-v";
 
 // determine if string is a help constant
 static bool IsHelp(char* str) {
@@ -67,7 +66,7 @@ static bool IsVersion(char* str) {
 }
 
 // subtool factory method
-AbstractTool* CreateTool(const string& arg) {
+AbstractTool* CreateTool(const std::string& arg) {
   
     // determine tool type based on arg
     if ( arg == CONVERT )  return new ConvertTool;
@@ -102,43 +101,43 @@ int Help(int argc, char* argv[]) {
     }
 
     // print general BamTools help message
-    cerr << endl;
-    cerr << "usage: bamtools [--help] COMMAND [ARGS]" << endl;
-    cerr << endl;
-    cerr << "Available bamtools commands:" << endl;
-    cerr << "\tconvert         Converts between BAM and a number of other formats" << endl;
-    cerr << "\tcount           Prints number of alignments in BAM file(s)" << endl;
-    cerr << "\tcoverage        Prints coverage statistics from the input BAM file" << endl;    
-    cerr << "\tfilter          Filters BAM file(s) by user-specified criteria" << endl;
-    cerr << "\theader          Prints BAM header information" << endl;
-    cerr << "\tindex           Generates index for BAM file" << endl;
-    cerr << "\tmerge           Merge multiple BAM files into single file" << endl;
-    cerr << "\trandom          Select random alignments from existing BAM file(s), intended more as a testing tool." << endl;
-    cerr << "\tresolve         Resolves paired-end reads (marking the IsProperPair flag as needed)" << endl;
-    cerr << "\trevert          Removes duplicate marks and restores original base qualities" << endl;
-    cerr << "\tsort            Sorts the BAM file according to some criteria" << endl;
-    cerr << "\tsplit           Splits a BAM file on user-specified property, creating a new BAM output file for each value found" << endl;
-    cerr << "\tstats           Prints some basic statistics from input BAM file(s)" << endl;
-    cerr << endl;
-    cerr << "See 'bamtools help COMMAND' for more information on a specific command." << endl;
-    cerr << endl;
+    std::cerr << std::endl;
+    std::cerr << "usage: bamtools [--help] COMMAND [ARGS]" << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "Available bamtools commands:" << std::endl;
+    std::cerr << "\tconvert         Converts between BAM and a number of other formats" << std::endl;
+    std::cerr << "\tcount           Prints number of alignments in BAM file(s)" << std::endl;
+    std::cerr << "\tcoverage        Prints coverage statistics from the input BAM file" << std::endl;    
+    std::cerr << "\tfilter          Filters BAM file(s) by user-specified criteria" << std::endl;
+    std::cerr << "\theader          Prints BAM header information" << std::endl;
+    std::cerr << "\tindex           Generates index for BAM file" << std::endl;
+    std::cerr << "\tmerge           Merge multiple BAM files into single file" << std::endl;
+    std::cerr << "\trandom          Select random alignments from existing BAM file(s), intended more as a testing tool." << std::endl;
+    std::cerr << "\tresolve         Resolves paired-end reads (marking the IsProperPair flag as needed)" << std::endl;
+    std::cerr << "\trevert          Removes duplicate marks and restores original base qualities" << std::endl;
+    std::cerr << "\tsort            Sorts the BAM file according to some criteria" << std::endl;
+    std::cerr << "\tsplit           Splits a BAM file on user-specified property, creating a new BAM output file for each value found" << std::endl;
+    std::cerr << "\tstats           Prints some basic statistics from input BAM file(s)" << std::endl;
+    std::cerr << std::endl;
+    std::cerr << "See 'bamtools help COMMAND' for more information on a specific command." << std::endl;
+    std::cerr << std::endl;
     return EXIT_SUCCESS;
 }
 
 // print version info
 int Version(void) {
 
-    stringstream versionStream("");
+    std::stringstream versionStream;
     versionStream << BAMTOOLS_VERSION_MAJOR << "."
                   << BAMTOOLS_VERSION_MINOR << "."
                   << BAMTOOLS_VERSION_BUILD;
 
-    cout << endl;
-    cout << "bamtools " << versionStream.str() << endl;
-    cout << "Part of BamTools API and toolkit" << endl;
-    cout << "Primary authors: Derek Barnett, Erik Garrison, Michael Stromberg" << endl;
-    cout << "(c) 2009-2012 Marth Lab, Biology Dept., Boston College" << endl;
-    cout << endl;
+    std::cout << std::endl;
+    std::cout << "bamtools " << versionStream.str() << std::endl;
+    std::cout << "Part of BamTools API and toolkit" << std::endl;
+    std::cout << "Primary authors: Derek Barnett, Erik Garrison, Michael Stromberg" << std::endl;
+    std::cout << "(c) 2009-2012 Marth Lab, Biology Dept., Boston College" << std::endl;
+    std::cout << std::endl;
     return EXIT_SUCCESS;
 }
 

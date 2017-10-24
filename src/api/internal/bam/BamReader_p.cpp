@@ -25,7 +25,6 @@ using namespace BamTools::Internal;
 #include <iostream>
 #include <iterator>
 #include <vector>
-using namespace std;
 
 // constructor
 BamReaderPrivate::BamReaderPrivate(BamReader* parent)
@@ -58,8 +57,8 @@ bool BamReaderPrivate::Close(void) {
         try {
             m_stream.Close();
         } catch ( BamException& e ) {
-            const string streamError = e.what();
-            const string message = string("encountered error closing BAM file: \n\t") + streamError;
+            const std::string streamError = e.what();
+            const std::string message = std::string("encountered error closing BAM file: \n\t") + streamError;
             SetErrorString("BamReader::Close", message);
             return false;
         }
@@ -82,15 +81,15 @@ bool BamReaderPrivate::CreateIndex(const BamIndex::IndexType& type) {
     if ( m_randomAccessController.CreateIndex(this, type) )
         return true;
     else {
-        const string bracError = m_randomAccessController.GetErrorString();
-        const string message = string("could not create index: \n\t") + bracError;
+        const std::string bracError = m_randomAccessController.GetErrorString();
+        const std::string message = std::string("could not create index: \n\t") + bracError;
         SetErrorString("BamReader::CreateIndex", message);
         return false;
     }
 }
 
 // return path & filename of current BAM file
-const string BamReaderPrivate::Filename(void) const {
+const std::string BamReaderPrivate::Filename(void) const {
     return m_filename;
 }
 
@@ -98,12 +97,12 @@ const SamHeader& BamReaderPrivate::GetConstSamHeader(void) const {
     return m_header.ToConstSamHeader();
 }
 
-string BamReaderPrivate::GetErrorString(void) const {
+std::string BamReaderPrivate::GetErrorString(void) const {
     return m_errorString;
 }
 
-// return header data as std::string
-string BamReaderPrivate::GetHeaderText(void) const {
+// return header data as string
+std::string BamReaderPrivate::GetHeaderText(void) const {
     return m_header.ToString();
 }
 
@@ -125,8 +124,8 @@ bool BamReaderPrivate::GetNextAlignment(BamAlignment& alignment) {
         if ( alignment.BuildCharData() )
             return true;
         else {
-            const string alError = alignment.GetErrorString();
-            const string message = string("could not populate alignment data: \n\t") + alError;
+            const std::string alError = alignment.GetErrorString();
+            const std::string message = std::string("could not populate alignment data: \n\t") + alError;
             SetErrorString("BamReader::GetNextAlignment", message);
             return false;
         }
@@ -187,8 +186,8 @@ bool BamReaderPrivate::GetNextAlignmentCore(BamAlignment& alignment) {
         return true;
 
     } catch ( BamException& e ) {
-        const string streamError = e.what();
-        const string message = string("encountered error reading BAM alignment: \n\t") + streamError;
+        const std::string streamError = e.what();
+        const std::string message = std::string("encountered error reading BAM alignment: \n\t") + streamError;
         SetErrorString("BamReader::GetNextAlignmentCore", message);
         return false;
     }
@@ -203,10 +202,10 @@ const RefVector& BamReaderPrivate::GetReferenceData(void) const {
 }
 
 // returns RefID for given RefName (returns References.size() if not found)
-int BamReaderPrivate::GetReferenceID(const string& refName) const {
+int BamReaderPrivate::GetReferenceID(const std::string& refName) const {
 
     // retrieve names from reference data
-    vector<string> refNames;
+    std::vector<std::string> refNames;
     RefVector::const_iterator refIter = m_references.begin();
     RefVector::const_iterator refEnd  = m_references.end();
     for ( ; refIter != refEnd; ++refIter)
@@ -236,7 +235,7 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment) {
 
     // read in the 'block length' value, make sure it's not zero
     char buffer[sizeof(uint32_t)];
-    fill_n(buffer, sizeof(uint32_t), 0);
+    std::fill_n(buffer, sizeof(uint32_t), 0);
     m_stream.Read(buffer, sizeof(uint32_t));
     alignment.SupportData.BlockLength = BamTools::UnpackUnsignedInt(buffer);
     if ( m_isBigEndian ) BamTools::SwapEndian_32(alignment.SupportData.BlockLength);
@@ -341,7 +340,7 @@ bool BamReaderPrivate::LoadReferenceData(void) {
 
         // store data for reference
         RefData aReference;
-        aReference.RefName   = (string)((const char*)refName.Buffer);
+        aReference.RefName   = static_cast<std::string>((const char*)refName.Buffer);
         aReference.RefLength = refLength;
         m_references.push_back(aReference);
     }
@@ -355,15 +354,15 @@ bool BamReaderPrivate::LocateIndex(const BamIndex::IndexType& preferredType) {
     if ( m_randomAccessController.LocateIndex(this, preferredType) )
         return true;
     else {
-        const string bracError = m_randomAccessController.GetErrorString();
-        const string message = string("could not locate index: \n\t") + bracError;
+        const std::string bracError = m_randomAccessController.GetErrorString();
+        const std::string message = std::string("could not locate index: \n\t") + bracError;
         SetErrorString("BamReader::LocateIndex", message);
         return false;
     }
 }
 
 // opens BAM file (and index)
-bool BamReaderPrivate::Open(const string& filename) {
+bool BamReaderPrivate::Open(const std::string& filename) {
 
     try {
 
@@ -385,8 +384,8 @@ bool BamReaderPrivate::Open(const string& filename) {
         return true;
 
     } catch ( BamException& e ) {
-        const string error = e.what();
-        const string message = string("could not open file: ") + filename +
+        const std::string error = e.what();
+        const std::string message = std::string("could not open file: ") + filename +
                                "\n\t" + error;
         SetErrorString("BamReader::Open", message);
         return false;
@@ -398,8 +397,8 @@ bool BamReaderPrivate::OpenIndex(const std::string& indexFilename) {
     if ( m_randomAccessController.OpenIndex(indexFilename, this) )
         return true;
     else {
-        const string bracError = m_randomAccessController.GetErrorString();
-        const string message = string("could not open index: \n\t") + bracError;
+        const std::string bracError = m_randomAccessController.GetErrorString();
+        const std::string message = std::string("could not open index: \n\t") + bracError;
         SetErrorString("BamReader::OpenIndex", message);
         return false;
     }
@@ -415,8 +414,8 @@ bool BamReaderPrivate::Rewind(void) {
     if ( Seek(m_alignmentsBeginOffset) )
         return true;
     else {
-        const string currentError = m_errorString;
-        const string message = string("could not rewind: \n\t") + currentError;
+        const std::string currentError = m_errorString;
+        const std::string message = std::string("could not rewind: \n\t") + currentError;
         SetErrorString("BamReader::Rewind", message);
         return false;
     }
@@ -435,15 +434,15 @@ bool BamReaderPrivate::Seek(const int64_t& position) {
         return true;
     }
     catch ( BamException& e ) {
-        const string streamError = e.what();
-        const string message = string("could not seek in BAM file: \n\t") + streamError;
+        const std::string streamError = e.what();
+        const std::string message = std::string("could not seek in BAM file: \n\t") + streamError;
         SetErrorString("BamReader::Seek", message);
         return false;
     }
 }
 
-void BamReaderPrivate::SetErrorString(const string& where, const string& what) {
-    static const string SEPARATOR = ": ";
+void BamReaderPrivate::SetErrorString(const std::string& where, const std::string& what) {
+    static const std::string SEPARATOR(": ");
     m_errorString = where + SEPARATOR + what;
 }
 
@@ -458,8 +457,8 @@ bool BamReaderPrivate::SetRegion(const BamRegion& region) {
     if ( m_randomAccessController.SetRegion(region, m_references.size()) )
         return true;
     else {
-        const string bracError = m_randomAccessController.GetErrorString();
-        const string message = string("could not set region: \n\t") + bracError;
+        const std::string bracError = m_randomAccessController.GetErrorString();
+        const std::string message = std::string("could not set region: \n\t") + bracError;
         SetErrorString("BamReader::SetRegion", message);
         return false;
     }

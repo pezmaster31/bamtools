@@ -25,7 +25,6 @@ using namespace Json;
 #include <sstream>
 #include <string>
 #include <vector>
-using namespace std;
   
 namespace BamTools {
   
@@ -33,34 +32,34 @@ namespace BamTools {
 // string literal constants  
 
 // property names
-const string ALIGNMENTFLAG_PROPERTY       = "alignmentFlag";
-const string CIGAR_PROPERTY               = "cigar";
-const string INSERTSIZE_PROPERTY          = "insertSize";
-const string ISDUPLICATE_PROPERTY         = "isDuplicate";
-const string ISFAILEDQC_PROPERTY          = "isFailedQC";
-const string ISFIRSTMATE_PROPERTY         = "isFirstMate";
-const string ISMAPPED_PROPERTY            = "isMapped";
-const string ISMATEMAPPED_PROPERTY        = "isMateMapped";
-const string ISMATEREVERSESTRAND_PROPERTY = "isMateReverseStrand";
-const string ISPAIRED_PROPERTY            = "isPaired";
-const string ISPRIMARYALIGNMENT_PROPERTY  = "isPrimaryAlignment";
-const string ISPROPERPAIR_PROPERTY        = "isProperPair";
-const string ISREVERSESTRAND_PROPERTY     = "isReverseStrand";
-const string ISSECONDMATE_PROPERTY        = "isSecondMate";
-const string ISSINGLETON_PROPERTY         = "isSingleton";
-const string LENGTH_PROPERTY              = "length";
-const string MAPQUALITY_PROPERTY          = "mapQuality";
-const string MATEPOSITION_PROPERTY        = "matePosition";
-const string MATEREFERENCE_PROPERTY       = "mateReference";
-const string NAME_PROPERTY                = "name";
-const string POSITION_PROPERTY            = "position";
-const string QUERYBASES_PROPERTY          = "queryBases";
-const string REFERENCE_PROPERTY           = "reference";
-const string TAG_PROPERTY                 = "tag";
+const std::string ALIGNMENTFLAG_PROPERTY       = "alignmentFlag";
+const std::string CIGAR_PROPERTY               = "cigar";
+const std::string INSERTSIZE_PROPERTY          = "insertSize";
+const std::string ISDUPLICATE_PROPERTY         = "isDuplicate";
+const std::string ISFAILEDQC_PROPERTY          = "isFailedQC";
+const std::string ISFIRSTMATE_PROPERTY         = "isFirstMate";
+const std::string ISMAPPED_PROPERTY            = "isMapped";
+const std::string ISMATEMAPPED_PROPERTY        = "isMateMapped";
+const std::string ISMATEREVERSESTRAND_PROPERTY = "isMateReverseStrand";
+const std::string ISPAIRED_PROPERTY            = "isPaired";
+const std::string ISPRIMARYALIGNMENT_PROPERTY  = "isPrimaryAlignment";
+const std::string ISPROPERPAIR_PROPERTY        = "isProperPair";
+const std::string ISREVERSESTRAND_PROPERTY     = "isReverseStrand";
+const std::string ISSECONDMATE_PROPERTY        = "isSecondMate";
+const std::string ISSINGLETON_PROPERTY         = "isSingleton";
+const std::string LENGTH_PROPERTY              = "length";
+const std::string MAPQUALITY_PROPERTY          = "mapQuality";
+const std::string MATEPOSITION_PROPERTY        = "matePosition";
+const std::string MATEREFERENCE_PROPERTY       = "mateReference";
+const std::string NAME_PROPERTY                = "name";
+const std::string POSITION_PROPERTY            = "position";
+const std::string QUERYBASES_PROPERTY          = "queryBases";
+const std::string REFERENCE_PROPERTY           = "reference";
+const std::string TAG_PROPERTY                 = "tag";
 
 // boolalpha
-const string TRUE_STR  = "true";
-const string FALSE_STR = "false";
+const std::string TRUE_STR  = "true";
+const std::string FALSE_STR = "false";
     
 RefVector filterToolReferences;    
     
@@ -74,17 +73,17 @@ struct BamAlignmentChecker {
         for ( ; propertyIter != propertyEnd; ++propertyIter ) {
           
             // check alignment data field depending on propertyName
-            const string& propertyName = (*propertyIter).first;
+            const std::string& propertyName = (*propertyIter).first;
             const PropertyFilterValue& valueFilter = (*propertyIter).second;
             
             if      ( propertyName == ALIGNMENTFLAG_PROPERTY )  keepAlignment &= valueFilter.check(al.AlignmentFlag);
             else if ( propertyName == CIGAR_PROPERTY ) {
-                stringstream cigarSs;
-                const vector<CigarOp>& cigarData = al.CigarData;
+                std::stringstream cigarSs;
+                const std::vector<CigarOp>& cigarData = al.CigarData;
                 if ( !cigarData.empty() ) {
-                    vector<CigarOp>::const_iterator cigarBegin = cigarData.begin();
-                    vector<CigarOp>::const_iterator cigarIter = cigarBegin;
-                    vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
+                    std::vector<CigarOp>::const_iterator cigarBegin = cigarData.begin();
+                    std::vector<CigarOp>::const_iterator cigarIter = cigarBegin;
+                    std::vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
                     for ( ; cigarIter != cigarEnd; ++cigarIter ) {
                         const CigarOp& op = (*cigarIter);
                         cigarSs << op.Length << op.Type;
@@ -114,7 +113,7 @@ struct BamAlignmentChecker {
             else if ( propertyName == MATEREFERENCE_PROPERTY ) {
                 if ( !al.IsPaired() || !al.IsMateMapped() ) return false;
                 BAMTOOLS_ASSERT_MESSAGE( (al.MateRefID>=0 && (al.MateRefID<(int)filterToolReferences.size())), "Invalid MateRefID");
-                const string& refName = filterToolReferences.at(al.MateRefID).RefName;
+                const std::string& refName = filterToolReferences.at(al.MateRefID).RefName;
                 keepAlignment &= valueFilter.check(refName);
             }
             else if ( propertyName == NAME_PROPERTY )                 keepAlignment &= valueFilter.check(al.Name);
@@ -122,7 +121,7 @@ struct BamAlignmentChecker {
             else if ( propertyName == QUERYBASES_PROPERTY )           keepAlignment &= valueFilter.check(al.QueryBases);
             else if ( propertyName == REFERENCE_PROPERTY ) {
                 BAMTOOLS_ASSERT_MESSAGE( (al.RefID>=0 && (al.RefID<(int)filterToolReferences.size())), "Invalid RefID");
-                const string& refName = filterToolReferences.at(al.RefID).RefName;
+                const std::string& refName = filterToolReferences.at(al.RefID).RefName;
                 keepAlignment &= valueFilter.check(refName);
             }
             else if ( propertyName == TAG_PROPERTY ) keepAlignment &= checkAlignmentTag(valueFilter, al);
@@ -140,10 +139,10 @@ struct BamAlignmentChecker {
      
         // ensure filter contains string data
         Variant entireTagFilter = valueFilter.Value;
-        if ( !entireTagFilter.is_type<string>() ) return false;
+        if ( !entireTagFilter.is_type<std::string>() ) return false;
 
         // localize string from variant
-        const string& entireTagFilterString = entireTagFilter.get<string>();
+        const std::string& entireTagFilterString = entireTagFilter.get<std::string>();
 
         // ensure we have at least "XX:x"
         if ( entireTagFilterString.length() < 4 ) return false;
@@ -151,19 +150,19 @@ struct BamAlignmentChecker {
         // get tagName & lookup in alignment
         // if found, set tagType to tag type character
         // if not found, return false
-        const string& tagName = entireTagFilterString.substr(0,2);
+        const std::string& tagName = entireTagFilterString.substr(0,2);
         char tagType = '\0';
         if ( !al.GetTagType(tagName, tagType) ) return false;
 
         // remove tagName & ":" from beginning tagFilter
-        string tagFilterString = entireTagFilterString.substr(3);
+        std::string tagFilterString = entireTagFilterString.substr(3);
 
         // switch on tag type to set tag query value & parse filter token
         int8_t   asciiFilterValue,   asciiQueryValue;
         int32_t  intFilterValue,    intQueryValue;
         uint32_t uintFilterValue,   uintQueryValue;
         float    realFilterValue,   realQueryValue;
-        string   stringFilterValue, stringQueryValue;
+        std::string stringFilterValue, stringQueryValue;
 
         PropertyFilterValue tagFilter;
         PropertyFilterValue::ValueCompareType compareType;
@@ -259,11 +258,11 @@ struct FilterTool::FilterSettings {
     bool IsForceCompression;
 
     // filenames
-    vector<string> InputFiles;
-    string InputFilelist;
-    string OutputFilename;
-    string Region;
-    string ScriptFilename;
+    std::vector<std::string> InputFiles;
+    std::string InputFilelist;
+    std::string OutputFilename;
+    std::string Region;
+    std::string ScriptFilename;
 
     // -----------------------------------
     // General filter opts
@@ -278,13 +277,13 @@ struct FilterTool::FilterSettings {
     bool HasTagFilter; //(s)
 
     // filters
-    string AlignmentFlagFilter;
-    string InsertSizeFilter;
-    string LengthFilter;
-    string MapQualityFilter;
-    string NameFilter;
-    string QueryBasesFilter;
-    string TagFilter;  // support multiple ?
+    std::string AlignmentFlagFilter;
+    std::string InsertSizeFilter;
+    std::string LengthFilter;
+    std::string MapQualityFilter;
+    std::string NameFilter;
+    std::string QueryBasesFilter;
+    std::string TagFilter;  // support multiple ?
 
     // -----------------------------------
     // AlignmentFlag filter opts
@@ -304,18 +303,18 @@ struct FilterTool::FilterSettings {
     bool HasIsSingletonFilter;
 
     // filters
-    string IsDuplicateFilter;
-    string IsFailedQCFilter;
-    string IsFirstMateFilter;
-    string IsMappedFilter;
-    string IsMateMappedFilter;
-    string IsMateReverseStrandFilter;
-    string IsPairedFilter;
-    string IsPrimaryAlignmentFilter;
-    string IsProperPairFilter;
-    string IsReverseStrandFilter;
-    string IsSecondMateFilter;
-    string IsSingletonFilter;
+    std::string IsDuplicateFilter;
+    std::string IsFailedQCFilter;
+    std::string IsFirstMateFilter;
+    std::string IsMappedFilter;
+    std::string IsMateMappedFilter;
+    std::string IsMateReverseStrandFilter;
+    std::string IsPairedFilter;
+    std::string IsPrimaryAlignmentFilter;
+    std::string IsProperPairFilter;
+    std::string IsReverseStrandFilter;
+    std::string IsSecondMateFilter;
+    std::string IsSingletonFilter;
 
     // ---------------------------------
     // constructor
@@ -378,18 +377,18 @@ class FilterTool::FilterToolPrivate {
         
     // internal methods
     private:
-        bool AddPropertyTokensToFilter(const string& filterName, const map<string, string>& propertyTokens);
+        bool AddPropertyTokensToFilter(const std::string& filterName, const std::map<std::string, std::string>& propertyTokens);
         bool CheckAlignment(const BamAlignment& al);
-        const string GetScriptContents(void);
+        const std::string GetScriptContents(void);
         void InitProperties(void);
         bool ParseCommandLine(void);
-        bool ParseFilterObject(const string& filterName, const Json::Value& filterObject);
+        bool ParseFilterObject(const std::string& filterName, const Json::Value& filterObject);
         bool ParseScript(void);
         bool SetupFilters(void);
         
     // data members
     private:
-        vector<string> m_propertyNames;
+        std::vector<std::string> m_propertyNames;
         FilterTool::FilterSettings* m_settings;
         FilterEngine<BamAlignmentChecker> m_filterEngine;
 };
@@ -405,25 +404,25 @@ FilterTool::FilterToolPrivate::FilterToolPrivate(FilterTool::FilterSettings* set
 // destructor
 FilterTool::FilterToolPrivate::~FilterToolPrivate(void) { }
 
-bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const string& filterName,
-                                                              const map<string,
-                                                              string>& propertyTokens)
+bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const std::string& filterName,
+                                                              const std::map<std::string,
+                                                              std::string>& propertyTokens)
 {
     // dummy temp values for token parsing
     bool boolValue;
     int32_t int32Value;
     uint16_t uint16Value;
     uint32_t uint32Value;
-    string stringValue;
+    std::string stringValue;
     PropertyFilterValue::ValueCompareType type;
   
     // iterate over property token map
-    map<string, string>::const_iterator mapIter = propertyTokens.begin();
-    map<string, string>::const_iterator mapEnd  = propertyTokens.end();
+    std::map<std::string, std::string>::const_iterator mapIter = propertyTokens.begin();
+    std::map<std::string, std::string>::const_iterator mapEnd  = propertyTokens.end();
     for ( ; mapIter != mapEnd; ++mapIter ) {
       
-        const string& propertyName = (*mapIter).first;
-        const string& token        = (*mapIter).second;
+        const std::string& propertyName = (*mapIter).first;
+        const std::string& token        = (*mapIter).second;
         
         // ------------------------------
         // convert token to value & compare type 
@@ -493,7 +492,7 @@ bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const string& filt
       
         // else unknown property 
         else {
-            cerr << "bamtools filter ERROR: unknown property - " << propertyName << endl;
+            std::cerr << "bamtools filter ERROR: unknown property - " << propertyName << std::endl;
             return false;
         }
     }
@@ -504,19 +503,19 @@ bool FilterTool::FilterToolPrivate::CheckAlignment(const BamAlignment& al) {
     return m_filterEngine.check(al);
 }
 
-const string FilterTool::FilterToolPrivate::GetScriptContents(void) {
+const std::string FilterTool::FilterToolPrivate::GetScriptContents(void) {
   
     // open script for reading
     FILE* inFile = fopen(m_settings->ScriptFilename.c_str(), "rb");
     if ( !inFile ) {
-        cerr << "bamtools filter ERROR: could not open script: "
-             << m_settings->ScriptFilename << " for reading" << endl;
-        return string();
+        std::cerr << "bamtools filter ERROR: could not open script: "
+             << m_settings->ScriptFilename << " for reading" << std::endl;
+        return std::string();
     }
     
     // read in entire script contents  
     char buffer[1024];
-    ostringstream docStream("");
+    std::ostringstream docStream;
     while ( true ) {
         
         // peek ahead, make sure there is data available
@@ -527,8 +526,8 @@ const string FilterTool::FilterToolPrivate::GetScriptContents(void) {
         
         // read next block of data
         if ( fgets(buffer, 1024, inFile) == 0 ) {
-            cerr << "bamtools filter ERROR: could not read script contents" << endl;
-            return string();
+            std::cerr << "bamtools filter ERROR: could not read script contents" << std::endl;
+            return std::string();
         }
         
         docStream << buffer;
@@ -570,8 +569,8 @@ void FilterTool::FilterToolPrivate::InitProperties(void) {
     m_propertyNames.push_back(TAG_PROPERTY);
     
     // add vector contents to FilterEngine<BamAlignmentChecker>
-    vector<string>::const_iterator propertyNameIter = m_propertyNames.begin();
-    vector<string>::const_iterator propertyNameEnd  = m_propertyNames.end();
+    std::vector<std::string>::const_iterator propertyNameIter = m_propertyNames.begin();
+    std::vector<std::string>::const_iterator propertyNameEnd  = m_propertyNames.end();
     for ( ; propertyNameIter != propertyNameEnd; ++propertyNameIter )
         m_filterEngine.addProperty((*propertyNameIter));
 }
@@ -579,11 +578,11 @@ void FilterTool::FilterToolPrivate::InitProperties(void) {
 bool FilterTool::FilterToolPrivate::ParseCommandLine(void) {
   
     // add a rule set to filter engine
-    const string CMD = "COMMAND_LINE";
+    const std::string CMD = "COMMAND_LINE";
     m_filterEngine.addFilter(CMD);
 
     // map property names to command line args
-    map<string, string> propertyTokens;
+    std::map<std::string, std::string> propertyTokens;
     if ( m_settings->HasAlignmentFlagFilter )       propertyTokens.insert( make_pair(ALIGNMENTFLAG_PROPERTY,       m_settings->AlignmentFlagFilter) );
     if ( m_settings->HasInsertSizeFilter )          propertyTokens.insert( make_pair(INSERTSIZE_PROPERTY,          m_settings->InsertSizeFilter) );
     if ( m_settings->HasIsDuplicateFilter )         propertyTokens.insert( make_pair(ISDUPLICATE_PROPERTY,         m_settings->IsDuplicateFilter) );
@@ -608,20 +607,20 @@ bool FilterTool::FilterToolPrivate::ParseCommandLine(void) {
     return AddPropertyTokensToFilter(CMD, propertyTokens);
 }
 
-bool FilterTool::FilterToolPrivate::ParseFilterObject(const string& filterName, const Json::Value& filterObject) {
+bool FilterTool::FilterToolPrivate::ParseFilterObject(const std::string& filterName, const Json::Value& filterObject) {
   
     // filter object parsing variables
     Json::Value null(Json::nullValue);
     Json::Value propertyValue;
     
     // store results
-    map<string, string> propertyTokens;
+    std::map<std::string, std::string> propertyTokens;
     
     // iterate over known properties
-    vector<string>::const_iterator propertyNameIter = m_propertyNames.begin();
-    vector<string>::const_iterator propertyNameEnd  = m_propertyNames.end();
+    std::vector<std::string>::const_iterator propertyNameIter = m_propertyNames.begin();
+    std::vector<std::string>::const_iterator propertyNameEnd  = m_propertyNames.end();
     for ( ; propertyNameIter != propertyNameEnd; ++propertyNameIter ) {
-        const string& propertyName = (*propertyNameIter);
+        const std::string& propertyName = (*propertyNameIter);
         
         // if property defined in filter, add to token list
         propertyValue = filterObject.get(propertyName, null);
@@ -639,7 +638,7 @@ bool FilterTool::FilterToolPrivate::ParseFilterObject(const string& filterName, 
 bool FilterTool::FilterToolPrivate::ParseScript(void) {
   
     // read in script contents from file
-    const string document = GetScriptContents();
+    const std::string document = GetScriptContents();
     std::istringstream sin(document);
     
     // set up JsonCPP reader and attempt to parse script
@@ -649,7 +648,7 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
     const bool ok = Json::parseFromStream(rbuilder, sin, &root, &errs);
     if (!ok) {
         // use built-in error reporting mechanism to alert user what was wrong with the script
-        cerr  << "bamtools filter ERROR: failed to parse script - see error message(s) below" << endl
+        std::cerr  << "bamtools filter ERROR: failed to parse script - see error message(s) below" << std::endl
               << errs;
         return false;     
     }
@@ -669,7 +668,7 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
             Json::Value filter = (*filtersIter);
             
             // convert filter index to string
-            string filterName;
+            std::string filterName;
             
             // if id tag supplied
             const Json::Value id = filter["id"];
@@ -678,7 +677,7 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
             
             // use array index 
             else {
-                stringstream convert;
+                std::stringstream convert;
                 convert << filterIndex;
                 filterName = convert.str();
             }
@@ -689,7 +688,7 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
         
         // see if user defined a "rule" for these filters
         // otherwise, use filter engine's default rule behavior
-        string ruleString("");
+        std::string ruleString;
         const Json::Value rule = root["rule"];
         if ( rule.isString() )
             ruleString = rule.asString();
@@ -716,14 +715,14 @@ bool FilterTool::FilterToolPrivate::Run(void) {
     // add files in the filelist to the input file list
     if ( m_settings->HasInputFilelist ) {
 
-        ifstream filelist(m_settings->InputFilelist.c_str(), ios::in);
+        std::ifstream filelist(m_settings->InputFilelist.c_str(), std::ios::in);
         if ( !filelist.is_open() ) {
-            cerr << "bamtools filter ERROR: could not open input BAM file list... Aborting." << endl;
+            std::cerr << "bamtools filter ERROR: could not open input BAM file list... Aborting." << std::endl;
             return false;
         }
 
-        string line;
-        while ( getline(filelist, line) )
+        std::string line;
+        while ( std::getline(filelist, line) )
             m_settings->InputFiles.push_back(line);
     }
 
@@ -735,12 +734,12 @@ bool FilterTool::FilterToolPrivate::Run(void) {
     // open reader without index
     BamMultiReader reader;
     if ( !reader.Open(m_settings->InputFiles) ) {
-        cerr << "bamtools filter ERROR: could not open input files for reading." << endl;
+        std::cerr << "bamtools filter ERROR: could not open input files for reading." << std::endl;
         return false;
     }
 
     // retrieve reader header & reference data
-    const string headerText = reader.GetHeaderText();
+    const std::string headerText = reader.GetHeaderText();
     filterToolReferences = reader.GetReferenceData();
     
     // determine compression mode for BamWriter
@@ -753,7 +752,7 @@ bool FilterTool::FilterToolPrivate::Run(void) {
     BamWriter writer;
     writer.SetCompressionMode(compressionMode);
     if ( !writer.Open(m_settings->OutputFilename, headerText, filterToolReferences) ) {
-        cerr << "bamtools filter ERROR: could not open " << m_settings->OutputFilename << " for writing." << endl;
+        std::cerr << "bamtools filter ERROR: could not open " << m_settings->OutputFilename << " for writing." << std::endl;
         reader.Close();
         return false;
     }
@@ -782,7 +781,7 @@ bool FilterTool::FilterToolPrivate::Run(void) {
 
                 // attempt to use SetRegion(), if failed report error
                 if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {
-                    cerr << "bamtools filter ERROR: set region failed. Check that REGION describes a valid range" << endl;
+                    std::cerr << "bamtools filter ERROR: set region failed. Check that REGION describes a valid range" << std::endl;
                     reader.Close();
                     return false;
                 } 
@@ -809,9 +808,9 @@ bool FilterTool::FilterToolPrivate::Run(void) {
         
         // error parsing REGION string
         else {
-            cerr << "bamtools filter ERROR: could not parse REGION: " << m_settings->Region << endl;
-            cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
-                 << endl;
+            std::cerr << "bamtools filter ERROR: could not parse REGION: " << m_settings->Region << std::endl;
+            std::cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
+                 << std::endl;
             reader.Close();
             return false;
         }
@@ -847,7 +846,7 @@ FilterTool::FilterTool(void)
     // ----------------------------------
     // set program details
 
-    const string usage = "[-in <filename> -in <filename> ... | -list <filelist>] "
+    const std::string usage = "[-in <filename> -in <filename> ... | -list <filelist>] "
                          "[-out <filename> | [-forceCompression]] [-region <REGION>] "
                          "[ [-script <filename] | [filterOptions] ]";
 
@@ -858,12 +857,12 @@ FilterTool::FilterTool(void)
 
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
 
-    const string inDesc     = "the input BAM file(s)";
-    const string listDesc   = "the input BAM file list, one line per file";
-    const string outDesc    = "the output BAM file";
-    const string regionDesc = "only read data from this genomic region (see documentation for more details)";
-    const string scriptDesc = "the filter script file (see documentation for more details)";
-    const string forceDesc  = "if results are sent to stdout (like when piping to another tool), "
+    const std::string inDesc     = "the input BAM file(s)";
+    const std::string listDesc   = "the input BAM file list, one line per file";
+    const std::string outDesc    = "the output BAM file";
+    const std::string regionDesc = "only read data from this genomic region (see documentation for more details)";
+    const std::string scriptDesc = "the filter script file (see documentation for more details)";
+    const std::string forceDesc  = "if results are sent to stdout (like when piping to another tool), "
                               "default behavior is to leave output uncompressed. Use this flag to "
                               "override and force compression";
 
@@ -879,13 +878,13 @@ FilterTool::FilterTool(void)
 
     OptionGroup* FilterOpts = Options::CreateOptionGroup("General Filters");
 
-    const string flagDesc    = "keep reads with this *exact* alignment flag (for more detailed queries, see below)";
-    const string insertDesc  = "keep reads with insert size that matches pattern";
-    const string lengthDesc  = "keep reads with length that matches pattern";
-    const string mapQualDesc = "keep reads with map quality that matches pattern";
-    const string nameDesc    = "keep reads with name that matches pattern";
-    const string queryDesc   = "keep reads with motif that matches pattern";
-    const string tagDesc     = "keep reads with this key=>value pair";
+    const std::string flagDesc    = "keep reads with this *exact* alignment flag (for more detailed queries, see below)";
+    const std::string insertDesc  = "keep reads with insert size that matches pattern";
+    const std::string lengthDesc  = "keep reads with length that matches pattern";
+    const std::string mapQualDesc = "keep reads with map quality that matches pattern";
+    const std::string nameDesc    = "keep reads with name that matches pattern";
+    const std::string queryDesc   = "keep reads with motif that matches pattern";
+    const std::string tagDesc     = "keep reads with this key=>value pair";
 
     Options::AddValueOption("-alignmentFlag", "int",       flagDesc,    "", m_settings->HasAlignmentFlagFilter, m_settings->AlignmentFlagFilter, FilterOpts);
     Options::AddValueOption("-insertSize",    "int",       insertDesc,  "", m_settings->HasInsertSizeFilter,    m_settings->InsertSizeFilter,    FilterOpts);
@@ -900,19 +899,19 @@ FilterTool::FilterTool(void)
 
     OptionGroup* AlignmentFlagOpts = Options::CreateOptionGroup("Alignment Flag Filters");
 
-    const string boolArg           = "true/false";
-    const string isDupDesc         = "keep only alignments that are marked as duplicate?";
-    const string isFailQcDesc      = "keep only alignments that failed QC?";
-    const string isFirstMateDesc   = "keep only alignments marked as first mate?";
-    const string isMappedDesc      = "keep only alignments that were mapped?";
-    const string isMateMappedDesc  = "keep only alignments with mates that mapped";
-    const string isMateReverseDesc = "keep only alignments with mate on reverese strand?";
-    const string isPairedDesc      = "keep only alignments that were sequenced as paired?";
-    const string isPrimaryDesc     = "keep only alignments marked as primary?";
-    const string isProperPairDesc  = "keep only alignments that passed PE resolution?";
-    const string isReverseDesc     = "keep only alignments on reverse strand?";
-    const string isSecondMateDesc  = "keep only alignments marked as second mate?";
-    const string isSingletonDesc   = "keep only singletons";
+    const std::string boolArg           = "true/false";
+    const std::string isDupDesc         = "keep only alignments that are marked as duplicate?";
+    const std::string isFailQcDesc      = "keep only alignments that failed QC?";
+    const std::string isFirstMateDesc   = "keep only alignments marked as first mate?";
+    const std::string isMappedDesc      = "keep only alignments that were mapped?";
+    const std::string isMateMappedDesc  = "keep only alignments with mates that mapped";
+    const std::string isMateReverseDesc = "keep only alignments with mate on reverese strand?";
+    const std::string isPairedDesc      = "keep only alignments that were sequenced as paired?";
+    const std::string isPrimaryDesc     = "keep only alignments marked as primary?";
+    const std::string isProperPairDesc  = "keep only alignments that passed PE resolution?";
+    const std::string isReverseDesc     = "keep only alignments on reverse strand?";
+    const std::string isSecondMateDesc  = "keep only alignments marked as second mate?";
+    const std::string isSingletonDesc   = "keep only singletons";
 
     Options::AddValueOption("-isDuplicate",         boolArg, isDupDesc,         "", m_settings->HasIsDuplicateFilter,         m_settings->IsDuplicateFilter,         AlignmentFlagOpts, TRUE_STR);
     Options::AddValueOption("-isFailedQC",          boolArg, isFailQcDesc,      "", m_settings->HasIsFailedQCFilter,          m_settings->IsFailedQCFilter,          AlignmentFlagOpts, TRUE_STR);

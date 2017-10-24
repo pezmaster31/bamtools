@@ -22,7 +22,6 @@ using namespace BamTools::Internal;
 #include <cstdlib>
 #include <cstring>
 #include <set>
-using namespace std;
 
 // -------------------------
 // HostInfo implementation
@@ -41,7 +40,7 @@ HostInfo::HostInfo(const HostInfo& other)
 
 HostInfo::~HostInfo(void) { }
 
-vector<HostAddress> HostInfo::Addresses(void) const {
+std::vector<HostAddress> HostInfo::Addresses(void) const {
     return m_addresses;
 }
 
@@ -49,11 +48,11 @@ HostInfo::ErrorType HostInfo::GetError(void) const {
     return m_error;
 }
 
-string HostInfo::GetErrorString(void) const {
+std::string HostInfo::GetErrorString(void) const {
     return m_errorString;
 }
 
-string HostInfo::HostName(void) const {
+std::string HostInfo::HostName(void) const {
     return m_hostName;
 }
 
@@ -69,7 +68,7 @@ void HostInfo::SetErrorString(const std::string& errorString) {
     m_errorString = errorString;
 }
 
-void HostInfo::SetHostName(const string& name) {
+void HostInfo::SetHostName(const std::string& name) {
     m_hostName = name;
 }
 
@@ -78,11 +77,11 @@ void HostInfo::SetHostName(const string& name) {
 //  - the real "heavy-lifter" here
 // ---------------------------------
 
-HostInfo HostInfo::Lookup(const string& hostname, const string& port) {
+HostInfo HostInfo::Lookup(const std::string& hostname, const std::string& port) {
 
     HostInfo result;
     result.SetHostName(hostname);
-    set<HostAddress> uniqueAddresses;
+    std::set<HostAddress> uniqueAddresses;
 
 #ifdef _WIN32
     WindowsSockInit init;
@@ -102,7 +101,7 @@ HostInfo HostInfo::Lookup(const string& hostname, const string& port) {
     //       anyway. GetHostName() just won't quite show what I was hoping for. :(
     if ( address.HasIPAddress() ) {
 
-        const uint16_t portNum = static_cast<uint16_t>( atoi(port.c_str()) );
+        const uint16_t portNum = static_cast<uint16_t>( std::atoi(port.c_str()) );
 
         sockaddr_in  sa4;
         sockaddr_in6 sa6;
@@ -136,7 +135,7 @@ HostInfo HostInfo::Lookup(const string& hostname, const string& port) {
         char hbuf[NI_MAXHOST];
         char serv[NI_MAXSERV];
         if ( sa && (getnameinfo(sa, saSize, hbuf, sizeof(hbuf), serv, sizeof(serv), 0) == 0) )
-            result.SetHostName(string(hbuf));
+            result.SetHostName(std::string(hbuf));
 
         // if no domain name found, just use the original address's IP string
         if ( result.HostName().empty() )
@@ -219,6 +218,6 @@ HostInfo HostInfo::Lookup(const string& hostname, const string& port) {
     }
 
     // store fetched addresses (converting set -> vector) in result & return
-    result.SetAddresses( vector<HostAddress>(uniqueAddresses.begin(), uniqueAddresses.end()) );
+    result.SetAddresses( std::vector<HostAddress>(uniqueAddresses.begin(), uniqueAddresses.end()) );
     return result;
 }

@@ -13,7 +13,6 @@
 #include "api/internal/bam/BamWriter_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
-using namespace std;
 
 /*! \class BamTools::BamWriter
     \brief Provides write access for generating BAM files.

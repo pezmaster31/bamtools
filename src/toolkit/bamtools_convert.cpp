@@ -22,7 +22,6 @@ using namespace BamTools;
 #include <sstream>
 #include <string>
 #include <vector>
-using namespace std;
   
 namespace BamTools { 
   
@@ -30,13 +29,13 @@ namespace BamTools {
 // ConvertTool constants
 
 // supported conversion format command-line names
-static const string FORMAT_BED    = "bed";
-static const string FORMAT_FASTA  = "fasta";
-static const string FORMAT_FASTQ  = "fastq";
-static const string FORMAT_JSON   = "json";
-static const string FORMAT_SAM    = "sam";
-static const string FORMAT_PILEUP = "pileup";
-static const string FORMAT_YAML   = "yaml";
+static const std::string FORMAT_BED    = "bed";
+static const std::string FORMAT_FASTA  = "fasta";
+static const std::string FORMAT_FASTQ  = "fastq";
+static const std::string FORMAT_JSON   = "json";
+static const std::string FORMAT_SAM    = "sam";
+static const std::string FORMAT_PILEUP = "pileup";
+static const std::string FORMAT_YAML   = "yaml";
 
 // other constants
 static const unsigned int FASTA_LINE_MAX = 50;
@@ -49,9 +48,9 @@ class ConvertPileupFormatVisitor : public PileupVisitor {
     // ctor & dtor
     public:
         ConvertPileupFormatVisitor(const RefVector& references,
-                                   const string& fastaFilename,
+                                   const std::string& fastaFilename,
                                    const bool isPrintingMapQualities,
-                                   ostream* out);
+                                   std::ostream* out);
         ~ConvertPileupFormatVisitor(void);
 
     // PileupVisitor interface implementation
@@ -63,7 +62,7 @@ class ConvertPileupFormatVisitor : public PileupVisitor {
         Fasta     m_fasta;
         bool      m_hasFasta;
         bool      m_isPrintingMapQualities;
-        ostream*  m_out;
+        std::ostream*  m_out;
         RefVector m_references;
 };
     
@@ -87,14 +86,14 @@ struct ConvertTool::ConvertSettings {
     bool IsPrintingPileupMapQualities;
     
     // options
-    vector<string> InputFiles;
-    string InputFilelist;
-    string OutputFilename;
-    string Format;
-    string Region;
+    std::vector<std::string> InputFiles;
+    std::string InputFilelist;
+    std::string OutputFilename;
+    std::string Format;
+    std::string Region;
     
     // pileup options
-    string FastaFilename;
+    std::string FastaFilename;
 
     // constructor
     ConvertSettings(void)
@@ -120,7 +119,7 @@ struct ConvertTool::ConvertToolPrivate {
     public:
         ConvertToolPrivate(ConvertTool::ConvertSettings* settings)
             : m_settings(settings)
-            , m_out(cout.rdbuf())
+            , m_out(std::cout.rdbuf())
         { }
 
         ~ConvertToolPrivate(void) { }
@@ -145,7 +144,7 @@ struct ConvertTool::ConvertToolPrivate {
     private: 
         ConvertTool::ConvertSettings* m_settings;
         RefVector m_references;
-        ostream m_out;
+        std::ostream m_out;
 };
 
 bool ConvertTool::ConvertToolPrivate::Run(void) {
@@ -160,28 +159,28 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
     // add files in the filelist to the input file list
     if ( m_settings->HasInputFilelist ) {
 
-        ifstream filelist(m_settings->InputFilelist.c_str(), ios::in);
+        std::ifstream filelist(m_settings->InputFilelist.c_str(), std::ios::in);
         if ( !filelist.is_open() ) {
-            cerr << "bamtools convert ERROR: could not open input BAM file list... Aborting." << endl;
+            std::cerr << "bamtools convert ERROR: could not open input BAM file list... Aborting." << std::endl;
             return false;
         }
 
-        string line;
-        while ( getline(filelist, line) )
+        std::string line;
+        while ( std::getline(filelist, line) )
             m_settings->InputFiles.push_back(line);
     }
 
     // open input files
     BamMultiReader reader;
     if ( !reader.Open(m_settings->InputFiles) ) {
-        cerr << "bamtools convert ERROR: could not open input BAM file(s)... Aborting." << endl;
+        std::cerr << "bamtools convert ERROR: could not open input BAM file(s)... Aborting." << std::endl;
         return false;
     }
 
     // if input is not stdin & a region is provided, look for index files
     if ( m_settings->HasInput && m_settings->HasRegion ) {
         if ( !reader.LocateIndexes() ) {
-            cerr << "bamtools convert ERROR: could not locate index file(s)... Aborting." << endl;
+            std::cerr << "bamtools convert ERROR: could not locate index file(s)... Aborting." << std::endl;
             return false;
         }
     }
@@ -196,30 +195,30 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
 
             if ( reader.HasIndexes() ) {
                 if ( !reader.SetRegion(region) ) {
-                    cerr << "bamtools convert ERROR: set region failed. Check that REGION describes a valid range" << endl;
+                    std::cerr << "bamtools convert ERROR: set region failed. Check that REGION describes a valid range" << std::endl;
                     reader.Close();
                     return false;
                 }
             }
 
         } else {
-            cerr << "bamtools convert ERROR: could not parse REGION: " << m_settings->Region << endl;
-            cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
-                 << endl;
+            std::cerr << "bamtools convert ERROR: could not parse REGION: " << m_settings->Region << std::endl;
+            std::cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
+                 << std::endl;
             reader.Close();
             return false;
         }
     }
         
     // if output file given
-    ofstream outFile;
+    std::ofstream outFile;
     if ( m_settings->HasOutput ) {
       
         // open output file stream
         outFile.open(m_settings->OutputFilename.c_str());
         if ( !outFile ) {
-            cerr << "bamtools convert ERROR: could not open " << m_settings->OutputFilename
-                 << " for output" << endl;
+            std::cerr << "bamtools convert ERROR: could not open " << m_settings->OutputFilename
+                 << " for output" << std::endl;
             return false; 
         }
         
@@ -251,8 +250,8 @@ bool ConvertTool::ConvertToolPrivate::Run(void) {
         else if ( m_settings->Format == FORMAT_SAM )   pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintSam;
         else if ( m_settings->Format == FORMAT_YAML )  pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintYaml;
         else { 
-            cerr << "bamtools convert ERROR: unrecognized format: " << m_settings->Format << endl;
-            cerr << "Please see documentation for list of supported formats " << endl;
+            std::cerr << "bamtools convert ERROR: unrecognized format: " << m_settings->Format << std::endl;
+            std::cerr << "Please see documentation for list of supported formats " << std::endl;
             formatError = true;
             convertedOk = false;
         }
@@ -297,7 +296,7 @@ void ConvertTool::ConvertToolPrivate::PrintBed(const BamAlignment& a) {
           << a.GetEndPosition() << "\t"
           << a.Name << "\t"
           << a.MapQuality << "\t"
-          << (a.IsReverseStrand() ? "-" : "+") << endl;
+          << (a.IsReverseStrand() ? "-" : "+") << std::endl;
 }
 
 // print BamAlignment in FASTA format
@@ -311,16 +310,16 @@ void ConvertTool::ConvertToolPrivate::PrintFasta(const BamAlignment& a) {
     // N.B. - QueryBases are reverse-complemented if aligned to reverse strand
   
     // print header
-    m_out << ">" << a.Name << endl;
+    m_out << ">" << a.Name << std::endl;
     
     // handle reverse strand alignment - bases 
-    string sequence = a.QueryBases;
+    std::string sequence = a.QueryBases;
     if ( a.IsReverseStrand() )
         Utilities::ReverseComplement(sequence);
     
     // if sequence fits on single line
     if ( sequence.length() <= FASTA_LINE_MAX )
-        m_out << sequence << endl;
+        m_out << sequence << std::endl;
     
     // else split over multiple lines
     else {
@@ -330,12 +329,12 @@ void ConvertTool::ConvertToolPrivate::PrintFasta(const BamAlignment& a) {
         
         // write subsequences to each line
         while ( position < (seqLength - FASTA_LINE_MAX) ) {
-            m_out << sequence.substr(position, FASTA_LINE_MAX) << endl;
+            m_out << sequence.substr(position, FASTA_LINE_MAX) << std::endl;
             position += FASTA_LINE_MAX;
         }
         
         // write final subsequence
-        m_out << sequence.substr(position) << endl;
+        m_out << sequence.substr(position) << std::endl;
     }
 }
 
@@ -352,23 +351,23 @@ void ConvertTool::ConvertToolPrivate::PrintFastq(const BamAlignment& a) {
     //        Name is appended "/1" or "/2" if paired-end, to reflect which mate this entry is.
   
     // handle paired-end alignments
-    string name = a.Name;
+    std::string name = a.Name;
     if ( a.IsPaired() )
         name.append( (a.IsFirstMate() ? "/1" : "/2") );
   
     // handle reverse strand alignment - bases & qualities
-    string qualities = a.Qualities;
-    string sequence  = a.QueryBases;
+    std::string qualities = a.Qualities;
+    std::string sequence  = a.QueryBases;
     if ( a.IsReverseStrand() ) {
         Utilities::Reverse(qualities);
         Utilities::ReverseComplement(sequence);
     }
   
     // write to output stream
-    m_out << "@" << name << endl
-          << sequence    << endl
-          << "+"         << endl
-          << qualities   << endl;
+    m_out << "@" << name << std::endl
+          << sequence    << std::endl
+          << "+"         << std::endl
+          << qualities   << std::endl;
 }
 
 // print BamAlignment in JSON format
@@ -385,12 +384,12 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a) {
     m_out << "\"position\":" << a.Position+1 << ",\"mapQuality\":" << a.MapQuality << ",";
     
     // write CIGAR
-    const vector<CigarOp>& cigarData = a.CigarData;
+    const std::vector<CigarOp>& cigarData = a.CigarData;
     if ( !cigarData.empty() ) {
         m_out << "\"cigar\":[";
-        vector<CigarOp>::const_iterator cigarBegin = cigarData.begin();
-        vector<CigarOp>::const_iterator cigarIter  = cigarBegin;
-        vector<CigarOp>::const_iterator cigarEnd   = cigarData.end();
+        std::vector<CigarOp>::const_iterator cigarBegin = cigarData.begin();
+        std::vector<CigarOp>::const_iterator cigarIter  = cigarBegin;
+        std::vector<CigarOp>::const_iterator cigarEnd   = cigarData.end();
         for ( ; cigarIter != cigarEnd; ++cigarIter ) {
             const CigarOp& op = (*cigarIter);
             if (cigarIter != cigarBegin)
@@ -414,7 +413,7 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a) {
     
     // write qualities
     if ( !a.Qualities.empty() && a.Qualities.at(0) != (char)0xFF ) {
-        string::const_iterator s = a.Qualities.begin();
+        std::string::const_iterator s = a.Qualities.begin();
         m_out << "\"qualities\":[" << static_cast<short>(*s) - 33;
         ++s;
         for ( ; s != a.Qualities.end(); ++s )
@@ -510,7 +509,7 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a) {
         m_out << "}";
     }
 
-    m_out << "}" << endl;
+    m_out << "}" << std::endl;
 }
 
 // print BamAlignment in SAM format
@@ -532,11 +531,11 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
     m_out << a.Position+1 << "\t" << a.MapQuality << "\t";
     
     // write CIGAR
-    const vector<CigarOp>& cigarData = a.CigarData;
+    const std::vector<CigarOp>& cigarData = a.CigarData;
     if ( cigarData.empty() ) m_out << "*\t";
     else {
-        vector<CigarOp>::const_iterator cigarIter = cigarData.begin();
-        vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
+        std::vector<CigarOp>::const_iterator cigarIter = cigarData.begin();
+        std::vector<CigarOp>::const_iterator cigarEnd  = cigarData.end();
         for ( ; cigarIter != cigarEnd; ++cigarIter ) {
             const CigarOp& op = (*cigarIter);
             m_out << op.Length << op.Type;
@@ -575,7 +574,7 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
     while ( index < tagDataLength ) {
 
         // write tag name   
-        string tagName = a.TagData.substr(index, 2);
+        std::string tagName = a.TagData.substr(index, 2);
         m_out << "\t" << tagName << ":";
         index += 2;
         
@@ -640,45 +639,45 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a) {
             break;
     }
 
-    m_out << endl;
+    m_out << std::endl;
 }
 
 // Print BamAlignment in YAML format
 void ConvertTool::ConvertToolPrivate::PrintYaml(const BamAlignment& a) {
 
     // write alignment name
-    m_out << "---" << endl;
-    m_out << a.Name << ":" << endl;
+    m_out << "---" << std::endl;
+    m_out << a.Name << ":" << std::endl;
 
     // write alignment data
-    m_out << "   " << "AlndBases: "     << a.AlignedBases << endl;
-    m_out << "   " << "Qualities: "     << a.Qualities << endl;
-    m_out << "   " << "Name: "          << a.Name << endl;
-    m_out << "   " << "Length: "        << a.Length << endl;
-    m_out << "   " << "TagData: "       << a.TagData << endl;
-    m_out << "   " << "RefID: "         << a.RefID << endl;
-    m_out << "   " << "RefName: "       << m_references[a.RefID].RefName << endl;
-    m_out << "   " << "Position: "      << a.Position << endl;
-    m_out << "   " << "Bin: "           << a.Bin << endl;
-    m_out << "   " << "MapQuality: "    << a.MapQuality << endl;
-    m_out << "   " << "AlignmentFlag: " << a.AlignmentFlag << endl;
-    m_out << "   " << "MateRefID: "     << a.MateRefID << endl;
-    m_out << "   " << "MatePosition: "  << a.MatePosition << endl;
-    m_out << "   " << "InsertSize: "    << a.InsertSize << endl;
-    m_out << "   " << "Filename: "      << a.Filename << endl;
+    m_out << "   " << "AlndBases: "     << a.AlignedBases << std::endl;
+    m_out << "   " << "Qualities: "     << a.Qualities << std::endl;
+    m_out << "   " << "Name: "          << a.Name << std::endl;
+    m_out << "   " << "Length: "        << a.Length << std::endl;
+    m_out << "   " << "TagData: "       << a.TagData << std::endl;
+    m_out << "   " << "RefID: "         << a.RefID << std::endl;
+    m_out << "   " << "RefName: "       << m_references[a.RefID].RefName << std::endl;
+    m_out << "   " << "Position: "      << a.Position << std::endl;
+    m_out << "   " << "Bin: "           << a.Bin << std::endl;
+    m_out << "   " << "MapQuality: "    << a.MapQuality << std::endl;
+    m_out << "   " << "AlignmentFlag: " << a.AlignmentFlag << std::endl;
+    m_out << "   " << "MateRefID: "     << a.MateRefID << std::endl;
+    m_out << "   " << "MatePosition: "  << a.MatePosition << std::endl;
+    m_out << "   " << "InsertSize: "    << a.InsertSize << std::endl;
+    m_out << "   " << "Filename: "      << a.Filename << std::endl;
 
     // write Cigar data
-    const vector<CigarOp>& cigarData = a.CigarData;
+    const std::vector<CigarOp>& cigarData = a.CigarData;
     if ( !cigarData.empty() ) {
         m_out << "   " <<  "Cigar: ";
-        vector<CigarOp>::const_iterator cigarBegin = cigarData.begin();
-        vector<CigarOp>::const_iterator cigarIter  = cigarBegin;
-        vector<CigarOp>::const_iterator cigarEnd   = cigarData.end();
+        std::vector<CigarOp>::const_iterator cigarBegin = cigarData.begin();
+        std::vector<CigarOp>::const_iterator cigarIter  = cigarBegin;
+        std::vector<CigarOp>::const_iterator cigarEnd   = cigarData.end();
         for ( ; cigarIter != cigarEnd; ++cigarIter ) {
             const CigarOp& op = (*cigarIter);
             m_out << op.Length << op.Type;
         }
-        m_out << endl;
+        m_out << std::endl;
     }
 }
 
@@ -772,9 +771,9 @@ int ConvertTool::Run(int argc, char* argv[]) {
 // ConvertPileupFormatVisitor implementation
 
 ConvertPileupFormatVisitor::ConvertPileupFormatVisitor(const RefVector& references, 
-                                                       const string& fastaFilename,
+                                                       const std::string& fastaFilename,
                                                        const bool isPrintingMapQualities,
-                                                       ostream* out)
+                                                       std::ostream* out)
     : PileupVisitor()
     , m_hasFasta(false)
     , m_isPrintingMapQualities(isPrintingMapQualities)
@@ -785,7 +784,7 @@ ConvertPileupFormatVisitor::ConvertPileupFormatVisitor(const RefVector& referenc
     if ( !fastaFilename.empty() ) {
       
         // check for FASTA index
-        string indexFilename = "";
+        std::string indexFilename;
         if ( Utilities::FileExists(fastaFilename + ".fai") ) 
             indexFilename = fastaFilename + ".fai";
       
@@ -809,14 +808,14 @@ void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData ) {
     if ( pileupData.PileupAlignments.empty() ) return;
   
     // retrieve reference name
-    const string& referenceName = m_references[pileupData.RefId].RefName;
+    const std::string& referenceName = m_references[pileupData.RefId].RefName;
     const int& position   = pileupData.Position;
     
     // retrieve reference base from FASTA file, if one provided; otherwise default to 'N'
     char referenceBase('N');
     if ( m_hasFasta && (pileupData.Position < m_references[pileupData.RefId].RefLength) ) {
         if ( !m_fasta.GetBase(pileupData.RefId, pileupData.Position, referenceBase ) ) {
-            cerr << "bamtools convert ERROR: pileup conversion - could not read reference base from FASTA file" << endl;
+            std::cerr << "bamtools convert ERROR: pileup conversion - could not read reference base from FASTA file" << std::endl;
             return;
         }
     }
@@ -827,13 +826,13 @@ void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData ) {
     // -----------------------------------------------------------
     // build strings based on alleles at this positionInAlignment
     
-    stringstream bases("");
-    stringstream baseQualities("");
-    stringstream mapQualities("");
+    std::stringstream bases;
+    std::stringstream baseQualities;
+    std::stringstream mapQualities;
     
     // iterate over alignments at this pileup position
-    vector<PileupAlignment>::const_iterator pileupIter = pileupData.PileupAlignments.begin();
-    vector<PileupAlignment>::const_iterator pileupEnd  = pileupData.PileupAlignments.end();
+    std::vector<PileupAlignment>::const_iterator pileupIter = pileupData.PileupAlignments.begin();
+    std::vector<PileupAlignment>::const_iterator pileupEnd  = pileupData.PileupAlignments.end();
     for ( ; pileupIter != pileupEnd; ++pileupIter ) {
         const PileupAlignment pa = (*pileupIter);
         const BamAlignment& ba = pa.Alignment;
@@ -878,7 +877,7 @@ void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData ) {
                     char deletedBase('N');
                     if ( m_hasFasta && (pileupData.Position+i < m_references[pileupData.RefId].RefLength) ) {
                         if ( !m_fasta.GetBase(pileupData.RefId, pileupData.Position+i, deletedBase ) ) {
-                            cerr << "bamtools convert ERROR: pileup conversion - could not read reference base from FASTA file" << endl;
+                            std::cerr << "bamtools convert ERROR: pileup conversion - could not read reference base from FASTA file" << std::endl;
                             return;
                         }
                     }
@@ -908,12 +907,12 @@ void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData ) {
     // tab-delimited
     // <refName> <1-based pos> <refBase> <numberAlleles> <bases> <qualities> [mapQuals]
     
-    const string TAB = "\t";
+    const std::string TAB = "\t";
     *m_out << referenceName       << TAB 
            << position + 1        << TAB 
            << referenceBase       << TAB 
            << numberAlleles       << TAB 
            << bases.str()         << TAB 
            << baseQualities.str() << TAB
-           << mapQualities.str()  << endl;
+           << mapQualities.str()  << std::endl;
 }

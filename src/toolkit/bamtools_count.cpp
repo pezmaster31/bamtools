@@ -19,7 +19,6 @@ using namespace BamTools;
 #include <iostream>
 #include <string>
 #include <vector>
-using namespace std;
 
 // ---------------------------------------------  
 // CountSettings implementation
@@ -32,9 +31,9 @@ struct CountTool::CountSettings {
     bool HasRegion;
 
     // filenames
-    vector<string> InputFiles;
-    string InputFilelist;
-    string Region;
+    std::vector<std::string> InputFiles;
+    std::string InputFilelist;
+    std::string Region;
     
     // constructor
     CountSettings(void)
@@ -75,21 +74,21 @@ bool CountTool::CountToolPrivate::Run(void) {
     // add files in the filelist to the input file list
     if ( m_settings->HasInputFilelist ) {
 
-        ifstream filelist(m_settings->InputFilelist.c_str(), ios::in);
+        std::ifstream filelist(m_settings->InputFilelist.c_str(), std::ios::in);
         if ( !filelist.is_open() ) {
-            cerr << "bamtools count ERROR: could not open input BAM file list... Aborting." << endl;
+            std::cerr << "bamtools count ERROR: could not open input BAM file list... Aborting." << std::endl;
             return false;
         }
 
-        string line;
-        while ( getline(filelist, line) )
+        std::string line;
+        while ( std::getline(filelist, line) )
             m_settings->InputFiles.push_back(line);
     }
 
     // open reader without index
     BamMultiReader reader;
     if ( !reader.Open(m_settings->InputFiles) ) {
-        cerr << "bamtools count ERROR: could not open input BAM file(s)... Aborting." << endl;
+        std::cerr << "bamtools count ERROR: could not open input BAM file(s)... Aborting." << std::endl;
         return false;
     }
 
@@ -118,7 +117,7 @@ bool CountTool::CountToolPrivate::Run(void) {
 
                 // attempt to set region on reader
                 if ( !reader.SetRegion(region.LeftRefID, region.LeftPosition, region.RightRefID, region.RightPosition) ) {
-                    cerr << "bamtools count ERROR: set region failed. Check that REGION describes a valid range" << endl;
+                    std::cerr << "bamtools count ERROR: set region failed. Check that REGION describes a valid range" << std::endl;
                     reader.Close();
                     return false;
                 }
@@ -143,16 +142,16 @@ bool CountTool::CountToolPrivate::Run(void) {
 
         // error parsing REGION string
         else {
-            cerr << "bamtools count ERROR: could not parse REGION - " << m_settings->Region << endl;
-            cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
-                 << endl;
+            std::cerr << "bamtools count ERROR: could not parse REGION - " << m_settings->Region << std::endl;
+            std::cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
+                 << std::endl;
             reader.Close();
             return false;
         }
     }
 
     // print results
-    cout << alignmentCount << endl;
+    std::cout << alignmentCount << std::endl;
 
     // clean up & exit
     reader.Close();

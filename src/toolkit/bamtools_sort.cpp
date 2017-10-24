@@ -23,7 +23,6 @@ using namespace BamTools::Algorithms;
 #include <sstream>
 #include <string>
 #include <vector>
-using namespace std;
 
 namespace BamTools {
   
@@ -52,8 +51,8 @@ struct SortTool::SortSettings {
     bool IsSortingByName;
 
     // filenames
-    string InputBamFilename;
-    string OutputBamFilename;
+    std::string InputBamFilename;
+    std::string OutputBamFilename;
 
     // parameters
     unsigned int MaxBufferCount;
@@ -89,20 +88,20 @@ class SortTool::SortToolPrivate {
         
     // internal methods
     private:
-        bool CreateSortedTempFile(vector<BamAlignment>& buffer);
+        bool CreateSortedTempFile(std::vector<BamAlignment>& buffer);
         bool GenerateSortedRuns(void);
         bool MergeSortedRuns(void);
-        bool WriteTempFile(const vector<BamAlignment>& buffer, const string& tempFilename);
-        void SortBuffer(vector<BamAlignment>& buffer);
+        bool WriteTempFile(const std::vector<BamAlignment>& buffer, const std::string& tempFilename);
+        void SortBuffer(std::vector<BamAlignment>& buffer);
         
     // data members
     private:
         SortTool::SortSettings* m_settings;
-        string m_tempFilenameStub;
+        std::string m_tempFilenameStub;
         int m_numberOfRuns;
-        string m_headerText;
+        std::string m_headerText;
         RefVector m_references;
-        vector<string> m_tempFilenames;
+        std::vector<std::string> m_tempFilenames;
 };
 
 // constructor
@@ -114,7 +113,7 @@ SortTool::SortToolPrivate::SortToolPrivate(SortTool::SortSettings* settings)
     // that way multiple sort runs don't trip on each other's temp files
     if ( m_settings) {
         size_t extensionFound = m_settings->InputBamFilename.find(".bam");
-        if ( extensionFound != string::npos )
+        if ( extensionFound != std::string::npos )
             m_tempFilenameStub = m_settings->InputBamFilename.substr(0,extensionFound);
         m_tempFilenameStub.append(".sort.temp.");
     }
@@ -126,8 +125,8 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
     // open input BAM file
     BamReader reader;
     if ( !reader.Open(m_settings->InputBamFilename) ) {
-        cerr << "bamtools sort ERROR: could not open " << m_settings->InputBamFilename
-             << " for reading... Aborting." << endl;
+        std::cerr << "bamtools sort ERROR: could not open " << m_settings->InputBamFilename
+             << " for reading... Aborting." << std::endl;
         return false;
     }
     
@@ -143,7 +142,7 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
     
     // set up alignments buffer
     BamAlignment al;
-    vector<BamAlignment> buffer;
+    std::vector<BamAlignment> buffer;
     buffer.reserve( (size_t)(m_settings->MaxBufferCount*1.1) );
     bool bufferFull = false;
 
@@ -203,13 +202,13 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
     return true;
 }
 
-bool SortTool::SortToolPrivate::CreateSortedTempFile(vector<BamAlignment>& buffer) {
+bool SortTool::SortToolPrivate::CreateSortedTempFile(std::vector<BamAlignment>& buffer) {
  
     // do sorting
     SortBuffer(buffer);
   
     // write sorted contents to temp file, store success/fail
-    stringstream tempStr;
+    std::stringstream tempStr;
     tempStr << m_tempFilenameStub << m_numberOfRuns;
     bool success = WriteTempFile( buffer, tempStr.str() );
     
@@ -232,16 +231,16 @@ bool SortTool::SortToolPrivate::MergeSortedRuns(void) {
     // this might get broken up if we do a multi-pass system later ??
     BamMultiReader multiReader;
     if ( !multiReader.Open(m_tempFilenames) ) {
-        cerr << "bamtools sort ERROR: could not open BamMultiReader for merging temp files... Aborting."
-             << endl;
+        std::cerr << "bamtools sort ERROR: could not open BamMultiReader for merging temp files... Aborting."
+             << std::endl;
         return false;
     }
 
     // open writer for our completely sorted output BAM file
     BamWriter mergedWriter;
     if ( !mergedWriter.Open(m_settings->OutputBamFilename, m_headerText, m_references) ) {
-        cerr << "bamtools sort ERROR: could not open " << m_settings->OutputBamFilename
-             << " for writing... Aborting." << endl;
+        std::cerr << "bamtools sort ERROR: could not open " << m_settings->OutputBamFilename
+             << " for writing... Aborting." << std::endl;
         multiReader.Close();
         return false;
     }
@@ -256,10 +255,10 @@ bool SortTool::SortToolPrivate::MergeSortedRuns(void) {
     mergedWriter.Close();
     
     // delete all temp files
-    vector<string>::const_iterator tempIter = m_tempFilenames.begin();
-    vector<string>::const_iterator tempEnd  = m_tempFilenames.end();
+    std::vector<std::string>::const_iterator tempIter = m_tempFilenames.begin();
+    std::vector<std::string>::const_iterator tempEnd  = m_tempFilenames.end();
     for ( ; tempIter != tempEnd; ++tempIter ) {
-        const string& tempFilename = (*tempIter);
+        const std::string& tempFilename = (*tempIter);
         remove(tempFilename.c_str());
     }
   
@@ -278,7 +277,7 @@ bool SortTool::SortToolPrivate::Run(void) {
         return false;
 } 
     
-void SortTool::SortToolPrivate::SortBuffer(vector<BamAlignment>& buffer) {
+void SortTool::SortToolPrivate::SortBuffer(std::vector<BamAlignment>& buffer) {
  
     // ** add further custom sort options later ?? **
     
@@ -289,20 +288,20 @@ void SortTool::SortToolPrivate::SortBuffer(vector<BamAlignment>& buffer) {
         std::stable_sort( buffer.begin(), buffer.end(), Sort::ByPosition() );
 }
     
-bool SortTool::SortToolPrivate::WriteTempFile(const vector<BamAlignment>& buffer,
-                                              const string& tempFilename)
+bool SortTool::SortToolPrivate::WriteTempFile(const std::vector<BamAlignment>& buffer,
+                                              const std::string& tempFilename)
 {
     // open temp file for writing
     BamWriter tempWriter;
     if ( !tempWriter.Open(tempFilename, m_headerText, m_references) ) {
-        cerr << "bamtools sort ERROR: could not open " << tempFilename
-             << " for writing." << endl;
+        std::cerr << "bamtools sort ERROR: could not open " << tempFilename
+             << " for writing." << std::endl;
         return false;
     }
   
     // write data
-    vector<BamAlignment>::const_iterator buffIter = buffer.begin();
-    vector<BamAlignment>::const_iterator buffEnd  = buffer.end();
+    std::vector<BamAlignment>::const_iterator buffIter = buffer.begin();
+    std::vector<BamAlignment>::const_iterator buffEnd  = buffer.end();
     for ( ; buffIter != buffEnd; ++buffIter )  {
         const BamAlignment& al = (*buffIter);
         tempWriter.SaveAlignment(al);

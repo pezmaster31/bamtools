@@ -11,7 +11,6 @@
 using namespace BamTools;
 
 #include <iostream>
-using namespace std;
 
 /*! \class BamTools::SamSequenceDictionary
     \brief Container of SamSequence entries.
@@ -88,8 +87,8 @@ void SamSequenceDictionary::Add(const SamSequenceDictionary& sequences) {
     \sa Add()
 */
 void SamSequenceDictionary::Add(const std::vector<SamSequence>& sequences) {
-    vector<SamSequence>::const_iterator seqIter = sequences.begin();
-    vector<SamSequence>::const_iterator seqEnd  = sequences.end();
+    std::vector<SamSequence>::const_iterator seqIter = sequences.begin();
+    std::vector<SamSequence>::const_iterator seqEnd  = sequences.end();
     for ( ; seqIter!= seqEnd; ++seqIter )
         Add(*seqIter);
 }
@@ -103,10 +102,10 @@ void SamSequenceDictionary::Add(const std::vector<SamSequence>& sequences) {
     \sa Add()
 */
 void SamSequenceDictionary::Add(const std::map<std::string, int>& sequenceMap) {
-    map<string, int>::const_iterator seqIter = sequenceMap.begin();
-    map<string, int>::const_iterator seqEnd  = sequenceMap.end();
+    std::map<std::string, int>::const_iterator seqIter = sequenceMap.begin();
+    std::map<std::string, int>::const_iterator seqEnd  = sequenceMap.end();
     for ( ; seqIter != seqEnd; ++seqIter ) {
-        const string& name = (*seqIter).first;
+        const std::string& name = (*seqIter).first;
         const int& length = (*seqIter).second;
         Add( SamSequence(name, length) );
     }
@@ -249,8 +248,8 @@ void SamSequenceDictionary::Remove(const std::string& sequenceName) {
     \sa Remove()
 */
 void SamSequenceDictionary::Remove(const std::vector<SamSequence>& sequences) {
-    vector<SamSequence>::const_iterator rgIter = sequences.begin();
-    vector<SamSequence>::const_iterator rgEnd  = sequences.end();
+    std::vector<SamSequence>::const_iterator rgIter = sequences.begin();
+    std::vector<SamSequence>::const_iterator rgEnd  = sequences.end();
     for ( ; rgIter!= rgEnd; ++rgIter )
         Remove(*rgIter);
 }
@@ -264,8 +263,8 @@ void SamSequenceDictionary::Remove(const std::vector<SamSequence>& sequences) {
     \sa Remove()
 */
 void SamSequenceDictionary::Remove(const std::vector<std::string>& sequenceNames) {
-    vector<string>::const_iterator rgIter = sequenceNames.begin();
-    vector<string>::const_iterator rgEnd  = sequenceNames.end();
+    std::vector<std::string>::const_iterator rgIter = sequenceNames.begin();
+    std::vector<std::string>::const_iterator rgEnd  = sequenceNames.end();
     for ( ; rgIter!= rgEnd; ++rgIter )
         Remove(*rgIter);
 }

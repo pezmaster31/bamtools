@@ -21,7 +21,6 @@ using namespace BamTools;
 #include <iostream>
 #include <string>
 #include <vector>
-using namespace std;
   
 namespace BamTools {
   
@@ -52,11 +51,11 @@ struct RandomTool::RandomSettings {
 
     // parameters
     unsigned int AlignmentCount;
-    vector<string> InputFiles;
-    string InputFilelist;
-    string OutputFilename;
+    std::vector<std::string> InputFiles;
+    std::string InputFilelist;
+    std::string OutputFilename;
     unsigned int RandomNumberSeed;
-    string Region;
+    std::string Region;
     
     // constructor
     RandomSettings(void)
@@ -104,21 +103,21 @@ bool RandomTool::RandomToolPrivate::Run(void) {
     // add files in the filelist to the input file list
     if ( m_settings->HasInputFilelist ) {
 
-        ifstream filelist(m_settings->InputFilelist.c_str(), ios::in);
+        std::ifstream filelist(m_settings->InputFilelist.c_str(), std::ios::in);
         if ( !filelist.is_open() ) {
-            cerr << "bamtools random ERROR: could not open input BAM file list... Aborting." << endl;
+            std::cerr << "bamtools random ERROR: could not open input BAM file list... Aborting." << std::endl;
             return false;
         }
 
-        string line;
-        while ( getline(filelist, line) )
+        std::string line;
+        while ( std::getline(filelist, line) )
             m_settings->InputFiles.push_back(line);
     }
 
     // open our reader
     BamMultiReader reader;
     if ( !reader.Open(m_settings->InputFiles) ) {
-        cerr << "bamtools random ERROR: could not open input BAM file(s)... Aborting." << endl;
+        std::cerr << "bamtools random ERROR: could not open input BAM file(s)... Aborting." << std::endl;
         return false;
     }
 
@@ -127,16 +126,16 @@ bool RandomTool::RandomToolPrivate::Run(void) {
 
     // make sure index data is available
     if ( !reader.HasIndexes() ) {
-        cerr << "bamtools random ERROR: could not load index data for all input BAM file(s)... Aborting." << endl;
+        std::cerr << "bamtools random ERROR: could not load index data for all input BAM file(s)... Aborting." << std::endl;
         reader.Close();
         return false;
     }
 
     // get BamReader metadata
-    const string headerText = reader.GetHeaderText();
+    const std::string headerText = reader.GetHeaderText();
     const RefVector references = reader.GetReferenceData();
     if ( references.empty() ) {
-        cerr << "bamtools random ERROR: no reference data available... Aborting." << endl;
+        std::cerr << "bamtools random ERROR: no reference data available... Aborting." << std::endl;
         reader.Close();
         return false;
     }
@@ -151,8 +150,8 @@ bool RandomTool::RandomToolPrivate::Run(void) {
     BamWriter writer;
     writer.SetCompressionMode(compressionMode);
     if ( !writer.Open(m_settings->OutputFilename, headerText, references) ) {
-        cerr << "bamtools random ERROR: could not open " << m_settings->OutputFilename
-             << " for writing... Aborting." << endl;
+        std::cerr << "bamtools random ERROR: could not open " << m_settings->OutputFilename
+             << " for writing... Aborting." << std::endl;
         reader.Close();
         return false;
     }
@@ -160,9 +159,9 @@ bool RandomTool::RandomToolPrivate::Run(void) {
     // if user specified a REGION constraint, attempt to parse REGION string
     BamRegion region;
     if ( m_settings->HasRegion && !Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
-        cerr << "bamtools random ERROR: could not parse REGION: " << m_settings->Region << endl;
-        cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
-             << endl;
+        std::cerr << "bamtools random ERROR: could not parse REGION: " << m_settings->Region << std::endl;
+        std::cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
+             << std::endl;
         reader.Close();
         writer.Close();
         return false;

@@ -13,7 +13,6 @@ using namespace BamTools::Internal;
 
 #include <cstdio>
 #include <iostream>
-using namespace std;
 
 BamPipe::BamPipe(void) : ILocalIODevice() { }
 
@@ -42,17 +41,17 @@ bool BamPipe::Open(const IBamIODevice::OpenMode mode) {
 #endif // SYSTEM_NODEJS
 
     else {
-        const string errorType = string( (mode == IBamIODevice::ReadWrite) ? "unsupported"
+        const std::string errorType = std::string( (mode == IBamIODevice::ReadWrite) ? "unsupported"
                                                                            : "unknown" );
-        const string message = errorType + " open mode requested";
+        const std::string message = errorType + " open mode requested";
         SetErrorString("BamPipe::Open", message);
         return false;
     }
 
     // check that we obtained a valid FILE*
     if ( m_stream == 0 ) {
-        const string message_base = string("could not open handle on ");
-        const string message = message_base + ( (mode == IBamIODevice::ReadOnly) ? "stdin"
+        const std::string message_base = std::string("could not open handle on ");
+        const std::string message = message_base + ( (mode == IBamIODevice::ReadOnly) ? "stdin"
                                                                                  : "stdout" );
         SetErrorString("BamPipe::Open", message);
         return false;

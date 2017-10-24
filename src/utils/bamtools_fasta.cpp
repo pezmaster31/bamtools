@@ -17,12 +17,11 @@ using namespace BamTools;
 #include <iostream>
 #include <sstream>
 #include <vector>
-using namespace std;
 
 struct Fasta::FastaPrivate {
   
     struct FastaIndexData {
-        string  Name;
+        std::string  Name;
         int32_t Length;
         int64_t Offset;
         int32_t LineLength;
@@ -37,7 +36,7 @@ struct Fasta::FastaPrivate {
     bool HasIndex;
     bool IsIndexOpen;
   
-    vector<FastaIndexData> Index;
+    std::vector<FastaIndexData> Index;
     
     // ctor
     FastaPrivate(void);
@@ -45,17 +44,17 @@ struct Fasta::FastaPrivate {
     
     // 'public' API methods
     bool Close(void);
-    bool CreateIndex(const string& indexFilename);
+    bool CreateIndex(const std::string& indexFilename);
     bool GetBase(const int& refId, const int& position, char& base);
-    bool GetSequence(const int& refId, const int& start, const int& stop, string& sequence);
-    bool Open(const string& filename, const string& indexFilename);
+    bool GetSequence(const int& refId, const int& start, const int& stop, std::string& sequence);
+    bool Open(const std::string& filename, const std::string& indexFilename);
     
     // internal methods
     private:
         void Chomp(char* sequence);
-        bool GetNameFromHeader(const string& header, string& name);
-        bool GetNextHeader(string& header);
-        bool GetNextSequence(string& sequence);
+        bool GetNameFromHeader(const std::string& header, std::string& name);
+        bool GetNextHeader(std::string& header);
+        bool GetNextSequence(std::string& sequence);
         bool LoadIndexData(void);
         bool Rewind(void);
         bool WriteIndexData(void);
@@ -111,17 +110,17 @@ bool Fasta::FastaPrivate::Close(void) {
     return true;
 }
 
-bool Fasta::FastaPrivate::CreateIndex(const string& indexFilename) {
+bool Fasta::FastaPrivate::CreateIndex(const std::string& indexFilename) {
   
     // check that file is open
     if ( !IsOpen ) {
-        cerr << "FASTA error : cannot create index, FASTA file not open" << endl;
+        std::cerr << "FASTA error : cannot create index, FASTA file not open" << std::endl;
         return false;
     }
   
     // rewind FASTA file
     if ( !Rewind() ) {
-        cerr << "FASTA error : could not rewind FASTA file" << endl;
+        std::cerr << "FASTA error : could not rewind FASTA file" << std::endl;
         return false;
     }
     
@@ -137,12 +136,12 @@ bool Fasta::FastaPrivate::CreateIndex(const string& indexFilename) {
     // skip over header
     char buffer[1024];
     if ( fgets(buffer, 1024, Stream) == 0 ) {
-        cerr << "FASTA error : could not read from file" << endl;
+        std::cerr << "FASTA error : could not read from file" << std::endl;
         return false;
     }
     if ( feof(Stream) ) return false;
     if ( buffer[0] != '>' ) { 
-        cerr << "FASTA error : expected header ('>'), instead : " << buffer[0] << endl;
+        std::cerr << "FASTA error : expected header ('>'), instead : " << buffer[0] << std::endl;
         return false;
     }
   
@@ -157,14 +156,14 @@ bool Fasta::FastaPrivate::CreateIndex(const string& indexFilename) {
     
     // rewind FASTA file
     if ( !Rewind() ) {
-        cerr << "FASTA error : could not rewind FASTA file" << endl;
+        std::cerr << "FASTA error : could not rewind FASTA file" << std::endl;
         return false;
     }
     
     // iterate through fasta entries
     int currentId   = 0;
-    string header   = "";
-    string sequence = "";
+    std::string header;
+    std::string sequence;
     while ( GetNextHeader(header) ) {
         
         // ---------------------------
@@ -176,13 +175,13 @@ bool Fasta::FastaPrivate::CreateIndex(const string& indexFilename) {
         
         // parse header, store sequence name in data.Name
         if ( !GetNameFromHeader(header, data.Name) ) {
-            cerr << "FASTA error : could not parse read name from FASTA header" << endl;
+            std::cerr << "FASTA error : could not parse read name from FASTA header" << std::endl;
             return false;
         }
         
         // retrieve FASTA sequence
         if ( !GetNextSequence(sequence) ) {
-            cerr << "FASTA error : could not read in next sequence from FASTA file" << endl;
+            std::cerr << "FASTA error : could not read in next sequence from FASTA file" << std::endl;
             return false;
         }
         
@@ -202,7 +201,7 @@ bool Fasta::FastaPrivate::CreateIndex(const string& indexFilename) {
     if ( !indexFilename.empty() ) {
         IndexStream = fopen(indexFilename.c_str(), "wb");
         if ( !IndexStream ) {
-            cerr << "FASTA error : Could not open " << indexFilename << " for writing." << endl;
+            std::cerr << "FASTA error : Could not open " << indexFilename << " for writing." << std::endl;
             return false;
         }
         IsIndexOpen = true;
@@ -224,7 +223,7 @@ bool Fasta::FastaPrivate::GetBase(const int& refId, const int& position, char& b
   
     // make sure FASTA file is open
     if ( !IsOpen ) {
-        cerr << "FASTA error : file not open for reading" << endl;
+        std::cerr << "FASTA error : file not open for reading" << std::endl;
         return false;
     }
   
@@ -233,7 +232,7 @@ bool Fasta::FastaPrivate::GetBase(const int& refId, const int& position, char& b
         
         // validate reference id 
         if ( (refId < 0) || (refId >= (int)Index.size()) ) {
-            cerr << "FASTA error: invalid refId specified: " << refId << endl;
+            std::cerr << "FASTA error: invalid refId specified: " << refId << std::endl;
             return false;
         }
         
@@ -242,7 +241,7 @@ bool Fasta::FastaPrivate::GetBase(const int& refId, const int& position, char& b
         
         // validate position 
         if ( (position < 0) || (position > referenceData.Length) ) {
-            cerr << "FASTA error: invalid position specified: " << position << endl;
+            std::cerr << "FASTA error: invalid position specified: " << position << std::endl;
             return false;
         }
 
@@ -251,7 +250,7 @@ bool Fasta::FastaPrivate::GetBase(const int& refId, const int& position, char& b
         const int64_t lineOffset = position % referenceData.LineLength;
         const int64_t seekTo = referenceData.Offset + (lines*referenceData.ByteLength) + lineOffset;
         if ( fseek64(Stream, seekTo, SEEK_SET) != 0 ) {
-            cerr << "FASTA error : could not seek in file" << endl;
+            std::cerr << "FASTA error : could not seek in file" << std::endl;
             return false;
         }
         
@@ -265,14 +264,14 @@ bool Fasta::FastaPrivate::GetBase(const int& refId, const int& position, char& b
       
         // rewind FASTA file
         if ( !Rewind() ) {
-            cerr << "FASTA error : could not rewind FASTA file" << endl;
+            std::cerr << "FASTA error : could not rewind FASTA file" << std::endl;
             return false;
         }
         
         // iterate through fasta entries
         int currentId = 0;
-        string header = "";
-        string sequence = "";
+        std::string header;
+        std::string sequence;
         
         // get first entry
         GetNextHeader(header);
@@ -299,10 +298,10 @@ bool Fasta::FastaPrivate::GetBase(const int& refId, const int& position, char& b
     return true;
 }
 
-bool Fasta::FastaPrivate::GetNameFromHeader(const string& header, string& name) {
+bool Fasta::FastaPrivate::GetNameFromHeader(const std::string& header, std::string& name) {
 
     // get rid of the leading greater than sign
-    string s = header.substr(1);
+    std::string s = header.substr(1);
 
     // extract the first non-whitespace segment
     char* pName = (char*)s.data();
@@ -325,7 +324,7 @@ bool Fasta::FastaPrivate::GetNameFromHeader(const string& header, string& name) 
     }
 
     if ( start == stop ) {
-        cerr << "FASTA error : could not parse read name from FASTA header" << endl;
+        std::cerr << "FASTA error : could not parse read name from FASTA header" << std::endl;
         return false;
     }
 
@@ -333,7 +332,7 @@ bool Fasta::FastaPrivate::GetNameFromHeader(const string& header, string& name) 
     return true;
 }
 
-bool Fasta::FastaPrivate::GetNextHeader(string& header) {
+bool Fasta::FastaPrivate::GetNextHeader(std::string& header) {
   
     // validate input stream
     if ( !IsOpen || feof(Stream) ) 
@@ -342,18 +341,18 @@ bool Fasta::FastaPrivate::GetNextHeader(string& header) {
     // read in header line
     char buffer[1024];
     if ( fgets(buffer, 1024, Stream) == 0 ) {
-        cerr << "FASTA error : could not read from file" << endl;
+        std::cerr << "FASTA error : could not read from file" << std::endl;
         return false;
     }
     
     // make sure it's a FASTA header
     if ( buffer[0] != '>' ) { 
-        cerr << "FASTA error : expected header ('>'), instead : " << buffer[0] << endl;
+        std::cerr << "FASTA error : expected header ('>'), instead : " << buffer[0] << std::endl;
         return false;
     }
   
     // import buffer contents to header string
-    stringstream headerBuffer("");
+    std::stringstream headerBuffer;
     headerBuffer << buffer;
     header = headerBuffer.str();
   
@@ -361,7 +360,7 @@ bool Fasta::FastaPrivate::GetNextHeader(string& header) {
     return true;
 }
 
-bool Fasta::FastaPrivate::GetNextSequence(string& sequence) {
+bool Fasta::FastaPrivate::GetNextSequence(std::string& sequence) {
   
     // validate input stream
     if ( !IsOpen || feof(Stream) ) 
@@ -369,7 +368,7 @@ bool Fasta::FastaPrivate::GetNextSequence(string& sequence) {
     
     // read in sequence  
     char buffer[1024];
-    ostringstream seqBuffer("");
+    std::ostringstream seqBuffer;
     while(true) {
         
         char ch = fgetc(Stream);
@@ -378,7 +377,7 @@ bool Fasta::FastaPrivate::GetNextSequence(string& sequence) {
               break;       
         
         if ( fgets(buffer, 1024, Stream) == 0 ) {
-            cerr << "FASTA error : could not read from file" << endl;
+            std::cerr << "FASTA error : could not read from file" << std::endl;
             return false;
         }
         
@@ -393,11 +392,11 @@ bool Fasta::FastaPrivate::GetNextSequence(string& sequence) {
     return true;
 }
 
-bool Fasta::FastaPrivate::GetSequence(const int& refId, const int& start, const int& stop, string& sequence) {
+bool Fasta::FastaPrivate::GetSequence(const int& refId, const int& start, const int& stop, std::string& sequence) {
  
     // make sure FASTA file is open
     if ( !IsOpen ) {
-        cerr << "FASTA error : file not open for reading" << endl;
+        std::cerr << "FASTA error : file not open for reading" << std::endl;
         return false;
     }
   
@@ -406,7 +405,7 @@ bool Fasta::FastaPrivate::GetSequence(const int& refId, const int& start, const 
       
         // validate reference id 
         if ( (refId < 0) || (refId >= (int)Index.size()) ) {
-            cerr << "FASTA error: invalid refId specified: " << refId << endl;
+            std::cerr << "FASTA error: invalid refId specified: " << refId << std::endl;
             return false;
         }
         
@@ -415,20 +414,20 @@ bool Fasta::FastaPrivate::GetSequence(const int& refId, const int& start, const 
         
         // validate stop position 
         if ( (start < 0) || (start > stop) || (stop > referenceData.Length) ) {
-            cerr << "FASTA error: invalid start/stop positions specified: " << start << ", " << stop << endl;
+            std::cerr << "FASTA error: invalid start/stop positions specified: " << start << ", " << stop << std::endl;
             return false;
         }
         
         // seek to beginning of sequence data
         if ( fseeko(Stream, referenceData.Offset, SEEK_SET) != 0 ) {
-            cerr << "FASTA error : could not sek in file" << endl;
+            std::cerr << "FASTA error : could not sek in file" << std::endl;
             return false;
         }
       
         // retrieve full sequence
-        string fullSequence = "";
+        std::string fullSequence;
         if ( !GetNextSequence(fullSequence) ) {
-            cerr << "FASTA error : could not retrieve sequence from FASTA file" << endl;
+            std::cerr << "FASTA error : could not retrieve sequence from FASTA file" << std::endl;
             return false;
         }
         
@@ -443,14 +442,14 @@ bool Fasta::FastaPrivate::GetSequence(const int& refId, const int& start, const 
       
         // rewind FASTA file
         if ( !Rewind() ) {
-            cerr << "FASTA error : could not rewind FASTA file" << endl;
+            std::cerr << "FASTA error : could not rewind FASTA file" << std::endl;
             return false;
         }
      
         // iterate through fasta entries
         int currentId = 0;
-        string header = "";
-        string fullSequence = "";
+        std::string header;
+        std::string fullSequence;
         
         // get first entry
         GetNextHeader(header);
@@ -487,7 +486,7 @@ bool Fasta::FastaPrivate::LoadIndexData(void) {
     Index.clear();
   
     char buffer[1024];
-    stringstream indexBuffer;
+    std::stringstream indexBuffer;
     while ( true ) {
       
         char c = fgetc(IndexStream);
@@ -499,7 +498,7 @@ bool Fasta::FastaPrivate::LoadIndexData(void) {
         
         // read line from index file
         if ( fgets(buffer, 1024, IndexStream) == 0 ) {
-            cerr << "FASTA LoadIndexData() error : could not read from index file" << endl;
+            std::cerr << "FASTA LoadIndexData() error : could not read from index file" << std::endl;
             HasIndex = false;
             return false;
         }
@@ -522,14 +521,14 @@ bool Fasta::FastaPrivate::LoadIndexData(void) {
     return true;
 }
 
-bool Fasta::FastaPrivate::Open(const string& filename, const string& indexFilename) {
+bool Fasta::FastaPrivate::Open(const std::string& filename, const std::string& indexFilename) {
  
     bool success = true;
   
     // open FASTA filename
     Stream = fopen(filename.c_str(), "rb");
     if ( !Stream ) {
-        cerr << "FASTA error: Could not open " << filename << " for reading" << endl;
+        std::cerr << "FASTA error: Could not open " << filename << " for reading" << std::endl;
         return false;
     }
     IsOpen = true;
@@ -539,7 +538,7 @@ bool Fasta::FastaPrivate::Open(const string& filename, const string& indexFilena
     if ( !indexFilename.empty() ) {
         IndexStream = fopen(indexFilename.c_str(), "rb");
         if ( !IndexStream ) {
-            cerr << "FASTA error : Could not open " << indexFilename << " for reading." << endl;
+            std::cerr << "FASTA error : Could not open " << indexFilename << " for reading." << std::endl;
             return false;
         }
         IsIndexOpen = true;
@@ -566,9 +565,9 @@ bool Fasta::FastaPrivate::WriteIndexData(void) {
   
     // iterate over index entries
     bool success = true;
-    stringstream indexBuffer;
-    vector<FastaIndexData>::const_iterator indexIter = Index.begin();
-    vector<FastaIndexData>::const_iterator indexEnd  = Index.end();
+    std::stringstream indexBuffer;
+    std::vector<FastaIndexData>::const_iterator indexIter = Index.begin();
+    std::vector<FastaIndexData>::const_iterator indexEnd  = Index.end();
     for ( ; indexIter != indexEnd; ++indexIter ) {
       
         // clear stream
@@ -580,7 +579,7 @@ bool Fasta::FastaPrivate::WriteIndexData(void) {
                     << data.Length << "\t"
                     << data.Offset << "\t"
                     << data.LineLength << "\t"
-                    << data.ByteLength << endl;
+                    << data.ByteLength << std::endl;
                     
         // write stream to file
         success &= ( fputs(indexBuffer.str().c_str(), IndexStream) >= 0 );
@@ -606,7 +605,7 @@ bool Fasta::Close(void) {
     return d->Close();
 }
 
-bool Fasta::CreateIndex(const string& indexFilename) {
+bool Fasta::CreateIndex(const std::string& indexFilename) {
     return d->CreateIndex(indexFilename);
 }
 
@@ -614,10 +613,10 @@ bool Fasta::GetBase(const int& refId, const int& position, char& base) {
     return d->GetBase(refId, position, base);
 }
 
-bool Fasta::GetSequence(const int& refId, const int& start, const int& stop, string& sequence) {
+bool Fasta::GetSequence(const int& refId, const int& start, const int& stop, std::string& sequence) {
     return d->GetSequence(refId, start, stop, sequence);
 }
 
-bool Fasta::Open(const string& filename, const string& indexFilename) {
+bool Fasta::Open(const std::string& filename, const std::string& indexFilename) {
     return d->Open(filename, indexFilename);
 }

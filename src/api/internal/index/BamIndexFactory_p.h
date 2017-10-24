@@ -12,6 +12,7 @@
 
 #include "api/BamIndex.h"
 #include <string>
+#include <sys/stat.h>
 
 namespace BamTools {
 namespace Internal {
@@ -41,6 +42,9 @@ class BamIndexFactory {
                                                      const BamIndex::IndexType& type);
         // retrieves file extension (including '.')
         static const std::string FileExtension(const std::string& filename);
+
+    private:
+        static const bool FileExists(const std::string& filename);
 };
 
 } // namespace Internal

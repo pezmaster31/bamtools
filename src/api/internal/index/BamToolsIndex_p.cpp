@@ -30,7 +30,8 @@ using namespace std;
 // --------------------------------
 
 const uint32_t BamToolsIndex::DEFAULT_BLOCK_LENGTH = 1000;
-const string BamToolsIndex::BTI_EXTENSION     = ".bti";
+const string BamToolsIndex::BTI_EXTENSION     = ".bam.bti";
+const string BamToolsIndex::BAM_BTI_EXTENSION = ".bam.bti";
 const char* const BamToolsIndex::BTI_MAGIC    = "BTI\1";
 const int BamToolsIndex::SIZEOF_BLOCK         = sizeof(int32_t)*2 + sizeof(int64_t);
 
@@ -275,6 +276,11 @@ bool BamToolsIndex::Create(void) {
 }
 
 // returns format's file extension
+const std::string BamToolsIndex::BamDotExtension(void) {
+    return BamToolsIndex::BAM_BTI_EXTENSION;
+}
+
+// just the bare extension
 const std::string BamToolsIndex::Extension(void) {
     return BamToolsIndex::BTI_EXTENSION;
 }

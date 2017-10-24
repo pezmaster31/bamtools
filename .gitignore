@@ -1,0 +1,5 @@
+bin/
+build/
+include/
+lib/
+src/toolkit/bamtools_version.h

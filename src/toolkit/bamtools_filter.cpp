@@ -640,14 +640,17 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
   
     // read in script contents from file
     const string document = GetScriptContents();
+    std::istringstream sin(document);
     
     // set up JsonCPP reader and attempt to parse script
     Json::Value root;
-    Json::Reader reader;
-    if ( !reader.parse(document, root) ) {
+    Json::CharReaderBuilder rbuilder;
+    std::string errs;
+    const bool ok = Json::parseFromStream(rbuilder, sin, &root, &errs);
+    if (!ok) {
         // use built-in error reporting mechanism to alert user what was wrong with the script
         cerr  << "bamtools filter ERROR: failed to parse script - see error message(s) below" << endl
-              << reader.getFormattedErrorMessages();
+              << errs;
         return false;     
     }
 

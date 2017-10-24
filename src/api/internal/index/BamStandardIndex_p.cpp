@@ -955,7 +955,7 @@ void BamStandardIndex::WriteLinearOffsets(const int& refId, BaiLinearOffsetVecto
         numBytesWritten += m_resources.Device->Write((const char*)&linearOffset, sizeof(linearOffset));
     }
 
-    if ( numBytesWritten != (sizeof(offsetCount) + linearOffsets.size()*sizeof(uint64_t)) )
+    if ( numBytesWritten != static_cast<int64_t>(sizeof(offsetCount) + linearOffsets.size()*sizeof(uint64_t)) )
         throw BamException("BamStandardIndex::WriteLinearOffsets", "could not write BAI linear offsets");
 }
 

@@ -578,23 +578,19 @@ inline bool BamAlignment::GetTag(const std::string& tag, std::vector<T>& destina
     ++pTagData;
 
     // calculate length of each element in tag's array
-    int elementLength = 0;
     switch ( elementType ) {
         case (Constants::BAM_TAG_TYPE_ASCII) :
         case (Constants::BAM_TAG_TYPE_INT8)  :
         case (Constants::BAM_TAG_TYPE_UINT8) :
-            elementLength = sizeof(uint8_t);
             break;
 
         case (Constants::BAM_TAG_TYPE_INT16)  :
         case (Constants::BAM_TAG_TYPE_UINT16) :
-            elementLength = sizeof(uint16_t);
             break;
 
         case (Constants::BAM_TAG_TYPE_INT32)  :
         case (Constants::BAM_TAG_TYPE_UINT32) :
         case (Constants::BAM_TAG_TYPE_FLOAT)  :
-            elementLength = sizeof(uint32_t);
             break;
 
         // var-length types not supported for numeric destination

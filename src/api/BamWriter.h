@@ -12,6 +12,7 @@
 
 #include "api/api_global.h"
 #include "api/BamAux.h"
+#include "api/IBamIODevice.h"
 #include <string>
 
 namespace BamTools {
@@ -54,6 +55,12 @@ class API_EXPORT BamWriter {
         bool Open(const std::string& filename,
                   const SamHeader& samHeader,
                   const RefVector& referenceSequences);
+		// opens a BAM file for writing using a custom oi device
+		// Device is deleted by BamWriter so it must be created on a heap 
+        bool Open(const std::string& filename,
+                  const SamHeader& samHeader,
+                  const RefVector& referenceSequences,
+				  IBamIODevice* device);		
         // saves the alignment to the alignment archive
         bool SaveAlignment(const BamAlignment& alignment);
         // sets the output compression mode

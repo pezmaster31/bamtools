@@ -363,7 +363,7 @@ bool BamReaderPrivate::LocateIndex(const BamIndex::IndexType& preferredType) {
 }
 
 // opens BAM file (and index)
-bool BamReaderPrivate::Open(const string& filename) {
+bool BamReaderPrivate::Open(const string& filename, IBamIODevice* device) {
 
     try {
 
@@ -371,7 +371,7 @@ bool BamReaderPrivate::Open(const string& filename) {
         Close();
 
         // open BgzfStream
-        m_stream.Open(filename, IBamIODevice::ReadOnly);
+        m_stream.Open(filename, IBamIODevice::ReadOnly, device);
 
         // load BAM metadata
         LoadHeaderData();

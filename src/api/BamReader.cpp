@@ -276,6 +276,22 @@ bool BamReader::Open(const std::string& filename) {
     return d->Open(filename);
 }
 
+/*! \fn bool BamReader::Open(const std::string& filename, IBamIODevice* device)
+    \brief Opens a BAM file with a custom io device.
+
+    If BamReader is already opened on another file, this function closes
+    that file, then attempts to open requested \a filename.
+
+    \param[in] filename name of BAM file to open
+
+    \returns \c true if BAM file was opened successfully
+    \sa Close(), IsOpen(), OpenIndex()
+*/
+bool BamReader::Open(const std::string& filename, IBamIODevice* device)
+{
+	return d->Open(filename, device);
+}
+
 /*! \fn bool BamReader::OpenIndex(const std::string& indexFilename)
     \brief Opens a BAM index file.
 

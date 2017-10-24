@@ -27,6 +27,7 @@
 #include "api/internal/bam/BamHeader_p.h"
 #include "api/internal/bam/BamRandomAccessController_p.h"
 #include "api/internal/io/BgzfStream_p.h"
+#include "api/IBamIODevice.h"
 #include <string>
 
 namespace BamTools {
@@ -46,7 +47,7 @@ class BamReaderPrivate {
         bool Close(void);
         const std::string Filename(void) const;
         bool IsOpen(void) const;
-        bool Open(const std::string& filename);
+        bool Open(const std::string& filename, IBamIODevice* device = 0);
         bool Rewind(void);
         bool SetRegion(const BamRegion& region);
 

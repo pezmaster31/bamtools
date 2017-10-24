@@ -1,4 +1,4 @@
-// ***************************************************************************
+﻿// ***************************************************************************
 // BamReader.h (c) 2009 Derek Barnett, Michael Str�mberg
 // Marth Lab, Department of Biology, Boston College
 // ---------------------------------------------------------------------------
@@ -14,6 +14,7 @@
 #include "api/BamAlignment.h"
 #include "api/BamIndex.h"
 #include "api/SamHeader.h"
+#include "api/IBamIODevice.h"
 #include <string>
 
 namespace BamTools {
@@ -46,6 +47,8 @@ class API_EXPORT BamReader {
         bool Jump(int refID, int position = 0);
         // opens a BAM file
         bool Open(const std::string& filename);
+        // opens a BAM file with a custom io device. Device is deleted by BamReader so it must be created on a heap 
+        bool Open(const std::string& filename, IBamIODevice* device);
         // returns internal file pointer to beginning of alignment data
         bool Rewind(void);
         // sets the target region of interest

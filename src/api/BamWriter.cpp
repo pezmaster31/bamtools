@@ -96,6 +96,15 @@ bool BamWriter::Open(const std::string& filename,
     return d->Open(filename, samHeaderText, referenceSequences);
 }
 
+bool BamWriter::Open(const std::string& filename,
+            const SamHeader& samHeader,
+            const RefVector& referenceSequences,
+			IBamIODevice* device)
+{
+	return d->Open(filename, samHeader.ToString(), referenceSequences, device);
+}
+
+
 /*! \fn bool BamWriter::Open(const std::string& filename,
                              const SamHeader& samHeader,
                              const RefVector& referenceSequences)

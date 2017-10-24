@@ -17,7 +17,6 @@ using namespace BamTools::Internal;
 #include <iterator>
 #include <string>
 #include <vector>
-using namespace std;
 
 /*! \class BamTools::BamReader
     \brief Provides read access to BAM files.
@@ -85,7 +84,7 @@ const SamHeader& BamReader::GetConstSamHeader(void) const {
 
     \return error description
 */
-string BamReader::GetErrorString(void) const {
+std::string BamReader::GetErrorString(void) const {
     return d->GetErrorString();
 }
 

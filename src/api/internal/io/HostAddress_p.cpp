@@ -15,7 +15,6 @@ using namespace BamTools::Internal;
 #include <cstdlib>
 #include <sstream>
 #include <vector>
-using namespace std;
 
 // ------------------------
 // static utility methods
@@ -26,22 +25,22 @@ namespace Internal {
 
 // split a string into fields, on delimiter character
 static inline
-vector<string> Split(const string& source, char delim) {
-    stringstream ss(source);
-    string field;
-    vector<string> fields;
-    while ( getline(ss, field, delim) )
+std::vector<std::string> Split(const std::string& source, char delim) {
+    std::stringstream ss(source);
+    std::string field;
+    std::vector<std::string> fields;
+    while ( std::getline(ss, field, delim) )
         fields.push_back(field);
     return fields;
 }
 
 // return number of occurrences of @pattern in @source
 static inline
-uint8_t CountHits(const string& source, const string& pattern) {
+uint8_t CountHits(const std::string& source, const std::string& pattern) {
 
     uint8_t count(0);
     size_t found = source.find(pattern);
-    while ( found != string::npos ) {
+    while ( found != std::string::npos ) {
         ++count;
         found = source.find(pattern, found+1);
     }
@@ -49,10 +48,10 @@ uint8_t CountHits(const string& source, const string& pattern) {
 }
 
 static
-bool ParseIp4(const string& address, uint32_t& maybeIp4 ) {
+bool ParseIp4(const std::string& address, uint32_t& maybeIp4 ) {
 
     // split IP address into string fields
-    vector<string> addressFields = Split(address, '.');
+    std::vector<std::string> addressFields = Split(address, '.');
     if ( addressFields.size() != 4 )
         return false;
 
@@ -60,14 +59,14 @@ bool ParseIp4(const string& address, uint32_t& maybeIp4 ) {
     uint32_t ipv4(0);
     for ( uint8_t i = 0; i < 4; ++i ) {
 
-        const string& field = addressFields.at(i);
+        const std::string& field = addressFields.at(i);
         const size_t fieldSize = field.size();
         for ( size_t j = 0; j < fieldSize; ++j ) {
             if ( !isdigit(field[j]) )
                 return false;
         }
 
-        int value = atoi( addressFields.at(i).c_str() );
+        int value = std::atoi( addressFields.at(i).c_str() );
         if ( value < 0 || value > 255 )
             return false;
 
@@ -82,18 +81,18 @@ bool ParseIp4(const string& address, uint32_t& maybeIp4 ) {
 }
 
 static
-bool ParseIp6(const string& address, uint8_t* maybeIp6 ) {
+bool ParseIp6(const std::string& address, uint8_t* maybeIp6 ) {
 
-    string tmp = address;
+    std::string tmp = address;
 
     // look for '%' char (if found, lop off that part of address)
     // we're going to ignore any link-local zone index, for now at least
     const size_t percentFound = tmp.rfind('%');
-    if ( percentFound != string::npos )
+    if ( percentFound != std::string::npos )
         tmp = tmp.substr(0, percentFound);
 
     // split IP address into string fields
-    vector<string> fields = Split(tmp, ':');
+    std::vector<std::string> fields = Split(tmp, ':');
     const uint8_t numFields = fields.size();
     if ( numFields < 3 || numFields > 8 )
         return false;
@@ -106,7 +105,7 @@ bool ParseIp6(const string& address, uint8_t* maybeIp6 ) {
     // check valid IPv6 'compression'
     // must be valid 'pure' IPv6 or mixed IPv4/6 notation
     const size_t dotFound = tmp.find('.');
-    const bool isMixed = ( dotFound != string::npos );
+    const bool isMixed = ( dotFound != std::string::npos );
     if ( numColonColons != 1 && (numFields < (isMixed ? 7 : 8)) )
         return false;
 
@@ -116,14 +115,14 @@ bool ParseIp6(const string& address, uint8_t* maybeIp6 ) {
     for ( int8_t i = numFields - 1; i >= 0; --i ) {
         if ( index == 0 )
             return false;
-        const string& field = fields.at(i);
+        const std::string& field = fields.at(i);
 
         // if field empty
         if ( field.empty() ) {
 
             // if last field empty
             if ( i == numFields - 1 ) {
-                const string& previousField = fields.at(i-1);
+                const std::string& previousField = fields.at(i-1);
                 if ( previousField.empty() )
                     return false;
                 maybeIp6[--index] = 0;
@@ -133,7 +132,7 @@ bool ParseIp6(const string& address, uint8_t* maybeIp6 ) {
             // if first field empty
             else if ( i == 0 ) {
                 // make sure ':' isn't first character
-                const string& nextField = fields.at(i+1);
+                const std::string& nextField = fields.at(i+1);
                 if ( nextField.empty() ) return false;
                 maybeIp6[--index] = 0;
                 maybeIp6[--index] = 0;
@@ -308,7 +307,7 @@ IPv6Address HostAddress::GetIPv6Address(void) const {
 
 std::string HostAddress::GetIPString(void) const {
 
-    stringstream ss("");
+    std::stringstream ss;
 
     // IPv4 format
     if ( m_protocol == HostAddress::IPv4Protocol ) {
@@ -324,9 +323,9 @@ std::string HostAddress::GetIPString(void) const {
         for ( uint8_t i = 0; i < 8; ++i ) {
             if ( i != 0 )
                 ss << ':';
-            ss << hex << ( (uint16_t(m_ip6Address[2*i]) << 8) |
-                           (uint16_t(m_ip6Address[2*i+1]))
-                         );
+            ss << std::hex << ( (uint16_t(m_ip6Address[2*i]) << 8) |
+                                (uint16_t(m_ip6Address[2*i+1]))
+                              );
         }
     }
 
@@ -341,9 +340,9 @@ HostAddress::NetworkProtocol HostAddress::GetProtocol(void) const {
 bool HostAddress::ParseAddress(void) {
 
     // all IPv6 addresses should have a ':'
-    string s = m_ipString;
+    std::string s = m_ipString;
     size_t found = s.find(':');
-    if ( found != string::npos ) {
+    if ( found != std::string::npos ) {
         // try parse IP6 address
         uint8_t maybeIp6[16];
         if ( ParseIp6(s, maybeIp6) ) {
@@ -355,7 +354,7 @@ bool HostAddress::ParseAddress(void) {
 
     // all IPv4 addresses should have a '.'
     found = s.find('.');
-    if ( found != string::npos ) {
+    if ( found != std::string::npos ) {
         uint32_t maybeIp4(0);
         if ( ParseIp4(s, maybeIp4) ) {
             SetAddress(maybeIp4);

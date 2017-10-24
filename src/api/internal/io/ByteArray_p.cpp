@@ -13,7 +13,6 @@ using namespace BamTools::Internal;
 
 #include <cstdlib>
 #include <cstring>
-using namespace std;
 
 // --------------------------
 // ByteArray implementation
@@ -23,16 +22,16 @@ ByteArray::ByteArray(void)
     : m_data()
 { }
 
-ByteArray::ByteArray(const string& value)
+ByteArray::ByteArray(const std::string& value)
     : m_data(value.begin(), value.end())
 { }
 
-ByteArray::ByteArray(const vector<char>& value)
+ByteArray::ByteArray(const std::vector<char>& value)
     : m_data(value)
 { }
 
 ByteArray::ByteArray(const char* value, size_t n) {
-    const string s(value, n);
+    const std::string s(value, n);
     m_data.assign(s.begin(), s.end());
 }
 
@@ -106,6 +105,6 @@ size_t ByteArray::Size(void) const {
 }
 
 void ByteArray::Squeeze(void) {
-    vector<char> t(m_data);
+    std::vector<char> t(m_data);
     t.swap(m_data);
 }

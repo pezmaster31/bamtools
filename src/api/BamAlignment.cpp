@@ -10,7 +10,6 @@
 #include "api/BamAlignment.h"
 #include "api/BamConstants.h"
 using namespace BamTools;
-using namespace std;
 
 /*! \class BamTools::BamAlignment
     \brief The main BAM alignment data structure.
@@ -196,8 +195,8 @@ bool BamAlignment::BuildCharData(void) {
 
         // iterate over CigarOps
         int k = 0;
-        vector<CigarOp>::const_iterator cigarIter = CigarData.begin();
-        vector<CigarOp>::const_iterator cigarEnd  = CigarData.end();
+        std::vector<CigarOp>::const_iterator cigarIter = CigarData.begin();
+        std::vector<CigarOp>::const_iterator cigarEnd  = CigarData.end();
         for ( ; cigarIter != cigarEnd; ++cigarIter ) {
             const CigarOp& op = (*cigarIter);
 
@@ -238,7 +237,7 @@ bool BamAlignment::BuildCharData(void) {
 
                 // invalid CIGAR op-code
                 default:
-                    const string message = string("invalid CIGAR operation type: ") + op.Type;
+                    const std::string message = std::string("invalid CIGAR operation type: ") + op.Type;
                     SetErrorString("BamAlignment::BuildCharData", message);
                     return false;
             }
@@ -323,7 +322,7 @@ bool BamAlignment::BuildCharData(void) {
                                     i += sizeof(uint32_t);
                                     break;
                                 default:
-                                    const string message = string("invalid binary array type: ") + arrayType;
+                                    const std::string message = std::string("invalid binary array type: ") + arrayType;
                                     SetErrorString("BamAlignment::BuildCharData", message);
                                     return false;
                             }
@@ -334,7 +333,7 @@ bool BamAlignment::BuildCharData(void) {
 
                     // invalid tag type-code
                     default :
-                        const string message = string("invalid tag type: ") + type;
+                        const std::string message = std::string("invalid tag type: ") + type;
                         SetErrorString("BamAlignment::BuildCharData", message);
                         return false;
                 }
@@ -481,8 +480,8 @@ int BamAlignment::GetEndPosition(bool usePadded, bool closedInterval) const {
     int alignEnd = Position;
 
     // iterate over cigar operations
-    vector<CigarOp>::const_iterator cigarIter = CigarData.begin();
-    vector<CigarOp>::const_iterator cigarEnd  = CigarData.end();
+    std::vector<CigarOp>::const_iterator cigarIter = CigarData.begin();
+    std::vector<CigarOp>::const_iterator cigarEnd  = CigarData.end();
     for ( ; cigarIter != cigarEnd; ++cigarIter) {
         const CigarOp& op = (*cigarIter);
 
@@ -542,9 +541,9 @@ std::string BamAlignment::GetErrorString(void) const {
 
     \return \c true if any soft clips were found in the alignment
 */
-bool BamAlignment::GetSoftClips(vector<int>& clipSizes,
-                                vector<int>& readPositions,
-                                vector<int>& genomePositions,
+bool BamAlignment::GetSoftClips(std::vector<int>& clipSizes,
+                                std::vector<int>& readPositions,
+                                std::vector<int>& genomePositions,
                                 bool usePadded) const
 {
     // initialize positions & flags
@@ -554,8 +553,8 @@ bool BamAlignment::GetSoftClips(vector<int>& clipSizes,
     bool firstCigarOp  = true;
 
     // iterate over cigar operations
-    vector<CigarOp>::const_iterator cigarIter = CigarData.begin();
-    vector<CigarOp>::const_iterator cigarEnd  = CigarData.end();
+    std::vector<CigarOp>::const_iterator cigarIter = CigarData.begin();
+    std::vector<CigarOp>::const_iterator cigarEnd  = CigarData.end();
     for ( ; cigarIter != cigarEnd; ++cigarIter) {
         const CigarOp& op = (*cigarIter);
 
@@ -708,7 +707,7 @@ bool BamAlignment::GetTagType(const std::string& tag, char& type) const {
 
         // unknown tag type
         default:
-            const string message = string("invalid tag type: ") + type;
+            const std::string message = std::string("invalid tag type: ") + type;
             SetErrorString("BamAlignment::GetTagType", message);
             return false;
     }
@@ -887,7 +886,7 @@ void BamAlignment::RemoveTag(const std::string& tag) {
     \param[in] what  description of error
 */
 void BamAlignment::SetErrorString(const std::string& where, const std::string& what) const {
-    static const string SEPARATOR = ": ";
+    static const std::string SEPARATOR(": ");
     ErrorString = where + SEPARATOR + what;
 }
 
@@ -1061,7 +1060,7 @@ bool BamAlignment::SkipToNextTag(const char storageType,
                     bytesToSkip = numElements*sizeof(uint32_t);
                     break;
                 default:
-                    const string message = string("invalid binary array type: ") + arrayType;
+                    const std::string message = std::string("invalid binary array type: ") + arrayType;
                     SetErrorString("BamAlignment::SkipToNextTag", message);
                     return false;
             }
@@ -1073,7 +1072,7 @@ bool BamAlignment::SkipToNextTag(const char storageType,
         }
 
         default:
-            const string message = string("invalid tag type: ") + storageType;
+            const std::string message = std::string("invalid tag type: ") + storageType;
             SetErrorString("BamAlignment::SkipToNextTag", message);
             return false;
     }

@@ -17,7 +17,6 @@ using namespace BamTools::Internal;
 
 #include <cstdlib>
 #include <cstring>
-using namespace std;
 
 // ctor
 BamWriterPrivate::BamWriterPrivate(void)
@@ -55,7 +54,7 @@ void BamWriterPrivate::Close(void) {
 }
 
 // creates a cigar string from the supplied alignment
-void BamWriterPrivate::CreatePackedCigar(const vector<CigarOp>& cigarOperations, string& packedCigar) {
+void BamWriterPrivate::CreatePackedCigar(const std::vector<CigarOp>& cigarOperations, std::string& packedCigar) {
 
     // initialize
     const size_t numCigarOperations = cigarOperations.size();
@@ -65,8 +64,8 @@ void BamWriterPrivate::CreatePackedCigar(const vector<CigarOp>& cigarOperations,
     unsigned int* pPackedCigar = (unsigned int*)packedCigar.data();
 
     // iterate over cigar operations
-    vector<CigarOp>::const_iterator coIter = cigarOperations.begin();
-    vector<CigarOp>::const_iterator coEnd  = cigarOperations.end();
+    std::vector<CigarOp>::const_iterator coIter = cigarOperations.begin();
+    std::vector<CigarOp>::const_iterator coEnd  = cigarOperations.end();
     for ( ; coIter != coEnd; ++coIter ) {
 
         // store op in packedCigar
@@ -82,7 +81,7 @@ void BamWriterPrivate::CreatePackedCigar(const vector<CigarOp>& cigarOperations,
             case (Constants::BAM_CIGAR_SEQMATCH_CHAR) : cigarOp = Constants::BAM_CIGAR_SEQMATCH; break;
             case (Constants::BAM_CIGAR_MISMATCH_CHAR) : cigarOp = Constants::BAM_CIGAR_MISMATCH; break;
             default:
-                const string message = string("invalid CIGAR operation type") + coIter->Type;
+                const std::string message = std::string("invalid CIGAR operation type") + coIter->Type;
                 throw BamException("BamWriter::CreatePackedCigar", message);
         }
 
@@ -92,7 +91,7 @@ void BamWriterPrivate::CreatePackedCigar(const vector<CigarOp>& cigarOperations,
 }
 
 // encodes the supplied query sequence into 4-bit notation
-void BamWriterPrivate::EncodeQuerySequence(const string& query, string& encodedQuery) {
+void BamWriterPrivate::EncodeQuerySequence(const std::string& query, std::string& encodedQuery) {
 
     // prepare the encoded query string
     const size_t queryLength = query.size();
@@ -123,7 +122,7 @@ void BamWriterPrivate::EncodeQuerySequence(const string& query, string& encodedQ
             case (Constants::BAM_DNA_B)     : nucleotideCode = Constants::BAM_BASECODE_B;     break;
             case (Constants::BAM_DNA_N)     : nucleotideCode = Constants::BAM_BASECODE_N;     break;
             default:
-                const string message = string("invalid base: ") + *pQuery;
+                const std::string message = std::string("invalid base: ") + *pQuery;
                 throw BamException("BamWriter::EncodeQuerySequence", message);
         }
 
@@ -153,8 +152,8 @@ bool BamWriterPrivate::IsOpen(void) const {
 }
 
 // opens the alignment archive
-bool BamWriterPrivate::Open(const string& filename,
-                            const string& samHeaderText,
+bool BamWriterPrivate::Open(const std::string& filename,
+                            const std::string& samHeaderText,
                             const RefVector& referenceSequences)
 {
     try {
@@ -218,13 +217,13 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
     const uint32_t alignmentBin = CalculateMinimumBin(al.Position, al.GetEndPosition());
 
     // create our packed cigar string
-    string packedCigar;
+    std::string packedCigar;
     CreatePackedCigar(al.CigarData, packedCigar);
     const unsigned int packedCigarLength = packedCigar.size();
 
     // encode the query
     unsigned int encodedQueryLength = 0;
-    string encodedQuery;
+    std::string encodedQuery;
     if ( queryLength > 0 ) {
         EncodeQuerySequence(al.QueryBases, encodedQuery);
         encodedQueryLength = encodedQuery.size();
@@ -371,7 +370,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
                                 break;
                             default:
                                 delete[] tagData;
-                                const string message = string("invalid binary array type: ") + arrayType;
+                                const std::string message = std::string("invalid binary array type: ") + arrayType;
                                 throw BamException("BamWriter::SaveAlignment", message);
                         }
                     }
@@ -381,7 +380,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al) {
 
                 default :
                     delete[] tagData;
-                    const string message = string("invalid tag type: ") + type;
+                    const std::string message = std::string("invalid tag type: ") + type;
                     throw BamException("BamWriter::SaveAlignment", message);
             }
         }

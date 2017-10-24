@@ -18,7 +18,6 @@ using namespace BamTools;
 #include <fstream>
 #include <string>
 #include <vector>
-using namespace std;
   
 namespace BamTools {
  
@@ -28,7 +27,7 @@ namespace BamTools {
 class CoverageVisitor : public PileupVisitor {
   
     public:
-        CoverageVisitor(const RefVector& references, ostream* out)
+        CoverageVisitor(const RefVector& references, std::ostream* out)
             : PileupVisitor()
             , m_references(references)
             , m_out(out)
@@ -41,12 +40,12 @@ class CoverageVisitor : public PileupVisitor {
         void Visit(const PileupPosition& pileupData) {
             *m_out << m_references[pileupData.RefId].RefName << "\t" 
                    << pileupData.Position << "\t" 
-                   << pileupData.PileupAlignments.size() << endl;
+                   << pileupData.PileupAlignments.size() << std::endl;
         }
         
     private:
         RefVector m_references;
-        ostream*  m_out;
+        std::ostream*  m_out;
 };
 
 } // namespace BamTools
@@ -61,8 +60,8 @@ struct CoverageTool::CoverageSettings {
     bool HasOutputFile;
 
     // filenames
-    string InputBamFilename;
-    string OutputFilename;
+    std::string InputBamFilename;
+    std::string OutputFilename;
     
     // constructor
     CoverageSettings(void)
@@ -82,7 +81,7 @@ struct CoverageTool::CoverageToolPrivate {
     public:
         CoverageToolPrivate(CoverageTool::CoverageSettings* settings)
             : m_settings(settings)
-            , m_out(cout.rdbuf())
+            , m_out(std::cout.rdbuf())
         { }
 
         ~CoverageToolPrivate(void) { }
@@ -94,21 +93,21 @@ struct CoverageTool::CoverageToolPrivate {
     // data members
     private: 
         CoverageTool::CoverageSettings* m_settings;
-        ostream m_out;
+        std::ostream m_out;
         RefVector m_references;
 };  
 
 bool CoverageTool::CoverageToolPrivate::Run(void) {  
   
     // if output filename given
-    ofstream outFile;
+    std::ofstream outFile;
     if ( m_settings->HasOutputFile ) {
       
         // open output file stream
         outFile.open(m_settings->OutputFilename.c_str());
         if ( !outFile ) {
-            cerr << "bamtools coverage ERROR: could not open " << m_settings->OutputFilename
-                 << " for output" << endl;
+            std::cerr << "bamtools coverage ERROR: could not open " << m_settings->OutputFilename
+                 << " for output" << std::endl;
             return false; 
         }
         
@@ -119,7 +118,7 @@ bool CoverageTool::CoverageToolPrivate::Run(void) {
     //open our BAM reader
     BamReader reader;
     if ( !reader.Open(m_settings->InputBamFilename) ) {
-        cerr << "bamtools coverage ERROR: could not open input BAM file: " << m_settings->InputBamFilename << endl;
+        std::cerr << "bamtools coverage ERROR: could not open input BAM file: " << m_settings->InputBamFilename << std::endl;
         return false;
     }
 

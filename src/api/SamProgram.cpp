@@ -9,7 +9,6 @@
 
 #include "api/SamProgram.h"
 using namespace BamTools;
-using namespace std;
 
 /*! \struct BamTools::SamProgram
     \brief Represents a SAM program record.

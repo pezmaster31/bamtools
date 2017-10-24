@@ -17,7 +17,6 @@ using namespace BamTools::Internal;
 #include <iostream>
 #include <sstream>
 #include <vector>
-using namespace std;
 
 SamFormatParser::SamFormatParser(SamHeader& header)
     : m_header(header)
@@ -25,7 +24,7 @@ SamFormatParser::SamFormatParser(SamHeader& header)
 
 SamFormatParser::~SamFormatParser(void) { }
 
-void SamFormatParser::Parse(const string& headerText) {
+void SamFormatParser::Parse(const std::string& headerText) {
 
     // clear header's prior contents
     m_header.Clear();
@@ -35,20 +34,20 @@ void SamFormatParser::Parse(const string& headerText) {
         return;
 
     // other wise parse SAM lines
-    istringstream headerStream(headerText);
-    string headerLine("");
-    while ( getline(headerStream, headerLine) )
+    std::istringstream headerStream(headerText);
+    std::string headerLine;
+    while ( std::getline(headerStream, headerLine) )
          ParseSamLine(headerLine);
 }
 
-void SamFormatParser::ParseSamLine(const string& line) {
+void SamFormatParser::ParseSamLine(const std::string& line) {
 
     // skip if line is not long enough to contain true values
     if ( line.length() < 5 ) return;
 
     // determine token at beginning of line
-    const string firstToken = line.substr(0,3);
-    const string restOfLine = line.substr(4);
+    const std::string firstToken = line.substr(0,3);
+    const std::string restOfLine = line.substr(4);
     if      ( firstToken == Constants::SAM_HD_BEGIN_TOKEN) ParseHDLine(restOfLine);
     else if ( firstToken == Constants::SAM_SQ_BEGIN_TOKEN) ParseSQLine(restOfLine);
     else if ( firstToken == Constants::SAM_RG_BEGIN_TOKEN) ParseRGLine(restOfLine);
@@ -56,19 +55,19 @@ void SamFormatParser::ParseSamLine(const string& line) {
     else if ( firstToken == Constants::SAM_CO_BEGIN_TOKEN) ParseCOLine(restOfLine);
 }
 
-void SamFormatParser::ParseHDLine(const string& line) {
+void SamFormatParser::ParseHDLine(const std::string& line) {
 
     // split HD lines into tokens
-    vector<string> tokens = Split(line, Constants::SAM_TAB);
+    std::vector<std::string> tokens = Split(line, Constants::SAM_TAB);
 
     // iterate over tokens
-    vector<string>::const_iterator tokenIter = tokens.begin();
-    vector<string>::const_iterator tokenEnd  = tokens.end();
+    std::vector<std::string>::const_iterator tokenIter = tokens.begin();
+    std::vector<std::string>::const_iterator tokenEnd  = tokens.end();
     for ( ; tokenIter != tokenEnd; ++tokenIter ) {
 
         // get tag/value
-        const string tokenTag = (*tokenIter).substr(0,2);
-        const string tokenValue = (*tokenIter).substr(3);
+        const std::string tokenTag = (*tokenIter).substr(0,2);
+        const std::string tokenValue = (*tokenIter).substr(3);
 
         // set header contents
         if      ( tokenTag == Constants::SAM_HD_VERSION_TAG    ) m_header.Version    = tokenValue;
@@ -87,21 +86,21 @@ void SamFormatParser::ParseHDLine(const string& line) {
         throw BamException("SamFormatParser::ParseHDLine", "@HD line is missing VN tag");
 }
 
-void SamFormatParser::ParseSQLine(const string& line) {
+void SamFormatParser::ParseSQLine(const std::string& line) {
 
     SamSequence seq;
 
     // split SQ line into tokens
-    vector<string> tokens = Split(line, Constants::SAM_TAB);
+    std::vector<std::string> tokens = Split(line, Constants::SAM_TAB);
 
     // iterate over tokens
-    vector<string>::const_iterator tokenIter = tokens.begin();
-    vector<string>::const_iterator tokenEnd  = tokens.end();
+    std::vector<std::string>::const_iterator tokenIter = tokens.begin();
+    std::vector<std::string>::const_iterator tokenEnd  = tokens.end();
     for ( ; tokenIter != tokenEnd; ++tokenIter ) {
 
         // get tag/value
-        const string tokenTag = (*tokenIter).substr(0,2);
-        const string tokenValue = (*tokenIter).substr(3);
+        const std::string tokenTag = (*tokenIter).substr(0,2);
+        const std::string tokenValue = (*tokenIter).substr(3);
 
         // set sequence contents
         if      ( tokenTag == Constants::SAM_SQ_NAME_TAG       ) seq.Name = tokenValue;
@@ -128,21 +127,21 @@ void SamFormatParser::ParseSQLine(const string& line) {
     m_header.Sequences.Add(seq);
 }
 
-void SamFormatParser::ParseRGLine(const string& line) {
+void SamFormatParser::ParseRGLine(const std::string& line) {
 
     SamReadGroup rg;
 
     // split string into tokens
-    vector<string> tokens = Split(line, Constants::SAM_TAB);
+    std::vector<std::string> tokens = Split(line, Constants::SAM_TAB);
 
     // iterate over tokens
-    vector<string>::const_iterator tokenIter = tokens.begin();
-    vector<string>::const_iterator tokenEnd  = tokens.end();
+    std::vector<std::string>::const_iterator tokenIter = tokens.begin();
+    std::vector<std::string>::const_iterator tokenEnd  = tokens.end();
     for ( ; tokenIter != tokenEnd; ++tokenIter ) {
 
         // get token tag/value
-        const string tokenTag = (*tokenIter).substr(0,2);
-        const string tokenValue = (*tokenIter).substr(3);
+        const std::string tokenTag = (*tokenIter).substr(0,2);
+        const std::string tokenValue = (*tokenIter).substr(3);
 
         // set read group contents
         if      ( tokenTag == Constants::SAM_RG_ID_TAG                  ) rg.ID = tokenValue;
@@ -173,21 +172,21 @@ void SamFormatParser::ParseRGLine(const string& line) {
     m_header.ReadGroups.Add(rg);
 }
 
-void SamFormatParser::ParsePGLine(const string& line) {
+void SamFormatParser::ParsePGLine(const std::string& line) {
 
     SamProgram pg;
 
     // split string into tokens
-    vector<string> tokens = Split(line, Constants::SAM_TAB);
+    std::vector<std::string> tokens = Split(line, Constants::SAM_TAB);
 
     // iterate over tokens
-    vector<string>::const_iterator tokenIter = tokens.begin();
-    vector<string>::const_iterator tokenEnd  = tokens.end();
+    std::vector<std::string>::const_iterator tokenIter = tokens.begin();
+    std::vector<std::string>::const_iterator tokenEnd  = tokens.end();
     for ( ; tokenIter != tokenEnd; ++tokenIter ) {
 
         // get token tag/value
-        const string tokenTag = (*tokenIter).substr(0,2);
-        const string tokenValue = (*tokenIter).substr(3);
+        const std::string tokenTag = (*tokenIter).substr(0,2);
+        const std::string tokenValue = (*tokenIter).substr(3);
 
         // set program record contents
         if      ( tokenTag == Constants::SAM_PG_ID_TAG              ) pg.ID = tokenValue;
@@ -211,16 +210,16 @@ void SamFormatParser::ParsePGLine(const string& line) {
     m_header.Programs.Add(pg);
 }
 
-void SamFormatParser::ParseCOLine(const string& line) {
+void SamFormatParser::ParseCOLine(const std::string& line) {
     // simply add line to comments list
     m_header.Comments.push_back(line);
 }
 
-const vector<string> SamFormatParser::Split(const string& line, const char delim) {
-    vector<string> tokens;
-    stringstream lineStream(line);
-    string token;
-    while ( getline(lineStream, token, delim) )
+const std::vector<std::string> SamFormatParser::Split(const std::string& line, const char delim) {
+    std::vector<std::string> tokens;
+    std::stringstream lineStream(line);
+    std::string token;
+    while ( std::getline(lineStream, token, delim) )
         tokens.push_back(token);
     return tokens;
 }

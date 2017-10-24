@@ -17,7 +17,6 @@ using namespace BamTools::Internal;
 
 #include <cstdlib>
 #include <cstring>
-using namespace std;
 
 // ------------------------
 // static utility methods
@@ -105,7 +104,7 @@ void BamHeader::ReadHeaderText(BgzfStream* stream, const uint32_t& length) {
 
     // otherwise, text was read OK
     // store & cleanup
-    m_header.SetHeaderText( (string)((const char*)headerText) );
+    m_header.SetHeaderText( static_cast<std::string>((const char*)headerText) );
     free(headerText);
 }
 
@@ -120,6 +119,6 @@ SamHeader BamHeader::ToSamHeader(void) const {
 }
 
 // returns SAM-formatted string of header data
-string BamHeader::ToString(void) const {
+std::string BamHeader::ToString(void) const {
     return m_header.ToString();
 }

@@ -15,7 +15,6 @@ using namespace BamTools;
 
 #include <iostream>
 #include <string>
-using namespace std;
 
 // ---------------------------------------------
 // IndexSettings implementation
@@ -27,7 +26,7 @@ struct IndexTool::IndexSettings {
     bool IsUsingBamtoolsIndex;
 
     // filenames
-    string InputBamFilename;
+    std::string InputBamFilename;
     
     // constructor
     IndexSettings(void)
@@ -64,8 +63,8 @@ bool IndexTool::IndexToolPrivate::Run(void) {
     // open our BAM reader
     BamReader reader;
     if ( !reader.Open(m_settings->InputBamFilename) ) {
-        cerr << "bamtools index ERROR: could not open BAM file: "
-             << m_settings->InputBamFilename << endl;
+        std::cerr << "bamtools index ERROR: could not open BAM file: "
+             << m_settings->InputBamFilename << std::endl;
         return false;
     }
 

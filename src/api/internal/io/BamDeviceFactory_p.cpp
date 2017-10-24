@@ -16,9 +16,8 @@ using namespace BamTools;
 using namespace BamTools::Internal;
 
 #include <iostream>
-using namespace std;
 
-IBamIODevice* BamDeviceFactory::CreateDevice(const string& source) {
+IBamIODevice* BamDeviceFactory::CreateDevice(const std::string& source) {
 
     // check for requested pipe
     if ( source == "-" || source == "stdin" || source == "stdout" )

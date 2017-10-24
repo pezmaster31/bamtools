@@ -12,7 +12,6 @@ using namespace BamTools;
 using namespace BamTools::Internal;
 
 #include <cstdio>
-using namespace std;
 
 ILocalIODevice::ILocalIODevice(void)
     : IBamIODevice()

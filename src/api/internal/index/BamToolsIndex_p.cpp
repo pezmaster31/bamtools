@@ -23,14 +23,13 @@ using namespace BamTools::Internal;
 #include <iostream>
 #include <iterator>
 #include <map>
-using namespace std;
 
 // --------------------------------
 // static BamToolsIndex constants
 // --------------------------------
 
 const uint32_t BamToolsIndex::DEFAULT_BLOCK_LENGTH = 1000;
-const string BamToolsIndex::BTI_EXTENSION     = ".bti";
+const std::string BamToolsIndex::BTI_EXTENSION     = ".bti";
 const char* const BamToolsIndex::BTI_MAGIC    = "BTI\1";
 const int BamToolsIndex::SIZEOF_BLOCK         = sizeof(int32_t)*2 + sizeof(int64_t);
 
@@ -97,7 +96,7 @@ void BamToolsIndex::CheckVersion(void) {
 
     // if version is newer than can be supported by this version of bamtools
     else if ( m_inputVersion > m_outputVersion ) {
-        const string message = "unsupported format: this index was created by a newer version of BamTools. "
+        const std::string message = "unsupported format: this index was created by a newer version of BamTools. "
                                "Update your local version of BamTools to use the index file.";
         throw BamException("BamToolsIndex::CheckVersion", message);
     }
@@ -109,7 +108,7 @@ void BamToolsIndex::CheckVersion(void) {
     // Version 2.0: introduced support for half-open intervals, instead of the old closed intervals
     //   respondBy: throwing exception - we're not going to try to handle the old BTI files.
     else if ( (Version)m_inputVersion < BamToolsIndex::BTI_2_0 ) {
-        const string message = "unsupported format: this version of the index may not properly handle "
+        const std::string message = "unsupported format: this version of the index may not properly handle "
                                "coordinate intervals. Please run 'bamtools index -bti -in yourData.bam' "
                                "to generate an up-to-date, fixed BTI file.";
         throw BamException("BamToolsIndex::CheckVersion", message);
@@ -141,15 +140,15 @@ bool BamToolsIndex::Create(void) {
 
     // rewind BamReader
     if ( !m_reader->Rewind() ) {
-        const string readerError = m_reader->GetErrorString();
-        const string message = "could not create index: \n\t" + readerError;
+        const std::string readerError = m_reader->GetErrorString();
+        const std::string message = "could not create index: \n\t" + readerError;
         SetErrorString("BamToolsIndex::Create", message);
         return false;
     }
 
     try {
         // open new index file (read & write)
-        const string indexFilename = m_reader->Filename() + Extension();
+        const std::string indexFilename = m_reader->Filename() + Extension();
         OpenFile(indexFilename, IBamIODevice::ReadWrite);
 
         // initialize BtiFileSummary with number of references
@@ -264,8 +263,8 @@ bool BamToolsIndex::Create(void) {
 
     // rewind BamReader
     if ( !m_reader->Rewind() ) {
-        const string readerError = m_reader->GetErrorString();
-        const string message = "could not create index: \n\t" + readerError;
+        const std::string readerError = m_reader->GetErrorString();
+        const std::string message = "could not create index: \n\t" + readerError;
         SetErrorString("BamToolsIndex::Create", message);
         return false;
     }
@@ -295,8 +294,8 @@ void BamToolsIndex::GetOffset(const BamRegion& region, int64_t& offset, bool* ha
     BtiBlockConstIterator blockFirst = refEntry.Blocks.begin();
     BtiBlockConstIterator blockIter  = blockFirst;
     BtiBlockConstIterator blockLast  = refEntry.Blocks.end();
-    iterator_traits<BtiBlockConstIterator>::difference_type count = distance(blockFirst, blockLast);
-    iterator_traits<BtiBlockConstIterator>::difference_type step;
+    std::iterator_traits<BtiBlockConstIterator>::difference_type count = std::distance(blockFirst, blockLast);
+    std::iterator_traits<BtiBlockConstIterator>::difference_type step;
     while ( count > 0 ) {
         blockIter = blockFirst;
         step = count/2;
@@ -486,14 +485,14 @@ void BamToolsIndex::OpenFile(const std::string& filename, IBamIODevice::OpenMode
 
     m_resources.Device = BamDeviceFactory::CreateDevice(filename);
     if ( m_resources.Device == 0 ) {
-        const string message = string("could not open file: ") + filename;
+        const std::string message = std::string("could not open file: ") + filename;
         throw BamException("BamStandardIndex::OpenFile", message);
     }
 
     // attempt to open file
     m_resources.Device->Open(mode);
     if ( !IsDeviceOpen() ) {
-        const string message = string("could not open file: ") + filename;
+        const std::string message = std::string("could not open file: ") + filename;
         throw BamException("BamToolsIndex::OpenFile", message);
     }
 }

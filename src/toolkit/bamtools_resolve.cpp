@@ -27,14 +27,13 @@ using namespace BamTools;
 #include <string>
 #include <utility>
 #include <vector>
-using namespace std;
 
 // --------------------------------------------------------------------------
 // general ResolveTool constants
 // --------------------------------------------------------------------------
 
 static const int      NUM_MODELS = 8;
-static const string   READ_GROUP_TAG = "RG";
+static const std::string   READ_GROUP_TAG = "RG";
 static const double   DEFAULT_CONFIDENCE_INTERVAL = 0.9973;
 static const uint16_t DEFAULT_MIN_MAPQUALITY = 1;
 static const double   DEFAULT_UNUSEDMODEL_THRESHOLD = 0.1;
@@ -48,30 +47,30 @@ static const char COMMENT_CHAR     = '#';
 static const char EQUAL_CHAR       = '=';
 static const char TAB_CHAR         = '\t';
 
-static const string WHITESPACE_CHARS = " \t\n";
-static const string TRUE_KEYWORD     = "true";
-static const string FALSE_KEYWORD    = "false";
+static const std::string WHITESPACE_CHARS = " \t\n";
+static const std::string TRUE_KEYWORD     = "true";
+static const std::string FALSE_KEYWORD    = "false";
 
 // field counts
 static const size_t NUM_OPTIONS_FIELDS    = 2;
 static const size_t NUM_READGROUPS_FIELDS = 7;
 
 // header strings
-static const string INPUT_TOKEN      = "[Input]";
-static const string OPTIONS_TOKEN    = "[Options]";
-static const string READGROUPS_TOKEN = "[ReadGroups]";
+static const std::string INPUT_TOKEN      = "[Input]";
+static const std::string OPTIONS_TOKEN    = "[Options]";
+static const std::string READGROUPS_TOKEN = "[ReadGroups]";
 
 // option keywords
-static const string OPTION_CONFIDENCEINTERVAL   = "ConfidenceInterval";
-static const string OPTION_MINIMUMMAPQUALITY    = "MinimumMapQuality";
-static const string OPTION_UNUSEDMODELTHRESHOLD = "UnusedModelThreshold";
-static const string OPTION_FORCEMARKREADGROUPS  = "ForceMarkReadGroups";
+static const std::string OPTION_CONFIDENCEINTERVAL   = "ConfidenceInterval";
+static const std::string OPTION_MINIMUMMAPQUALITY    = "MinimumMapQuality";
+static const std::string OPTION_UNUSEDMODELTHRESHOLD = "UnusedModelThreshold";
+static const std::string OPTION_FORCEMARKREADGROUPS  = "ForceMarkReadGroups";
 
 // other string constants
-static const string RG_FIELD_DESCRIPTION =
+static const std::string RG_FIELD_DESCRIPTION =
     "#<name> <medianFL> <minFL> <maxFL> <topModelID> <nextTopModelID> <isAmbiguous?>";
 
-static const string MODEL_DESCRIPTION =
+static const std::string MODEL_DESCRIPTION =
     "# ------------- Model Types Description ---------------\n"
     "#\n"
     "#   ID     Position              Orientation           \n"
@@ -89,8 +88,8 @@ static const string MODEL_DESCRIPTION =
 // unique readname file constants
 // --------------------------------------------------------------------------
 
-static const string READNAME_FILE_SUFFIX = ".uniq_names.txt";
-static const string DEFAULT_READNAME_FILE = "bt_resolve_TEMP" + READNAME_FILE_SUFFIX;
+static const std::string READNAME_FILE_SUFFIX = ".uniq_names.txt";
+static const std::string DEFAULT_READNAME_FILE = "bt_resolve_TEMP" + READNAME_FILE_SUFFIX;
 
 // --------------------------------------------------------------------------
 // ModelType implementation
@@ -99,7 +98,7 @@ struct ModelType {
 
     // data members
     uint16_t ID;
-    vector<int32_t> FragmentLengths;
+    std::vector<int32_t> FragmentLengths;
 
     // ctor
     ModelType(const uint16_t id)
@@ -110,11 +109,11 @@ struct ModelType {
     }
 
     // convenience access to internal fragment lengths vector
-    vector<int32_t>::iterator begin(void) { return FragmentLengths.begin(); }
-    vector<int32_t>::const_iterator begin(void) const { return FragmentLengths.begin(); }
+    std::vector<int32_t>::iterator begin(void) { return FragmentLengths.begin(); }
+    std::vector<int32_t>::const_iterator begin(void) const { return FragmentLengths.begin(); }
     void clear(void) { FragmentLengths.clear(); }
-    vector<int32_t>::iterator end(void) { return FragmentLengths.end(); }
-    vector<int32_t>::const_iterator end(void) const { return FragmentLengths.end(); }
+    std::vector<int32_t>::iterator end(void) { return FragmentLengths.end(); }
+    std::vector<int32_t>::const_iterator end(void) const { return FragmentLengths.end(); }
     void push_back(const int32_t& x) { FragmentLengths.push_back(x); }
     size_t size(void) const { return FragmentLengths.size(); }
 
@@ -166,8 +165,8 @@ struct ReadGroupResolver {
     uint16_t NextTopModelId;
     bool IsAmbiguous;
     bool HasData;
-    vector<ModelType> Models;
-    map<string, bool> ReadNames;
+    std::vector<ModelType> Models;
+    std::map<std::string, bool> ReadNames;
 
     // ctor
     ReadGroupResolver(void);
@@ -177,7 +176,7 @@ struct ReadGroupResolver {
     bool IsValidOrientation(const BamAlignment& al) const;
 
     // select 2 best models based on observed data
-    void DetermineTopModels(const string& readGroupName);
+    void DetermineTopModels(const std::string& readGroupName);
 
     // static settings
     static double ConfidenceInterval;
@@ -215,7 +214,7 @@ bool ReadGroupResolver::IsValidOrientation(const BamAlignment& al) const {
     return ( currentModelId == TopModelId || currentModelId == NextTopModelId );
 }
 
-void ReadGroupResolver::DetermineTopModels(const string& readGroupName) {
+void ReadGroupResolver::DetermineTopModels(const std::string& readGroupName) {
 
     // sort models (from most common to least common)
     sort( Models.begin(), Models.end(), std::greater<ModelType>() );
@@ -233,9 +232,9 @@ void ReadGroupResolver::DetermineTopModels(const string& readGroupName) {
                                              Models[6].size() + Models[7].size();    
     const double unusedPercentage = (double)unusedModelCountSum / (double)activeModelCountSum;
     if ( unusedPercentage > UnusedModelThreshold ) {
-        cerr << "WARNING: " << readGroupName << " does not have clearly defined 'top models'" << endl
+        std::cerr << "WARNING: " << readGroupName << " does not have clearly defined 'top models'" << std::endl
              << "         The fraction of alignments in bottom 6 models (" << unusedPercentage
-             << ") exceeds threshold: " << UnusedModelThreshold << endl;
+             << ") exceeds threshold: " << UnusedModelThreshold << std::endl;
         IsAmbiguous = true;
     }
 
@@ -252,13 +251,13 @@ void ReadGroupResolver::DetermineTopModels(const string& readGroupName) {
     bool isSolidPair = ( isModel1Top && isModel8Top ? true : false );
 
     if ( !isMatePair && !isPairedEnd && !isSolidPair ) {
-        cerr << "WARNING: Found a non-standard alignment model configuration. " << endl
+        std::cerr << "WARNING: Found a non-standard alignment model configuration. " << std::endl
              << "         Using alignment models " << TopModelId << " & " << NextTopModelId
-             << endl;
+             << std::endl;
     }
 
     // store only the fragments from the best alignment models, then sort
-    vector<int32_t> fragments;
+    std::vector<int32_t> fragments;
     fragments.reserve( Models[0].size() + Models[1].size() );
     fragments.insert( fragments.end(), Models[0].begin(), Models[0].end() );
     fragments.insert( fragments.end(), Models[1].begin(), Models[1].end() );
@@ -317,10 +316,10 @@ struct ResolveTool::ResolveSettings {
     bool HasUnusedModelThreshold;
 
     // I/O filenames
-    string InputBamFilename;
-    string OutputBamFilename;
-    string StatsFilename;
-    string ReadNamesFilename; //  ** N.B. - Only used internally, not set from cmdline **
+    std::string InputBamFilename;
+    std::string OutputBamFilename;
+    std::string StatsFilename;
+    std::string ReadNamesFilename; //  ** N.B. - Only used internally, not set from cmdline **
 
     // resolve options
     double   ConfidenceInterval;
@@ -362,12 +361,12 @@ struct ResolveTool::ReadNamesFileReader {
     // main reader interface
     public:
         void Close(void);
-        bool Open(const string& filename);
-        bool Read(map<string, ReadGroupResolver>& readGroups);
+        bool Open(const std::string& filename);
+        bool Read(std::map<std::string, ReadGroupResolver>& readGroups);
 
     // data members
     private:
-        ifstream m_stream;
+        std::ifstream m_stream;
 };
 
 void ResolveTool::ReadNamesFileReader::Close(void) {
@@ -375,27 +374,27 @@ void ResolveTool::ReadNamesFileReader::Close(void) {
         m_stream.close();
 }
 
-bool ResolveTool::ReadNamesFileReader::Open(const string& filename) {
+bool ResolveTool::ReadNamesFileReader::Open(const std::string& filename) {
 
     // make sure stream is fresh
     Close();
 
     // attempt to open filename, return status
-    m_stream.open(filename.c_str(), ifstream::in);
+    m_stream.open(filename.c_str(), std::ifstream::in);
     return m_stream.good();
 }
 
-bool ResolveTool::ReadNamesFileReader::Read(map<string, ReadGroupResolver>& readGroups) {
+bool ResolveTool::ReadNamesFileReader::Read(std::map<std::string, ReadGroupResolver>& readGroups) {
 
     // up-front sanity check
     if ( !m_stream.is_open() ) return false;
 
     // parse read names file
-    string line;
-    vector<string> fields;
-    map<string, ReadGroupResolver>::iterator rgIter;
-    map<string, ReadGroupResolver>::iterator rgEnd = readGroups.end();
-    while ( getline(m_stream, line) ) {
+    std::string line;
+    std::vector<std::string> fields;
+    std::map<std::string, ReadGroupResolver>::iterator rgIter;
+    std::map<std::string, ReadGroupResolver>::iterator rgEnd = readGroups.end();
+    while ( std::getline(m_stream, line) ) {
 
         // skip if empty line
         if ( line.empty() ) continue;
@@ -410,7 +409,7 @@ bool ResolveTool::ReadNamesFileReader::Read(map<string, ReadGroupResolver>& read
         ReadGroupResolver& resolver = (*rgIter).second;
 
         // store read name with resolver
-        resolver.ReadNames.insert( make_pair(fields[1], true) ) ;
+        resolver.ReadNames.insert( std::make_pair(fields[1], true) ) ;
     }
 
     // if here, return success
@@ -429,12 +428,12 @@ struct ResolveTool::ReadNamesFileWriter {
     // main reader interface
     public:
         void Close(void);
-        bool Open(const string& filename);
-        void Write(const string& readGroupName, const string& readName);
+        bool Open(const std::string& filename);
+        void Write(const std::string& readGroupName, const std::string& readName);
 
     // data members
     private:
-        ofstream m_stream;
+        std::ofstream m_stream;
 };
 
 void ResolveTool::ReadNamesFileWriter::Close(void) {
@@ -442,20 +441,20 @@ void ResolveTool::ReadNamesFileWriter::Close(void) {
         m_stream.close();
 }
 
-bool ResolveTool::ReadNamesFileWriter::Open(const string& filename) {
+bool ResolveTool::ReadNamesFileWriter::Open(const std::string& filename) {
 
     // make sure stream is fresh
     Close();
 
     // attempt to open filename, return status
-    m_stream.open(filename.c_str(), ofstream::out);
+    m_stream.open(filename.c_str(), std::ofstream::out);
     return m_stream.good();
 }
 
-void ResolveTool::ReadNamesFileWriter::Write(const string& readGroupName,
-                                             const string& readName)
+void ResolveTool::ReadNamesFileWriter::Write(const std::string& readGroupName,
+                                             const std::string& readName)
 {
-    m_stream << readGroupName << TAB_CHAR << readName << endl;
+    m_stream << readGroupName << TAB_CHAR << readName << std::endl;
 }
 
 // --------------------------------------------------------------------------
@@ -471,22 +470,22 @@ struct ResolveTool::StatsFileReader {
     // main reader interface
     public:
         void Close(void);
-        bool Open(const string& filename);
+        bool Open(const std::string& filename);
         bool Read(ResolveTool::ResolveSettings* settings,
-                  map<string, ReadGroupResolver>& readGroups);
+                  std::map<std::string, ReadGroupResolver>& readGroups);
 
     // internal methods
     private:
-        bool IsComment(const string& line) const;
-        bool IsWhitespace(const string& line) const;
-        bool ParseInputLine(const string& line);
-        bool ParseOptionLine(const string& line, ResolveTool::ResolveSettings* settings);
-        bool ParseReadGroupLine(const string& line, map<string, ReadGroupResolver>& readGroups);
-        string SkipCommentsAndWhitespace(void);
+        bool IsComment(const std::string& line) const;
+        bool IsWhitespace(const std::string& line) const;
+        bool ParseInputLine(const std::string& line);
+        bool ParseOptionLine(const std::string& line, ResolveTool::ResolveSettings* settings);
+        bool ParseReadGroupLine(const std::string& line, std::map<std::string, ReadGroupResolver>& readGroups);
+        std::string SkipCommentsAndWhitespace(void);
 
     // data members
     private:
-        ifstream m_stream;
+        std::ifstream m_stream;
 
         enum State { None = 0
                    , InInput
@@ -499,41 +498,41 @@ void ResolveTool::StatsFileReader::Close(void) {
         m_stream.close();
 }
 
-bool ResolveTool::StatsFileReader::IsComment(const string& line) const {
+bool ResolveTool::StatsFileReader::IsComment(const std::string& line) const {
     assert( !line.empty() );
     return ( line.at(0) == COMMENT_CHAR );
 }
 
-bool ResolveTool::StatsFileReader::IsWhitespace(const string& line) const {
+bool ResolveTool::StatsFileReader::IsWhitespace(const std::string& line) const {
     if ( line.empty() )
         return true;
     return ( isspace(line.at(0)) );
 }
 
-bool ResolveTool::StatsFileReader::Open(const string& filename) {
+bool ResolveTool::StatsFileReader::Open(const std::string& filename) {
 
     // make sure stream is fresh
     Close();
 
     // attempt to open filename, return status
-    m_stream.open(filename.c_str(), ifstream::in);
+    m_stream.open(filename.c_str(), std::ifstream::in);
     return m_stream.good();
 }
 
-bool ResolveTool::StatsFileReader::ParseInputLine(const string& /*line*/) {
+bool ResolveTool::StatsFileReader::ParseInputLine(const std::string& /*line*/) {
     // input lines are ignored (for now at least), tool will use input from command line
     return true;
 }
 
-bool ResolveTool::StatsFileReader::ParseOptionLine(const string& line,
+bool ResolveTool::StatsFileReader::ParseOptionLine(const std::string& line,
                                                    ResolveTool::ResolveSettings* settings)
 {
     // split line into option, value
-    vector<string> fields = Utilities::Split(line, EQUAL_CHAR);
+    std::vector<std::string> fields = Utilities::Split(line, EQUAL_CHAR);
     if ( fields.size() != NUM_OPTIONS_FIELDS )
         return false;
-    const string& option = fields.at(0);
-    stringstream value(fields.at(1));
+    const std::string& option = fields.at(0);
+    std::stringstream value(fields.at(1));
 
     // -----------------------------------
     // handle option based on keyword
@@ -566,24 +565,24 @@ bool ResolveTool::StatsFileReader::ParseOptionLine(const string& line,
     }
 
     // otherwise unknown option
-    cerr << "bamtools resolve ERROR - unrecognized option: " << option << " in stats file" << endl;
+    std::cerr << "bamtools resolve ERROR - unrecognized option: " << option << " in stats file" << std::endl;
     return false;
 }
 
-bool ResolveTool::StatsFileReader::ParseReadGroupLine(const string& line,
-                                                      map<string, ReadGroupResolver>& readGroups)
+bool ResolveTool::StatsFileReader::ParseReadGroupLine(const std::string& line,
+                                                      std::map<std::string, ReadGroupResolver>& readGroups)
 {
     // split read group data in to fields
-    vector<string> fields = Utilities::Split(line, WHITESPACE_CHARS);
+    std::vector<std::string> fields = Utilities::Split(line, WHITESPACE_CHARS);
     if ( fields.size() != NUM_READGROUPS_FIELDS ) return false;
 
     // retrieve RG name
-    const string& name = fields.at(0);
+    const std::string& name = fields.at(0);
 
     // populate RG's 'resolver' data
     ReadGroupResolver resolver;
 
-    stringstream dataStream;
+    std::stringstream dataStream;
     dataStream.str(fields.at(1));
     dataStream >> resolver.MedianFragmentLength;
     dataStream.clear();
@@ -607,12 +606,12 @@ bool ResolveTool::StatsFileReader::ParseReadGroupLine(const string& line,
     resolver.IsAmbiguous = ( fields.at(6) == TRUE_KEYWORD );
 
     // store RG entry and return success
-    readGroups.insert( make_pair(name, resolver) );
+    readGroups.insert( std::make_pair(name, resolver) );
     return true;
 }
 
 bool ResolveTool::StatsFileReader::Read(ResolveTool::ResolveSettings* settings,
-                                        map<string, ReadGroupResolver>& readGroups)
+                                        std::map<std::string, ReadGroupResolver>& readGroups)
 {
     // up-front sanity checks
     if ( !m_stream.is_open() || settings == 0 )
@@ -625,7 +624,7 @@ bool ResolveTool::StatsFileReader::Read(ResolveTool::ResolveSettings* settings,
     State currentState = StatsFileReader::None;
 
     // read stats file
-    string line = SkipCommentsAndWhitespace();
+    std::string line = SkipCommentsAndWhitespace();
     while ( !line.empty() ) {
 
         bool foundError = false;
@@ -662,12 +661,12 @@ bool ResolveTool::StatsFileReader::Read(ResolveTool::ResolveSettings* settings,
     return true;
 }
 
-string ResolveTool::StatsFileReader::SkipCommentsAndWhitespace(void) {
-    string line;
+std::string ResolveTool::StatsFileReader::SkipCommentsAndWhitespace(void) {
+    std::string line;
     do {
         if ( m_stream.eof() )
-            return string();
-        getline(m_stream, line);
+            return std::string();
+        std::getline(m_stream, line);
     } while ( IsWhitespace(line) || IsComment(line) );
     return line;
 }
@@ -685,20 +684,20 @@ struct ResolveTool::StatsFileWriter {
     // main reader interface
     public:
         void Close(void);
-        bool Open(const string& filename);
+        bool Open(const std::string& filename);
         bool Write(ResolveTool::ResolveSettings* settings,
-                   const map<string, ReadGroupResolver>& readGroups);
+                   const std::map<std::string, ReadGroupResolver>& readGroups);
 
     // internal methods
     private:
         void WriteHeader(void);
         void WriteInput(ResolveTool::ResolveSettings* settings);
         void WriteOptions(ResolveTool::ResolveSettings* settings);
-        void WriteReadGroups(const map<string, ReadGroupResolver>& readGroups);
+        void WriteReadGroups(const std::map<std::string, ReadGroupResolver>& readGroups);
 
     // data members
     private:
-        ofstream m_stream;
+        std::ofstream m_stream;
 };
 
 void ResolveTool::StatsFileWriter::Close(void) {
@@ -706,18 +705,18 @@ void ResolveTool::StatsFileWriter::Close(void) {
         m_stream.close();
 }
 
-bool ResolveTool::StatsFileWriter::Open(const string& filename) {
+bool ResolveTool::StatsFileWriter::Open(const std::string& filename) {
 
     // make sure stream is fresh
     Close();
 
     // attempt to open filename, return status
-    m_stream.open(filename.c_str(), ofstream::out);
+    m_stream.open(filename.c_str(), std::ofstream::out);
     return m_stream.good();
 }
 
 bool ResolveTool::StatsFileWriter::Write(ResolveTool::ResolveSettings* settings,
-                                         const map<string, ReadGroupResolver>& readGroups)
+                                         const std::map<std::string, ReadGroupResolver>& readGroups)
 {
     // return failure if file not open
     if ( !m_stream.is_open() )
@@ -736,7 +735,7 @@ bool ResolveTool::StatsFileWriter::Write(ResolveTool::ResolveSettings* settings,
 void ResolveTool::StatsFileWriter::WriteHeader(void) {
 
     // stringify current bamtools version
-    stringstream versionStream("");
+    std::stringstream versionStream;
     versionStream << "v"
                   << BAMTOOLS_VERSION_MAJOR << "."
                   << BAMTOOLS_VERSION_MINOR << "."
@@ -747,10 +746,10 @@ void ResolveTool::StatsFileWriter::WriteHeader(void) {
     // # MODEL DESCRIPTION - see above for actual text
     // \n
 
-    m_stream << COMMENT_CHAR << " bamtools resolve (" << versionStream.str() << ")" << endl
-             << COMMENT_CHAR << endl
+    m_stream << COMMENT_CHAR << " bamtools resolve (" << versionStream.str() << ")" << std::endl
+             << COMMENT_CHAR << std::endl
              << MODEL_DESCRIPTION
-             << endl;
+             << std::endl;
 }
 
 void ResolveTool::StatsFileWriter::WriteInput(ResolveTool::ResolveSettings* settings) {
@@ -759,9 +758,9 @@ void ResolveTool::StatsFileWriter::WriteInput(ResolveTool::ResolveSettings* sett
     // filename
     // \n
 
-    m_stream << INPUT_TOKEN << endl
-             << settings->InputBamFilename << endl
-             << endl;
+    m_stream << INPUT_TOKEN << std::endl
+             << settings->InputBamFilename << std::endl
+             << std::endl;
 }
 
 void ResolveTool::StatsFileWriter::WriteOptions(ResolveTool::ResolveSettings* settings) {
@@ -773,26 +772,26 @@ void ResolveTool::StatsFileWriter::WriteOptions(ResolveTool::ResolveSettings* se
     // UnusedModelThreshold=<double>
     // \n
 
-    m_stream << OPTIONS_TOKEN << endl
-             << OPTION_CONFIDENCEINTERVAL   << EQUAL_CHAR << settings->ConfidenceInterval << endl
-             << OPTION_FORCEMARKREADGROUPS  << EQUAL_CHAR << boolalpha << settings->HasForceMarkReadGroups << endl
-             << OPTION_MINIMUMMAPQUALITY    << EQUAL_CHAR << settings->MinimumMapQuality << endl
-             << OPTION_UNUSEDMODELTHRESHOLD << EQUAL_CHAR << settings->UnusedModelThreshold << endl
-             << endl;
+    m_stream << OPTIONS_TOKEN << std::endl
+             << OPTION_CONFIDENCEINTERVAL   << EQUAL_CHAR << settings->ConfidenceInterval << std::endl
+             << OPTION_FORCEMARKREADGROUPS  << EQUAL_CHAR << std::boolalpha << settings->HasForceMarkReadGroups << std::endl
+             << OPTION_MINIMUMMAPQUALITY    << EQUAL_CHAR << settings->MinimumMapQuality << std::endl
+             << OPTION_UNUSEDMODELTHRESHOLD << EQUAL_CHAR << settings->UnusedModelThreshold << std::endl
+             << std::endl;
 }
 
-void ResolveTool::StatsFileWriter::WriteReadGroups(const map<string, ReadGroupResolver>& readGroups) {
+void ResolveTool::StatsFileWriter::WriteReadGroups(const std::map<std::string, ReadGroupResolver>& readGroups) {
 
     // [ReadGroups]
     // #<name> <medianFL> <minFL> <maxFL> <topModelID> <nextTopModelID> <isAmbiguous?>
-    m_stream << READGROUPS_TOKEN << endl
-             << RG_FIELD_DESCRIPTION << endl;
+    m_stream << READGROUPS_TOKEN << std::endl
+             << RG_FIELD_DESCRIPTION << std::endl;
 
     // iterate over read groups
-    map<string, ReadGroupResolver>::const_iterator rgIter = readGroups.begin();
-    map<string, ReadGroupResolver>::const_iterator rgEnd  = readGroups.end();
+    std::map<std::string, ReadGroupResolver>::const_iterator rgIter = readGroups.begin();
+    std::map<std::string, ReadGroupResolver>::const_iterator rgEnd  = readGroups.end();
     for ( ; rgIter != rgEnd; ++rgIter ) {
-        const string& name = (*rgIter).first;
+        const std::string& name = (*rgIter).first;
         const ReadGroupResolver& resolver = (*rgIter).second;
 
         // skip if read group has no data
@@ -806,12 +805,12 @@ void ResolveTool::StatsFileWriter::WriteReadGroups(const map<string, ReadGroupRe
                  << resolver.MaxFragmentLength << TAB_CHAR
                  << resolver.TopModelId << TAB_CHAR
                  << resolver.NextTopModelId << TAB_CHAR
-                 << boolalpha << resolver.IsAmbiguous
-                 << endl;
+                 << std::boolalpha << resolver.IsAmbiguous
+                 << std::endl;
     }
 
     // extra newline at end
-    m_stream << endl;
+    m_stream << std::endl;
 }
 
 // --------------------------------------------------------------------------
@@ -832,7 +831,7 @@ struct ResolveTool::ResolveToolPrivate {
 
     // internal methods
     private:
-        bool CheckSettings(vector<string>& errors);
+        bool CheckSettings(std::vector<std::string>& errors);
         bool MakeStats(void);
         void ParseHeader(const SamHeader& header);
         bool ReadStatsFile(void);
@@ -843,10 +842,10 @@ struct ResolveTool::ResolveToolPrivate {
     // data members
     private:
         ResolveTool::ResolveSettings* m_settings;
-        map<string, ReadGroupResolver> m_readGroups;
+        std::map<std::string, ReadGroupResolver> m_readGroups;
 };
 
-bool ResolveTool::ResolveToolPrivate::CheckSettings(vector<string>& errors) {
+bool ResolveTool::ResolveToolPrivate::CheckSettings(std::vector<std::string>& errors) {
 
     // ensure clean slate
     errors.clear();
@@ -938,8 +937,8 @@ bool ResolveTool::ResolveToolPrivate::MakeStats(void) {
     // open our BAM reader
     BamReader bamReader;
     if ( !bamReader.Open(m_settings->InputBamFilename) ) {
-        cerr << "bamtools resolve ERROR: could not open input BAM file: "
-             << m_settings->InputBamFilename << endl;
+        std::cerr << "bamtools resolve ERROR: could not open input BAM file: "
+             << m_settings->InputBamFilename << std::endl;
         return false;
     }
 
@@ -950,17 +949,17 @@ bool ResolveTool::ResolveToolPrivate::MakeStats(void) {
     // open ReadNamesFileWriter
     ResolveTool::ReadNamesFileWriter readNamesWriter;
     if ( !readNamesWriter.Open(m_settings->ReadNamesFilename) ) {
-        cerr << "bamtools resolve ERROR: could not open (temp) output read names file: "
-             << m_settings->ReadNamesFilename << endl;
+        std::cerr << "bamtools resolve ERROR: could not open (temp) output read names file: "
+             << m_settings->ReadNamesFilename << std::endl;
         bamReader.Close();
         return false;
     }
 
     // read through BAM file
     BamAlignment al;
-    string readGroup("");
-    map<string, ReadGroupResolver>::iterator rgIter;
-    map<string, bool>::iterator readNameIter;
+    std::string readGroup;
+    std::map<std::string, ReadGroupResolver>::iterator rgIter;
+    std::map<std::string, bool>::iterator readNameIter;
     while ( bamReader.GetNextAlignmentCore(al) ) {
 
         // skip if alignment is not paired, mapped, nor mate is mapped
@@ -980,8 +979,8 @@ bool ResolveTool::ResolveToolPrivate::MakeStats(void) {
         // look up resolver for read group
         rgIter = m_readGroups.find(readGroup);
         if ( rgIter == m_readGroups.end() )  {
-            cerr << "bamtools resolve ERROR - unable to calculate stats, unknown read group encountered: "
-                 << readGroup << endl;
+            std::cerr << "bamtools resolve ERROR - unable to calculate stats, unknown read group encountered: "
+                 << readGroup << std::endl;
             bamReader.Close();
             return false;
         }
@@ -1014,7 +1013,7 @@ bool ResolveTool::ResolveToolPrivate::MakeStats(void) {
         }
 
         // if read name not found, store new entry
-        else resolver.ReadNames.insert( make_pair(al.Name, isCurrentMateUnique) );
+        else resolver.ReadNames.insert( std::make_pair(al.Name, isCurrentMateUnique) );
     }
 
     // close files
@@ -1022,9 +1021,9 @@ bool ResolveTool::ResolveToolPrivate::MakeStats(void) {
     bamReader.Close();
 
     // iterate back through read groups
-    map<string, ReadGroupResolver>::iterator rgEnd  = m_readGroups.end();
+    std::map<std::string, ReadGroupResolver>::iterator rgEnd  = m_readGroups.end();
     for ( rgIter = m_readGroups.begin(); rgIter != rgEnd; ++rgIter ) {
-        const string& name = (*rgIter).first;
+        const std::string& name = (*rgIter).first;
         ReadGroupResolver& resolver = (*rgIter).second;
 
         // calculate acceptable orientation & insert sizes for this read group
@@ -1046,7 +1045,7 @@ void ResolveTool::ResolveToolPrivate::ParseHeader(const SamHeader& header) {
     SamReadGroupConstIterator rgEnd  = header.ReadGroups.ConstEnd();
     for ( ; rgIter != rgEnd; ++rgIter ) {
         const SamReadGroup& rg = (*rgIter);
-        m_readGroups.insert( make_pair(rg.ID, ReadGroupResolver()) );
+        m_readGroups.insert( std::make_pair(rg.ID, ReadGroupResolver()) );
     }
 }
 
@@ -1059,15 +1058,15 @@ bool ResolveTool::ResolveToolPrivate::ReadStatsFile(void) {
     // attempt to open stats file
     ResolveTool::StatsFileReader statsReader;
     if ( !statsReader.Open(m_settings->StatsFilename) ) {
-        cerr << "bamtools resolve ERROR - could not open stats file: "
-             << m_settings->StatsFilename << " for reading" << endl;
+        std::cerr << "bamtools resolve ERROR - could not open stats file: "
+             << m_settings->StatsFilename << " for reading" << std::endl;
         return false;
     }
 
     // attempt to read stats data
     if ( !statsReader.Read(m_settings, m_readGroups) ) {
-        cerr << "bamtools resolve ERROR - could not parse stats file: "
-             << m_settings->StatsFilename << " for data" << endl;
+        std::cerr << "bamtools resolve ERROR - could not parse stats file: "
+             << m_settings->StatsFilename << " for data" << std::endl;
         return false;
     }
 
@@ -1094,15 +1093,15 @@ void ResolveTool::ResolveToolPrivate::ResolveAlignment(BamAlignment& al) {
 
     // get read group from alignment
     // empty string if not found, this is OK - we handle empty read group case
-    string readGroupName("");
+    std::string readGroupName;
     al.GetTag(READ_GROUP_TAG, readGroupName);
 
     // look up read group's 'resolver'
-    map<string, ReadGroupResolver>::iterator rgIter = m_readGroups.find(readGroupName);
+    std::map<std::string, ReadGroupResolver>::iterator rgIter = m_readGroups.find(readGroupName);
     if ( rgIter == m_readGroups.end() ) {
-        cerr << "bamtools resolve ERROR - read group found that was not in header: "
-             << readGroupName << endl;
-        exit(1);
+        std::cerr << "bamtools resolve ERROR - read group found that was not in header: "
+             << readGroupName << std::endl;
+        std::exit(EXIT_FAILURE);
     }
     const ReadGroupResolver& resolver = (*rgIter).second;
 
@@ -1113,7 +1112,7 @@ void ResolveTool::ResolveToolPrivate::ResolveAlignment(BamAlignment& al) {
     if ( !resolver.IsValidInsertSize(al) ) return;
 
     // quit check if alignment is not a "candidate proper pair"
-    map<string, bool>::const_iterator readNameIter;
+    std::map<std::string, bool>::const_iterator readNameIter;
     readNameIter = resolver.ReadNames.find(al.Name);
     if ( readNameIter == resolver.ReadNames.end() )
         return;
@@ -1127,15 +1126,15 @@ bool ResolveTool::ResolveToolPrivate::ResolvePairs(void) {
     // open file containing read names of candidate proper pairs
     ResolveTool::ReadNamesFileReader readNamesReader;
     if ( !readNamesReader.Open(m_settings->ReadNamesFilename) ) {
-        cerr << "bamtools resolve ERROR: could not open (temp) inputput read names file: "
-             << m_settings->ReadNamesFilename << endl;
+        std::cerr << "bamtools resolve ERROR: could not open (temp) inputput read names file: "
+             << m_settings->ReadNamesFilename << std::endl;
         return false;
     }
 
     // parse read names (matching with corresponding read groups)
     if ( !readNamesReader.Read(m_readGroups) ) {
-        cerr << "bamtools resolve ERROR: could not read candidate read names from file: "
-             << m_settings->ReadNamesFilename << endl;
+        std::cerr << "bamtools resolve ERROR: could not read candidate read names from file: "
+             << m_settings->ReadNamesFilename << std::endl;
         readNamesReader.Close();
         return false;
     }
@@ -1143,15 +1142,15 @@ bool ResolveTool::ResolveToolPrivate::ResolvePairs(void) {
     // close read name file reader & delete temp file
     readNamesReader.Close();
     if ( remove(m_settings->ReadNamesFilename.c_str()) != 0 ) {
-        cerr << "bamtools resolve WARNING: could not delete temp file: "
-             << m_settings->ReadNamesFilename << endl;
+        std::cerr << "bamtools resolve WARNING: could not delete temp file: "
+             << m_settings->ReadNamesFilename << std::endl;
     }
 
     // open our BAM reader
     BamReader reader;
     if ( !reader.Open(m_settings->InputBamFilename) ) {
-        cerr << "bamtools resolve ERROR: could not open input BAM file: "
-             << m_settings->InputBamFilename << endl;
+        std::cerr << "bamtools resolve ERROR: could not open input BAM file: "
+             << m_settings->InputBamFilename << std::endl;
         return false;
     }
 
@@ -1169,8 +1168,8 @@ bool ResolveTool::ResolveToolPrivate::ResolvePairs(void) {
     BamWriter writer;
     writer.SetCompressionMode(compressionMode);
     if ( !writer.Open(m_settings->OutputBamFilename, header, references) ) {
-        cerr << "bamtools resolve ERROR: could not open "
-             << m_settings->OutputBamFilename << " for writing." << endl;
+        std::cerr << "bamtools resolve ERROR: could not open "
+             << m_settings->OutputBamFilename << " for writing." << std::endl;
         reader.Close();
         return false;
     }
@@ -1192,18 +1191,18 @@ bool ResolveTool::ResolveToolPrivate::ResolvePairs(void) {
 bool ResolveTool::ResolveToolPrivate::Run(void) {
 
     // verify that command line settings are acceptable
-    vector<string> errors;
+    std::vector<std::string> errors;
     if ( !CheckSettings(errors) ) {
-        cerr << "bamtools resolve ERROR - invalid settings: " << endl;
-        vector<string>::const_iterator errorIter = errors.begin();
-        vector<string>::const_iterator errorEnd  = errors.end();
+        std::cerr << "bamtools resolve ERROR - invalid settings: " << std::endl;
+        std::vector<std::string>::const_iterator errorIter = errors.begin();
+        std::vector<std::string>::const_iterator errorEnd  = errors.end();
         for ( ; errorIter != errorEnd; ++errorIter )
-            cerr << (*errorIter) << endl;
+            std::cerr << (*errorIter) << std::endl;
         return false;
     }
 
     // initialize read group map with default (empty name) read group
-    m_readGroups.insert( make_pair<string, ReadGroupResolver>("", ReadGroupResolver()) );
+    m_readGroups.insert( std::make_pair("", ReadGroupResolver()) );
 
     // init readname filename
     // uses (adjusted) stats filename if provided (req'd for makeStats, markPairs modes; optional for twoPass)
@@ -1216,14 +1215,14 @@ bool ResolveTool::ResolveToolPrivate::Run(void) {
 
         // generate stats data
         if ( !MakeStats() ) {
-            cerr << "bamtools resolve ERROR - could not generate stats" << endl;
+            std::cerr << "bamtools resolve ERROR - could not generate stats" << std::endl;
             return false;
         }
 
         // write stats to file
         if ( !WriteStatsFile() ) {
-            cerr << "bamtools resolve ERROR - could not write stats file: "
-                 << m_settings->StatsFilename << endl;
+            std::cerr << "bamtools resolve ERROR - could not write stats file: "
+                 << m_settings->StatsFilename << std::endl;
             return false;
         }
     }
@@ -1233,14 +1232,14 @@ bool ResolveTool::ResolveToolPrivate::Run(void) {
 
         // read stats from file
         if ( !ReadStatsFile() ) {
-            cerr << "bamtools resolve ERROR - could not read stats file: "
-                 << m_settings->StatsFilename << endl;
+            std::cerr << "bamtools resolve ERROR - could not read stats file: "
+                 << m_settings->StatsFilename << std::endl;
             return false;
         }
 
         // do paired-end resolution
         if ( !ResolvePairs() ) {
-            cerr << "bamtools resolve ERROR - could not resolve pairs" << endl;
+            std::cerr << "bamtools resolve ERROR - could not resolve pairs" << std::endl;
             return false;
         }
     }
@@ -1250,7 +1249,7 @@ bool ResolveTool::ResolveToolPrivate::Run(void) {
 
         // generate stats data
         if ( !MakeStats() ) {
-            cerr << "bamtools resolve ERROR - could not generate stats" << endl;
+            std::cerr << "bamtools resolve ERROR - could not generate stats" << std::endl;
             return false;
         }
 
@@ -1260,13 +1259,13 @@ bool ResolveTool::ResolveToolPrivate::Run(void) {
             // write stats to file
             // emit warning if write fails, but paired-end resolution should be allowed to proceed
             if ( !WriteStatsFile() )
-                cerr << "bamtools resolve WARNING - could not write stats file: "
-                     << m_settings->StatsFilename << endl;
+                std::cerr << "bamtools resolve WARNING - could not write stats file: "
+                     << m_settings->StatsFilename << std::endl;
         }
 
         // do paired-end resolution
         if ( !ResolvePairs() ) {
-            cerr << "bamtools resolve ERROR - could not resolve pairs" << endl;
+            std::cerr << "bamtools resolve ERROR - could not resolve pairs" << std::endl;
             return false;
         }
     }
@@ -1284,15 +1283,15 @@ bool ResolveTool::ResolveToolPrivate::WriteStatsFile(void) {
     // attempt to open stats file
     ResolveTool::StatsFileWriter statsWriter;
     if ( !statsWriter.Open(m_settings->StatsFilename) ) {
-        cerr << "bamtools resolve ERROR - could not open stats file: "
-             << m_settings->StatsFilename << " for writing" << endl;
+        std::cerr << "bamtools resolve ERROR - could not open stats file: "
+             << m_settings->StatsFilename << " for writing" << std::endl;
         return false;
     }
 
     // attempt to write stats data
     if ( !statsWriter.Write(m_settings, m_readGroups) ) {
-        cerr << "bamtools resolve ERROR - could not write stats file: "
-             << m_settings->StatsFilename << " for data" << endl;
+        std::cerr << "bamtools resolve ERROR - could not write stats file: "
+             << m_settings->StatsFilename << " for data" << std::endl;
         return false;
     }
 
@@ -1309,39 +1308,39 @@ ResolveTool::ResolveTool(void)
     , m_impl(0)
 {
     // set description texts
-    const string programDescription = "resolves paired-end reads (marking the IsProperPair flag as needed)";
-    const string programUsage = "<mode> [options] [-in <filename>] [-out <filename> | [-forceCompression] ] [-stats <filename>]";
-    const string inputBamDescription = "the input BAM file(s)";
-    const string outputBamDescription = "the output BAM file";
-    const string statsFileDescription = "input/output stats file, depending on selected mode (see below). "
+    const std::string programDescription = "resolves paired-end reads (marking the IsProperPair flag as needed)";
+    const std::string programUsage = "<mode> [options] [-in <filename>] [-out <filename> | [-forceCompression] ] [-stats <filename>]";
+    const std::string inputBamDescription = "the input BAM file(s)";
+    const std::string outputBamDescription = "the output BAM file";
+    const std::string statsFileDescription = "input/output stats file, depending on selected mode (see below). "
             "This file is human-readable, storing fragment length data generated per read group, as well as "
             "the options used to configure the -makeStats mode";
-    const string forceCompressionDescription = "if results are sent to stdout (like when piping to another tool), "
+    const std::string forceCompressionDescription = "if results are sent to stdout (like when piping to another tool), "
             "default behavior is to leave output uncompressed."
             "Use this flag to override and force compression. This feature is disabled in -makeStats mode.";
-    const string makeStatsDescription = "generates a fragment-length stats file from the input BAM. "
+    const std::string makeStatsDescription = "generates a fragment-length stats file from the input BAM. "
             "Data is written to file specified using the -stats option. "
             "MarkPairs Mode Settings are DISABLED.";
-    const string markPairsDescription = "generates an output BAM with alignments marked with proper-pair status. "
+    const std::string markPairsDescription = "generates an output BAM with alignments marked with proper-pair status. "
             "Stats data is read from file specified using the -stats option. "
             "MakeStats Mode Settings are DISABLED";
-    const string twoPassDescription = "combines the -makeStats & -markPairs modes into a single command. "
+    const std::string twoPassDescription = "combines the -makeStats & -markPairs modes into a single command. "
             "However, due to the two-pass nature of paired-end resolution, piping BAM data via stdin is DISABLED. "
             "You must supply an explicit input BAM file. Output BAM may be piped to stdout, however, if desired. "
             "All MakeStats & MarkPairs Mode Settings are available. "
             "The intermediate stats file is not necessary, but if the -stats options is used, then one will be generated. "
             "You may find this useful for documentation purposes.";
-    const string minMapQualDescription = "minimum map quality. Used in -makeStats mode as a heuristic for determining a mate's "
+    const std::string minMapQualDescription = "minimum map quality. Used in -makeStats mode as a heuristic for determining a mate's "
             "uniqueness. Used in -markPairs mode as a filter for marking candidate proper pairs.";
-    const string confidenceIntervalDescription = "confidence interval. Set min/max fragment lengths such that we capture "
+    const std::string confidenceIntervalDescription = "confidence interval. Set min/max fragment lengths such that we capture "
             "this fraction of pairs";
-    const string unusedModelThresholdDescription = "unused model threshold. The resolve tool considers 8 possible orientation models "
+    const std::string unusedModelThresholdDescription = "unused model threshold. The resolve tool considers 8 possible orientation models "
             "for pairs. The top 2 are selected for later use when actually marking alignments. This value determines the "
             "cutoff for marking a read group as ambiguous. Meaning that if the ratio of the number of alignments from bottom 6 models "
             "to the top 2 is greater than this threshold, then the read group is flagged as ambiguous. By default, NO alignments "
             "from ambiguous read groups will be marked as proper pairs. You may override this behavior with the -force option "
             "in -markPairs mode";
-    const string forceMarkDescription = "forces all read groups to be marked according to their top 2 'orientation models'. "
+    const std::string forceMarkDescription = "forces all read groups to be marked according to their top 2 'orientation models'. "
             "When generating stats, the 2 (out of 8 possible) models with the most observations are chosen as the top models for each read group. "
             "If the remaining 6 models account for more than some threshold ([default=10%], see -umt), then the read group is marked as ambiguous. "
             "The default behavior is that for an ambiguous read group, NONE of its alignments are marked as proper-pairs. "

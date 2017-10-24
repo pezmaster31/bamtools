@@ -17,11 +17,10 @@ using namespace BamTools;
 
 #include <iostream>
 #include <string>
-using namespace std;
 
 namespace BamTools {
 
-static const string OQ_TAG = "OQ";
+static const std::string OQ_TAG = "OQ";
 
 } // namespace BamTools;
 
@@ -38,8 +37,8 @@ struct RevertTool::RevertSettings {
     bool IsKeepQualities;
 
     // filenames
-    string InputFilename;
-    string OutputFilename;
+    std::string InputFilename;
+    std::string OutputFilename;
     
     // constructor
     RevertSettings(void)
@@ -87,7 +86,7 @@ void RevertTool::RevertToolPrivate::RevertAlignment(BamAlignment& al) {
 
     // replace Qualities with OQ contents, if requested
     if ( !m_settings->IsKeepQualities ) {
-        string originalQualities;
+        std::string originalQualities;
         if ( al.GetTag(OQ_TAG, originalQualities) ) {
             al.Qualities = originalQualities;
             al.RemoveTag(OQ_TAG);
@@ -104,13 +103,13 @@ bool RevertTool::RevertToolPrivate::Run(void) {
     // opens the BAM file without checking for indexes
     BamReader reader;
     if ( !reader.Open(m_settings->InputFilename) ) {
-        cerr << "bamtools revert ERROR: could not open " << m_settings->InputFilename
-             << " for reading... Aborting." << endl;
+        std::cerr << "bamtools revert ERROR: could not open " << m_settings->InputFilename
+             << " for reading... Aborting." << std::endl;
         return false;
     }
 
     // get BAM file metadata
-    const string& headerText = reader.GetHeaderText();
+    const std::string& headerText = reader.GetHeaderText();
     const RefVector& references = reader.GetReferenceData();
     
     // determine compression mode for BamWriter
@@ -123,8 +122,8 @@ bool RevertTool::RevertToolPrivate::Run(void) {
     BamWriter writer;
     writer.SetCompressionMode(compressionMode);
     if ( !writer.Open(m_settings->OutputFilename, headerText, references) ) {
-        cerr << "bamtools revert ERROR: could not open " << m_settings->OutputFilename
-             << " for writing... Aborting." << endl;
+        std::cerr << "bamtools revert ERROR: could not open " << m_settings->OutputFilename
+             << " for writing... Aborting." << std::endl;
         reader.Close();
         return false;
     }

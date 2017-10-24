@@ -73,7 +73,7 @@ void SamHeaderVersion::SetVersion(const std::string& version) {
     // do nothing if version is empty
     if ( !version.empty() ) {
 
-        std::stringstream versionStream("");
+        std::stringstream versionStream;
 
         // do nothing if period not found
         const size_t periodFound = version.find(Constants::SAM_PERIOD);

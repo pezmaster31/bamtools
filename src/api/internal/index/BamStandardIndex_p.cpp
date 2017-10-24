@@ -20,7 +20,6 @@ using namespace BamTools::Internal;
 #include <cstring>
 #include <algorithm>
 #include <sstream>
-using namespace std;
 
 // -----------------------------------
 // static BamStandardIndex constants
@@ -28,7 +27,7 @@ using namespace std;
 
 const int BamStandardIndex::MAX_BIN               = 37450;  // =(8^6-1)/7+1
 const int BamStandardIndex::BAM_LIDX_SHIFT        = 14;
-const string BamStandardIndex::BAI_EXTENSION      = ".bai";
+const std::string BamStandardIndex::BAI_EXTENSION = ".bai";
 const char* const BamStandardIndex::BAI_MAGIC     = "BAI\1";
 const int BamStandardIndex::SIZEOF_ALIGNMENTCHUNK = sizeof(uint64_t)*2;
 const int BamStandardIndex::SIZEOF_BINCORE        = sizeof(uint32_t) + sizeof(int32_t);
@@ -98,7 +97,7 @@ void BamStandardIndex::AdjustRegion(const BamRegion& region, uint32_t& begin, ui
 // [begin, end)
 void BamStandardIndex::CalculateCandidateBins(const uint32_t& begin,
                                               const uint32_t& end,
-                                              set<uint16_t>& candidateBins)
+                                              std::set<uint16_t>& candidateBins)
 {
     // initialize list, bin '0' is always a valid bin
     candidateBins.insert(0);
@@ -114,8 +113,8 @@ void BamStandardIndex::CalculateCandidateBins(const uint32_t& begin,
 
 void BamStandardIndex::CalculateCandidateOffsets(const BaiReferenceSummary& refSummary,
                                                  const uint64_t& minOffset,
-                                                 set<uint16_t>& candidateBins,
-                                                 vector<int64_t>& offsets)
+                                                 std::set<uint16_t>& candidateBins,
+                                                 std::vector<int64_t>& offsets)
 {
     // seek to first bin
     Seek(refSummary.FirstBinFilePosition, SEEK_SET);
@@ -123,7 +122,7 @@ void BamStandardIndex::CalculateCandidateOffsets(const BaiReferenceSummary& refS
     // iterate over reference bins
     uint32_t binId;
     int32_t numAlignmentChunks;
-    set<uint16_t>::iterator candidateBinIter;
+    std::set<uint16_t>::iterator candidateBinIter;
     for ( int i = 0; i < refSummary.NumBins; ++i ) {
 
         // read bin contents (if successful, alignment chunks are now in m_buffer)
@@ -201,7 +200,7 @@ void BamStandardIndex::CheckBufferSize(char*& buffer,
             buffer = new char[bufferLength];
         }
     } catch ( std::bad_alloc&  ) {
-        stringstream s("");
+        std::stringstream s;
         s << "out of memory when allocating " << requestedBytes << " bytes";
         throw BamException("BamStandardIndex::CheckBufferSize", s.str());
     }
@@ -218,7 +217,7 @@ void BamStandardIndex::CheckBufferSize(unsigned char*& buffer,
             buffer = new unsigned char[bufferLength];
         }
     } catch ( std::bad_alloc& ) {
-        stringstream s("");
+        std::stringstream s;
         s << "out of memory when allocating " << requestedBytes << " bytes";
         throw BamException("BamStandardIndex::CheckBufferSize", s.str());
     }
@@ -272,8 +271,8 @@ bool BamStandardIndex::Create(void) {
 
     // rewind BamReader
     if ( !m_reader->Rewind() ) {
-        const string readerError = m_reader->GetErrorString();
-        const string message = "could not create index: \n\t" + readerError;
+        const std::string readerError = m_reader->GetErrorString();
+        const std::string message = "could not create index: \n\t" + readerError;
         SetErrorString("BamStandardIndex::Create", message);
         return false;
     }
@@ -281,7 +280,7 @@ bool BamStandardIndex::Create(void) {
     try {
 
         // open new index file (read & write)
-        string indexFilename = m_reader->Filename() + Extension();
+        std::string indexFilename = m_reader->Filename() + Extension();
         OpenFile(indexFilename, IBamIODevice::ReadWrite);
 
         // initialize BaiFileSummary with number of references
@@ -346,11 +345,11 @@ bool BamStandardIndex::Create(void) {
 
             // if lastPosition greater than current alignment position - file not sorted properly
             else if ( lastPosition > al.Position ) {
-                stringstream s("");
-                s << "BAM file is not properly sorted by coordinate" << endl
+                std::stringstream s;
+                s << "BAM file is not properly sorted by coordinate" << std::endl
                   << "Current alignment position: " << al.Position
                   << " < previous alignment position: " << lastPosition
-                  << " on reference ID: " << al.RefID << endl;
+                  << " on reference ID: " << al.RefID << std::endl;
                 SetErrorString("BamStandardIndex::Create", s.str());
                 return false;
             }
@@ -409,8 +408,8 @@ bool BamStandardIndex::Create(void) {
 
     // rewind BamReader
     if ( !m_reader->Rewind() ) {
-        const string readerError = m_reader->GetErrorString();
-        const string message = "could not create index: \n\t" + readerError;
+        const std::string readerError = m_reader->GetErrorString();
+        const std::string message = "could not create index: \n\t" + readerError;
         SetErrorString("BamStandardIndex::Create", message);
         return false;
     }
@@ -420,7 +419,7 @@ bool BamStandardIndex::Create(void) {
 }
 
 // returns format's file extension
-const string BamStandardIndex::Extension(void) {
+const std::string BamStandardIndex::Extension(void) {
     return BamStandardIndex::BAI_EXTENSION;
 }
 
@@ -439,7 +438,7 @@ void BamStandardIndex::GetOffset(const BamRegion& region, int64_t& offset, bool*
     AdjustRegion(region, begin, end);
 
     // retrieve all candidate bin IDs for region
-    set<uint16_t> candidateBins;
+    std::set<uint16_t> candidateBins;
     CalculateCandidateBins(begin, end, candidateBins);
 
     // use reference's linear offsets to calculate the minimum offset
@@ -448,7 +447,7 @@ void BamStandardIndex::GetOffset(const BamRegion& region, int64_t& offset, bool*
 
     // attempt to use reference summary, minOffset, & candidateBins to calculate offsets
     // no data should not be error, just bail
-    vector<int64_t> offsets;
+    std::vector<int64_t> offsets;
     CalculateCandidateOffsets(refSummary, minOffset, candidateBins, offsets);
     if ( offsets.empty() )
         return;
@@ -458,12 +457,12 @@ void BamStandardIndex::GetOffset(const BamRegion& region, int64_t& offset, bool*
 
     // binary search for an overlapping block (may not be first one though)
     BamAlignment al;
-    typedef vector<int64_t>::const_iterator OffsetConstIterator;
+    typedef std::vector<int64_t>::const_iterator OffsetConstIterator;
     OffsetConstIterator offsetFirst = offsets.begin();
     OffsetConstIterator offsetIter  = offsetFirst;
     OffsetConstIterator offsetLast  = offsets.end();
-    iterator_traits<OffsetConstIterator>::difference_type count = distance(offsetFirst, offsetLast);
-    iterator_traits<OffsetConstIterator>::difference_type step;
+    std::iterator_traits<OffsetConstIterator>::difference_type count = distance(offsetFirst, offsetLast);
+    std::iterator_traits<OffsetConstIterator>::difference_type step;
     while ( count > 0 ) {
         offsetIter = offsetFirst;
         step = count/2;
@@ -472,8 +471,8 @@ void BamStandardIndex::GetOffset(const BamRegion& region, int64_t& offset, bool*
         // attempt seek to candidate offset
         const int64_t& candidateOffset = (*offsetIter);
         if ( !m_reader->Seek(candidateOffset) ) {
-            const string readerError = m_reader->GetErrorString();
-            const string message = "could not seek in BAM file: \n\t" + readerError;
+            const std::string readerError = m_reader->GetErrorString();
+            const std::string message = "could not seek in BAM file: \n\t" + readerError;
             throw BamException("BamToolsIndex::GetOffset", message);
         }
 
@@ -624,14 +623,14 @@ void BamStandardIndex::OpenFile(const std::string& filename, IBamIODevice::OpenM
 
     m_resources.Device = BamDeviceFactory::CreateDevice(filename);
     if ( m_resources.Device == 0 ) {
-        const string message = string("could not open file: ") + filename;
+        const std::string message = std::string("could not open file: ") + filename;
         throw BamException("BamStandardIndex::OpenFile", message);
     }
 
     // attempt to open file
     m_resources.Device->Open(mode);
     if ( !IsDeviceOpen() ) {
-        const string message = string("could not open file: ") + filename;
+        const std::string message = std::string("could not open file: ") + filename;
         throw BamException("BamStandardIndex::OpenFile", message);
     }
 }
@@ -661,8 +660,8 @@ void BamStandardIndex::ReadIntoBuffer(const unsigned int& bytesRequested) {
 
     // read from BAI file stream
     const int64_t bytesRead = m_resources.Device->Read(m_resources.Buffer, bytesRequested);
-    if ( bytesRead != (int64_t)bytesRequested ) {
-        stringstream s("");
+    if ( bytesRead != static_cast<int64_t>(bytesRequested) ) {
+        std::stringstream s;
         s << "expected to read: " << bytesRequested << " bytes, "
           << "but instead read: " << bytesRead;
         throw BamException("BamStandardIndex::ReadIntoBuffer", s.str());
@@ -722,7 +721,7 @@ void BamStandardIndex::SaveAlignmentChunkToBin(BaiBinMap& binMap,
     if ( binIter == binMap.end() ) {
         BaiAlignmentChunkVector newChunks;
         newChunks.push_back(newChunk);
-        binMap.insert( pair<uint32_t, BaiAlignmentChunkVector>(currentBin, newChunks));
+        binMap.insert( std::pair<uint32_t, BaiAlignmentChunkVector>(currentBin, newChunks));
     }
 
     // otherwise, just append alignment chunk

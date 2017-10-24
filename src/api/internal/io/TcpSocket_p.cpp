@@ -17,7 +17,6 @@ using namespace BamTools::Internal;
 #include <climits>
 #include <sstream>
 #include <vector>
-using namespace std;
 
 // ------------------------------------
 // static utility methods & constants
@@ -88,7 +87,7 @@ bool TcpSocket::ConnectImpl(const HostInfo& hostInfo,
     m_readBuffer.Clear();
 
     // fetch candidate addresses for requested host
-    vector<HostAddress> addresses = hostInfo.Addresses();
+    std::vector<HostAddress> addresses = hostInfo.Addresses();
     if ( addresses.empty() ) {
         m_error = TcpSocket::HostNotFoundError;
         m_errorString = "no IP addresses found for host";
@@ -96,13 +95,13 @@ bool TcpSocket::ConnectImpl(const HostInfo& hostInfo,
     }
 
     // convert port string to integer
-    stringstream ss(port);
+    std::stringstream ss(port);
     uint16_t portNumber(0);
     ss >> portNumber;
 
     // iterate through adddresses
-    vector<HostAddress>::const_iterator addrIter = addresses.begin();
-    vector<HostAddress>::const_iterator addrEnd  = addresses.end();
+    std::vector<HostAddress>::const_iterator addrIter = addresses.begin();
+    std::vector<HostAddress>::const_iterator addrEnd  = addresses.end();
     for ( ; addrIter != addrEnd; ++addrIter) {
         const HostAddress& addr = (*addrIter);
 
@@ -134,18 +133,18 @@ bool TcpSocket::ConnectImpl(const HostInfo& hostInfo,
     return false;
 }
 
-bool TcpSocket::ConnectToHost(const string& hostName,
+bool TcpSocket::ConnectToHost(const std::string& hostName,
                               uint16_t port,
                               IBamIODevice::OpenMode mode)
 {
-    stringstream ss("");
+    std::stringstream ss;
     ss << port;
     return ConnectToHost(hostName, ss.str(), mode);
 
 }
 
-bool TcpSocket::ConnectToHost(const string& hostName,
-                              const string& port,
+bool TcpSocket::ConnectToHost(const std::string& hostName,
+                              const std::string& port,
                               IBamIODevice::OpenMode mode)
 {
     // create new address object with requested host name
@@ -157,7 +156,7 @@ bool TcpSocket::ConnectToHost(const string& hostName,
     // otherwise host name was 'plain-text' ("www.foo.bar")
     // we need to look up IP address(es)
     if ( hostAddress.HasIPAddress() )
-        info.SetAddresses( vector<HostAddress>(1, hostAddress) );
+        info.SetAddresses( std::vector<HostAddress>(1, hostAddress) );
     else
         info = HostInfo::Lookup(hostName, port);
 
@@ -311,7 +310,7 @@ int64_t TcpSocket::ReadFromSocket(void) {
     return numBytesRead;
 }
 
-string TcpSocket::ReadLine(int64_t max) {
+std::string TcpSocket::ReadLine(int64_t max) {
 
     // prep result byte buffer
     ByteArray result;
@@ -330,7 +329,7 @@ string TcpSocket::ReadLine(int64_t max) {
 
         int64_t readResult;
         do {
-            result.Resize( static_cast<size_t>(min(bufferMax, result.Size() + DEFAULT_BUFFER_SIZE)) );
+            result.Resize( static_cast<size_t>(std::min(bufferMax, result.Size() + DEFAULT_BUFFER_SIZE)) );
             readResult = ReadLine(result.Data()+readBytes, result.Size()-readBytes);
             if ( readResult > 0 || readBytes == 0 )
                 readBytes += readResult;
@@ -346,7 +345,7 @@ string TcpSocket::ReadLine(int64_t max) {
         result.Resize(static_cast<size_t>(readBytes));
 
     // return byte buffer as string
-    return string( result.ConstData(), result.Size() );
+    return std::string( result.ConstData(), result.Size() );
 }
 
 int64_t TcpSocket::ReadLine(char* dest, size_t max) {

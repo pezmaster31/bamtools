@@ -23,30 +23,29 @@ using namespace BamTools;
 #include <sstream>
 #include <string>
 #include <vector>
-using namespace std;
 
 namespace BamTools {
   
 // string constants
-static const string SPLIT_MAPPED_TOKEN    = ".MAPPED";
-static const string SPLIT_UNMAPPED_TOKEN  = ".UNMAPPED";
-static const string SPLIT_PAIRED_TOKEN    = ".PAIRED_END";
-static const string SPLIT_SINGLE_TOKEN    = ".SINGLE_END";
-static const string SPLIT_REFERENCE_TOKEN = ".REF_";
-static const string SPLIT_TAG_TOKEN       = ".TAG_";
+static const std::string SPLIT_MAPPED_TOKEN    = ".MAPPED";
+static const std::string SPLIT_UNMAPPED_TOKEN  = ".UNMAPPED";
+static const std::string SPLIT_PAIRED_TOKEN    = ".PAIRED_END";
+static const std::string SPLIT_SINGLE_TOKEN    = ".SINGLE_END";
+static const std::string SPLIT_REFERENCE_TOKEN = ".REF_";
+static const std::string SPLIT_TAG_TOKEN       = ".TAG_";
 
-string GetTimestampString(void) {
+std::string GetTimestampString(void) {
 
     // get human readable timestamp
     time_t currentTime;
     time(&currentTime);
-    stringstream timeStream("");
+    std::stringstream timeStream;
     timeStream << ctime(&currentTime);
 
     // convert whitespace to '_'
-    string timeString = timeStream.str();
+    std::string timeString = timeStream.str();
     size_t found = timeString.find(" ");
-    while (found != string::npos) {
+    while (found != std::string::npos) {
         timeString.replace(found, 1, "_");
         found = timeString.find(" ", found+1);
     }
@@ -55,7 +54,7 @@ string GetTimestampString(void) {
 
 // remove copy of filename without extension
 // (so /path/to/file.txt becomes /path/to/file )
-string RemoveFilenameExtension(const string& filename) {
+std::string RemoveFilenameExtension(const std::string& filename) {
     size_t found = filename.rfind(".");
     return filename.substr(0, found);
 }
@@ -79,12 +78,12 @@ struct SplitTool::SplitSettings {
     bool IsSplittingTag;
     
     // string args
-    string CustomOutputStub;
-    string CustomRefPrefix;
-    string CustomTagPrefix;
-    string InputFilename;
-    string TagToSplit;
-    string ListTagDelimiter;
+    std::string CustomOutputStub;
+    std::string CustomRefPrefix;
+    std::string CustomTagPrefix;
+    std::string InputFilename;
+    std::string TagToSplit;
+    std::string ListTagDelimiter;
     
     // constructor
     SplitSettings(void)
@@ -129,7 +128,7 @@ class SplitTool::SplitToolPrivate {
     private:
         // close & delete BamWriters in map
         template<typename T>
-        void CloseWriters(map<T, BamWriter*>& writers);
+        void CloseWriters(std::map<T, BamWriter*>& writers);
         // calculate output stub based on IO args given
         void DetermineOutputFilenameStub(void);
         // open our BamReader
@@ -157,9 +156,9 @@ class SplitTool::SplitToolPrivate {
     // data members
     private:
         SplitTool::SplitSettings* m_settings;
-        string m_outputFilenameStub;
+        std::string m_outputFilenameStub;
         BamReader m_reader;
-        string m_header;
+        std::string m_header;
         RefVector m_references;
 };
 
@@ -182,7 +181,7 @@ bool SplitTool::SplitToolPrivate::OpenReader(void) {
 
     // attempt to open BAM file
     if ( !m_reader.Open(m_settings->InputFilename) ) {
-        cerr << "bamtools split ERROR: could not open BAM file: " << m_settings->InputFilename << endl;
+        std::cerr << "bamtools split ERROR: could not open BAM file: " << m_settings->InputFilename << std::endl;
         return false;
     }
 
@@ -208,16 +207,16 @@ bool SplitTool::SplitToolPrivate::Run(void) {
     if ( m_settings->IsSplittingTag )       return SplitTag();
 
     // if we get here, no property was specified 
-    cerr << "bamtools split ERROR: no property given to split on... " << endl
-         << "Please use -mapped, -paired, -reference, or -tag TAG to specify desired split behavior." << endl;
+    std::cerr << "bamtools split ERROR: no property given to split on... " << std::endl
+         << "Please use -mapped, -paired, -reference, or -tag TAG to specify desired split behavior." << std::endl;
     return false;
 }    
 
 bool SplitTool::SplitToolPrivate::SplitMapped(void) {
     
     // set up splitting data structure
-    map<bool, BamWriter*> outputFiles;
-    map<bool, BamWriter*>::iterator writerIter;
+    std::map<bool, BamWriter*> outputFiles;
+    std::map<bool, BamWriter*>::iterator writerIter;
     
     // iterate through alignments
     BamAlignment al;
@@ -233,18 +232,18 @@ bool SplitTool::SplitToolPrivate::SplitMapped(void) {
         if ( writerIter == outputFiles.end() ) {
         
             // open new BamWriter
-            const string outputFilename = m_outputFilenameStub + ( isCurrentAlignmentMapped
+            const std::string outputFilename = m_outputFilenameStub + ( isCurrentAlignmentMapped
                                                                   ? SPLIT_MAPPED_TOKEN
                                                                   : SPLIT_UNMAPPED_TOKEN ) + ".bam";
             writer = new BamWriter;
             if ( !writer->Open(outputFilename, m_header, m_references) ) {
-                cerr << "bamtools split ERROR: could not open " << outputFilename
-                     << " for writing." << endl;
+                std::cerr << "bamtools split ERROR: could not open " << outputFilename
+                     << " for writing." << std::endl;
                 return false;
             }
           
             // store in map
-            outputFiles.insert( make_pair(isCurrentAlignmentMapped, writer) );
+            outputFiles.insert( std::make_pair(isCurrentAlignmentMapped, writer) );
         } 
         
         // else grab corresponding writer
@@ -265,8 +264,8 @@ bool SplitTool::SplitToolPrivate::SplitMapped(void) {
 bool SplitTool::SplitToolPrivate::SplitPaired(void) {
   
     // set up splitting data structure
-    map<bool, BamWriter*> outputFiles;
-    map<bool, BamWriter*>::iterator writerIter;
+    std::map<bool, BamWriter*> outputFiles;
+    std::map<bool, BamWriter*>::iterator writerIter;
     
     // iterate through alignments
     BamAlignment al;
@@ -282,18 +281,18 @@ bool SplitTool::SplitToolPrivate::SplitPaired(void) {
         if ( writerIter == outputFiles.end() ) {
         
             // open new BamWriter
-            const string outputFilename = m_outputFilenameStub + ( isCurrentAlignmentPaired
+            const std::string outputFilename = m_outputFilenameStub + ( isCurrentAlignmentPaired
                                                                   ? SPLIT_PAIRED_TOKEN
                                                                   : SPLIT_SINGLE_TOKEN ) + ".bam";
             writer = new BamWriter;
             if ( !writer->Open(outputFilename, m_header, m_references) ) {
-                cerr << "bamtool split ERROR: could not open " << outputFilename
-                     << " for writing." << endl;
+                std::cerr << "bamtool split ERROR: could not open " << outputFilename
+                     << " for writing." << std::endl;
                 return false;
             }
           
             // store in map
-            outputFiles.insert( make_pair(isCurrentAlignmentPaired, writer) );
+            outputFiles.insert( std::make_pair(isCurrentAlignmentPaired, writer) );
         } 
         
         // else grab corresponding writer
@@ -314,18 +313,18 @@ bool SplitTool::SplitToolPrivate::SplitPaired(void) {
 bool SplitTool::SplitToolPrivate::SplitReference(void) {
   
     // set up splitting data structure
-    map<int32_t, BamWriter*> outputFiles;
-    map<int32_t, BamWriter*>::iterator writerIter;
+    std::map<int32_t, BamWriter*> outputFiles;
+    std::map<int32_t, BamWriter*>::iterator writerIter;
     
     // determine reference prefix
-    string refPrefix = SPLIT_REFERENCE_TOKEN;
+    std::string refPrefix = SPLIT_REFERENCE_TOKEN;
     if ( m_settings->HasCustomRefPrefix )
         refPrefix = m_settings->CustomRefPrefix;
 
     // make sure prefix starts with '.'
     const size_t dotFound = refPrefix.find('.');
     if ( dotFound != 0 )
-        refPrefix = string(".") + refPrefix;
+        refPrefix = std::string(".") + refPrefix;
 
     // iterate through alignments
     BamAlignment al;
@@ -341,25 +340,25 @@ bool SplitTool::SplitToolPrivate::SplitReference(void) {
         if ( writerIter == outputFiles.end() ) {
         
             // fetch reference name for ID
-            string refName;
+            std::string refName;
             if ( currentRefId == -1 )
                 refName = "unmapped";
             else
                 refName = m_references.at(currentRefId).RefName;
 
             // construct new output filename
-            const string outputFilename = m_outputFilenameStub + refPrefix + refName + ".bam";
+            const std::string outputFilename = m_outputFilenameStub + refPrefix + refName + ".bam";
 
             // open new BamWriter
             writer = new BamWriter;
             if ( !writer->Open(outputFilename, m_header, m_references) ) {
-                cerr << "bamtools split ERROR: could not open " << outputFilename
-                     << " for writing." << endl;
+                std::cerr << "bamtools split ERROR: could not open " << outputFilename
+                     << " for writing." << std::endl;
                 return false;
             }
 
             // store in map
-            outputFiles.insert( make_pair(currentRefId, writer) );
+            outputFiles.insert( std::make_pair(currentRefId, writer) );
         } 
         
         // else grab corresponding writer
@@ -404,7 +403,7 @@ bool SplitTool::SplitToolPrivate::SplitTag(void) {
             case (Constants::BAM_TAG_TYPE_ASCII)  :
             case (Constants::BAM_TAG_TYPE_STRING) :
             case (Constants::BAM_TAG_TYPE_HEX)    :
-                return SplitTagImpl<string>(al);
+                return SplitTagImpl<std::string>(al);
 
             case (Constants::BAM_TAG_TYPE_ARRAY) : {
 
@@ -420,13 +419,13 @@ bool SplitTool::SplitToolPrivate::SplitTag(void) {
                     case (Constants::BAM_TAG_TYPE_UINT32) : return SplitListTagImpl<uint32_t>(al);
                     case (Constants::BAM_TAG_TYPE_FLOAT)  : return SplitListTagImpl<float>(al);
                     default:
-                        cerr << "bamtools split ERROR: array tag has unsupported element type: " << arrayTagType << endl;
+                        std::cerr << "bamtools split ERROR: array tag has unsupported element type: " << arrayTagType << std::endl;
                         return false;
                 }
             }
           
             default:
-                cerr << "bamtools split ERROR: unknown tag type encountered: " << tagType << endl;
+                std::cerr << "bamtools split ERROR: unknown tag type encountered: " << tagType << std::endl;
                 return false;
         }
     }
@@ -443,9 +442,9 @@ bool SplitTool::SplitToolPrivate::SplitTag(void) {
 
 // close BamWriters & delete pointers
 template<typename T>
-void SplitTool::SplitToolPrivate::CloseWriters(map<T, BamWriter*>& writers) {
+void SplitTool::SplitToolPrivate::CloseWriters(std::map<T, BamWriter*>& writers) {
   
-    typedef map<T, BamWriter*> WriterMap;
+    typedef std::map<T, BamWriter*> WriterMap;
     typedef typename WriterMap::iterator WriterMapIterator;
   
     // iterate over writers
@@ -471,8 +470,8 @@ void SplitTool::SplitToolPrivate::CloseWriters(map<T, BamWriter*>& writers) {
 template<typename T>
 bool SplitTool::SplitToolPrivate::SplitListTagImpl(BamAlignment& al) {
 
-    typedef vector<T> TagValueType;
-    typedef map<string, BamWriter*> WriterMap;
+    typedef std::vector<T> TagValueType;
+    typedef std::map<std::string, BamWriter*> WriterMap;
     typedef typename WriterMap::iterator WriterMapIterator;
 
     // set up splitting data structure
@@ -480,26 +479,26 @@ bool SplitTool::SplitToolPrivate::SplitListTagImpl(BamAlignment& al) {
     WriterMapIterator writerIter;
 
     // determine tag prefix
-    string tagPrefix = SPLIT_TAG_TOKEN;
+    std::string tagPrefix = SPLIT_TAG_TOKEN;
     if ( m_settings->HasCustomTagPrefix )
         tagPrefix = m_settings->CustomTagPrefix;
 
     // make sure prefix starts with '.'
     const size_t dotFound = tagPrefix.find('.');
     if ( dotFound != 0 )
-        tagPrefix = string(".") + tagPrefix;
+        tagPrefix = std::string(".") + tagPrefix;
 
-    const string tag = m_settings->TagToSplit;
+    const std::string tag = m_settings->TagToSplit;
     BamWriter* writer;
     TagValueType currentValue;
     while (m_reader.GetNextAlignment(al)) {
 
-        string listTagLabel;
+        std::string listTagLabel;
         if (!al.GetTag(tag, currentValue))
             listTagLabel = "none";
         else {
             // make list label from tag data
-            stringstream listTagLabelStream;
+            std::stringstream listTagLabelStream;
             typename TagValueType::const_iterator tagValueIter = currentValue.begin();
             typename TagValueType::const_iterator tagValueEnd  = currentValue.end();
             for (; tagValueIter != tagValueEnd; ++tagValueIter)
@@ -516,17 +515,17 @@ bool SplitTool::SplitToolPrivate::SplitListTagImpl(BamAlignment& al) {
         if (writerIter == outputFiles.end()) {
 
             // open new BamWriter, save first alignment
-            stringstream outputFilenameStream;
+            std::stringstream outputFilenameStream;
             outputFilenameStream << m_outputFilenameStub << tagPrefix << tag << "_" << listTagLabel << ".bam";
             writer = new BamWriter;
             if ( !writer->Open(outputFilenameStream.str(), m_header, m_references) ) {
-                cerr << "bamtools split ERROR: could not open " << outputFilenameStream.str()
-                     << " for writing." << endl;
+                std::cerr << "bamtools split ERROR: could not open " << outputFilenameStream.str()
+                     << " for writing." << std::endl;
                 return false;
             }
 
             // store in map
-            outputFiles.insert( make_pair(listTagLabel, writer) );
+            outputFiles.insert( std::make_pair(listTagLabel, writer) );
         }
 
         // else grab existing writer
@@ -547,7 +546,7 @@ template<typename T>
 bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al) {
   
     typedef T TagValueType;
-    typedef map<TagValueType, BamWriter*> WriterMap;
+    typedef std::map<TagValueType, BamWriter*> WriterMap;
     typedef typename WriterMap::iterator WriterMapIterator;
   
     // set up splitting data structure
@@ -555,19 +554,19 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al) {
     WriterMapIterator writerIter;
 
     // determine tag prefix
-    string tagPrefix = SPLIT_TAG_TOKEN;
+    std::string tagPrefix = SPLIT_TAG_TOKEN;
     if ( m_settings->HasCustomTagPrefix )
         tagPrefix = m_settings->CustomTagPrefix;
 
     // make sure prefix starts with '.'
     const size_t dotFound = tagPrefix.find('.');
     if ( dotFound != 0 )
-        tagPrefix = string(".") + tagPrefix;
+        tagPrefix = std::string(".") + tagPrefix;
 
     // local variables
-    const string tag = m_settings->TagToSplit;
+    const std::string tag = m_settings->TagToSplit;
     BamWriter* writer;
-    stringstream outputFilenameStream("");
+    std::stringstream outputFilenameStream;
     TagValueType currentValue;
     
     // retrieve first alignment tag value
@@ -577,14 +576,14 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al) {
         outputFilenameStream << m_outputFilenameStub << tagPrefix << tag << "_" << currentValue << ".bam";
         writer = new BamWriter;
         if ( !writer->Open(outputFilenameStream.str(), m_header, m_references) ) {
-            cerr << "bamtools split ERROR: could not open " << outputFilenameStream.str()
-                 << " for writing." << endl;
+            std::cerr << "bamtools split ERROR: could not open " << outputFilenameStream.str()
+                 << " for writing." << std::endl;
             return false;
         }
         writer->SaveAlignment(al);
         
         // store in map
-        outputFiles.insert( make_pair(currentValue, writer) );
+        outputFiles.insert( std::make_pair(currentValue, writer) );
         
         // reset stream
         outputFilenameStream.str("");
@@ -606,13 +605,13 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al) {
             outputFilenameStream << m_outputFilenameStub << tagPrefix << tag << "_" << currentValue << ".bam";
             writer = new BamWriter;
             if ( !writer->Open(outputFilenameStream.str(), m_header, m_references) ) {
-                cerr << "bamtool split ERROR: could not open " << outputFilenameStream.str()
-                     << " for writing." << endl;
+                std::cerr << "bamtool split ERROR: could not open " << outputFilenameStream.str()
+                     << " for writing." << std::endl;
                 return false;
             }
 
             // store in map
-            outputFiles.insert( make_pair(currentValue, writer) );
+            outputFiles.insert( std::make_pair(currentValue, writer) );
             
             // reset stream
             outputFilenameStream.str("");
@@ -642,9 +641,9 @@ SplitTool::SplitTool(void)
     , m_impl(0)
 {
     // set program details
-    const string name = "bamtools split";
-    const string description = "splits a BAM file on user-specified property, creating a new BAM output file for each value found";
-    const string args = "[-in <filename>] [-stub <filename stub>] < -mapped | -paired | -reference [-refPrefix <prefix>] | -tag <TAG> > ";
+    const std::string name = "bamtools split";
+    const std::string description = "splits a BAM file on user-specified property, creating a new BAM output file for each value found";
+    const std::string args = "[-in <filename>] [-stub <filename stub>] < -mapped | -paired | -reference [-refPrefix <prefix>] | -tag <TAG> > ";
     Options::SetProgramInfo(name, description, args);
     
     // set up options 

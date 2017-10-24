@@ -9,7 +9,6 @@
 
 #include "api/SamReadGroup.h"
 using namespace BamTools;
-using namespace std;
 
 /*! \struct BamTools::SamReadGroup
     \brief Represents a SAM read group entry.

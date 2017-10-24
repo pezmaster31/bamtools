@@ -12,27 +12,26 @@
 #include "api/internal/index/BamToolsIndex_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
-using namespace std;
 
 // generates index filename from BAM filename (depending on requested type)
 // if type is unknown, returns empty string
-const string BamIndexFactory::CreateIndexFilename(const string& bamFilename,
+const std::string BamIndexFactory::CreateIndexFilename(const std::string& bamFilename,
                                                   const BamIndex::IndexType& type)
 {
     switch ( type ) {
         case ( BamIndex::STANDARD ) : return ( bamFilename + BamStandardIndex::Extension() );
         case ( BamIndex::BAMTOOLS ) : return ( bamFilename + BamToolsIndex::Extension() );
         default :
-            return string();
+            return std::string();
     }
 }
 
 // creates a new BamIndex object, depending on extension of @indexFilename
-BamIndex* BamIndexFactory::CreateIndexFromFilename(const string& indexFilename, BamReaderPrivate* reader) {
+BamIndex* BamIndexFactory::CreateIndexFromFilename(const std::string& indexFilename, BamReaderPrivate* reader) {
 
     // get file extension from index filename, including dot (".EXT")
     // if can't get file extension, return null index
-    const string extension = FileExtension(indexFilename);
+    const std::string extension = FileExtension(indexFilename);
     if ( extension.empty() )
         return 0;
 
@@ -56,18 +55,18 @@ BamIndex* BamIndexFactory::CreateIndexOfType(const BamIndex::IndexType& type,
 }
 
 // retrieves file extension (including '.')
-const string BamIndexFactory::FileExtension(const string& filename) {
+const std::string BamIndexFactory::FileExtension(const std::string& filename) {
 
     // if filename cannot contain valid path + extension, return empty string
     if ( filename.empty() || filename.length() <= 4 )
-        return string();
+        return std::string();
 
     // look for last dot in filename
     const size_t lastDotPosition = filename.find_last_of('.');
 
     // if none found, return empty string
-    if ( lastDotPosition == string::npos )
-        return string();
+    if ( lastDotPosition == std::string::npos )
+        return std::string();
 
     // return substring from last dot position
     return filename.substr(lastDotPosition);
@@ -76,16 +75,16 @@ const string BamIndexFactory::FileExtension(const string& filename) {
 // returns name of existing index file that corresponds to @bamFilename
 // will defer to @preferredType if possible, if not will attempt to load any supported type
 // returns empty string if not found
-const string BamIndexFactory::FindIndexFilename(const string& bamFilename,
+const std::string BamIndexFactory::FindIndexFilename(const std::string& bamFilename,
                                                 const BamIndex::IndexType& preferredType)
 {
     // skip if BAM filename provided is empty
     if ( bamFilename.empty() )
-        return string();
+        return std::string();
 
     // try to find index of preferred type first
     // return index filename if found
-    string indexFilename = CreateIndexFilename(bamFilename, preferredType);
+    std::string indexFilename = CreateIndexFilename(bamFilename, preferredType);
     if ( !indexFilename.empty() )
         return indexFilename;
 
@@ -103,5 +102,5 @@ const string BamIndexFactory::FindIndexFilename(const string& bamFilename,
     }
 
     // otherwise couldn't find any index matching this filename
-    return string();
+    return std::string();
 }

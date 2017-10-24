@@ -19,7 +19,6 @@ using namespace BamTools::Internal;
 #include <cstring>
 #include <algorithm>
 #include <string>
-using namespace std;
 
 // ------------------------------
 // RollingBuffer implementation
@@ -49,7 +48,7 @@ size_t RollingBuffer::BlockSize(void) const {
 }
 
 bool RollingBuffer::CanReadLine(void) const {
-    return IndexOf('\n') != string::npos;
+    return IndexOf('\n') != std::string::npos;
 }
 
 void RollingBuffer::Chop(size_t n) {
@@ -169,7 +168,7 @@ size_t RollingBuffer::IndexOf(char c) const {
 
     // skip processing if empty buffer
     if ( IsEmpty() )
-        return string::npos;
+        return std::string::npos;
 
     size_t index(0);
 
@@ -194,7 +193,7 @@ size_t RollingBuffer::IndexOf(char c) const {
     }
 
     // no match found
-    return string::npos;
+    return std::string::npos;
 }
 
 bool RollingBuffer::IsEmpty(void) const {

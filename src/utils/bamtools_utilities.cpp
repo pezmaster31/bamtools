@@ -18,7 +18,6 @@ using namespace BamTools;
 #include <fstream>
 #include <iostream>
 #include <sstream>
-using namespace std;
 
 namespace BamTools {
   
@@ -33,17 +32,17 @@ const char REVCOMP_LOOKUP[] = {'T',  0,  'G', 'H',
 } // namespace BamTools 
   
 // returns true if 'source' contains 'pattern'
-bool Utilities::Contains(const string& source, const string& pattern) {
-    return ( source.find(pattern) != string::npos );
+bool Utilities::Contains(const std::string& source, const std::string& pattern) {
+    return ( source.find(pattern) != std::string::npos );
 }
 
 // returns true if 'source' contains 'c'
 bool Utilities::Contains(const std::string &source, const char c) {
-    return ( source.find(c) != string::npos );
+    return ( source.find(c) != std::string::npos );
 }
 
 // returns true if 'source' ends with 'pattern'
-bool Utilities::EndsWith(const string& source, const string& pattern) {
+bool Utilities::EndsWith(const std::string& source, const std::string& pattern) {
     return ( source.find(pattern) == (source.length() - pattern.length()) );
 }
 
@@ -53,14 +52,14 @@ bool Utilities::EndsWith(const std::string& source, const char c) {
 }
 
 // check if a file exists
-bool Utilities::FileExists(const string& filename) {
-    ifstream f(filename.c_str(), ifstream::in);
+bool Utilities::FileExists(const std::string& filename) {
+    std::ifstream f(filename.c_str(), std::ifstream::in);
     return !f.fail();
 }
 
 // Parses a region string, does validation (valid ID's, positions), stores in Region struct
 // Returns success (true/false)
-bool Utilities::ParseRegionString(const string& regionString,
+bool Utilities::ParseRegionString(const std::string& regionString,
                                   const BamReader& reader,
                                   BamRegion& region)
 {
@@ -75,8 +74,8 @@ bool Utilities::ParseRegionString(const string& regionString,
     size_t foundFirstColon = regionString.find(':');
     
     // store chrom strings, and numeric positions
-    string startChrom;
-    string stopChrom;
+    std::string startChrom;
+    std::string stopChrom;
     int startPos;
     int stopPos;
     
@@ -84,7 +83,7 @@ bool Utilities::ParseRegionString(const string& regionString,
     // going to use entire contents of requested chromosome 
     // just store entire region string as startChrom name
     // use BamReader methods to check if its valid for current BAM file
-    if ( foundFirstColon == string::npos ) {
+    if ( foundFirstColon == std::string::npos ) {
         startChrom = regionString;
         startPos   = 0;
         stopChrom  = regionString;
@@ -103,8 +102,8 @@ bool Utilities::ParseRegionString(const string& regionString,
         // no dots found
         // so we have a startPos but no range
         // store contents before colon as startChrom, after as startPos
-        if ( foundRangeDots == string::npos ) {
-            startPos   = atoi( regionString.substr(foundFirstColon+1).c_str() ); 
+        if ( foundRangeDots == std::string::npos ) {
+            startPos   = std::atoi( regionString.substr(foundFirstColon+1).c_str() ); 
             stopChrom  = startChrom;
             stopPos    = -1;
         } 
@@ -113,23 +112,23 @@ bool Utilities::ParseRegionString(const string& regionString,
         else {
           
             // store startPos between first colon and range dots ".."
-            startPos = atoi( regionString.substr(foundFirstColon+1, foundRangeDots-foundFirstColon-1).c_str() );
+            startPos = std::atoi( regionString.substr(foundFirstColon+1, foundRangeDots-foundFirstColon-1).c_str() );
           
             // look for second colon
             size_t foundSecondColon = regionString.find(':', foundRangeDots+1);
             
             // no second colon found
             // so we have a "standard" chrom:start..stop input format (on single chrom)
-            if ( foundSecondColon == string::npos ) {
+            if ( foundSecondColon == std::string::npos ) {
                 stopChrom  = startChrom;
-                stopPos    = atoi( regionString.substr(foundRangeDots+2).c_str() );
+                stopPos    = std::atoi( regionString.substr(foundRangeDots+2).c_str() );
             }
             
             // second colon found
             // so we have a range requested across 2 chrom's
             else {
                 stopChrom  = regionString.substr(foundRangeDots+2, foundSecondColon-(foundRangeDots+2));
-                stopPos    = atoi( regionString.substr(foundSecondColon+1).c_str() );
+                stopPos    = std::atoi( regionString.substr(foundSecondColon+1).c_str() );
             }
         }
     }
@@ -169,7 +168,7 @@ bool Utilities::ParseRegionString(const string& regionString,
 }
 
 // Same as ParseRegionString() above, but accepts a BamMultiReader
-bool Utilities::ParseRegionString(const string& regionString,
+bool Utilities::ParseRegionString(const std::string& regionString,
                                   const BamMultiReader& reader,
                                   BamRegion& region)
 {
@@ -184,8 +183,8 @@ bool Utilities::ParseRegionString(const string& regionString,
     size_t foundFirstColon = regionString.find(':');
     
     // store chrom strings, and numeric positions
-    string startChrom;
-    string stopChrom;
+    std::string startChrom;
+    std::string stopChrom;
     int startPos;
     int stopPos;
     
@@ -193,7 +192,7 @@ bool Utilities::ParseRegionString(const string& regionString,
     // going to use entire contents of requested chromosome 
     // just store entire region string as startChrom name
     // use BamReader methods to check if its valid for current BAM file
-    if ( foundFirstColon == string::npos ) {
+    if ( foundFirstColon == std::string::npos ) {
         startChrom = regionString;
         startPos   = 0;
         stopChrom  = regionString;
@@ -212,8 +211,8 @@ bool Utilities::ParseRegionString(const string& regionString,
         // no dots found
         // so we have a startPos but no range
         // store contents before colon as startChrom, after as startPos
-        if ( foundRangeDots == string::npos ) {
-            startPos   = atoi( regionString.substr(foundFirstColon+1).c_str() ); 
+        if ( foundRangeDots == std::string::npos ) {
+            startPos   = std::atoi( regionString.substr(foundFirstColon+1).c_str() ); 
             stopChrom  = startChrom;
             stopPos    = -1;
         } 
@@ -222,23 +221,23 @@ bool Utilities::ParseRegionString(const string& regionString,
         else {
           
             // store startPos between first colon and range dots ".."
-            startPos = atoi( regionString.substr(foundFirstColon+1, foundRangeDots-foundFirstColon-1).c_str() );
+            startPos = std::atoi( regionString.substr(foundFirstColon+1, foundRangeDots-foundFirstColon-1).c_str() );
           
             // look for second colon
             size_t foundSecondColon = regionString.find(':', foundRangeDots+1);
             
             // no second colon found
             // so we have a "standard" chrom:start..stop input format (on single chrom)
-            if ( foundSecondColon == string::npos ) {
+            if ( foundSecondColon == std::string::npos ) {
                 stopChrom  = startChrom;
-                stopPos    = atoi( regionString.substr(foundRangeDots+2).c_str() );
+                stopPos    = std::atoi( regionString.substr(foundRangeDots+2).c_str() );
             }
             
             // second colon found
             // so we have a range requested across 2 chrom's
             else {
                 stopChrom  = regionString.substr(foundRangeDots+2, foundSecondColon-(foundRangeDots+2));
-                stopPos    = atoi( regionString.substr(foundSecondColon+1).c_str() );
+                stopPos    = std::atoi( regionString.substr(foundSecondColon+1).c_str() );
             }
         }
     }
@@ -277,11 +276,11 @@ bool Utilities::ParseRegionString(const string& regionString,
     return true;
 }
 
-void Utilities::Reverse(string& sequence) {
+void Utilities::Reverse(std::string& sequence) {
     reverse(sequence.begin(), sequence.end());
 }
 
-void Utilities::ReverseComplement(string& sequence) {
+void Utilities::ReverseComplement(std::string& sequence) {
     
     // do complement, in-place
     size_t seqLength = sequence.length();
@@ -292,20 +291,20 @@ void Utilities::ReverseComplement(string& sequence) {
     Reverse(sequence);
 }
 
-vector<string> Utilities::Split(const string& source, const char delim) {
+std::vector<std::string> Utilities::Split(const std::string& source, const char delim) {
 
-    stringstream ss(source);
-    string field;
-    vector<string> fields;
+    std::stringstream ss(source);
+    std::string field;
+    std::vector<std::string> fields;
 
-    while ( getline(ss, field, delim) )
+    while ( std::getline(ss, field, delim) )
         fields.push_back(field);
     return fields;
 }
 
-vector<string> Utilities::Split(const string& source, const string& delims) {
+std::vector<std::string> Utilities::Split(const std::string& source, const std::string& delims) {
 
-    vector<string> fields;
+    std::vector<std::string> fields;
 
     char* tok;
     char* cchars = new char[source.size()+1];
@@ -323,7 +322,7 @@ vector<string> Utilities::Split(const string& source, const string& delims) {
 }
 
 // returns true if 'source' starts with 'pattern'
-bool Utilities::StartsWith(const string& source, const string& pattern) {
+bool Utilities::StartsWith(const std::string& source, const std::string& pattern) {
     return ( source.find(pattern) == 0 );
 }
 

@@ -15,7 +15,6 @@
 #include "api/internal/sam/SamHeaderValidator_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
-using namespace std;
 
 /*! \struct BamTools::SamHeader
     \brief Represents the SAM-formatted text header that is part of the BAM file header.
@@ -193,7 +192,7 @@ bool SamHeader::IsValid(bool verbose) const {
 
         // or catch in local error string
         else {
-            stringstream errorStream("");
+            std::stringstream errorStream;
             validator.PrintMessages(errorStream);
             m_errorString = errorStream.str();
         }
@@ -232,7 +231,7 @@ void SamHeader::SetHeaderText(const std::string& headerText) {
 
     \return SAM-formatted header text
 */
-string SamHeader::ToString(void) const {
+std::string SamHeader::ToString(void) const {
     SamFormatPrinter printer(*this);
     return printer.ToString();
 }

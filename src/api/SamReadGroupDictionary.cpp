@@ -11,7 +11,6 @@
 using namespace BamTools;
 
 #include <iostream>
-using namespace std;
 
 /*! \class BamTools::SamReadGroupDictionary
     \brief Container of SamReadGroup entries.
@@ -87,8 +86,8 @@ void SamReadGroupDictionary::Add(const SamReadGroupDictionary& readGroups) {
     \sa Add()
 */
 void SamReadGroupDictionary::Add(const std::vector<SamReadGroup>& readGroups) {
-    vector<SamReadGroup>::const_iterator rgIter = readGroups.begin();
-    vector<SamReadGroup>::const_iterator rgEnd  = readGroups.end();
+    std::vector<SamReadGroup>::const_iterator rgIter = readGroups.begin();
+    std::vector<SamReadGroup>::const_iterator rgEnd  = readGroups.end();
     for ( ; rgIter!= rgEnd; ++rgIter )
         Add(*rgIter);
 }
@@ -102,8 +101,8 @@ void SamReadGroupDictionary::Add(const std::vector<SamReadGroup>& readGroups) {
     \sa Add()
 */
 void SamReadGroupDictionary::Add(const std::vector<std::string>& readGroupIds) {
-    vector<string>::const_iterator rgIter = readGroupIds.begin();
-    vector<string>::const_iterator rgEnd  = readGroupIds.end();
+    std::vector<std::string>::const_iterator rgIter = readGroupIds.begin();
+    std::vector<std::string>::const_iterator rgEnd  = readGroupIds.end();
     for ( ; rgIter!= rgEnd; ++rgIter )
         Add(*rgIter);
 }
@@ -245,8 +244,8 @@ void SamReadGroupDictionary::Remove(const std::string& readGroupId) {
     \sa Remove()
 */
 void SamReadGroupDictionary::Remove(const std::vector<SamReadGroup>& readGroups) {
-    vector<SamReadGroup>::const_iterator rgIter = readGroups.begin();
-    vector<SamReadGroup>::const_iterator rgEnd  = readGroups.end();
+    std::vector<SamReadGroup>::const_iterator rgIter = readGroups.begin();
+    std::vector<SamReadGroup>::const_iterator rgEnd  = readGroups.end();
     for ( ; rgIter!= rgEnd; ++rgIter )
         Remove(*rgIter);
 }
@@ -260,8 +259,8 @@ void SamReadGroupDictionary::Remove(const std::vector<SamReadGroup>& readGroups)
     \sa Remove()
 */
 void SamReadGroupDictionary::Remove(const std::vector<std::string>& readGroupIds) {
-    vector<string>::const_iterator rgIter = readGroupIds.begin();
-    vector<string>::const_iterator rgEnd  = readGroupIds.end();
+    std::vector<std::string>::const_iterator rgIter = readGroupIds.begin();
+    std::vector<std::string>::const_iterator rgEnd  = readGroupIds.end();
     for ( ; rgIter!= rgEnd; ++rgIter )
         Remove(*rgIter);
 }

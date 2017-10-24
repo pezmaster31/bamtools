@@ -218,7 +218,7 @@ template<typename FilterChecker>
 inline void FilterEngine<FilterChecker>::buildDefaultRuleString(void) {
   
     // set up temp string stream 
-    std::stringstream ruleStream("");
+    std::stringstream ruleStream;
   
     // get first filterName
     FilterMap::const_iterator mapIter = m_filters.begin();

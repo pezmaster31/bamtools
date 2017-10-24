@@ -19,7 +19,6 @@ using namespace BamTools;
 #include <iostream>
 #include <string>
 #include <vector>
-using namespace std;
 
 // ---------------------------------------------
 // MergeSettings implementation
@@ -34,12 +33,12 @@ struct MergeTool::MergeSettings {
     bool HasRegion;
     
     // filenames
-    vector<string> InputFiles;
-    string InputFilelist;
+    std::vector<std::string> InputFiles;
+    std::string InputFilelist;
     
     // other parameters
-    string OutputFilename;
-    string Region;
+    std::string OutputFilename;
+    std::string Region;
     
     // constructor
     MergeSettings(void)
@@ -83,21 +82,21 @@ bool MergeTool::MergeToolPrivate::Run(void) {
     // add files in the filelist to the input file list
     if ( m_settings->HasInputFilelist ) {
 
-        ifstream filelist(m_settings->InputFilelist.c_str(), ios::in);
+        std::ifstream filelist(m_settings->InputFilelist.c_str(), std::ios::in);
         if ( !filelist.is_open() ) {
-            cerr << "bamtools merge ERROR: could not open input BAM file list... Aborting." << endl;
+            std::cerr << "bamtools merge ERROR: could not open input BAM file list... Aborting." << std::endl;
             return false;
         }
 
-        string line;
-        while ( getline(filelist, line) )
+        std::string line;
+        while ( std::getline(filelist, line) )
             m_settings->InputFiles.push_back(line);
     }
 
     // opens the BAM files (by default without checking for indexes)
     BamMultiReader reader;
     if ( !reader.Open(m_settings->InputFiles) ) {
-        cerr << "bamtools merge ERROR: could not open input BAM file(s)... Aborting." << endl;
+        std::cerr << "bamtools merge ERROR: could not open input BAM file(s)... Aborting." << std::endl;
         return false;
     }
 
@@ -115,8 +114,8 @@ bool MergeTool::MergeToolPrivate::Run(void) {
     BamWriter writer;
     writer.SetCompressionMode(compressionMode);
     if ( !writer.Open(m_settings->OutputFilename, mergedHeader, references) ) {
-        cerr << "bamtools merge ERROR: could not open "
-             << m_settings->OutputFilename << " for writing." << endl;
+        std::cerr << "bamtools merge ERROR: could not open "
+             << m_settings->OutputFilename << " for writing." << std::endl;
         reader.Close();
         return false;
     }
@@ -147,8 +146,8 @@ bool MergeTool::MergeToolPrivate::Run(void) {
                                        region.RightRefID,
                                        region.RightPosition) )
                 {
-                    cerr << "bamtools merge ERROR: set region failed. Check that REGION describes a valid range"
-                         << endl;
+                    std::cerr << "bamtools merge ERROR: set region failed. Check that REGION describes a valid range"
+                         << std::endl;
                     reader.Close();
                     return false;
                 }
@@ -175,9 +174,9 @@ bool MergeTool::MergeToolPrivate::Run(void) {
 
         // error parsing REGION string
         else {
-            cerr << "bamtools merge ERROR: could not parse REGION - " << m_settings->Region << endl;
-            cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
-                 << endl;
+            std::cerr << "bamtools merge ERROR: could not parse REGION - " << m_settings->Region << std::endl;
+            std::cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
+                 << std::endl;
             reader.Close();
             writer.Close();
             return false;

@@ -18,7 +18,6 @@ using namespace BamTools;
 
 #include <string>
 #include <vector>
-using namespace std;
 
 /*! \class BamTools::BamMultiReader
     \brief Convenience class for reading multiple BAM files.

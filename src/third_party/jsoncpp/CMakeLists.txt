@@ -18,3 +18,6 @@ set_target_properties( jsoncpp PROPERTIES
                        OUTPUT_NAME jsoncpp
                        PREFIX "lib"
                      )
+set_property( TARGET jsoncpp
+              PROPERTY position_independent_code ${BUILD_SHARED_LIBS}
+            )

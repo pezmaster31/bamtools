@@ -28,6 +28,7 @@ namespace Internal {
 
 // constants
 static const size_t DEFAULT_BUFFER_SIZE = 0x10000;
+static const int64_t DEFAULT_BUFFER_SIZE64 = DEFAULT_BUFFER_SIZE;
 
 } // namespace Internal
 } // namespace BamTools
@@ -333,7 +334,7 @@ string TcpSocket::ReadLine(int64_t max) {
             readResult = ReadLine(result.Data()+readBytes, result.Size()-readBytes);
             if ( readResult > 0 || readBytes == 0 )
                 readBytes += readResult;
-        } while ( readResult == DEFAULT_BUFFER_SIZE && result[static_cast<size_t>(readBytes-1)] != '\n' );
+        } while ( readResult == DEFAULT_BUFFER_SIZE64 && result[static_cast<size_t>(readBytes-1)] != '\n' );
 
     } else
         readBytes = ReadLine(result.Data(), result.Size());

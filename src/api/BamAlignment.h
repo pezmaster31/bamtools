@@ -38,7 +38,7 @@ class API_EXPORT BamAlignment {
         ~BamAlignment(void);
 
     // queries against alignment flags
-    public:        
+    public:
         bool IsDuplicate(void) const;         // returns true if this read is a PCR duplicate
         bool IsFailedQC(void) const;          // returns true if this read failed quality control
         bool IsFirstMate(void) const;         // returns true if alignment is first mate on read
@@ -52,7 +52,7 @@ class API_EXPORT BamAlignment {
         bool IsSecondMate(void) const;        // returns true if alignment is second mate on read
 
     // manipulate alignment flags
-    public:        
+    public:
         void SetIsDuplicate(bool ok);         // sets value of "PCR duplicate" flag
         void SetIsFailedQC(bool ok);          // sets value of "failed quality control" flag
         void SetIsFirstMate(bool ok);         // sets value of "alignment is first mate" flag
@@ -148,7 +148,7 @@ class API_EXPORT BamAlignment {
     private:
 
         struct BamAlignmentSupportData {
-      
+
             // data members
             std::string AllCharData;
             uint32_t    BlockLength;
@@ -156,7 +156,7 @@ class API_EXPORT BamAlignment {
             uint32_t    QueryNameLength;
             uint32_t    QuerySequenceLength;
             bool        HasCoreOnly;
-            
+
             // constructor
             BamAlignmentSupportData(void)
                 : BlockLength(0)

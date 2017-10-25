@@ -67,7 +67,7 @@ static bool IsVersion(char* str) {
 
 // subtool factory method
 AbstractTool* CreateTool(const std::string& arg) {
-  
+
     // determine tool type based on arg
     if ( arg == CONVERT )  return new ConvertTool;
     if ( arg == COUNT )    return new CountTool;
@@ -89,10 +89,10 @@ AbstractTool* CreateTool(const std::string& arg) {
 
 // print help info
 int Help(int argc, char* argv[]) {
-  
+
     // check for 'bamtools help COMMAND' to print tool-specific help message
     if (argc > 2) {
-        
+
 	// determine desired sub-tool
         AbstractTool* tool = CreateTool( argv[2] );
 
@@ -107,7 +107,7 @@ int Help(int argc, char* argv[]) {
     std::cerr << "Available bamtools commands:" << std::endl;
     std::cerr << "\tconvert         Converts between BAM and a number of other formats" << std::endl;
     std::cerr << "\tcount           Prints number of alignments in BAM file(s)" << std::endl;
-    std::cerr << "\tcoverage        Prints coverage statistics from the input BAM file" << std::endl;    
+    std::cerr << "\tcoverage        Prints coverage statistics from the input BAM file" << std::endl;
     std::cerr << "\tfilter          Filters BAM file(s) by user-specified criteria" << std::endl;
     std::cerr << "\theader          Prints BAM header information" << std::endl;
     std::cerr << "\tindex           Generates index for BAM file" << std::endl;
@@ -146,13 +146,13 @@ int main(int argc, char* argv[]) {
 
     // just 'bamtools'
     if ( argc == 1 ) return Help(argc, argv);
-    
+
     // 'bamtools help', 'bamtools --help', or 'bamtools -h'
-    if ( IsHelp(argv[1]) ) return Help(argc, argv); 
-    
+    if ( IsHelp(argv[1]) ) return Help(argc, argv);
+
     // 'bamtools version', 'bamtools --version', or 'bamtools -v'
-    if ( IsVersion(argv[1]) ) return Version(); 
-        
+    if ( IsVersion(argv[1]) ) return Version();
+
     // determine desired sub-tool, run if found
     AbstractTool* tool = CreateTool( argv[1] );
     if ( tool ) return tool->Run(argc, argv);

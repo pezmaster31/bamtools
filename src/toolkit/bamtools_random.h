@@ -13,17 +13,17 @@
 #include "bamtools_tool.h"
 
 namespace BamTools {
-  
+
 class RandomTool : public AbstractTool {
-  
+
     public:
         RandomTool(void);
         ~RandomTool(void);
-  
+
     public:
         int Help(void);
-        int Run(int argc, char* argv[]); 
-        
+        int Run(int argc, char* argv[]);
+
     private:
         struct RandomSettings;
         RandomSettings* m_settings;
@@ -31,7 +31,7 @@ class RandomTool : public AbstractTool {
         struct RandomToolPrivate;
         RandomToolPrivate* m_impl;
 };
-  
+
 } // namespace BamTools
 
 #endif // BAMTOOLS_RANDOM _H

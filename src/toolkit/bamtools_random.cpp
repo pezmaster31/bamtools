@@ -21,9 +21,9 @@ using namespace BamTools;
 #include <iostream>
 #include <string>
 #include <vector>
-  
+
 namespace BamTools {
-  
+
 // define constants
 const unsigned int RANDOM_MAX_ALIGNMENT_COUNT = 10000;
 
@@ -32,10 +32,10 @@ int getRandomInt(const int& lowerBound, const int& upperBound) {
     const int range = (upperBound - lowerBound) + 1;
     return ( lowerBound + (int)(range * (double)rand()/((double)RAND_MAX + 1)) );
 }
-    
+
 } // namespace BamTools
-  
-// ---------------------------------------------  
+
+// ---------------------------------------------
 // RandomSettings implementation
 
 struct RandomTool::RandomSettings {
@@ -56,7 +56,7 @@ struct RandomTool::RandomSettings {
     std::string OutputFilename;
     unsigned int RandomNumberSeed;
     std::string Region;
-    
+
     // constructor
     RandomSettings(void)
         : HasAlignmentCount(false)
@@ -69,8 +69,8 @@ struct RandomTool::RandomSettings {
         , AlignmentCount(RANDOM_MAX_ALIGNMENT_COUNT)
         , OutputFilename(Options::StandardOut())
         , RandomNumberSeed(0)
-    { }  
-};  
+    { }
+};
 
 // ---------------------------------------------
 // RandomToolPrivate implementation
@@ -230,23 +230,23 @@ bool RandomTool::RandomToolPrivate::Run(void) {
 // ---------------------------------------------
 // RandomTool implementation
 
-RandomTool::RandomTool(void) 
+RandomTool::RandomTool(void)
     : AbstractTool()
     , m_settings(new RandomSettings)
     , m_impl(0)
-{ 
+{
     // set program details
     Options::SetProgramInfo("bamtools random", "grab a random subset of alignments",
                             "[-in <filename> -in <filename> ... | -list <filelist>] [-out <filename>] [-forceCompression] [-n] [-region <REGION>]");
-    
-    // set up options 
+
+    // set up options
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in",     "BAM filename", "the input BAM file",                         "", m_settings->HasInput,          m_settings->InputFiles,     IO_Opts, Options::StandardIn());
     Options::AddValueOption("-list",   "filename",     "the input BAM file list, one line per file", "", m_settings->HasInputFilelist,  m_settings->InputFilelist,  IO_Opts);
     Options::AddValueOption("-out",    "BAM filename", "the output BAM file",                        "", m_settings->HasOutput,         m_settings->OutputFilename, IO_Opts, Options::StandardOut());
     Options::AddValueOption("-region", "REGION",       "only pull random alignments from within this genomic region. Index file is recommended for better performance, and is used automatically if it exists. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
     Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
-    
+
     OptionGroup* SettingsOpts = Options::CreateOptionGroup("Settings");
     Options::AddValueOption("-n", "count", "number of alignments to grab. Note - no duplicate checking is performed", "",
                             m_settings->HasAlignmentCount, m_settings->AlignmentCount, SettingsOpts, RANDOM_MAX_ALIGNMENT_COUNT);
@@ -254,7 +254,7 @@ RandomTool::RandomTool(void)
                             m_settings->HasRandomNumberSeed, m_settings->RandomNumberSeed, SettingsOpts);
 }
 
-RandomTool::~RandomTool(void) { 
+RandomTool::~RandomTool(void) {
 
     delete m_settings;
     m_settings = 0;
@@ -263,12 +263,12 @@ RandomTool::~RandomTool(void) {
     m_impl = 0;
 }
 
-int RandomTool::Help(void) { 
+int RandomTool::Help(void) {
     Options::DisplayHelp();
     return 0;
-} 
+}
 
-int RandomTool::Run(int argc, char* argv[]) { 
+int RandomTool::Run(int argc, char* argv[]) {
 
     // parse command line arguments
     Options::Parse(argc, argv, 1);

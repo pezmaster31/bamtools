@@ -69,7 +69,7 @@ char& ByteArray::operator[](size_t i) {
 size_t ByteArray::IndexOf(const char c, const size_t from, const size_t to) const {
     const size_t size = ( (to == 0 ) ? m_data.size() : to );
     for ( size_t i = from; i < size; ++i ) {
-        if ( m_data.at(i) == c ) 
+        if ( m_data.at(i) == c )
             return i;
     }
     return m_data.size();

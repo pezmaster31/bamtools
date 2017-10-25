@@ -12,7 +12,7 @@
 // Marth Lab, Department of Biology, Boston College
 // Re-licensed under MIT License with author's permission.
 //
-// * Modified slightly to fit BamTools, otherwise code is same. 
+// * Modified slightly to fit BamTools, otherwise code is same.
 // *  (BamTools namespace, added stdin/stdout) (DB)
 // ***************************************************************************
 
@@ -80,14 +80,14 @@ void Options::DisplayHelp(void) {
     std::vector<Option>::const_iterator      optionIter;
     std::vector<OptionGroup>::const_iterator groupIter;
     for (groupIter = m_optionGroups.begin(); groupIter != m_optionGroups.end(); ++groupIter) {
-        
+
         printf("%s:\n", groupIter->Name.c_str());
 
         for (optionIter = groupIter->Options.begin(); optionIter != groupIter->Options.end(); ++optionIter) {
 
-            if (optionIter->StoreValue) 
+            if (optionIter->StoreValue)
                 snprintf(argumentBuffer, ARGUMENT_LENGTH + 1, "  %s <%s>", optionIter->Argument.c_str(), optionIter->ValueDescription.c_str());
-            else 
+            else
                 snprintf(argumentBuffer, ARGUMENT_LENGTH + 1, "  %s", optionIter->Argument.c_str());
             printf("%-35s ", argumentBuffer);
 
@@ -95,7 +95,7 @@ void Options::DisplayHelp(void) {
 
             // handle default values
             if (optionIter->HasDefaultValue) {
-                
+
                 sb.str("");
                 sb << description << " [";
 
@@ -117,7 +117,7 @@ void Options::DisplayHelp(void) {
                 }
 
                 sb << "]";
-                description = sb.str(); 
+                description = sb.str();
             }
 
             if ( description.size() <= DESC_LENGTH_FIRST_ROW ) {
@@ -127,7 +127,7 @@ void Options::DisplayHelp(void) {
                 // handle the first row
                 const char* pDescription = description.data();
                 unsigned int cutIndex = DESC_LENGTH_FIRST_ROW;
-                while(pDescription[cutIndex] != ' ') 
+                while(pDescription[cutIndex] != ' ')
                     cutIndex--;
                 printf("%s\n", description.substr(0, cutIndex).c_str());
                 description = description.substr(cutIndex + 1);
@@ -136,7 +136,7 @@ void Options::DisplayHelp(void) {
                 while(description.size() > DESC_LENGTH) {
                     pDescription = description.data();
                     cutIndex = DESC_LENGTH;
-                    while(pDescription[cutIndex] != ' ') 
+                    while(pDescription[cutIndex] != ' ')
                         cutIndex--;
                     printf("%s%s\n", indentBuffer, description.substr(0, cutIndex).c_str());
                     description = description.substr(cutIndex + 1);
@@ -144,13 +144,13 @@ void Options::DisplayHelp(void) {
 
                 // handle last row
                 printf("%s%s\n", indentBuffer, description.c_str());
-            }                       
+            }
         }
 
         printf("\n");
     }
 
-    printf("Help:\n"); 
+    printf("Help:\n");
     printf("  --help, -h                        shows this help text\n");
     std::exit(EXIT_FAILURE);
 }
@@ -172,17 +172,17 @@ void Options::Parse(int argc, char* argv[], int offset) {
     if (argc > 1) {
         for (int i = 1; i < argc; i++) {
             const std::string argument = argv[i];
-            if ( (argument == "-h") || (argument == "--help") || (argument == "help") ) 
+            if ( (argument == "-h") || (argument == "--help") || (argument == "help") )
                 showHelpMenu = true;
         }
     } else showHelpMenu = true;
 
-    if (showHelpMenu) 
+    if (showHelpMenu)
         DisplayHelp();
 
     // check each argument
     for (int i = offset+1; i < argc; i++) {
-      
+
         const std::string argument = argv[i];
         ovMapIter = m_optionsMap.find(argument);
 
@@ -199,13 +199,13 @@ void Options::Parse(int argc, char* argv[], int offset) {
                 if (i < LAST_INDEX) {
 
                     // check if the next argument is really a command line option
-                    const std::string val = argv[i + 1]; 
+                    const std::string val = argv[i + 1];
                     checkMapIter = m_optionsMap.find(val);
 
                     if (checkMapIter == m_optionsMap.end()) {
-                        
+
                         ++i;
-                        
+
                         if (ovMapIter->second.VariantValue.is_type<unsigned int>()) {
                             const unsigned int uint32 = (unsigned int)strtoul(val.c_str(), &end_ptr, 10);
                             unsigned int* varValue = (unsigned int*)ovMapIter->second.pValue;

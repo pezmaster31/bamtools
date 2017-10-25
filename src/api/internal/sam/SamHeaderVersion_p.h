@@ -52,7 +52,7 @@ class SamHeaderVersion {
             m_majorVersion = 0;
             m_minorVersion = 0;
         }
-    
+
     // acess data
     public:
         unsigned int MajorVersion(void) const { return m_majorVersion; }
@@ -120,7 +120,7 @@ inline bool operator==(const SamHeaderVersion& lhs, const SamHeaderVersion& rhs)
 inline bool operator<(const SamHeaderVersion& lhs, const SamHeaderVersion& rhs) {
     if ( lhs.MajorVersion() == rhs.MajorVersion() )
         return lhs.MinorVersion() < rhs.MinorVersion();
-    else 
+    else
         return lhs.MajorVersion() < rhs.MajorVersion();
 }
 
@@ -128,7 +128,7 @@ inline bool operator> (const SamHeaderVersion& lhs, const SamHeaderVersion& rhs)
 inline bool operator<=(const SamHeaderVersion& lhs, const SamHeaderVersion& rhs) { return !(lhs>rhs); }
 inline bool operator>=(const SamHeaderVersion& lhs, const SamHeaderVersion& rhs) { return !(lhs<rhs); }
 
-} // namespace Internal 
+} // namespace Internal
 } // namespace BamTools
 
 #endif // SAM_HEADERVERSION_P_H

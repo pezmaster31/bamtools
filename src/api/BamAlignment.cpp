@@ -665,7 +665,7 @@ std::vector<std::string> BamAlignment::GetTagNames(void) const {
     \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
 bool BamAlignment::GetTagType(const std::string& tag, char& type) const {
-  
+
     // skip if alignment is core-only
     if ( SupportData.HasCoreOnly ) {
         // TODO: set error string?
@@ -682,7 +682,7 @@ bool BamAlignment::GetTagType(const std::string& tag, char& type) const {
     char* pTagData = (char*)TagData.data();
     const unsigned int tagDataLength = TagData.size();
     unsigned int numBytesParsed = 0;
-    
+
     // if tag not found, return failure
     if ( !FindTag(tag, pTagData, tagDataLength, numBytesParsed) ){
         // TODO: set error string?
@@ -831,7 +831,7 @@ bool BamAlignment::IsValidSize(const std::string& tag, const std::string& type) 
     \param[in] tag 2-character name of field to remove
 */
 void BamAlignment::RemoveTag(const std::string& tag) {
-  
+
     // if char data not populated, do that first
     if ( SupportData.HasCoreOnly )
         BuildCharData();
@@ -839,7 +839,7 @@ void BamAlignment::RemoveTag(const std::string& tag) {
     // skip if no tags available
     if ( TagData.empty() )
         return;
-  
+
     // localize the tag data
     char* pOriginalTagData = (char*)TagData.data();
     char* pTagData = pOriginalTagData;

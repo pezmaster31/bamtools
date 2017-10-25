@@ -49,7 +49,7 @@ class BamFtp : public IBamIODevice {
     // internal methods
     private:
         bool ConnectCommandSocket(void);
-        bool ConnectDataSocket(void);        
+        bool ConnectDataSocket(void);
         bool ParsePassiveResponse(void);
         void ParseUrl(const std::string& url);
         int64_t ReadCommandSocket(char* data, const unsigned int numBytes);

@@ -12,7 +12,7 @@
 
 #include "api/api_global.h"
 #include <cstring>
-#include <fstream> 
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -39,15 +39,15 @@ namespace BamTools {
     \sa \samSpecURL for more details on using CIGAR operations.
 */
 struct API_EXPORT CigarOp {
-  
+
     char     Type;   //!< CIGAR operation type (MIDNSHPX=)
     uint32_t Length; //!< CIGAR operation length (number of bases)
-    
+
     //! constructor
-    CigarOp(const char type = '\0', 
+    CigarOp(const char type = '\0',
             const uint32_t& length = 0)
         : Type(type)
-        , Length(length) 
+        , Length(length)
     { }
 };
 
@@ -58,10 +58,10 @@ struct API_EXPORT CigarOp {
     \brief Represents a reference sequence entry
 */
 struct API_EXPORT RefData {
-   
+
     std::string RefName;    //!< name of reference sequence
     int32_t     RefLength;  //!< length of reference sequence
-    
+
     //! constructor
     RefData(const std::string& name = "",
             const int32_t& length = 0)
@@ -86,14 +86,14 @@ typedef std::vector<RefData> RefVector;
     as zero-based, CLOSED.
 */
 struct API_EXPORT BamRegion {
-  
+
     int LeftRefID;      //!< reference ID for region's left boundary
     int LeftPosition;   //!< position for region's left boundary
     int RightRefID;     //!< reference ID for region's right boundary
     int RightPosition;  //!< position for region's right boundary
-    
+
     //! constructor
-    BamRegion(const int& leftID   = -1, 
+    BamRegion(const int& leftID   = -1,
               const int& leftPos  = -1,
               const int& rightID  = -1,
               const int& rightPos = -1)
@@ -102,7 +102,7 @@ struct API_EXPORT BamRegion {
         , RightRefID(rightID)
         , RightPosition(rightPos)
     { }
-    
+
     //! copy constructor
     BamRegion(const BamRegion& other)
         : LeftRefID(other.LeftRefID)
@@ -110,7 +110,7 @@ struct API_EXPORT BamRegion {
         , RightRefID(other.RightRefID)
         , RightPosition(other.RightPosition)
     { }
-    
+
     //! Clears region boundaries
     void clear(void) {
         LeftRefID  = -1; LeftPosition  = -1;
@@ -168,9 +168,9 @@ API_EXPORT inline void SwapEndian_16(uint16_t& x) {
     \brief swaps endianness of signed 32-bit integer, in place
 */
 API_EXPORT inline void SwapEndian_32(int32_t& x) {
-    x = ( (x >> 24) | 
-         ((x << 8) & 0x00FF0000) | 
-         ((x >> 8) & 0x0000FF00) | 
+    x = ( (x >> 24) |
+         ((x << 8) & 0x00FF0000) |
+         ((x >> 8) & 0x0000FF00) |
           (x << 24)
         );
 }
@@ -179,9 +179,9 @@ API_EXPORT inline void SwapEndian_32(int32_t& x) {
     \brief swaps endianness of unsigned 32-bit integer, in place
 */
 API_EXPORT inline void SwapEndian_32(uint32_t& x) {
-    x = ( (x >> 24) | 
-         ((x << 8) & 0x00FF0000) | 
-         ((x >> 8) & 0x0000FF00) | 
+    x = ( (x >> 24) |
+         ((x << 8) & 0x00FF0000) |
+         ((x >> 8) & 0x0000FF00) |
           (x << 24)
         );
 }
@@ -190,7 +190,7 @@ API_EXPORT inline void SwapEndian_32(uint32_t& x) {
     \brief swaps endianness of signed 64-bit integer, in place
 */
 API_EXPORT inline void SwapEndian_64(int64_t& x) {
-    x = ( (x >> 56) | 
+    x = ( (x >> 56) |
          ((x << 40) & 0x00FF000000000000ll) |
          ((x << 24) & 0x0000FF0000000000ll) |
          ((x << 8)  & 0x000000FF00000000ll) |
@@ -205,7 +205,7 @@ API_EXPORT inline void SwapEndian_64(int64_t& x) {
     \brief swaps endianness of unsigned 64-bit integer, in place
 */
 API_EXPORT inline void SwapEndian_64(uint64_t& x) {
-    x = ( (x >> 56) | 
+    x = ( (x >> 56) |
          ((x << 40) & 0x00FF000000000000ll) |
          ((x << 24) & 0x0000FF0000000000ll) |
          ((x << 8)  & 0x000000FF00000000ll) |
@@ -220,7 +220,7 @@ API_EXPORT inline void SwapEndian_64(uint64_t& x) {
     \brief swaps endianness of the next 2 bytes in a buffer, in place
 */
 API_EXPORT inline void SwapEndian_16p(char* data) {
-    uint16_t& value = (uint16_t&)*data; 
+    uint16_t& value = (uint16_t&)*data;
     SwapEndian_16(value);
 }
 
@@ -228,7 +228,7 @@ API_EXPORT inline void SwapEndian_16p(char* data) {
     \brief swaps endianness of the next 4 bytes in a buffer, in place
 */
 API_EXPORT inline void SwapEndian_32p(char* data) {
-    uint32_t& value = (uint32_t&)*data; 
+    uint32_t& value = (uint32_t&)*data;
     SwapEndian_32(value);
 }
 
@@ -236,7 +236,7 @@ API_EXPORT inline void SwapEndian_32p(char* data) {
     \brief swaps endianness of the next 8 bytes in a buffer, in place
 */
 API_EXPORT inline void SwapEndian_64p(char* data) {
-    uint64_t& value = (uint64_t&)*data; 
+    uint64_t& value = (uint64_t&)*data;
     SwapEndian_64(value);
 }
 

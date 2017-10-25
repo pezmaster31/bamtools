@@ -668,7 +668,7 @@ bool BamMultiReaderPrivate::SetExplicitMergeOrder(BamMultiReader::MergeOrder ord
 
     // remove any existing merger (storing any existing data sitting in the cache)
     std::vector<MergeItem> currentCacheData;
-    if ( m_alignmentCache ) {        
+    if ( m_alignmentCache ) {
         while ( !m_alignmentCache->IsEmpty() )
             currentCacheData.push_back( m_alignmentCache->TakeFirst() );
         delete m_alignmentCache;

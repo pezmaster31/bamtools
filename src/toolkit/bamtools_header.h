@@ -14,17 +14,17 @@
 #include "bamtools_tool.h"
 
 namespace BamTools {
-  
+
 class HeaderTool : public AbstractTool {
-  
+
     public:
         HeaderTool(void);
         ~HeaderTool(void);
-  
+
     public:
         int Help(void);
-        int Run(int argc, char* argv[]); 
-        
+        int Run(int argc, char* argv[]);
+
     private:
         struct HeaderSettings;
         HeaderSettings* m_settings;
@@ -32,7 +32,7 @@ class HeaderTool : public AbstractTool {
         struct HeaderToolPrivate;
         HeaderToolPrivate* m_impl;
 };
-  
+
 } // namespace BamTools
 
 #endif // BAMTOOLS_HEADER_H

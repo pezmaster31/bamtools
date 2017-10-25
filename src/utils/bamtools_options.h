@@ -12,7 +12,7 @@
 // Marth Lab, Department of Biology, Boston College
 // Re-licensed under MIT License with author's permission.
 //
-// * Modified slightly to fit BamTools, otherwise code is same. 
+// * Modified slightly to fit BamTools, otherwise code is same.
 // *  (BamTools namespace, added stdin/stdout) (DB)
 // ***************************************************************************
 
@@ -47,7 +47,7 @@ namespace BamTools {
 #endif
 
 struct UTILS_EXPORT Option {
-  
+
     // data members
     std::string Argument;
     std::string ValueDescription;
@@ -64,7 +64,7 @@ struct UTILS_EXPORT Option {
 };
 
 struct UTILS_EXPORT OptionValue {
-  
+
     // data members
     bool* pFoundArgument;
     void* pValue;
@@ -81,7 +81,7 @@ struct UTILS_EXPORT OptionValue {
         , UseVector(false)
         , StoreValue(true)
         , IsRequired(false)
-    { } 
+    { }
 };
 
 struct UTILS_EXPORT OptionGroup {
@@ -90,40 +90,40 @@ struct UTILS_EXPORT OptionGroup {
 };
 
 class UTILS_EXPORT Options {
-  
+
     // add option/argument rules
     public:
         // adds a simple option to the parser
-        static void AddOption(const std::string& argument, 
-                       const std::string& optionDescription, 
-                       bool& foundArgument, 
+        static void AddOption(const std::string& argument,
+                       const std::string& optionDescription,
+                       bool& foundArgument,
                        OptionGroup* group);
-                       
+
         // adds a value option to the parser
         template<typename T>
-        static void AddValueOption(const std::string& argument, 
-                            const std::string& valueDescription, 
-                            const std::string& optionDescription, 
-                            const std::string& valueTypeDescription, 
-                            bool& foundArgument, 
-                            T& val, 
+        static void AddValueOption(const std::string& argument,
+                            const std::string& valueDescription,
+                            const std::string& optionDescription,
+                            const std::string& valueTypeDescription,
+                            bool& foundArgument,
+                            T& val,
                             OptionGroup* group);
-                            
+
         // adds a value option to the parser (with a default value)
         template<typename T, typename D>
-        static void AddValueOption(const std::string& argument, 
-                            const std::string& valueDescription, 
-                            const std::string& optionDescription, 
-                            const std::string& valueTypeDescription, 
-                            bool& foundArgument, 
-                            T& val, 
-                            OptionGroup* group, 
+        static void AddValueOption(const std::string& argument,
+                            const std::string& valueDescription,
+                            const std::string& optionDescription,
+                            const std::string& valueTypeDescription,
+                            bool& foundArgument,
+                            T& val,
+                            OptionGroup* group,
                             D& defaultValue);
-       
+
     // other API methods
     public:
         // creates an option group
-        static OptionGroup* CreateOptionGroup(const std::string& groupName);    
+        static OptionGroup* CreateOptionGroup(const std::string& groupName);
         // displays the help menu
         static void DisplayHelp(void);
         // parses the command line
@@ -136,7 +136,7 @@ class UTILS_EXPORT Options {
         static const std::string& StandardIn(void);
         // returns string representation of stdout
         static const std::string& StandardOut(void);
-        
+
     // static data members
     private:
         // the program name
@@ -157,13 +157,13 @@ class UTILS_EXPORT Options {
 
 // adds a value option to the parser
 template<typename T>
-void Options::AddValueOption(const std::string& argument, 
-                             const std::string& valueDescription, 
-                             const std::string& optionDescription, 
-                             const std::string& valueTypeDescription, 
-                             bool& foundArgument, 
-                             T& val, 
-                             OptionGroup* group) 
+void Options::AddValueOption(const std::string& argument,
+                             const std::string& valueDescription,
+                             const std::string& optionDescription,
+                             const std::string& valueTypeDescription,
+                             bool& foundArgument,
+                             T& val,
+                             OptionGroup* group)
 {
         Option o;
         o.Argument         = argument;
@@ -182,14 +182,14 @@ void Options::AddValueOption(const std::string& argument,
 
 // adds a value option to the parser (with a default value)
 template<typename T, typename D>
-void Options::AddValueOption(const std::string& argument, 
-                             const std::string& valueDescription, 
-                             const std::string& optionDescription, 
-                             const std::string& valueTypeDescription, 
-                             bool& foundArgument, 
-                             T& val, 
-                             OptionGroup* group, 
-                             D& defaultValue) 
+void Options::AddValueOption(const std::string& argument,
+                             const std::string& valueDescription,
+                             const std::string& optionDescription,
+                             const std::string& valueTypeDescription,
+                             bool& foundArgument,
+                             T& val,
+                             OptionGroup* group,
+                             D& defaultValue)
 {
         Option o;
         o.Argument         = argument;

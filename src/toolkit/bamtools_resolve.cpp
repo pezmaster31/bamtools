@@ -109,13 +109,13 @@ struct ModelType {
     }
 
     // convenience access to internal fragment lengths vector
-    std::vector<int32_t>::iterator begin(void) { return FragmentLengths.begin(); }
-    std::vector<int32_t>::const_iterator begin(void) const { return FragmentLengths.begin(); }
-    void clear(void) { FragmentLengths.clear(); }
-    std::vector<int32_t>::iterator end(void) { return FragmentLengths.end(); }
-    std::vector<int32_t>::const_iterator end(void) const { return FragmentLengths.end(); }
+    std::vector<int32_t>::iterator begin() { return FragmentLengths.begin(); }
+    std::vector<int32_t>::const_iterator begin() const { return FragmentLengths.begin(); }
+    void clear() { FragmentLengths.clear(); }
+    std::vector<int32_t>::iterator end() { return FragmentLengths.end(); }
+    std::vector<int32_t>::const_iterator end() const { return FragmentLengths.end(); }
     void push_back(const int32_t& x) { FragmentLengths.push_back(x); }
-    size_t size(void) const { return FragmentLengths.size(); }
+    size_t size() const { return FragmentLengths.size(); }
 
     // constants
     static const uint16_t DUMMY_ID;
@@ -169,7 +169,7 @@ struct ReadGroupResolver {
     std::map<std::string, bool> ReadNames;
 
     // ctor
-    ReadGroupResolver(void);
+    ReadGroupResolver();
 
     // resolving methods
     bool IsValidInsertSize(const BamAlignment& al) const;
@@ -188,7 +188,7 @@ struct ReadGroupResolver {
 double ReadGroupResolver::ConfidenceInterval   = DEFAULT_CONFIDENCE_INTERVAL;
 double ReadGroupResolver::UnusedModelThreshold = DEFAULT_UNUSEDMODEL_THRESHOLD;
 
-ReadGroupResolver::ReadGroupResolver(void)
+ReadGroupResolver::ReadGroupResolver()
     : MinFragmentLength(0)
     , MedianFragmentLength(0)
     , MaxFragmentLength(0)
@@ -327,7 +327,7 @@ struct ResolveTool::ResolveSettings {
     double   UnusedModelThreshold;
 
     // constructor
-    ResolveSettings(void)
+    ResolveSettings()
         : IsMakeStats(false)
         , IsMarkPairs(false)
         , IsTwoPass(false)
@@ -355,12 +355,12 @@ struct ResolveTool::ResolveSettings {
 struct ResolveTool::ReadNamesFileReader {
 
     // ctor & dtor
-    ReadNamesFileReader(void) { }
-    ~ReadNamesFileReader(void) { Close(); }
+    ReadNamesFileReader() { }
+    ~ReadNamesFileReader() { Close(); }
 
     // main reader interface
     public:
-        void Close(void);
+        void Close();
         bool Open(const std::string& filename);
         bool Read(std::map<std::string, ReadGroupResolver>& readGroups);
 
@@ -369,7 +369,7 @@ struct ResolveTool::ReadNamesFileReader {
         std::ifstream m_stream;
 };
 
-void ResolveTool::ReadNamesFileReader::Close(void) {
+void ResolveTool::ReadNamesFileReader::Close() {
     if ( m_stream.is_open() )
         m_stream.close();
 }
@@ -422,12 +422,12 @@ bool ResolveTool::ReadNamesFileReader::Read(std::map<std::string, ReadGroupResol
 struct ResolveTool::ReadNamesFileWriter {
 
     // ctor & dtor
-    ReadNamesFileWriter(void) { }
-    ~ReadNamesFileWriter(void) { Close(); }
+    ReadNamesFileWriter() { }
+    ~ReadNamesFileWriter() { Close(); }
 
     // main reader interface
     public:
-        void Close(void);
+        void Close();
         bool Open(const std::string& filename);
         void Write(const std::string& readGroupName, const std::string& readName);
 
@@ -436,7 +436,7 @@ struct ResolveTool::ReadNamesFileWriter {
         std::ofstream m_stream;
 };
 
-void ResolveTool::ReadNamesFileWriter::Close(void) {
+void ResolveTool::ReadNamesFileWriter::Close() {
     if ( m_stream.is_open() )
         m_stream.close();
 }
@@ -464,12 +464,12 @@ struct ResolveTool::StatsFileReader {
 
     // ctor & dtor
     public:
-        StatsFileReader(void) { }
-        ~StatsFileReader(void) { Close(); }
+        StatsFileReader() { }
+        ~StatsFileReader() { Close(); }
 
     // main reader interface
     public:
-        void Close(void);
+        void Close();
         bool Open(const std::string& filename);
         bool Read(ResolveTool::ResolveSettings* settings,
                   std::map<std::string, ReadGroupResolver>& readGroups);
@@ -481,7 +481,7 @@ struct ResolveTool::StatsFileReader {
         bool ParseInputLine(const std::string& line);
         bool ParseOptionLine(const std::string& line, ResolveTool::ResolveSettings* settings);
         bool ParseReadGroupLine(const std::string& line, std::map<std::string, ReadGroupResolver>& readGroups);
-        std::string SkipCommentsAndWhitespace(void);
+        std::string SkipCommentsAndWhitespace();
 
     // data members
     private:
@@ -493,7 +493,7 @@ struct ResolveTool::StatsFileReader {
                    , InReadGroups };
 };
 
-void ResolveTool::StatsFileReader::Close(void) {
+void ResolveTool::StatsFileReader::Close() {
     if ( m_stream.is_open() )
         m_stream.close();
 }
@@ -661,7 +661,7 @@ bool ResolveTool::StatsFileReader::Read(ResolveTool::ResolveSettings* settings,
     return true;
 }
 
-std::string ResolveTool::StatsFileReader::SkipCommentsAndWhitespace(void) {
+std::string ResolveTool::StatsFileReader::SkipCommentsAndWhitespace() {
     std::string line;
     do {
         if ( m_stream.eof() )
@@ -678,19 +678,19 @@ struct ResolveTool::StatsFileWriter {
 
     // ctor & dtor
     public:
-        StatsFileWriter(void) { }
-        ~StatsFileWriter(void) { Close(); }
+        StatsFileWriter() { }
+        ~StatsFileWriter() { Close(); }
 
     // main reader interface
     public:
-        void Close(void);
+        void Close();
         bool Open(const std::string& filename);
         bool Write(ResolveTool::ResolveSettings* settings,
                    const std::map<std::string, ReadGroupResolver>& readGroups);
 
     // internal methods
     private:
-        void WriteHeader(void);
+        void WriteHeader();
         void WriteInput(ResolveTool::ResolveSettings* settings);
         void WriteOptions(ResolveTool::ResolveSettings* settings);
         void WriteReadGroups(const std::map<std::string, ReadGroupResolver>& readGroups);
@@ -700,7 +700,7 @@ struct ResolveTool::StatsFileWriter {
         std::ofstream m_stream;
 };
 
-void ResolveTool::StatsFileWriter::Close(void) {
+void ResolveTool::StatsFileWriter::Close() {
     if ( m_stream.is_open() )
         m_stream.close();
 }
@@ -732,7 +732,7 @@ bool ResolveTool::StatsFileWriter::Write(ResolveTool::ResolveSettings* settings,
     return true;
 }
 
-void ResolveTool::StatsFileWriter::WriteHeader(void) {
+void ResolveTool::StatsFileWriter::WriteHeader() {
 
     // stringify current bamtools version
     std::stringstream versionStream;
@@ -823,21 +823,21 @@ struct ResolveTool::ResolveToolPrivate {
         ResolveToolPrivate(ResolveTool::ResolveSettings* settings)
             : m_settings(settings)
         { }
-        ~ResolveToolPrivate(void) { }
+        ~ResolveToolPrivate() { }
 
     // 'public' interface
     public:
-        bool Run(void);
+        bool Run();
 
     // internal methods
     private:
         bool CheckSettings(std::vector<std::string>& errors);
-        bool MakeStats(void);
+        bool MakeStats();
         void ParseHeader(const SamHeader& header);
-        bool ReadStatsFile(void);
+        bool ReadStatsFile();
         void ResolveAlignment(BamAlignment& al);
-        bool ResolvePairs(void);
-        bool WriteStatsFile(void);
+        bool ResolvePairs();
+        bool WriteStatsFile();
 
     // data members
     private:
@@ -928,7 +928,7 @@ bool ResolveTool::ResolveToolPrivate::CheckSettings(std::vector<std::string>& er
     return ( errors.empty() );
 }
 
-bool ResolveTool::ResolveToolPrivate::MakeStats(void) {
+bool ResolveTool::ResolveToolPrivate::MakeStats() {
 
     // pull resolver settings from command-line settings
     ReadGroupResolver::SetConfidenceInterval(m_settings->ConfidenceInterval);
@@ -1049,7 +1049,7 @@ void ResolveTool::ResolveToolPrivate::ParseHeader(const SamHeader& header) {
     }
 }
 
-bool ResolveTool::ResolveToolPrivate::ReadStatsFile(void) {
+bool ResolveTool::ResolveToolPrivate::ReadStatsFile() {
 
     // skip if no filename provided
     if ( m_settings->StatsFilename.empty() )
@@ -1121,7 +1121,7 @@ void ResolveTool::ResolveToolPrivate::ResolveAlignment(BamAlignment& al) {
     al.SetIsProperPair(true);
 }
 
-bool ResolveTool::ResolveToolPrivate::ResolvePairs(void) {
+bool ResolveTool::ResolveToolPrivate::ResolvePairs() {
 
     // open file containing read names of candidate proper pairs
     ResolveTool::ReadNamesFileReader readNamesReader;
@@ -1188,7 +1188,7 @@ bool ResolveTool::ResolveToolPrivate::ResolvePairs(void) {
     return true;
 }
 
-bool ResolveTool::ResolveToolPrivate::Run(void) {
+bool ResolveTool::ResolveToolPrivate::Run() {
 
     // verify that command line settings are acceptable
     std::vector<std::string> errors;
@@ -1274,7 +1274,7 @@ bool ResolveTool::ResolveToolPrivate::Run(void) {
     return true;
 }
 
-bool ResolveTool::ResolveToolPrivate::WriteStatsFile(void) {
+bool ResolveTool::ResolveToolPrivate::WriteStatsFile() {
 
     // skip if no filename provided
     if ( m_settings->StatsFilename.empty() )
@@ -1302,7 +1302,7 @@ bool ResolveTool::ResolveToolPrivate::WriteStatsFile(void) {
 // --------------------------------------------------------------------------
 // ResolveTool implementation
 
-ResolveTool::ResolveTool(void)
+ResolveTool::ResolveTool()
     : AbstractTool()
     , m_settings(new ResolveSettings)
     , m_impl(0)
@@ -1381,7 +1381,7 @@ ResolveTool::ResolveTool(void)
     Options::AddOption("-force", forceMarkDescription, m_settings->HasForceMarkReadGroups, MarkPairsOpts);
 }
 
-ResolveTool::~ResolveTool(void) {
+ResolveTool::~ResolveTool() {
 
     delete m_settings;
     m_settings = 0;
@@ -1390,7 +1390,7 @@ ResolveTool::~ResolveTool(void) {
     m_impl = 0;
 }
 
-int ResolveTool::Help(void) {
+int ResolveTool::Help() {
     Options::DisplayHelp();
     return 0;
 }

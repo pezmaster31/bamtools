@@ -27,7 +27,7 @@ namespace BamTools {
 class UTILS_EXPORT Variant {
 
     public:
-        Variant(void) : data(NULL) { }
+        Variant() : data(NULL) { }
 
         Variant(const Variant& other) {
             if ( other.data != NULL )
@@ -35,7 +35,7 @@ class UTILS_EXPORT Variant {
             data = other.data;
         }
 
-        ~Variant(void) {
+        ~Variant() {
             if ( data != NULL )
                 data->Release();
         }
@@ -72,12 +72,12 @@ class UTILS_EXPORT Variant {
         // This forms returns a REFERENCE and not a COPY, which
         // will be significant in some cases.
         template<typename T>
-        const T& get(void) const {
+        const T& get() const {
             return CastFromBase<T>(data)->data;
         }
 
         template<typename T>
-        bool is_type(void) const {
+        bool is_type() const {
             return typeid(*data)==typeid(Impl<T>);
         }
 
@@ -90,10 +90,10 @@ class UTILS_EXPORT Variant {
         struct ImplBase {
 
             ImplBase() : refs(0) { }
-            virtual ~ImplBase(void) { }
+            virtual ~ImplBase() { }
 
-            void AddRef(void) { ++refs; }
-            void Release(void) {
+            void AddRef() { ++refs; }
+            void Release() {
                 --refs;
                 if ( refs == 0 ) delete this;
             }
@@ -104,7 +104,7 @@ class UTILS_EXPORT Variant {
         template<typename T>
         struct Impl : ImplBase {
             Impl(T v) : data(v) { }
-            ~Impl(void) { }
+            ~Impl() { }
             T data;
         };
 

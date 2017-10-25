@@ -26,8 +26,8 @@ class API_EXPORT BamReader {
 
     // constructor / destructor
     public:
-        BamReader(void);
-        ~BamReader(void);
+        BamReader();
+        ~BamReader();
 
     // public interface
     public:
@@ -37,17 +37,17 @@ class API_EXPORT BamReader {
         // ----------------------
 
         // closes the current BAM file
-        bool Close(void);
+        bool Close();
         // returns filename of current BAM file
-        const std::string GetFilename(void) const;
+        const std::string GetFilename() const;
         // returns true if a BAM file is open for reading
-        bool IsOpen(void) const;
+        bool IsOpen() const;
         // performs random-access jump within BAM file
         bool Jump(int refID, int position = 0);
         // opens a BAM file
         bool Open(const std::string& filename);
         // returns internal file pointer to beginning of alignment data
-        bool Rewind(void);
+        bool Rewind();
         // sets the target region of interest
         bool SetRegion(const BamRegion& region);
         // sets the target region of interest
@@ -70,20 +70,20 @@ class API_EXPORT BamReader {
         // ----------------------
 
         // returns a read-only reference to SAM header data
-        const SamHeader& GetConstSamHeader(void) const;
+        const SamHeader& GetConstSamHeader() const;
         // returns an editable copy of SAM header data
-        SamHeader GetHeader(void) const;
+        SamHeader GetHeader() const;
         // returns SAM header data, as SAM-formatted text
-        std::string GetHeaderText(void) const;
+        std::string GetHeaderText() const;
 
         // ----------------------
         // access reference data
         // ----------------------
 
         // returns the number of reference sequences
-        int GetReferenceCount(void) const;
+        int GetReferenceCount() const;
         // returns all reference sequence entries
-        const RefVector& GetReferenceData(void) const;
+        const RefVector& GetReferenceData() const;
         // returns the ID of the reference with this name
         int GetReferenceID(const std::string& refName) const;
 
@@ -94,7 +94,7 @@ class API_EXPORT BamReader {
         // creates an index file for current BAM file, using the requested index type
         bool CreateIndex(const BamIndex::IndexType& type = BamIndex::STANDARD);
         // returns true if index data is available
-        bool HasIndex(void) const;
+        bool HasIndex() const;
         // looks in BAM file's directory for a matching index file
         bool LocateIndex(const BamIndex::IndexType& preferredType = BamIndex::STANDARD);
         // opens a BAM index file
@@ -107,7 +107,7 @@ class API_EXPORT BamReader {
         // ----------------------
 
         // returns a human-readable description of the last error that occurred
-        std::string GetErrorString(void) const;
+        std::string GetErrorString() const;
 
     // private implementation
     private:

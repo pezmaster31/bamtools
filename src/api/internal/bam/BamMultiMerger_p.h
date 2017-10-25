@@ -50,7 +50,7 @@ struct MergeItem {
         , Alignment(other.Alignment)
     { }
 
-    ~MergeItem(void) { }
+    ~MergeItem() { }
 };
 
 template<typename Compare>
@@ -75,16 +75,16 @@ struct MergeItemSorter : public std::binary_function<MergeItem, MergeItem, bool>
 class IMultiMerger {
 
     public:
-        IMultiMerger(void) { }
-        virtual ~IMultiMerger(void) { }
+        IMultiMerger() { }
+        virtual ~IMultiMerger() { }
     public:
         virtual void Add(MergeItem item) =0;
-        virtual void Clear(void) =0;
-        virtual const MergeItem& First(void) const =0;
-        virtual bool IsEmpty(void) const =0;
+        virtual void Clear() =0;
+        virtual const MergeItem& First() const =0;
+        virtual bool IsEmpty() const =0;
         virtual void Remove(BamReader* reader) =0;
-        virtual int Size(void) const =0;
-        virtual MergeItem TakeFirst(void) =0;
+        virtual int Size() const =0;
+        virtual MergeItem TakeFirst() =0;
 };
 
 // general merger
@@ -100,16 +100,16 @@ class MultiMerger : public IMultiMerger {
             : IMultiMerger()
             , m_data( MergeType(comp) )
         { }
-        ~MultiMerger(void) { }
+        ~MultiMerger() { }
 
     public:
         void Add(MergeItem item);
-        void Clear(void);
-        const MergeItem& First(void) const;
-        bool IsEmpty(void) const;
+        void Clear();
+        const MergeItem& First() const;
+        bool IsEmpty() const;
         void Remove(BamReader* reader);
-        int Size(void) const;
-        MergeItem TakeFirst(void);
+        int Size() const;
+        MergeItem TakeFirst();
 
     private:
         typedef MergeItem                              ValueType;
@@ -131,18 +131,18 @@ inline void MultiMerger<Compare>::Add(MergeItem item) {
 }
 
 template <typename Compare>
-inline void MultiMerger<Compare>::Clear(void) {
+inline void MultiMerger<Compare>::Clear() {
     m_data.clear();
 }
 
 template <typename Compare>
-inline const MergeItem& MultiMerger<Compare>::First(void) const {
+inline const MergeItem& MultiMerger<Compare>::First() const {
     const ValueType& entry = (*m_data.begin());
     return entry;
 }
 
 template <typename Compare>
-inline bool MultiMerger<Compare>::IsEmpty(void) const {
+inline bool MultiMerger<Compare>::IsEmpty() const {
     return m_data.empty();
 }
 template <typename Compare>
@@ -167,12 +167,12 @@ inline void MultiMerger<Compare>::Remove(BamReader* reader) {
     }
 }
 template <typename Compare>
-inline int MultiMerger<Compare>::Size(void) const {
+inline int MultiMerger<Compare>::Size() const {
     return m_data.size();
 }
 
 template <typename Compare>
-inline MergeItem MultiMerger<Compare>::TakeFirst(void) {
+inline MergeItem MultiMerger<Compare>::TakeFirst() {
     DataIterator firstIter = m_data.begin();
     MergeItem    firstItem = (*firstIter);
     m_data.erase(firstIter);
@@ -187,16 +187,16 @@ class MultiMerger<Algorithms::Sort::Unsorted> : public IMultiMerger {
         explicit MultiMerger(const Algorithms::Sort::Unsorted& comp = Algorithms::Sort::Unsorted())
             : IMultiMerger()
         { }
-        ~MultiMerger(void) { }
+        ~MultiMerger() { }
 
     public:
         void Add(MergeItem item);
-        void Clear(void);
-        const MergeItem& First(void) const;
-        bool IsEmpty(void) const;
+        void Clear();
+        const MergeItem& First() const;
+        bool IsEmpty() const;
         void Remove(BamReader* reader);
-        int Size(void) const;
-        MergeItem TakeFirst(void);
+        int Size() const;
+        MergeItem TakeFirst();
 
     private:
         typedef MergeItem                     ValueType;
@@ -212,17 +212,17 @@ void MultiMerger<Algorithms::Sort::Unsorted>::Add(MergeItem item) {
 }
 
 inline
-void MultiMerger<Algorithms::Sort::Unsorted>::Clear(void) {
+void MultiMerger<Algorithms::Sort::Unsorted>::Clear() {
     m_data.clear();
 }
 
 inline
-const MergeItem& MultiMerger<Algorithms::Sort::Unsorted>::First(void) const {
+const MergeItem& MultiMerger<Algorithms::Sort::Unsorted>::First() const {
     return m_data.front();
 }
 
 inline
-bool MultiMerger<Algorithms::Sort::Unsorted>::IsEmpty(void) const {
+bool MultiMerger<Algorithms::Sort::Unsorted>::IsEmpty() const {
     return m_data.empty();
 }
 
@@ -249,12 +249,12 @@ void MultiMerger<Algorithms::Sort::Unsorted>::Remove(BamReader* reader) {
 }
 
 inline
-int MultiMerger<Algorithms::Sort::Unsorted>::Size(void) const {
+int MultiMerger<Algorithms::Sort::Unsorted>::Size() const {
     return m_data.size();
 }
 
 inline
-MergeItem MultiMerger<Algorithms::Sort::Unsorted>::TakeFirst(void) {
+MergeItem MultiMerger<Algorithms::Sort::Unsorted>::TakeFirst() {
     MergeItem firstItem = m_data.front();
     m_data.pop_front();
     return firstItem;

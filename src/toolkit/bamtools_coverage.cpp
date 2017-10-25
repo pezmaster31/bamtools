@@ -32,7 +32,7 @@ class CoverageVisitor : public PileupVisitor {
             , m_references(references)
             , m_out(out)
         { }
-        ~CoverageVisitor(void) { }
+        ~CoverageVisitor() { }
 
     // PileupVisitor interface implementation
     public:
@@ -64,7 +64,7 @@ struct CoverageTool::CoverageSettings {
     std::string OutputFilename;
 
     // constructor
-    CoverageSettings(void)
+    CoverageSettings()
         : HasInputFile(false)
         , HasOutputFile(false)
         , InputBamFilename(Options::StandardIn())
@@ -84,11 +84,11 @@ struct CoverageTool::CoverageToolPrivate {
             , m_out(std::cout.rdbuf())
         { }
 
-        ~CoverageToolPrivate(void) { }
+        ~CoverageToolPrivate() { }
 
     // interface
     public:
-        bool Run(void);
+        bool Run();
 
     // data members
     private:
@@ -97,7 +97,7 @@ struct CoverageTool::CoverageToolPrivate {
         RefVector m_references;
 };
 
-bool CoverageTool::CoverageToolPrivate::Run(void) {
+bool CoverageTool::CoverageToolPrivate::Run() {
 
     // if output filename given
     std::ofstream outFile;
@@ -152,7 +152,7 @@ bool CoverageTool::CoverageToolPrivate::Run(void) {
 // ---------------------------------------------
 // CoverageTool implementation
 
-CoverageTool::CoverageTool(void)
+CoverageTool::CoverageTool()
     : AbstractTool()
     , m_settings(new CoverageSettings)
     , m_impl(0)
@@ -166,7 +166,7 @@ CoverageTool::CoverageTool(void)
     Options::AddValueOption("-out", "filename",     "the output file",    "", m_settings->HasOutputFile, m_settings->OutputFilename,   IO_Opts, Options::StandardOut());
 }
 
-CoverageTool::~CoverageTool(void) {
+CoverageTool::~CoverageTool() {
 
     delete m_settings;
     m_settings = 0;
@@ -175,7 +175,7 @@ CoverageTool::~CoverageTool(void) {
     m_impl = 0;
 }
 
-int CoverageTool::Help(void) {
+int CoverageTool::Help() {
     Options::DisplayHelp();
     return 0;
 }

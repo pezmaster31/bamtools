@@ -104,7 +104,7 @@ BamFtp::BamFtp(const std::string& url)
     ParseUrl(url);
 }
 
-BamFtp::~BamFtp(void) {
+BamFtp::~BamFtp() {
 
     // close connection & clean up
     Close();
@@ -114,7 +114,7 @@ BamFtp::~BamFtp(void) {
         delete m_dataSocket;
 }
 
-void BamFtp::Close(void) {
+void BamFtp::Close() {
 
     // disconnect socket
     m_commandSocket->DisconnectFromHost();
@@ -129,7 +129,7 @@ void BamFtp::Close(void) {
     m_dataPort = 0;
 }
 
-bool BamFtp::ConnectCommandSocket(void) {
+bool BamFtp::ConnectCommandSocket() {
 
     BT_ASSERT_X(m_commandSocket, "null command socket?");
 
@@ -170,7 +170,7 @@ bool BamFtp::ConnectCommandSocket(void) {
     return true;
 }
 
-bool BamFtp::ConnectDataSocket(void) {
+bool BamFtp::ConnectDataSocket() {
 
     // failure if can't connect to command socket first
     if ( !m_commandSocket->IsConnected() ) {
@@ -238,11 +238,11 @@ bool BamFtp::ConnectDataSocket(void) {
     return true;
 }
 
-bool BamFtp::IsOpen(void) const {
+bool BamFtp::IsOpen() const {
     return IBamIODevice::IsOpen() && m_isUrlParsed;
 }
 
-bool BamFtp::IsRandomAccess(void) const {
+bool BamFtp::IsRandomAccess() const {
     return true;
 }
 
@@ -262,7 +262,7 @@ bool BamFtp::Open(const IBamIODevice::OpenMode mode) {
     return ( ConnectCommandSocket() && ConnectDataSocket() );
 }
 
-bool BamFtp::ParsePassiveResponse(void) {
+bool BamFtp::ParsePassiveResponse() {
 
     // fail if empty
     if ( m_response.empty() )
@@ -374,7 +374,7 @@ int64_t BamFtp::ReadDataSocket(char* data, const unsigned int maxNumBytes) {
     return m_dataSocket->Read(data, maxNumBytes);
 }
 
-bool BamFtp::ReceiveReply(void) {
+bool BamFtp::ReceiveReply() {
 
     // failure if not connected
     if ( !m_commandSocket->IsConnected() ) {
@@ -461,7 +461,7 @@ bool BamFtp::SendCommand(const std::string& command, bool waitForReply) {
     return true;
 }
 
-int64_t BamFtp::Tell(void) const {
+int64_t BamFtp::Tell() const {
     return ( IsOpen() ? m_filePosition : -1 );
 }
 

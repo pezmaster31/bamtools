@@ -36,7 +36,7 @@ static const int64_t DEFAULT_BUFFER_SIZE64 = DEFAULT_BUFFER_SIZE;
 // TcpSocket implementation
 // --------------------------
 
-TcpSocket::TcpSocket(void)
+TcpSocket::TcpSocket()
     : m_mode(IBamIODevice::NotOpen)
 //    , m_localPort(0)
     , m_remotePort(0)
@@ -47,20 +47,20 @@ TcpSocket::TcpSocket(void)
     , m_state(TcpSocket::UnconnectedState)
 { }
 
-TcpSocket::~TcpSocket(void) {
+TcpSocket::~TcpSocket() {
     if ( m_state == TcpSocket::ConnectedState )
         DisconnectFromHost();
 }
 
-size_t TcpSocket::BufferBytesAvailable(void) const {
+size_t TcpSocket::BufferBytesAvailable() const {
     return m_readBuffer.Size();
 }
 
-bool TcpSocket::CanReadLine(void) const {
+bool TcpSocket::CanReadLine() const {
     return m_readBuffer.CanReadLine();
 }
 
-void TcpSocket::ClearBuffer(void) {
+void TcpSocket::ClearBuffer() {
     m_readBuffer.Clear();
 }
 
@@ -164,7 +164,7 @@ bool TcpSocket::ConnectToHost(const std::string& hostName,
     return ConnectImpl(info, port, mode);
 }
 
-void TcpSocket::DisconnectFromHost(void) {
+void TcpSocket::DisconnectFromHost() {
 
     // close socket engine & delete
     if ( m_state == TcpSocket::ConnectedState )
@@ -182,35 +182,35 @@ void TcpSocket::DisconnectFromHost(void) {
     m_readBuffer.Clear();
 }
 
-TcpSocket::SocketError TcpSocket::GetError(void) const {
+TcpSocket::SocketError TcpSocket::GetError() const {
     return m_error;
 }
 
-std::string TcpSocket::GetErrorString(void) const {
+std::string TcpSocket::GetErrorString() const {
     return m_errorString;
 }
 
-std::string TcpSocket::GetHostName(void) const {
+std::string TcpSocket::GetHostName() const {
     return m_hostName;
 }
 
-//HostAddress TcpSocket::GetLocalAddress(void) const {
+//HostAddress TcpSocket::GetLocalAddress() const {
 //    return m_localAddress;
 //}
 
-//uint16_t TcpSocket::GetLocalPort(void) const {
+//uint16_t TcpSocket::GetLocalPort() const {
 //    return m_localPort;
 //}
 
-HostAddress TcpSocket::GetRemoteAddress(void) const {
+HostAddress TcpSocket::GetRemoteAddress() const {
     return m_remoteAddress;
 }
 
-uint16_t TcpSocket::GetRemotePort(void) const {
+uint16_t TcpSocket::GetRemotePort() const {
     return m_remotePort;
 }
 
-TcpSocket::SocketState TcpSocket::GetState(void) const {
+TcpSocket::SocketState TcpSocket::GetState() const {
     return m_state;
 }
 
@@ -220,7 +220,7 @@ bool TcpSocket::InitializeSocketEngine(HostAddress::NetworkProtocol protocol) {
     return m_engine->Initialize(protocol);
 }
 
-bool TcpSocket::IsConnected(void) const {
+bool TcpSocket::IsConnected() const {
     if ( m_engine == 0 )
         return false;
     return ( m_engine->IsValid() && (m_state == TcpSocket::ConnectedState) );
@@ -258,7 +258,7 @@ int64_t TcpSocket::Read(char* data, const unsigned int numBytes) {
     return static_cast<int64_t>(numBytesRead);
 }
 
-int64_t TcpSocket::ReadFromSocket(void) {
+int64_t TcpSocket::ReadFromSocket() {
 
     // check for any socket engine errors
     if ( !m_engine->IsValid() ) {
@@ -377,7 +377,7 @@ int64_t TcpSocket::ReadLine(char* dest, size_t max) {
     return readSoFar;
 }
 
-void TcpSocket::ResetSocketEngine(void) {
+void TcpSocket::ResetSocketEngine() {
 
     // shut down socket engine
     if ( m_engine ) {
@@ -391,7 +391,7 @@ void TcpSocket::ResetSocketEngine(void) {
     m_cachedSocketDescriptor = -1;
 }
 
-bool TcpSocket::WaitForReadLine(void) {
+bool TcpSocket::WaitForReadLine() {
 
     // wait until we can read a line (will return immediately if already capable)
     while ( !CanReadLine() ) {

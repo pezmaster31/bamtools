@@ -35,7 +35,7 @@ class API_EXPORT IBamIODevice {
 
     // ctor & dtor
     public:
-        virtual ~IBamIODevice(void) { }
+        virtual ~IBamIODevice() { }
 
     // IBamIODevice interface
     public:
@@ -43,22 +43,22 @@ class API_EXPORT IBamIODevice {
         // TODO: add seek(pos, *from*)
 
         // pure virtuals
-        virtual void Close(void) =0;
-        virtual bool IsRandomAccess(void) const =0;
+        virtual void Close() =0;
+        virtual bool IsRandomAccess() const =0;
         virtual bool Open(const OpenMode mode) =0;
         virtual int64_t Read(char* data, const unsigned int numBytes) =0;
         virtual bool Seek(const int64_t& position, const int origin = SEEK_SET) =0;
-        virtual int64_t Tell(void) const =0;
+        virtual int64_t Tell() const =0;
         virtual int64_t Write(const char* data, const unsigned int numBytes) =0;
 
         // default implementation provided
-        virtual std::string GetErrorString(void);
-        virtual bool IsOpen(void) const;
-        virtual OpenMode Mode(void) const;
+        virtual std::string GetErrorString();
+        virtual bool IsOpen() const;
+        virtual OpenMode Mode() const;
 
     // internal methods
     protected:
-        IBamIODevice(void); // hidden ctor
+        IBamIODevice(); // hidden ctor
         void SetErrorString(const std::string& where, const std::string& what);
 
     // data members
@@ -68,22 +68,22 @@ class API_EXPORT IBamIODevice {
 };
 
 inline
-IBamIODevice::IBamIODevice(void)
+IBamIODevice::IBamIODevice()
     : m_mode(IBamIODevice::NotOpen)
 { }
 
 inline
-std::string IBamIODevice::GetErrorString(void) {
+std::string IBamIODevice::GetErrorString() {
     return m_errorString;
 }
 
 inline
-bool IBamIODevice::IsOpen(void) const {
+bool IBamIODevice::IsOpen() const {
     return ( m_mode != IBamIODevice::NotOpen );
 }
 
 inline
-IBamIODevice::OpenMode IBamIODevice::Mode(void) const {
+IBamIODevice::OpenMode IBamIODevice::Mode() const {
     return m_mode;
 }
 

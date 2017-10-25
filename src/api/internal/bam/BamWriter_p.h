@@ -35,14 +35,14 @@ class BamWriterPrivate {
 
     // ctor & dtor
     public:
-        BamWriterPrivate(void);
-        ~BamWriterPrivate(void);
+        BamWriterPrivate();
+        ~BamWriterPrivate();
 
     // interface methods
     public:
-        void Close(void);
-        std::string GetErrorString(void) const;
-        bool IsOpen(void) const;
+        void Close();
+        std::string GetErrorString() const;
+        bool IsOpen() const;
         bool Open(const std::string& filename,
                   const std::string& samHeaderText,
                   const BamTools::RefVector& referenceSequences);
@@ -56,7 +56,7 @@ class BamWriterPrivate {
         void EncodeQuerySequence(const std::string& query, std::string& encodedQuery);
         void WriteAlignment(const BamAlignment& al);
         void WriteCoreAlignment(const BamAlignment& al);
-        void WriteMagicNumber(void);
+        void WriteMagicNumber();
         void WriteReferences(const BamTools::RefVector& referenceSequences);
         void WriteSamHeaderText(const std::string& samHeaderText);
 

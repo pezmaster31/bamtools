@@ -20,27 +20,27 @@ namespace BamTools {
 struct API_EXPORT SamReadGroup {
 
     // ctor & dtor
-    SamReadGroup(void);
+    SamReadGroup();
     SamReadGroup(const std::string& id);
     SamReadGroup(const SamReadGroup& other);
-    ~SamReadGroup(void);
+    ~SamReadGroup();
 
     // query/modify entire read group
-    void Clear(void);                          // clears all data fields
+    void Clear();                          // clears all data fields
 
     // convenience query methods
-    bool HasDescription(void) const;           // returns true if read group has a description
-    bool HasFlowOrder(void) const;             // returns true if read group has a flow order entry
-    bool HasID(void) const;                    // returns true if read group has a group ID
-    bool HasKeySequence(void) const;           // returns true if read group has a key sequence
-    bool HasLibrary(void) const;               // returns true if read group has a library name
-    bool HasPlatformUnit(void) const;          // returns true if read group has a platform unit ID
-    bool HasPredictedInsertSize(void) const;   // returns true if read group has a predicted insert size
-    bool HasProductionDate(void) const;        // returns true if read group has a production date
-    bool HasProgram(void) const;               // returns true if read group has a program entry
-    bool HasSample(void) const;                // returns true if read group has a sample name
-    bool HasSequencingCenter(void) const;      // returns true if read group has a sequencing center ID
-    bool HasSequencingTechnology(void) const;  // returns true if read group has a sequencing technology ID
+    bool HasDescription() const;           // returns true if read group has a description
+    bool HasFlowOrder() const;             // returns true if read group has a flow order entry
+    bool HasID() const;                    // returns true if read group has a group ID
+    bool HasKeySequence() const;           // returns true if read group has a key sequence
+    bool HasLibrary() const;               // returns true if read group has a library name
+    bool HasPlatformUnit() const;          // returns true if read group has a platform unit ID
+    bool HasPredictedInsertSize() const;   // returns true if read group has a predicted insert size
+    bool HasProductionDate() const;        // returns true if read group has a production date
+    bool HasProgram() const;               // returns true if read group has a program entry
+    bool HasSample() const;                // returns true if read group has a sample name
+    bool HasSequencingCenter() const;      // returns true if read group has a sequencing center ID
+    bool HasSequencingTechnology() const;  // returns true if read group has a sequencing technology ID
 
 
     // data fields

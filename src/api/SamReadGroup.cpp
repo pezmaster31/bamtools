@@ -56,10 +56,10 @@ using namespace BamTools;
     \brief corresponds to \@RG PL:\<SequencingTechnology\>
 */
 
-/*! \fn SamReadGroup::SamReadGroup(void)
+/*! \fn SamReadGroup::SamReadGroup()
     \brief default constructor
 */
-SamReadGroup::SamReadGroup(void)
+SamReadGroup::SamReadGroup()
     : Description("")
     , FlowOrder("")
     , ID("")
@@ -113,15 +113,15 @@ SamReadGroup::SamReadGroup(const SamReadGroup& other)
     , CustomTags(other.CustomTags)
 { }
 
-/*! \fn SamReadGroup::~SamReadGroup(void)
+/*! \fn SamReadGroup::~SamReadGroup()
     \brief destructor
 */
-SamReadGroup::~SamReadGroup(void) { }
+SamReadGroup::~SamReadGroup() { }
 
-/*! \fn void SamReadGroup::Clear(void)
+/*! \fn void SamReadGroup::Clear()
     \brief Clears all data fields.
 */
-void SamReadGroup::Clear(void) {
+void SamReadGroup::Clear() {
     Description.clear();
     FlowOrder.clear();
     ID.clear();
@@ -137,86 +137,86 @@ void SamReadGroup::Clear(void) {
     CustomTags.clear();
 }
 
-/*! \fn bool SamReadGroup::HasDescription(void) const
+/*! \fn bool SamReadGroup::HasDescription() const
     \brief Returns \c true if read group contains \@RG DS:\<Description\>
 */
-bool SamReadGroup::HasDescription(void) const {
+bool SamReadGroup::HasDescription() const {
     return (!Description.empty());
 }
 
-/*! \fn bool SamReadGroup::HasFlowOrder(void) const
+/*! \fn bool SamReadGroup::HasFlowOrder() const
     \brief Returns \c true if read group contains \@RG FO:\<FlowOrder\>
 */
-bool SamReadGroup::HasFlowOrder(void) const {
+bool SamReadGroup::HasFlowOrder() const {
     return (!FlowOrder.empty());
 }
 
-/*! \fn bool SamReadGroup::HasID(void) const
+/*! \fn bool SamReadGroup::HasID() const
     \brief Returns \c true if read group contains \@RG: ID:\<ID\>
 */
-bool SamReadGroup::HasID(void) const {
+bool SamReadGroup::HasID() const {
     return (!ID.empty());
 }
 
-/*! \fn bool SamReadGroup::HasKeySequence(void) const
+/*! \fn bool SamReadGroup::HasKeySequence() const
     \brief Returns \c true if read group contains \@RG KS:\<KeySequence\>
 */
-bool SamReadGroup::HasKeySequence(void) const {
+bool SamReadGroup::HasKeySequence() const {
     return (!KeySequence.empty());
 }
 
-/*! \fn bool SamReadGroup::HasLibrary(void) const
+/*! \fn bool SamReadGroup::HasLibrary() const
     \brief Returns \c true if read group contains \@RG LB:\<Library\>
 */
-bool SamReadGroup::HasLibrary(void) const {
+bool SamReadGroup::HasLibrary() const {
     return (!Library.empty());
 }
 
-/*! \fn bool SamReadGroup::HasPlatformUnit(void) const
+/*! \fn bool SamReadGroup::HasPlatformUnit() const
     \brief Returns \c true if read group contains \@RG PU:\<PlatformUnit\>
 */
-bool SamReadGroup::HasPlatformUnit(void) const {
+bool SamReadGroup::HasPlatformUnit() const {
     return (!PlatformUnit.empty());
 }
 
-/*! \fn bool SamReadGroup::HasPredictedInsertSize(void) const
+/*! \fn bool SamReadGroup::HasPredictedInsertSize() const
     \brief Returns \c true if read group contains \@RG PI:\<PredictedInsertSize\>
 */
-bool SamReadGroup::HasPredictedInsertSize(void) const {
+bool SamReadGroup::HasPredictedInsertSize() const {
     return (!PredictedInsertSize.empty());
 }
 
-/*! \fn bool SamReadGroup::HasProductionDate(void) const
+/*! \fn bool SamReadGroup::HasProductionDate() const
     \brief Returns \c true if read group contains \@RG DT:\<ProductionDate\>
 */
-bool SamReadGroup::HasProductionDate(void) const {
+bool SamReadGroup::HasProductionDate() const {
     return (!ProductionDate.empty());
 }
 
-/*! \fn bool SamReadGroup::HasProgram(void) const
+/*! \fn bool SamReadGroup::HasProgram() const
     \brief Returns \c true if read group contains \@RG PG:\<Program\>
 */
-bool SamReadGroup::HasProgram(void) const {
+bool SamReadGroup::HasProgram() const {
     return (!Program.empty());
 }
 
-/*! \fn bool SamReadGroup::HasSample(void) const
+/*! \fn bool SamReadGroup::HasSample() const
     \brief Returns \c true if read group contains \@RG SM:\<Sample\>
 */
-bool SamReadGroup::HasSample(void) const {
+bool SamReadGroup::HasSample() const {
     return (!Sample.empty());
 }
 
-/*! \fn bool SamReadGroup::HasSequencingCenter(void) const
+/*! \fn bool SamReadGroup::HasSequencingCenter() const
     \brief Returns \c true if read group contains \@RG CN:\<SequencingCenter\>
 */
-bool SamReadGroup::HasSequencingCenter(void) const {
+bool SamReadGroup::HasSequencingCenter() const {
     return (!SequencingCenter.empty());
 }
 
-/*! \fn bool SamReadGroup::HasSequencingTechnology(void) const
+/*! \fn bool SamReadGroup::HasSequencingTechnology() const
     \brief Returns \c true if read group contains \@RG PL:\<SequencingTechnology\>
 */
-bool SamReadGroup::HasSequencingTechnology(void) const {
+bool SamReadGroup::HasSequencingTechnology() const {
     return (!SequencingTechnology.empty());
 }

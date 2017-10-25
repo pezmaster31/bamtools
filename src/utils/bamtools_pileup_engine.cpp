@@ -27,22 +27,22 @@ struct PileupEngine::PileupEnginePrivate {
     std::vector<PileupVisitor*> Visitors;
 
     // ctor & dtor
-    PileupEnginePrivate(void)
+    PileupEnginePrivate()
         : CurrentId(-1)
         , CurrentPosition(-1)
         , IsFirstAlignment(true)
     { }
-    ~PileupEnginePrivate(void) { }
+    ~PileupEnginePrivate() { }
 
     // 'public' methods
     bool AddAlignment(const BamAlignment& al);
-    void Flush(void);
+    void Flush();
 
     // internal methods
     private:
-        void ApplyVisitors(void);
-        void ClearOldData(void);
-        void CreatePileupData(void);
+        void ApplyVisitors();
+        void ClearOldData();
+        void CreatePileupData();
         void ParseAlignmentCigar(const BamAlignment& al);
 };
 
@@ -112,7 +112,7 @@ bool PileupEngine::PileupEnginePrivate::AddAlignment(const BamAlignment& al) {
     return true;
 }
 
-void PileupEngine::PileupEnginePrivate::ApplyVisitors(void) {
+void PileupEngine::PileupEnginePrivate::ApplyVisitors() {
 
     // parse CIGAR data in BamAlignments to build up current pileup data
     CreatePileupData();
@@ -124,7 +124,7 @@ void PileupEngine::PileupEnginePrivate::ApplyVisitors(void) {
         (*visitorIter)->Visit(CurrentPileupData);
 }
 
-void PileupEngine::PileupEnginePrivate::ClearOldData(void) {
+void PileupEngine::PileupEnginePrivate::ClearOldData() {
 
     // remove any alignments that end before our CurrentPosition
     // N.B. - BAM positions are 0-based, half-open. GetEndPosition() returns a 1-based position,
@@ -158,7 +158,7 @@ void PileupEngine::PileupEnginePrivate::ClearOldData(void) {
     CurrentAlignments.resize(j);
 }
 
-void PileupEngine::PileupEnginePrivate::CreatePileupData(void) {
+void PileupEngine::PileupEnginePrivate::CreatePileupData() {
 
     // remove any non-overlapping alignments
     ClearOldData();
@@ -175,7 +175,7 @@ void PileupEngine::PileupEnginePrivate::CreatePileupData(void) {
         ParseAlignmentCigar( (*alIter) );
 }
 
-void PileupEngine::PileupEnginePrivate::Flush(void) {
+void PileupEngine::PileupEnginePrivate::Flush() {
     while ( !CurrentAlignments.empty() ) {
         ApplyVisitors();
         ++CurrentPosition;
@@ -331,15 +331,15 @@ void PileupEngine::PileupEnginePrivate::ParseAlignmentCigar(const BamAlignment& 
 // ---------------------------------------------
 // PileupEngine implementation
 
-PileupEngine::PileupEngine(void)
+PileupEngine::PileupEngine()
     : d( new PileupEnginePrivate )
 { }
 
-PileupEngine::~PileupEngine(void) {
+PileupEngine::~PileupEngine() {
     delete d;
     d = 0;
 }
 
 bool PileupEngine::AddAlignment(const BamAlignment& al) { return d->AddAlignment(al); }
 void PileupEngine::AddVisitor(PileupVisitor* visitor) { d->Visitors.push_back(visitor); }
-void PileupEngine::Flush(void) { d->Flush(); }
+void PileupEngine::Flush() { d->Flush(); }

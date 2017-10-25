@@ -30,12 +30,12 @@ class BamPipe : public ILocalIODevice {
 
     // ctor & dtor
     public:
-        BamPipe(void);
-        ~BamPipe(void);
+        BamPipe();
+        ~BamPipe();
 
     // IBamIODevice implementation
     public:
-        bool IsRandomAccess(void) const;
+        bool IsRandomAccess() const;
         bool Open(const IBamIODevice::OpenMode mode);
         bool Seek(const int64_t& position, const int origin = SEEK_SET);
 };

@@ -27,7 +27,7 @@ using namespace BamTools::Internal;
 // HostInfo implementation
 // -------------------------
 
-HostInfo::HostInfo(void)
+HostInfo::HostInfo()
     : m_error(HostInfo::NoError)
 { }
 
@@ -38,21 +38,21 @@ HostInfo::HostInfo(const HostInfo& other)
     , m_errorString(other.m_errorString)
 { }
 
-HostInfo::~HostInfo(void) { }
+HostInfo::~HostInfo() { }
 
-std::vector<HostAddress> HostInfo::Addresses(void) const {
+std::vector<HostAddress> HostInfo::Addresses() const {
     return m_addresses;
 }
 
-HostInfo::ErrorType HostInfo::GetError(void) const {
+HostInfo::ErrorType HostInfo::GetError() const {
     return m_error;
 }
 
-std::string HostInfo::GetErrorString(void) const {
+std::string HostInfo::GetErrorString() const {
     return m_errorString;
 }
 
-std::string HostInfo::HostName(void) const {
+std::string HostInfo::HostName() const {
     return m_hostName;
 }
 

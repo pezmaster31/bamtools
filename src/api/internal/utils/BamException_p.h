@@ -34,9 +34,9 @@ class BamException : public std::exception {
             , m_errorString(where + SEPARATOR + message)
         { }
 
-        inline ~BamException(void) throw() { }
+        inline ~BamException() throw() { }
 
-        inline const char* what(void) const throw() {
+        inline const char* what() const throw() {
             return m_errorString.c_str();
         }
 

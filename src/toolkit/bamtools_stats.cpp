@@ -37,7 +37,7 @@ struct StatsTool::StatsSettings {
     std::string InputFilelist;
 
     // constructor
-    StatsSettings(void)
+    StatsSettings()
         : HasInput(false)
         , HasInputFilelist(false)
         , IsShowingInsertSizeSummary(false)
@@ -52,16 +52,16 @@ struct StatsTool::StatsToolPrivate {
     // ctor & dtor
     public:
         StatsToolPrivate(StatsTool::StatsSettings* _settings);
-        ~StatsToolPrivate(void) { }
+        ~StatsToolPrivate() { }
 
     // 'public' interface
     public:
-        bool Run(void);
+        bool Run();
 
     // internal methods
     private:
         bool CalculateMedian(std::vector<int>& data, double& median);
-        void PrintStats(void);
+        void PrintStats();
         void ProcessAlignment(const BamAlignment& al);
 
     // data members
@@ -130,7 +130,7 @@ bool StatsTool::StatsToolPrivate::CalculateMedian(std::vector<int>& data, double
 }
 
 // print BAM file alignment stats
-void StatsTool::StatsToolPrivate::PrintStats(void) {
+void StatsTool::StatsToolPrivate::PrintStats() {
 
     std::cout << std::endl;
     std::cout << "**********************************************" << std::endl;
@@ -259,7 +259,7 @@ bool StatsTool::StatsToolPrivate::Run() {
 // ---------------------------------------------
 // StatsTool implementation
 
-StatsTool::StatsTool(void)
+StatsTool::StatsTool()
     : AbstractTool()
     , m_settings(new StatsSettings)
     , m_impl(0)
@@ -276,7 +276,7 @@ StatsTool::StatsTool(void)
     Options::AddOption("-insert", "summarize insert size data", m_settings->IsShowingInsertSizeSummary, AdditionalOpts);
 }
 
-StatsTool::~StatsTool(void) {
+StatsTool::~StatsTool() {
 
     delete m_settings;
     m_settings = 0;
@@ -285,7 +285,7 @@ StatsTool::~StatsTool(void) {
     m_impl = 0;
 }
 
-int StatsTool::Help(void) {
+int StatsTool::Help() {
     Options::DisplayHelp();
     return 0;
 }

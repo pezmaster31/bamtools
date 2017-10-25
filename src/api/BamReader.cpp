@@ -22,22 +22,22 @@ using namespace BamTools::Internal;
     \brief Provides read access to BAM files.
 */
 
-/*! \fn BamReader::BamReader(void)
+/*! \fn BamReader::BamReader()
     \brief constructor
 */
-BamReader::BamReader(void)
+BamReader::BamReader()
     : d(new BamReaderPrivate(this))
 { }
 
-/*! \fn BamReader::~BamReader(void)
+/*! \fn BamReader::~BamReader()
     \brief destructor
 */
-BamReader::~BamReader(void) {
+BamReader::~BamReader() {
     delete d;
     d = 0;
 }
 
-/*! \fn bool BamReader::Close(void)
+/*! \fn bool BamReader::Close()
     \brief Closes the current BAM file.
 
     Also clears out all header and reference data.
@@ -45,7 +45,7 @@ BamReader::~BamReader(void) {
     \return \c true if file closed OK
     \sa IsOpen(), Open()
 */
-bool BamReader::Close(void) {
+bool BamReader::Close() {
     return d->Close();
 }
 
@@ -60,7 +60,7 @@ bool BamReader::CreateIndex(const BamIndex::IndexType& type) {
     return d->CreateIndex(type);
 }
 
-/*! \fn const SamHeader& BamReader::GetConstSamHeader(void) const
+/*! \fn const SamHeader& BamReader::GetConstSamHeader() const
     \brief Returns const reference to SAM header data.
 
     Allows for read-only queries of SAM header data.
@@ -72,11 +72,11 @@ bool BamReader::CreateIndex(const BamIndex::IndexType& type) {
     \returns const reference to header data object
     \sa GetHeader(), GetHeaderText()
 */
-const SamHeader& BamReader::GetConstSamHeader(void) const {
+const SamHeader& BamReader::GetConstSamHeader() const {
     return d->GetConstSamHeader();
 }
 
-/*! \fn std::string BamReader::GetErrorString(void) const
+/*! \fn std::string BamReader::GetErrorString() const
     \brief Returns a human-readable description of the last error that occurred
 
     This method allows elimination of STDERR pollution. Developers of client code
@@ -84,11 +84,11 @@ const SamHeader& BamReader::GetConstSamHeader(void) const {
 
     \return error description
 */
-std::string BamReader::GetErrorString(void) const {
+std::string BamReader::GetErrorString() const {
     return d->GetErrorString();
 }
 
-/*! \fn const std::string BamReader::GetFilename(void) const
+/*! \fn const std::string BamReader::GetFilename() const
     \brief Returns name of current BAM file.
 
     Retrieved filename will contain whatever was passed via Open().
@@ -98,11 +98,11 @@ std::string BamReader::GetErrorString(void) const {
     \returns name of open BAM file. If no file is open, returns an empty string.
     \sa IsOpen()
 */
-const std::string BamReader::GetFilename(void) const {
+const std::string BamReader::GetFilename() const {
     return d->Filename();
 }
 
-/*! \fn SamHeader BamReader::GetHeader(void) const
+/*! \fn SamHeader BamReader::GetHeader() const
     \brief Returns SAM header data.
 
     Header data is wrapped in a SamHeader object that can be conveniently queried and/or modified.
@@ -116,11 +116,11 @@ const std::string BamReader::GetFilename(void) const {
     \returns header data object
     \sa GetConstSamHeader(), GetHeaderText()
 */
-SamHeader BamReader::GetHeader(void) const {
+SamHeader BamReader::GetHeader() const {
     return d->GetSamHeader();
 }
 
-/*! \fn std::string BamReader::GetHeaderText(void) const
+/*! \fn std::string BamReader::GetHeaderText() const
     \brief Returns SAM header data, as SAM-formatted text.
 
     \note Modifying the retrieved text does NOT affect the current
@@ -131,7 +131,7 @@ SamHeader BamReader::GetHeader(void) const {
     \returns SAM-formatted header text
     \sa GetHeader()
 */
-std::string BamReader::GetHeaderText(void) const {
+std::string BamReader::GetHeaderText() const {
     return d->GetHeaderText();
 }
 
@@ -181,18 +181,18 @@ bool BamReader::GetNextAlignmentCore(BamAlignment& alignment) {
     return d->GetNextAlignmentCore(alignment);
 }
 
-/*! \fn int BamReader::GetReferenceCount(void) const
+/*! \fn int BamReader::GetReferenceCount() const
     \brief Returns number of reference sequences.
 */
-int BamReader::GetReferenceCount(void) const {
+int BamReader::GetReferenceCount() const {
     return d->GetReferenceCount();
 }
 
-/*! \fn const RefVector& BamReader::GetReferenceData(void) const
+/*! \fn const RefVector& BamReader::GetReferenceData() const
     \brief Returns all reference sequence entries.
     \sa RefData
 */
-const RefVector& BamReader::GetReferenceData(void) const {
+const RefVector& BamReader::GetReferenceData() const {
     return d->GetReferenceData();
 }
 
@@ -207,17 +207,17 @@ int BamReader::GetReferenceID(const std::string& refName) const {
     return d->GetReferenceID(refName);
 }
 
-/*! \fn bool BamReader::HasIndex(void) const
+/*! \fn bool BamReader::HasIndex() const
     \brief Returns \c true if index data is available.
 */
-bool BamReader::HasIndex(void) const {
+bool BamReader::HasIndex() const {
     return d->HasIndex();
 }
 
-/*! \fn bool BamReader::IsOpen(void) const
+/*! \fn bool BamReader::IsOpen() const
     \brief Returns \c true if a BAM file is open for reading.
 */
-bool BamReader::IsOpen(void) const {
+bool BamReader::IsOpen() const {
     return d->IsOpen();
 }
 
@@ -287,7 +287,7 @@ bool BamReader::OpenIndex(const std::string& indexFilename) {
     return d->OpenIndex(indexFilename);
 }
 
-/*! \fn bool BamReader::Rewind(void)
+/*! \fn bool BamReader::Rewind()
     \brief Returns the internal file pointer to the first alignment record.
 
     Useful for performing multiple sequential passes through a BAM file.
@@ -299,7 +299,7 @@ bool BamReader::OpenIndex(const std::string& indexFilename) {
     \returns \c true if rewind operation was successful
     \sa Jump(), SetRegion()
 */
-bool BamReader::Rewind(void) {
+bool BamReader::Rewind() {
     return d->Rewind();
 }
 

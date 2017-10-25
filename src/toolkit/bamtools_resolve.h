@@ -17,11 +17,11 @@ namespace BamTools {
 class ResolveTool : public AbstractTool {
 
     public:
-        ResolveTool(void);
-        ~ResolveTool(void);
+        ResolveTool();
+        ~ResolveTool();
 
     public:
-        int Help(void);
+        int Help();
         int Run(int argc, char* argv[]);
 
     private:

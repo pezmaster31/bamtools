@@ -51,7 +51,7 @@ class ConvertPileupFormatVisitor : public PileupVisitor {
                                    const std::string& fastaFilename,
                                    const bool isPrintingMapQualities,
                                    std::ostream* out);
-        ~ConvertPileupFormatVisitor(void);
+        ~ConvertPileupFormatVisitor();
 
     // PileupVisitor interface implementation
     public:
@@ -96,7 +96,7 @@ struct ConvertTool::ConvertSettings {
     std::string FastaFilename;
 
     // constructor
-    ConvertSettings(void)
+    ConvertSettings()
         : HasInput(false)
         , HasInputFilelist(false)
         , HasOutput(false)
@@ -122,11 +122,11 @@ struct ConvertTool::ConvertToolPrivate {
             , m_out(std::cout.rdbuf())
         { }
 
-        ~ConvertToolPrivate(void) { }
+        ~ConvertToolPrivate() { }
 
     // interface
     public:
-        bool Run(void);
+        bool Run();
 
     // internal methods
     private:
@@ -147,7 +147,7 @@ struct ConvertTool::ConvertToolPrivate {
         std::ostream m_out;
 };
 
-bool ConvertTool::ConvertToolPrivate::Run(void) {
+bool ConvertTool::ConvertToolPrivate::Run() {
 
     // ------------------------------------
     // initialize conversion input/output
@@ -713,7 +713,7 @@ bool ConvertTool::ConvertToolPrivate::RunPileupConversion(BamMultiReader* reader
 // ---------------------------------------------
 // ConvertTool implementation
 
-ConvertTool::ConvertTool(void)
+ConvertTool::ConvertTool()
     : AbstractTool()
     , m_settings(new ConvertSettings)
     , m_impl(0)
@@ -738,7 +738,7 @@ ConvertTool::ConvertTool(void)
     Options::AddOption("-noheader", "omit the SAM header from output", m_settings->IsOmittingSamHeader, SamOpts);
 }
 
-ConvertTool::~ConvertTool(void) {
+ConvertTool::~ConvertTool() {
 
     delete m_settings;
     m_settings = 0;
@@ -747,7 +747,7 @@ ConvertTool::~ConvertTool(void) {
     m_impl = 0;
 }
 
-int ConvertTool::Help(void) {
+int ConvertTool::Help() {
     Options::DisplayHelp();
     return 0;
 }
@@ -794,7 +794,7 @@ ConvertPileupFormatVisitor::ConvertPileupFormatVisitor(const RefVector& referenc
     }
 }
 
-ConvertPileupFormatVisitor::~ConvertPileupFormatVisitor(void) {
+ConvertPileupFormatVisitor::~ConvertPileupFormatVisitor() {
     // be sure to close Fasta reader
     if ( m_hasFasta ) {
         m_fasta.Close();

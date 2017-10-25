@@ -37,12 +37,12 @@ const int BamStandardIndex::SIZEOF_LINEAROFFSET   = sizeof(uint64_t);
 // RaiiWrapper implementation
 // ----------------------------
 
-BamStandardIndex::RaiiWrapper::RaiiWrapper(void)
+BamStandardIndex::RaiiWrapper::RaiiWrapper()
     : Device(0)
     , Buffer(0)
 { }
 
-BamStandardIndex::RaiiWrapper::~RaiiWrapper(void) {
+BamStandardIndex::RaiiWrapper::~RaiiWrapper() {
 
     if ( Device ) {
         Device->Close();
@@ -69,7 +69,7 @@ BamStandardIndex::BamStandardIndex(Internal::BamReaderPrivate* reader)
 }
 
 // dtor
-BamStandardIndex::~BamStandardIndex(void) {
+BamStandardIndex::~BamStandardIndex() {
     CloseFile();
 }
 
@@ -223,7 +223,7 @@ void BamStandardIndex::CheckBufferSize(unsigned char*& buffer,
     }
 }
 
-void BamStandardIndex::CheckMagicNumber(void) {
+void BamStandardIndex::CheckMagicNumber() {
 
     // check 'magic number' to see if file is BAI index
     char magic[4];
@@ -242,7 +242,7 @@ void BamStandardIndex::ClearReferenceEntry(BaiReferenceEntry& refEntry) {
     refEntry.LinearOffsets.clear();
 }
 
-void BamStandardIndex::CloseFile(void) {
+void BamStandardIndex::CloseFile() {
 
     // close file stream
     if ( IsDeviceOpen() ) {
@@ -261,7 +261,7 @@ void BamStandardIndex::CloseFile(void) {
 }
 
 // builds index from associated BAM file & writes out to index file
-bool BamStandardIndex::Create(void) {
+bool BamStandardIndex::Create() {
 
     // skip if BamReader is invalid or not open
     if ( m_reader == 0 || !m_reader->IsOpen() ) {
@@ -419,7 +419,7 @@ bool BamStandardIndex::Create(void) {
 }
 
 // returns format's file extension
-const std::string BamStandardIndex::Extension(void) {
+const std::string BamStandardIndex::Extension() {
     return BamStandardIndex::BAI_EXTENSION;
 }
 
@@ -500,7 +500,7 @@ bool BamStandardIndex::HasAlignments(const int& referenceID) const {
     return ( refSummary.NumBins > 0 );
 }
 
-bool BamStandardIndex::IsDeviceOpen(void) const {
+bool BamStandardIndex::IsDeviceOpen() const {
     if ( m_resources.Device == 0 )
         return false;
     return m_resources.Device->IsOpen();
@@ -801,7 +801,7 @@ void BamStandardIndex::SummarizeBins(BaiReferenceSummary& refSummary) {
     SkipBins(numBins);
 }
 
-void BamStandardIndex::SummarizeIndexFile(void) {
+void BamStandardIndex::SummarizeIndexFile() {
 
     // load number of reference sequences
     int numReferences;
@@ -837,7 +837,7 @@ void BamStandardIndex::SummarizeReference(BaiReferenceSummary& refSummary) {
 }
 
 // return position of file pointer in index file stream
-int64_t BamStandardIndex::Tell(void) const {
+int64_t BamStandardIndex::Tell() const {
     return m_resources.Device->Tell();
 }
 
@@ -912,7 +912,7 @@ void BamStandardIndex::WriteBins(const int& refId, BaiBinMap& bins) {
         WriteBin( (*binIter).first, (*binIter).second );
 }
 
-void BamStandardIndex::WriteHeader(void) {
+void BamStandardIndex::WriteHeader() {
 
     int64_t numBytesWritten = 0;
 

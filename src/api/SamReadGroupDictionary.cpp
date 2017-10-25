@@ -18,10 +18,10 @@ using namespace BamTools;
     Provides methods for operating on a collection of SamReadGroup entries.
 */
 
-/*! \fn SamReadGroupDictionary::SamReadGroupDictionary(void)
+/*! \fn SamReadGroupDictionary::SamReadGroupDictionary()
     \brief constructor
 */
-SamReadGroupDictionary::SamReadGroupDictionary(void) { }
+SamReadGroupDictionary::SamReadGroupDictionary() { }
 
 /*! \fn SamReadGroupDictionary::SamReadGroupDictionary(const SamReadGroupDictionary& other)
     \brief copy constructor
@@ -31,10 +31,10 @@ SamReadGroupDictionary::SamReadGroupDictionary(const SamReadGroupDictionary& oth
     , m_lookupData(other.m_lookupData)
 { }
 
-/*! \fn SamReadGroupDictionary::~SamReadGroupDictionary(void)
+/*! \fn SamReadGroupDictionary::~SamReadGroupDictionary()
     \brief destructor
 */
-SamReadGroupDictionary::~SamReadGroupDictionary(void) { }
+SamReadGroupDictionary::~SamReadGroupDictionary() { }
 
 /*! \fn void SamReadGroupDictionary::Add(const SamReadGroup& readGroup)
     \brief Appends a read group to the dictionary.
@@ -107,46 +107,46 @@ void SamReadGroupDictionary::Add(const std::vector<std::string>& readGroupIds) {
         Add(*rgIter);
 }
 
-/*! \fn SamReadGroupIterator SamReadGroupDictionary::Begin(void)
+/*! \fn SamReadGroupIterator SamReadGroupDictionary::Begin()
     \return an STL iterator pointing to the first read group
     \sa ConstBegin(), End()
 */
-SamReadGroupIterator SamReadGroupDictionary::Begin(void) {
+SamReadGroupIterator SamReadGroupDictionary::Begin() {
     return m_data.begin();
 }
 
-/*! \fn SamReadGroupConstIterator SamReadGroupDictionary::Begin(void) const
+/*! \fn SamReadGroupConstIterator SamReadGroupDictionary::Begin() const
     \return an STL const_iterator pointing to the first read group
 
     This is an overloaded function.
 
     \sa ConstBegin(), End()
 */
-SamReadGroupConstIterator SamReadGroupDictionary::Begin(void) const {
+SamReadGroupConstIterator SamReadGroupDictionary::Begin() const {
     return m_data.begin();
 }
 
-/*! \fn void SamReadGroupDictionary::Clear(void)
+/*! \fn void SamReadGroupDictionary::Clear()
     \brief Clears all read group entries.
 */
-void SamReadGroupDictionary::Clear(void) {
+void SamReadGroupDictionary::Clear() {
     m_data.clear();
     m_lookupData.clear();
 }
 
-/*! \fn SamReadGroupConstIterator SamReadGroupDictionary::ConstBegin(void) const
+/*! \fn SamReadGroupConstIterator SamReadGroupDictionary::ConstBegin() const
     \return an STL const_iterator pointing to the first read group
     \sa Begin(), ConstEnd()
 */
-SamReadGroupConstIterator SamReadGroupDictionary::ConstBegin(void) const {
+SamReadGroupConstIterator SamReadGroupDictionary::ConstBegin() const {
     return m_data.begin();
 }
 
-/*! \fn SamReadGroupConstIterator SamReadGroupDictionary::ConstEnd(void) const
+/*! \fn SamReadGroupConstIterator SamReadGroupDictionary::ConstEnd() const
     \return an STL const_iterator pointing to the imaginary entry after the last read group
     \sa ConstBegin(), End()
 */
-SamReadGroupConstIterator SamReadGroupDictionary::ConstEnd(void) const {
+SamReadGroupConstIterator SamReadGroupDictionary::ConstEnd() const {
     return m_data.end();
 }
 
@@ -172,30 +172,30 @@ bool SamReadGroupDictionary::Contains(const SamReadGroup& readGroup) const {
     return Contains(readGroup.ID);
 }
 
-/*! \fn SamReadGroupIterator SamReadGroupDictionary::End(void)
+/*! \fn SamReadGroupIterator SamReadGroupDictionary::End()
     \return an STL iterator pointing to the imaginary entry after the last read group
     \sa Begin(), ConstEnd()
 */
-SamReadGroupIterator SamReadGroupDictionary::End(void) {
+SamReadGroupIterator SamReadGroupDictionary::End() {
     return m_data.end();
 }
 
-/*! \fn SamReadGroupConstIterator SamReadGroupDictionary::End(void) const
+/*! \fn SamReadGroupConstIterator SamReadGroupDictionary::End() const
     \return an STL const_iterator pointing to the imaginary entry after the last read group
 
     This is an overloaded function.
 
     \sa Begin(), ConstEnd()
 */
-SamReadGroupConstIterator SamReadGroupDictionary::End(void) const {
+SamReadGroupConstIterator SamReadGroupDictionary::End() const {
     return m_data.end();
 }
 
-/*! \fn bool SamReadGroupDictionary::IsEmpty(void) const
+/*! \fn bool SamReadGroupDictionary::IsEmpty() const
     \brief Returns \c true if dictionary contains no read groups
     \sa Size()
 */
-bool SamReadGroupDictionary::IsEmpty(void) const {
+bool SamReadGroupDictionary::IsEmpty() const {
     return m_data.empty();
 }
 
@@ -265,11 +265,11 @@ void SamReadGroupDictionary::Remove(const std::vector<std::string>& readGroupIds
         Remove(*rgIter);
 }
 
-/*! \fn int SamReadGroupDictionary::Size(void) const
+/*! \fn int SamReadGroupDictionary::Size() const
     \brief Returns number of read groups in dictionary.
     \sa IsEmpty()
 */
-int SamReadGroupDictionary::Size(void) const {
+int SamReadGroupDictionary::Size() const {
     return m_data.size();
 }
 

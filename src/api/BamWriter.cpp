@@ -31,30 +31,30 @@ using namespace BamTools::Internal;
     the data.
 */
 
-/*! \fn BamWriter::BamWriter(void)
+/*! \fn BamWriter::BamWriter()
     \brief constructor
 */
-BamWriter::BamWriter(void)
+BamWriter::BamWriter()
     : d(new BamWriterPrivate)
 { }
 
-/*! \fn BamWriter::~BamWriter(void)
+/*! \fn BamWriter::~BamWriter()
     \brief destructor
 */
-BamWriter::~BamWriter(void) {
+BamWriter::~BamWriter() {
     delete d;
     d = 0;
 }
 
-/*! \fn BamWriter::Close(void)
+/*! \fn BamWriter::Close()
     \brief Closes the current BAM file.
     \sa Open()
 */
-void BamWriter::Close(void) {
+void BamWriter::Close() {
     d->Close();
 }
 
-/*! \fn std::string BamWriter::GetErrorString(void) const
+/*! \fn std::string BamWriter::GetErrorString() const
     \brief Returns a human-readable description of the last error that occurred
 
     This method allows elimination of STDERR pollution. Developers of client code
@@ -62,15 +62,15 @@ void BamWriter::Close(void) {
 
     \return error description
 */
-std::string BamWriter::GetErrorString(void) const {
+std::string BamWriter::GetErrorString() const {
     return d->GetErrorString();
 }
 
-/*! \fn bool BamWriter::IsOpen(void) const
+/*! \fn bool BamWriter::IsOpen() const
     \brief Returns \c true if BAM file is open for writing.
     \sa Open()
 */
-bool BamWriter::IsOpen(void) const {
+bool BamWriter::IsOpen() const {
     return d->IsOpen();
 }
 

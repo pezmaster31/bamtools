@@ -59,7 +59,7 @@ struct SortTool::SortSettings {
     unsigned int MaxBufferMemory;
 
     // constructor
-    SortSettings(void)
+    SortSettings()
         : HasInputBamFilename(false)
         , HasMaxBufferCount(false)
         , HasMaxBufferMemory(false)
@@ -80,17 +80,17 @@ class SortTool::SortToolPrivate {
     // ctor & dtor
     public:
         SortToolPrivate(SortTool::SortSettings* settings);
-        ~SortToolPrivate(void) { }
+        ~SortToolPrivate() { }
 
     // 'public' interface
     public:
-        bool Run(void);
+        bool Run();
 
     // internal methods
     private:
         bool CreateSortedTempFile(std::vector<BamAlignment>& buffer);
-        bool GenerateSortedRuns(void);
-        bool MergeSortedRuns(void);
+        bool GenerateSortedRuns();
+        bool MergeSortedRuns();
         bool WriteTempFile(const std::vector<BamAlignment>& buffer, const std::string& tempFilename);
         void SortBuffer(std::vector<BamAlignment>& buffer);
 
@@ -120,7 +120,7 @@ SortTool::SortToolPrivate::SortToolPrivate(SortTool::SortSettings* settings)
 }
 
 // generates mutiple sorted temp BAM files from single unsorted BAM file
-bool SortTool::SortToolPrivate::GenerateSortedRuns(void) {
+bool SortTool::SortToolPrivate::GenerateSortedRuns() {
 
     // open input BAM file
     BamReader reader;
@@ -225,7 +225,7 @@ bool SortTool::SortToolPrivate::CreateSortedTempFile(std::vector<BamAlignment>& 
 }
 
 // merges sorted temp BAM files into single sorted output BAM file
-bool SortTool::SortToolPrivate::MergeSortedRuns(void) {
+bool SortTool::SortToolPrivate::MergeSortedRuns() {
 
     // open up multi reader for all of our temp files
     // this might get broken up if we do a multi-pass system later ??
@@ -266,7 +266,7 @@ bool SortTool::SortToolPrivate::MergeSortedRuns(void) {
     return true;
 }
 
-bool SortTool::SortToolPrivate::Run(void) {
+bool SortTool::SortToolPrivate::Run() {
 
     // this does a single pass, chunking up the input file into smaller sorted temp files,
     // then write out using BamMultiReader to handle merging
@@ -315,7 +315,7 @@ bool SortTool::SortToolPrivate::WriteTempFile(const std::vector<BamAlignment>& b
 // ---------------------------------------------
 // SortTool implementation
 
-SortTool::SortTool(void)
+SortTool::SortTool()
     : AbstractTool()
     , m_settings(new SortSettings)
     , m_impl(0)
@@ -344,7 +344,7 @@ SortTool::SortTool(void)
                             MemOpts, SORT_DEFAULT_MAX_BUFFER_MEMORY);
 }
 
-SortTool::~SortTool(void) {
+SortTool::~SortTool() {
 
     delete m_settings;
     m_settings = 0;
@@ -353,7 +353,7 @@ SortTool::~SortTool(void) {
     m_impl = 0;
 }
 
-int SortTool::Help(void) {
+int SortTool::Help() {
     Options::DisplayHelp();
     return 0;
 }

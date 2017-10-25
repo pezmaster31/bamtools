@@ -31,12 +31,12 @@ class BamFile : public ILocalIODevice {
     // ctor & dtor
     public:
         BamFile(const std::string& filename);
-        ~BamFile(void);
+        ~BamFile();
 
     // ILocalIODevice implementation
     public:
-        void Close(void);
-        bool IsRandomAccess(void) const;
+        void Close();
+        bool IsRandomAccess() const;
         bool Open(const IBamIODevice::OpenMode mode);
         bool Seek(const int64_t& position, const int origin = SEEK_SET);
 

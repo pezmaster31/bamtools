@@ -26,24 +26,24 @@ struct API_EXPORT SamHeader {
     // ctor & dtor
     SamHeader(const std::string& headerText = "");
     SamHeader(const SamHeader& other);
-    ~SamHeader(void);
+    ~SamHeader();
 
     // query/modify entire SamHeader
-    void Clear(void);                                   // clears all header contents
-    std::string GetErrorString(void) const;
-    bool HasError(void) const;
+    void Clear();                                   // clears all header contents
+    std::string GetErrorString() const;
+    bool HasError() const;
     bool IsValid(bool verbose = false) const;           // returns true if SAM header is well-formed
     void SetHeaderText(const std::string& headerText);  // replaces data fields with contents of SAM-formatted text
-    std::string ToString(void) const;                   // returns the printable, SAM-formatted header text
+    std::string ToString() const;                   // returns the printable, SAM-formatted header text
 
     // convenience query methods
-    bool HasVersion(void) const;     // returns true if header contains format version entry
-    bool HasSortOrder(void) const;   // returns true if header contains sort order entry
-    bool HasGroupOrder(void) const;  // returns true if header contains group order entry
-    bool HasSequences(void) const;   // returns true if header contains any sequence entries
-    bool HasReadGroups(void) const;  // returns true if header contains any read group entries
-    bool HasPrograms(void) const;    // returns true if header contains any program record entries
-    bool HasComments(void) const;    // returns true if header contains comments
+    bool HasVersion() const;     // returns true if header contains format version entry
+    bool HasSortOrder() const;   // returns true if header contains sort order entry
+    bool HasGroupOrder() const;  // returns true if header contains group order entry
+    bool HasSequences() const;   // returns true if header contains any sequence entries
+    bool HasReadGroups() const;  // returns true if header contains any read group entries
+    bool HasPrograms() const;    // returns true if header contains any program record entries
+    bool HasComments() const;    // returns true if header contains comments
 
     // --------------
     // data members

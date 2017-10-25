@@ -33,7 +33,7 @@ struct HeaderTool::HeaderSettings {
     std::string InputFilelist;
 
     // constructor
-    HeaderSettings(void)
+    HeaderSettings()
         : HasInput(false)
         , HasInputFilelist(false)
     { }
@@ -47,18 +47,18 @@ struct HeaderTool::HeaderToolPrivate {
             : m_settings(settings)
         { }
 
-        ~HeaderToolPrivate(void) { }
+        ~HeaderToolPrivate() { }
 
     // interface
     public:
-        bool Run(void);
+        bool Run();
 
     // data members
     private:
         HeaderTool::HeaderSettings* m_settings;
 };
 
-bool HeaderTool::HeaderToolPrivate::Run(void) {
+bool HeaderTool::HeaderToolPrivate::Run() {
 
     // set to default input if none provided
     if ( !m_settings->HasInput && !m_settings->HasInputFilelist )
@@ -96,7 +96,7 @@ bool HeaderTool::HeaderToolPrivate::Run(void) {
 // ---------------------------------------------
 // HeaderTool implementation
 
-HeaderTool::HeaderTool(void)
+HeaderTool::HeaderTool()
     : AbstractTool()
     , m_settings(new HeaderSettings)
     , m_impl(0)
@@ -110,7 +110,7 @@ HeaderTool::HeaderTool(void)
     Options::AddValueOption("-list", "filename", "the input BAM file list, one line per file", "", m_settings->HasInputFilelist,  m_settings->InputFilelist, IO_Opts);
 }
 
-HeaderTool::~HeaderTool(void) {
+HeaderTool::~HeaderTool() {
 
     delete m_settings;
     m_settings = 0;
@@ -119,7 +119,7 @@ HeaderTool::~HeaderTool(void) {
     m_impl = 0;
 }
 
-int HeaderTool::Help(void) {
+int HeaderTool::Help() {
     Options::DisplayHelp();
     return 0;
 }

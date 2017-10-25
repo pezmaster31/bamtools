@@ -18,12 +18,12 @@ using namespace BamTools::Internal;
 #include <cassert>
 #include <sstream>
 
-BamRandomAccessController::BamRandomAccessController(void)
+BamRandomAccessController::BamRandomAccessController()
     : m_index(0)
     , m_hasAlignmentsInRegion(true)
 { }
 
-BamRandomAccessController::~BamRandomAccessController(void) {
+BamRandomAccessController::~BamRandomAccessController() {
     Close();
 }
 
@@ -127,19 +127,19 @@ BamRandomAccessController::AlignmentState(const BamAlignment& alignment) const {
     }
 }
 
-void BamRandomAccessController::Close(void) {
+void BamRandomAccessController::Close() {
     ClearIndex();
     ClearRegion();
 }
 
-void BamRandomAccessController::ClearIndex(void) {
+void BamRandomAccessController::ClearIndex() {
     if ( m_index ) {
         delete m_index;
         m_index = 0;
     }
 }
 
-void BamRandomAccessController::ClearRegion(void) {
+void BamRandomAccessController::ClearRegion() {
     m_region.clear();
     m_hasAlignmentsInRegion = true;
 }
@@ -177,15 +177,15 @@ bool BamRandomAccessController::CreateIndex(BamReaderPrivate* reader,
     return true;
 }
 
-std::string BamRandomAccessController::GetErrorString(void) const {
+std::string BamRandomAccessController::GetErrorString() const {
     return m_errorString;
 }
 
-bool BamRandomAccessController::HasIndex(void) const {
+bool BamRandomAccessController::HasIndex() const {
     return ( m_index != 0 );
 }
 
-bool BamRandomAccessController::HasRegion(void) const  {
+bool BamRandomAccessController::HasRegion() const  {
     return ( !m_region.isNull() );
 }
 
@@ -235,7 +235,7 @@ bool BamRandomAccessController::OpenIndex(const std::string& indexFilename, BamR
     return true;
 }
 
-bool BamRandomAccessController::RegionHasAlignments(void) const {
+bool BamRandomAccessController::RegionHasAlignments() const {
     return m_hasAlignmentsInRegion;
 }
 

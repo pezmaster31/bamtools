@@ -53,8 +53,8 @@ class TcpSocket {
 
     // ctor & dtor
     public:
-        TcpSocket(void);
-        ~TcpSocket(void);
+        TcpSocket();
+        ~TcpSocket();
 
     // TcpSocket interface
     public:
@@ -66,30 +66,30 @@ class TcpSocket {
         bool ConnectToHost(const std::string& hostName,
                            const std::string& port,    // Connect("host", "80")
                            IBamIODevice::OpenMode mode = IBamIODevice::ReadOnly);
-        void DisconnectFromHost(void);
-        bool IsConnected(void) const;
+        void DisconnectFromHost();
+        bool IsConnected() const;
 
         // I/O methods
-        size_t BufferBytesAvailable(void) const;
-        bool CanReadLine(void) const;
-        void ClearBuffer(void); // force buffer to clear (not a 'flush', just a 'discard')
+        size_t BufferBytesAvailable() const;
+        bool CanReadLine() const;
+        void ClearBuffer(); // force buffer to clear (not a 'flush', just a 'discard')
         int64_t Read(char* data, const unsigned int numBytes);
         std::string ReadLine(int64_t max = 0);
         int64_t ReadLine(char* dest, size_t max);
-        bool WaitForReadLine(void);
+        bool WaitForReadLine();
         int64_t Write(const char* data, const unsigned int numBytes);
 
         // connection values
-        std::string GetHostName(void) const;
-//        HostAddress GetLocalAddress(void) const;
-//        uint16_t    GetLocalPort(void) const;
-        HostAddress GetRemoteAddress(void) const;
-        uint16_t    GetRemotePort(void) const;
+        std::string GetHostName() const;
+//        HostAddress GetLocalAddress() const;
+//        uint16_t    GetLocalPort() const;
+        HostAddress GetRemoteAddress() const;
+        uint16_t    GetRemotePort() const;
 
         // connection status
-        TcpSocket::SocketError GetError(void) const;
-        TcpSocket::SocketState GetState(void) const;
-        std::string GetErrorString(void) const;
+        TcpSocket::SocketError GetError() const;
+        TcpSocket::SocketState GetState() const;
+        std::string GetErrorString() const;
 
     // internal methods
     private:
@@ -97,8 +97,8 @@ class TcpSocket {
                          const std::string& port,
                          IBamIODevice::OpenMode mode);
         bool InitializeSocketEngine(HostAddress::NetworkProtocol protocol);
-        int64_t ReadFromSocket(void);
-        void ResetSocketEngine(void);
+        int64_t ReadFromSocket();
+        void ResetSocketEngine();
 
     // data members
     private:

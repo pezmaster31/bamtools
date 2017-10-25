@@ -33,10 +33,10 @@ bool isValidMagicNumber(const char* buffer) {
 // --------------------------
 
 // ctor
-BamHeader::BamHeader(void) { }
+BamHeader::BamHeader() { }
 
 // dtor
-BamHeader::~BamHeader(void) { }
+BamHeader::~BamHeader() { }
 
 // reads magic number from BGZF stream, returns true if valid
 void BamHeader::CheckMagicNumber(BgzfStream* stream) {
@@ -53,12 +53,12 @@ void BamHeader::CheckMagicNumber(BgzfStream* stream) {
 }
 
 // clear SamHeader data
-void BamHeader::Clear(void) {
+void BamHeader::Clear() {
     m_header.Clear();
 }
 
 // return true if SamHeader data is valid
-bool BamHeader::IsValid(void) const {
+bool BamHeader::IsValid() const {
     return m_header.IsValid();
 }
 
@@ -109,16 +109,16 @@ void BamHeader::ReadHeaderText(BgzfStream* stream, const uint32_t& length) {
 }
 
 // returns const-reference to SamHeader data object
-const SamHeader& BamHeader::ToConstSamHeader(void) const {
+const SamHeader& BamHeader::ToConstSamHeader() const {
     return m_header;
 }
 
 // returns *copy* of SamHeader data object
-SamHeader BamHeader::ToSamHeader(void) const {
+SamHeader BamHeader::ToSamHeader() const {
     return m_header;
 }
 
 // returns SAM-formatted string of header data
-std::string BamHeader::ToString(void) const {
+std::string BamHeader::ToString() const {
     return m_header.ToString();
 }

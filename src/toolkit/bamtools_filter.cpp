@@ -319,7 +319,7 @@ struct FilterTool::FilterSettings {
     // ---------------------------------
     // constructor
 
-    FilterSettings(void)
+    FilterSettings()
         : HasInput(false)
         , HasInputFilelist(false)
         , HasOutput(false)
@@ -369,22 +369,22 @@ class FilterTool::FilterToolPrivate {
     // ctor & dtor
     public:
         FilterToolPrivate(FilterTool::FilterSettings* settings);
-        ~FilterToolPrivate(void);
+        ~FilterToolPrivate();
 
     // 'public' interface
     public:
-        bool Run(void);
+        bool Run();
 
     // internal methods
     private:
         bool AddPropertyTokensToFilter(const std::string& filterName, const std::map<std::string, std::string>& propertyTokens);
         bool CheckAlignment(const BamAlignment& al);
-        const std::string GetScriptContents(void);
-        void InitProperties(void);
-        bool ParseCommandLine(void);
+        const std::string GetScriptContents();
+        void InitProperties();
+        bool ParseCommandLine();
         bool ParseFilterObject(const std::string& filterName, const Json::Value& filterObject);
-        bool ParseScript(void);
-        bool SetupFilters(void);
+        bool ParseScript();
+        bool SetupFilters();
 
     // data members
     private:
@@ -402,7 +402,7 @@ FilterTool::FilterToolPrivate::FilterToolPrivate(FilterTool::FilterSettings* set
 { }
 
 // destructor
-FilterTool::FilterToolPrivate::~FilterToolPrivate(void) { }
+FilterTool::FilterToolPrivate::~FilterToolPrivate() { }
 
 bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const std::string& filterName,
                                                               const std::map<std::string,
@@ -503,7 +503,7 @@ bool FilterTool::FilterToolPrivate::CheckAlignment(const BamAlignment& al) {
     return m_filterEngine.check(al);
 }
 
-const std::string FilterTool::FilterToolPrivate::GetScriptContents(void) {
+const std::string FilterTool::FilterToolPrivate::GetScriptContents() {
 
     // open script for reading
     FILE* inFile = fopen(m_settings->ScriptFilename.c_str(), "rb");
@@ -540,7 +540,7 @@ const std::string FilterTool::FilterToolPrivate::GetScriptContents(void) {
     return docStream.str();
 }
 
-void FilterTool::FilterToolPrivate::InitProperties(void) {
+void FilterTool::FilterToolPrivate::InitProperties() {
 
     // store property names in vector
     m_propertyNames.push_back(ALIGNMENTFLAG_PROPERTY);
@@ -575,7 +575,7 @@ void FilterTool::FilterToolPrivate::InitProperties(void) {
         m_filterEngine.addProperty((*propertyNameIter));
 }
 
-bool FilterTool::FilterToolPrivate::ParseCommandLine(void) {
+bool FilterTool::FilterToolPrivate::ParseCommandLine() {
 
     // add a rule set to filter engine
     const std::string CMD = "COMMAND_LINE";
@@ -635,7 +635,7 @@ bool FilterTool::FilterToolPrivate::ParseFilterObject(const std::string& filterN
     return AddPropertyTokensToFilter(filterName, propertyTokens);
 }
 
-bool FilterTool::FilterToolPrivate::ParseScript(void) {
+bool FilterTool::FilterToolPrivate::ParseScript() {
 
     // read in script contents from file
     const std::string document = GetScriptContents();
@@ -706,7 +706,7 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
     return success;
 }
 
-bool FilterTool::FilterToolPrivate::Run(void) {
+bool FilterTool::FilterToolPrivate::Run() {
 
     // set to default input if none provided
     if ( !m_settings->HasInput && !m_settings->HasInputFilelist )
@@ -822,7 +822,7 @@ bool FilterTool::FilterToolPrivate::Run(void) {
     return true;
 }
 
-bool FilterTool::FilterToolPrivate::SetupFilters(void) {
+bool FilterTool::FilterToolPrivate::SetupFilters() {
 
     // set up filter engine with supported properties
     InitProperties();
@@ -838,7 +838,7 @@ bool FilterTool::FilterToolPrivate::SetupFilters(void) {
 // ---------------------------------------------
 // FilterTool implementation
 
-FilterTool::FilterTool(void)
+FilterTool::FilterTool()
     : AbstractTool()
     , m_settings(new FilterSettings)
     , m_impl(0)
@@ -927,7 +927,7 @@ FilterTool::FilterTool(void)
     Options::AddValueOption("-isSingleton",         boolArg, isSingletonDesc,   "", m_settings->HasIsSingletonFilter,         m_settings->IsSingletonFilter,         AlignmentFlagOpts, TRUE_STR);
 }
 
-FilterTool::~FilterTool(void) {
+FilterTool::~FilterTool() {
 
     delete m_settings;
     m_settings = 0;
@@ -936,7 +936,7 @@ FilterTool::~FilterTool(void) {
     m_impl = 0;
 }
 
-int FilterTool::Help(void) {
+int FilterTool::Help() {
     Options::DisplayHelp();
     return 0;
 }

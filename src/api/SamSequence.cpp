@@ -41,10 +41,10 @@ using namespace BamTools;
     \brief corresponds to \@SQ UR:\<URI\>
 */
 
-/*! \fn SamSequence::SamSequence(void)
+/*! \fn SamSequence::SamSequence()
     \brief default constructor
 */
-SamSequence::SamSequence(void)
+SamSequence::SamSequence()
     : AssemblyID("")
     , Checksum("")
     , Length("")
@@ -101,15 +101,15 @@ SamSequence::SamSequence(const SamSequence& other)
     , CustomTags(other.CustomTags)
 { }
 
-/*! \fn SamSequence::~SamSequence(void)
+/*! \fn SamSequence::~SamSequence()
     \brief destructor
 */
-SamSequence::~SamSequence(void) { }
+SamSequence::~SamSequence() { }
 
-/*! \fn void SamSequence::Clear(void)
+/*! \fn void SamSequence::Clear()
     \brief Clears all data fields.
 */
-void SamSequence::Clear(void) {
+void SamSequence::Clear() {
     AssemblyID.clear();
     Checksum.clear();
     Length.clear();
@@ -119,44 +119,44 @@ void SamSequence::Clear(void) {
     CustomTags.clear();
 }
 
-/*! \fn bool SamSequence::HasAssemblyID(void) const
+/*! \fn bool SamSequence::HasAssemblyID() const
     \brief Returns \c true if sequence contains \@SQ AS:\<AssemblyID\>
 */
-bool SamSequence::HasAssemblyID(void) const {
+bool SamSequence::HasAssemblyID() const {
     return (!AssemblyID.empty());
 }
 
-/*! \fn bool SamSequence::HasChecksum(void) const
+/*! \fn bool SamSequence::HasChecksum() const
     \brief Returns \c true if sequence contains \@SQ M5:\<Checksum\>
 */
-bool SamSequence::HasChecksum(void) const {
+bool SamSequence::HasChecksum() const {
     return (!Checksum.empty());
 }
 
-/*! \fn bool SamSequence::HasLength(void) const
+/*! \fn bool SamSequence::HasLength() const
     \brief Returns \c true if sequence contains \@SQ LN:\<Length\>
 */
-bool SamSequence::HasLength(void) const {
+bool SamSequence::HasLength() const {
     return (!Length.empty());
 }
 
-/*! \fn bool SamSequence::HasName(void) const
+/*! \fn bool SamSequence::HasName() const
     \brief Returns \c true if sequence contains \@SQ SN:\<Name\>
 */
-bool SamSequence::HasName(void) const {
+bool SamSequence::HasName() const {
     return (!Name.empty());
 }
 
-/*! \fn bool SamSequence::HasSpecies(void) const
+/*! \fn bool SamSequence::HasSpecies() const
     \brief Returns \c true if sequence contains \@SQ SP:\<Species\>
 */
-bool SamSequence::HasSpecies(void) const {
+bool SamSequence::HasSpecies() const {
     return (!Species.empty());
 }
 
-/*! \fn bool SamSequence::HasURI(void) const
+/*! \fn bool SamSequence::HasURI() const
     \brief Returns \c true if sequence contains \@SQ UR:\<URI\>
 */
-bool SamSequence::HasURI(void) const {
+bool SamSequence::HasURI() const {
     return (!URI.empty());
 }

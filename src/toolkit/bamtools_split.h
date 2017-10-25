@@ -18,11 +18,11 @@ namespace BamTools {
 class SplitTool : public AbstractTool {
 
     public:
-        SplitTool(void);
-        ~SplitTool(void);
+        SplitTool();
+        ~SplitTool();
 
     public:
-        int Help(void);
+        int Help();
         int Run(int argc, char* argv[]);
 
     private:

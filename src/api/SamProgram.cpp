@@ -39,10 +39,10 @@ using namespace BamTools;
     Holds ID of the "next" program record in a SamProgramChain
 */
 
-/*! \fn SamProgram::SamProgram(void)
+/*! \fn SamProgram::SamProgram()
     \brief default constructor
 */
-SamProgram::SamProgram(void)
+SamProgram::SamProgram()
     : CommandLine("")
     , ID("")
     , Name("")
@@ -78,15 +78,15 @@ SamProgram::SamProgram(const SamProgram& other)
     , NextProgramID(other.NextProgramID)
 { }
 
-/*! \fn SamProgram::~SamProgram(void)
+/*! \fn SamProgram::~SamProgram()
     \brief destructor
 */
-SamProgram::~SamProgram(void) { }
+SamProgram::~SamProgram() { }
 
-/*! \fn void SamProgram::Clear(void)
+/*! \fn void SamProgram::Clear()
     \brief Clears all data fields.
 */
-void SamProgram::Clear(void) {
+void SamProgram::Clear() {
     CommandLine.clear();
     ID.clear();
     Name.clear();
@@ -95,45 +95,45 @@ void SamProgram::Clear(void) {
     NextProgramID.clear();
 }
 
-/*! \fn bool SamProgram::HasCommandLine(void) const
+/*! \fn bool SamProgram::HasCommandLine() const
     \brief Returns \c true if program record contains \@PG: CL:\<CommandLine\>
 */
-bool SamProgram::HasCommandLine(void) const {
+bool SamProgram::HasCommandLine() const {
     return (!CommandLine.empty());
 }
 
-/*! \fn bool SamProgram::HasID(void) const
+/*! \fn bool SamProgram::HasID() const
     \brief Returns \c true if program record contains \@PG: ID:\<ID\>
 */
-bool SamProgram::HasID(void) const {
+bool SamProgram::HasID() const {
     return (!ID.empty());
 }
 
-/*! \fn bool SamProgram::HasName(void) const
+/*! \fn bool SamProgram::HasName() const
     \brief Returns \c true if program record contains \@PG: PN:\<Name\>
 */
-bool SamProgram::HasName(void) const {
+bool SamProgram::HasName() const {
     return (!Name.empty());
 }
 
-/*! \fn bool SamProgram::HasNextProgramID(void) const
+/*! \fn bool SamProgram::HasNextProgramID() const
     \internal
     \return true if program has a "next" record in a SamProgramChain
 */
-bool SamProgram::HasNextProgramID(void) const {
+bool SamProgram::HasNextProgramID() const {
     return (!NextProgramID.empty());
 }
 
-/*! \fn bool SamProgram::HasPreviousProgramID(void) const
+/*! \fn bool SamProgram::HasPreviousProgramID() const
     \brief Returns \c true if program record contains \@PG: PP:\<PreviousProgramID\>
 */
-bool SamProgram::HasPreviousProgramID(void) const {
+bool SamProgram::HasPreviousProgramID() const {
     return (!PreviousProgramID.empty());
 }
 
-/*! \fn bool SamProgram::HasVersion(void) const
+/*! \fn bool SamProgram::HasVersion() const
     \brief Returns \c true if program record contains \@PG: VN:\<Version\>
 */
-bool SamProgram::HasVersion(void) const {
+bool SamProgram::HasVersion() const {
     return (!Version.empty());
 }

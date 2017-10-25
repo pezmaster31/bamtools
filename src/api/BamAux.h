@@ -112,23 +112,23 @@ struct API_EXPORT BamRegion {
     { }
 
     //! Clears region boundaries
-    void clear(void) {
+    void clear() {
         LeftRefID  = -1; LeftPosition  = -1;
         RightRefID = -1; RightPosition = -1;
     }
 
     //! Returns true if region has a left boundary
-    bool isLeftBoundSpecified(void) const {
+    bool isLeftBoundSpecified() const {
         return ( LeftRefID >= 0 && LeftPosition >= 0 );
     }
 
     //! Returns true if region boundaries are not defined
-    bool isNull(void) const {
+    bool isNull() const {
         return ( !isLeftBoundSpecified() && !isRightBoundSpecified() );
     }
 
     //! Returns true if region has a right boundary
-    bool isRightBoundSpecified(void) const {
+    bool isRightBoundSpecified() const {
         return ( RightRefID >= 0 && RightPosition >= 1 );
     }
 };
@@ -240,11 +240,11 @@ API_EXPORT inline void SwapEndian_64p(char* data) {
     SwapEndian_64(value);
 }
 
-/*! \fn bool SystemIsBigEndian(void)
+/*! \fn bool SystemIsBigEndian()
     \brief checks host architecture's byte order
     \return \c true if system uses big-endian ordering
 */
-API_EXPORT inline bool SystemIsBigEndian(void) {
+API_EXPORT inline bool SystemIsBigEndian() {
    const uint16_t one = 0x0001;
    return ((*(char*) &one) == 0 );
 }
@@ -466,12 +466,12 @@ struct RaiiBuffer {
         , NumBytes(n)
     { }
 
-    ~RaiiBuffer(void) {
+    ~RaiiBuffer() {
         delete[] Buffer;
     }
 
     // add'l methods
-    void Clear(void) {
+    void Clear() {
         memset(Buffer, 0, NumBytes);
     }
 };

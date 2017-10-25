@@ -17,11 +17,11 @@ namespace BamTools {
 class MergeTool : public AbstractTool {
 
     public:
-        MergeTool(void);
-        ~MergeTool(void);
+        MergeTool();
+        ~MergeTool();
 
     public:
-        int Help(void);
+        int Help();
         int Run(int argc, char* argv[]);
 
     private:

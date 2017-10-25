@@ -37,7 +37,7 @@ class SamHeaderValidator {
     // ctor & dtor
     public:
         SamHeaderValidator(const SamHeader& header);
-        ~SamHeaderValidator(void);
+        ~SamHeaderValidator();
 
     // SamHeaderValidator interface
     public:
@@ -46,36 +46,36 @@ class SamHeaderValidator {
         void PrintMessages(std::ostream& stream);
 
         // validates SamHeader data, returns true/false accordingly
-        bool Validate(void);
+        bool Validate();
 
     // internal methods
     private:
 
         // validate header metadata
-        bool ValidateMetadata(void);
-        bool ValidateVersion(void);
+        bool ValidateMetadata();
+        bool ValidateVersion();
         bool ContainsOnlyDigits(const std::string& s);
-        bool ValidateSortOrder(void);
-        bool ValidateGroupOrder(void);
+        bool ValidateSortOrder();
+        bool ValidateGroupOrder();
 
         // validate sequence dictionary
-        bool ValidateSequenceDictionary(void);
-        bool ContainsUniqueSequenceNames(void);
+        bool ValidateSequenceDictionary();
+        bool ContainsUniqueSequenceNames();
         bool CheckNameFormat(const std::string& name);
         bool ValidateSequence(const SamSequence& seq);
         bool CheckLengthInRange(const std::string& length);
 
         // validate read group dictionary
-        bool ValidateReadGroupDictionary(void);
-        bool ContainsUniqueIDsAndPlatformUnits(void);
+        bool ValidateReadGroupDictionary();
+        bool ContainsUniqueIDsAndPlatformUnits();
         bool ValidateReadGroup(const SamReadGroup& rg);
         bool CheckReadGroupID(const std::string& id);
         bool CheckSequencingTechnology(const std::string& technology);
 
         // validate program data
-        bool ValidateProgramChain(void);
-        bool ContainsUniqueProgramIds(void);
-        bool ValidatePreviousProgramIds(void);
+        bool ValidateProgramChain();
+        bool ContainsUniqueProgramIds();
+        bool ValidatePreviousProgramIds();
 
         // error reporting
         void AddError(const std::string& message);

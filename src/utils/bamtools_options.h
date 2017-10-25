@@ -57,7 +57,7 @@ struct UTILS_EXPORT Option {
     Variant DefaultValue;
 
     // constructor
-    Option(void)
+    Option()
         : StoreValue(true)
         , HasDefaultValue(false)
     { }
@@ -75,7 +75,7 @@ struct UTILS_EXPORT OptionValue {
     Variant VariantValue;
 
     // constructor
-    OptionValue(void)
+    OptionValue()
         : pFoundArgument(NULL)
         , pValue(NULL)
         , UseVector(false)
@@ -125,7 +125,7 @@ class UTILS_EXPORT Options {
         // creates an option group
         static OptionGroup* CreateOptionGroup(const std::string& groupName);
         // displays the help menu
-        static void DisplayHelp(void);
+        static void DisplayHelp();
         // parses the command line
         static void Parse(int argc, char* argv[], int offset = 0);
         // sets the program info
@@ -133,9 +133,9 @@ class UTILS_EXPORT Options {
                                    const std::string& description,
                                    const std::string& arguments);
         // returns string representation of stdin
-        static const std::string& StandardIn(void);
+        static const std::string& StandardIn();
         // returns string representation of stdout
-        static const std::string& StandardOut(void);
+        static const std::string& StandardOut();
 
     // static data members
     private:

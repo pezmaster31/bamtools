@@ -27,9 +27,9 @@ class API_EXPORT SamProgramChain {
 
     // ctor & dtor
     public:
-        SamProgramChain(void);
+        SamProgramChain();
         SamProgramChain(const SamProgramChain& other);
-        ~SamProgramChain(void);
+        ~SamProgramChain();
 
     // query/modify program data
     public:
@@ -38,37 +38,37 @@ class API_EXPORT SamProgramChain {
         void Add(std::vector<SamProgram>& programs);
 
         // clears all read group entries
-        void Clear(void);
+        void Clear();
 
         // returns true if chain contains this program record (matches on ID)
         bool Contains(const SamProgram& program) const;
         bool Contains(const std::string& programId) const;
 
         // returns the first (oldest) program in the chain
-        SamProgram& First(void);
-        const SamProgram& First(void) const;
+        SamProgram& First();
+        const SamProgram& First() const;
 
         // returns true if chain is empty
-        bool IsEmpty(void) const;
+        bool IsEmpty() const;
 
         // returns last (most recent) program in the chain
-        SamProgram& Last(void);
-        const SamProgram& Last(void) const;
+        SamProgram& Last();
+        const SamProgram& Last() const;
 
         // returns number of program records in the chain
-        int Size(void) const;
+        int Size() const;
 
         // retrieves a modifiable reference to the SamProgram object associated with this ID
         SamProgram& operator[](const std::string& programId);
 
     // retrieve STL-compatible iterators
     public:
-        SamProgramIterator      Begin(void);              // returns iterator to begin()
-        SamProgramConstIterator Begin(void) const;        // returns const_iterator to begin()
-        SamProgramConstIterator ConstBegin(void) const;   // returns const_iterator to begin()
-        SamProgramIterator      End(void);                // returns iterator to end()
-        SamProgramConstIterator End(void) const;          // returns const_iterator to end()
-        SamProgramConstIterator ConstEnd(void) const;     // returns const_iterator to end()
+        SamProgramIterator      Begin();              // returns iterator to begin()
+        SamProgramConstIterator Begin() const;        // returns const_iterator to begin()
+        SamProgramConstIterator ConstBegin() const;   // returns const_iterator to begin()
+        SamProgramIterator      End();                // returns iterator to end()
+        SamProgramConstIterator End() const;          // returns const_iterator to end()
+        SamProgramConstIterator ConstEnd() const;     // returns const_iterator to end()
 
     // internal methods
     private:

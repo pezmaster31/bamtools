@@ -13,16 +13,16 @@ using namespace BamTools::Internal;
 
 #include <cstdio>
 
-ILocalIODevice::ILocalIODevice(void)
+ILocalIODevice::ILocalIODevice()
     : IBamIODevice()
     , m_stream(0)
 { }
 
-ILocalIODevice::~ILocalIODevice(void) {
+ILocalIODevice::~ILocalIODevice() {
     Close();
 }
 
-void ILocalIODevice::Close(void) {
+void ILocalIODevice::Close() {
 
     // skip if not open
     if ( !IsOpen() )
@@ -43,7 +43,7 @@ int64_t ILocalIODevice::Read(char* data, const unsigned int numBytes) {
     return static_cast<int64_t>( fread(data, sizeof(char), numBytes, m_stream) );
 }
 
-int64_t ILocalIODevice::Tell(void) const {
+int64_t ILocalIODevice::Tell() const {
     BT_ASSERT_X( m_stream, "ILocalIODevice::Tell: trying to get file position fromnull stream" );
     return ftell64(m_stream);
 }

@@ -29,14 +29,14 @@ class ILocalIODevice : public IBamIODevice {
 
     // ctor & dtor
     public:
-        ILocalIODevice(void);
-        virtual ~ILocalIODevice(void);
+        ILocalIODevice();
+        virtual ~ILocalIODevice();
 
     // IBamIODevice implementation
     public:
-        virtual void Close(void);
+        virtual void Close();
         virtual int64_t Read(char* data, const unsigned int numBytes);
-        virtual int64_t Tell(void) const;
+        virtual int64_t Tell() const;
         virtual int64_t Write(const char* data, const unsigned int numBytes);
 
     // data members

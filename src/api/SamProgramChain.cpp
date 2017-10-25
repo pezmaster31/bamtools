@@ -25,10 +25,10 @@ using namespace BamTools;
     Instead use First()/Last() to access oldest/newest records, respectively.
 */
 
-/*! \fn SamProgramChain::SamProgramChain(void)
+/*! \fn SamProgramChain::SamProgramChain()
     \brief constructor
 */
-SamProgramChain::SamProgramChain(void) { }
+SamProgramChain::SamProgramChain() { }
 
 /*! \fn SamProgramChain::SamProgramChain(const SamProgramChain& other)
     \brief copy constructor
@@ -37,10 +37,10 @@ SamProgramChain::SamProgramChain(const SamProgramChain& other)
     : m_data(other.m_data)
 { }
 
-/*! \fn SamProgramChain::~SamProgramChain(void)
+/*! \fn SamProgramChain::~SamProgramChain()
     \brief destructor
 */
-SamProgramChain::~SamProgramChain(void) { }
+SamProgramChain::~SamProgramChain() { }
 
 /*! \fn void SamProgramChain::Add(SamProgram& program)
     \brief Appends a program to program chain.
@@ -84,45 +84,45 @@ void SamProgramChain::Add(std::vector<SamProgram>& programs) {
         Add(*pgIter);
 }
 
-/*! \fn SamProgramIterator SamProgramChain::Begin(void)
+/*! \fn SamProgramIterator SamProgramChain::Begin()
     \return an STL iterator pointing to the first (oldest) program record
     \sa ConstBegin(), End(), First()
 */
-SamProgramIterator SamProgramChain::Begin(void) {
+SamProgramIterator SamProgramChain::Begin() {
     return m_data.begin();
 }
 
-/*! \fn SamProgramConstIterator SamProgramChain::Begin(void) const
+/*! \fn SamProgramConstIterator SamProgramChain::Begin() const
     \return an STL const_iterator pointing to the first (oldest) program record
 
     This is an overloaded function.
 
     \sa ConstBegin(), End(), First()
 */
-SamProgramConstIterator SamProgramChain::Begin(void) const {
+SamProgramConstIterator SamProgramChain::Begin() const {
     return m_data.begin();
 }
 
-/*! \fn void SamProgramChain::Clear(void)
+/*! \fn void SamProgramChain::Clear()
     \brief Clears all program records.
 */
-void SamProgramChain::Clear(void) {
+void SamProgramChain::Clear() {
     m_data.clear();
 }
 
-/*! \fn SamProgramConstIterator SamProgramChain::ConstBegin(void) const
+/*! \fn SamProgramConstIterator SamProgramChain::ConstBegin() const
     \return an STL const_iterator pointing to the first (oldest) program record
     \sa Begin(), ConstEnd(), First()
 */
-SamProgramConstIterator SamProgramChain::ConstBegin(void) const {
+SamProgramConstIterator SamProgramChain::ConstBegin() const {
     return m_data.begin();
 }
 
-/*! \fn SamProgramConstIterator SamProgramChain::ConstEnd(void) const
+/*! \fn SamProgramConstIterator SamProgramChain::ConstEnd() const
     \return an STL const_iterator pointing to the imaginary entry after the last (newest) program record
     \sa ConstBegin(), End(), Last()
 */
-SamProgramConstIterator SamProgramChain::ConstEnd(void) const {
+SamProgramConstIterator SamProgramChain::ConstEnd() const {
     return m_data.end();
 }
 
@@ -148,26 +148,26 @@ bool SamProgramChain::Contains(const std::string& programId) const {
     return ( IndexOf(programId) != (int)m_data.size() );
 }
 
-/*! \fn SamProgramIterator SamProgramChain::End(void)
+/*! \fn SamProgramIterator SamProgramChain::End()
     \return an STL iterator pointing to the imaginary entry after the last (newest) program record
     \sa Begin(), ConstEnd(), Last()
 */
-SamProgramIterator SamProgramChain::End(void) {
+SamProgramIterator SamProgramChain::End() {
     return m_data.end();
 }
 
-/*! \fn SamProgramConstIterator SamProgramChain::End(void) const
+/*! \fn SamProgramConstIterator SamProgramChain::End() const
     \return an STL const_iterator pointing to the imaginary entry after the last (newest) program record
 
     This is an overloaded function.
 
     \sa Begin(), ConstEnd(), Last()
 */
-SamProgramConstIterator SamProgramChain::End(void) const {
+SamProgramConstIterator SamProgramChain::End() const {
     return m_data.end();
 }
 
-/*! \fn SamProgram& SamProgramChain::First(void)
+/*! \fn SamProgram& SamProgramChain::First()
     \brief Fetches first (oldest) record in the chain.
 
     \warning This function will fail if the chain is empty. If this is possible,
@@ -176,7 +176,7 @@ SamProgramConstIterator SamProgramChain::End(void) const {
     \return a modifiable reference to the first (oldest) program entry
     \sa Begin(), Last()
 */
-SamProgram& SamProgramChain::First(void) {
+SamProgram& SamProgramChain::First() {
 
     // find first record in container that has no PreviousProgramID entry
     SamProgramIterator iter = Begin();
@@ -192,7 +192,7 @@ SamProgram& SamProgramChain::First(void) {
     std::exit(EXIT_FAILURE);
 }
 
-/*! \fn const SamProgram& SamProgramChain::First(void) const
+/*! \fn const SamProgram& SamProgramChain::First() const
     \brief Fetches first (oldest) record in the chain.
 
     This is an overloaded function.
@@ -203,7 +203,7 @@ SamProgram& SamProgramChain::First(void) {
     \return a read-only reference to the first (oldest) program entry
     \sa Begin(), ConstBegin(), Last()
 */
-const SamProgram& SamProgramChain::First(void) const {
+const SamProgram& SamProgramChain::First() const {
 
     // find first record in container that has no PreviousProgramID entry
     SamProgramConstIterator iter = ConstBegin();
@@ -236,15 +236,15 @@ int SamProgramChain::IndexOf(const std::string& programId) const {
     return distance( begin, iter );
 }
 
-/*! \fn bool SamProgramChain::IsEmpty(void) const
+/*! \fn bool SamProgramChain::IsEmpty() const
     \brief Returns \c true if chain contains no records
     \sa Size()
 */
-bool SamProgramChain::IsEmpty(void) const {
+bool SamProgramChain::IsEmpty() const {
     return m_data.empty();
 }
 
-/*! \fn SamProgram& SamProgramChain::Last(void)
+/*! \fn SamProgram& SamProgramChain::Last()
     \brief Fetches last (newest) record in the chain.
 
     \warning This function will fail if the chain is empty. If this is possible,
@@ -253,7 +253,7 @@ bool SamProgramChain::IsEmpty(void) const {
     \return a modifiable reference to the last (newest) program entry
     \sa End(), First()
 */
-SamProgram& SamProgramChain::Last(void) {
+SamProgram& SamProgramChain::Last() {
     // find first record in container that has no NextProgramID entry
     SamProgramIterator iter = Begin();
     SamProgramIterator end  = End();
@@ -268,7 +268,7 @@ SamProgram& SamProgramChain::Last(void) {
     std::exit(EXIT_FAILURE);
 }
 
-/*! \fn const SamProgram& SamProgramChain::Last(void) const
+/*! \fn const SamProgram& SamProgramChain::Last() const
     \brief Fetches last (newest) record in the chain.
 
     This is an overloaded function.
@@ -279,7 +279,7 @@ SamProgram& SamProgramChain::Last(void) {
     \return a read-only reference to the last (newest) program entry
     \sa End(), ConstEnd(), First()
 */
-const SamProgram& SamProgramChain::Last(void) const {
+const SamProgram& SamProgramChain::Last() const {
     // find first record in container that has no NextProgramID entry
     SamProgramConstIterator iter = ConstBegin();
     SamProgramConstIterator end  = ConstEnd();
@@ -319,11 +319,11 @@ const std::string SamProgramChain::NextIdFor(const std::string& programId) const
     return std::string();
 }
 
-/*! \fn int SamProgramChain::Size(void) const
+/*! \fn int SamProgramChain::Size() const
     \brief Returns number of program records in the chain.
     \sa IsEmpty()
 */
-int SamProgramChain::Size(void) const {
+int SamProgramChain::Size() const {
     return m_data.size();
 }
 

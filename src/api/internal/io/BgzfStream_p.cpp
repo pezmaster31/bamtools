@@ -29,7 +29,7 @@ using namespace BamTools::Internal;
 // ---------------------------
 
 // constructor
-BgzfStream::BgzfStream(void)
+BgzfStream::BgzfStream()
   : m_blockLength(0)
   , m_blockOffset(0)
   , m_blockAddress(0)
@@ -40,7 +40,7 @@ BgzfStream::BgzfStream(void)
 { }
 
 // destructor
-BgzfStream::~BgzfStream(void) {
+BgzfStream::~BgzfStream() {
     Close();
 }
 
@@ -57,7 +57,7 @@ bool BgzfStream::CheckBlockHeader(char* header) {
 }
 
 // closes BGZF file
-void BgzfStream::Close(void) {
+void BgzfStream::Close() {
 
     // skip if no device open
     if ( m_device == 0 ) return;
@@ -194,7 +194,7 @@ size_t BgzfStream::DeflateBlock(int32_t blockLength) {
 }
 
 // flushes the data in the BGZF block
-void BgzfStream::FlushBlock(void) {
+void BgzfStream::FlushBlock() {
 
     BT_ASSERT_X( m_device, "BgzfStream::FlushBlock() - attempting to flush to null device" );
 
@@ -261,7 +261,7 @@ size_t BgzfStream::InflateBlock(const size_t& blockLength) {
     return zs.total_out;
 }
 
-bool BgzfStream::IsOpen(void) const {
+bool BgzfStream::IsOpen() const {
     if ( m_device == 0 )
         return false;
     return m_device->IsOpen();
@@ -334,7 +334,7 @@ size_t BgzfStream::Read(char* data, const size_t dataLength) {
 }
 
 // reads a BGZF block
-void BgzfStream::ReadBlock(void) {
+void BgzfStream::ReadBlock() {
 
     BT_ASSERT_X( m_device, "BgzfStream::ReadBlock() - trying to read from null IO device");
 
@@ -425,7 +425,7 @@ void BgzfStream::SetWriteCompressed(bool ok) {
 }
 
 // get file position in BGZF file
-int64_t BgzfStream::Tell(void) const {
+int64_t BgzfStream::Tell() const {
     if ( !IsOpen() )
         return 0;
     return ( (m_blockAddress << 16) | (m_blockOffset & 0xFFFF) );

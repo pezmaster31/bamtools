@@ -32,24 +32,24 @@ class BamHeader {
 
     // ctor & dtor
     public:
-        BamHeader(void);
-        ~BamHeader(void);
+        BamHeader();
+        ~BamHeader();
 
     // BamHeader interface
     public:
         // clear SamHeader data
-        void Clear(void);
+        void Clear();
         // return true if SamHeader data is valid
-        bool IsValid(void) const;
+        bool IsValid() const;
         // load BAM header ('magic number' and SAM header text) from BGZF stream
         // returns true if all OK
         void Load(BgzfStream* stream);
         // returns (read-only) reference to SamHeader data object
-        const SamHeader& ToConstSamHeader(void) const;
+        const SamHeader& ToConstSamHeader() const;
         // returns (editable) copy of SamHeader data object
-        SamHeader ToSamHeader(void) const;
+        SamHeader ToSamHeader() const;
         // returns SAM-formatted string of header data
-        std::string ToString(void) const;
+        std::string ToString() const;
 
     // internal methods
     private:

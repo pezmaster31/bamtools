@@ -39,11 +39,11 @@ struct Fasta::FastaPrivate {
     std::vector<FastaIndexData> Index;
 
     // ctor
-    FastaPrivate(void);
-    ~FastaPrivate(void);
+    FastaPrivate();
+    ~FastaPrivate();
 
     // 'public' API methods
-    bool Close(void);
+    bool Close();
     bool CreateIndex(const std::string& indexFilename);
     bool GetBase(const int& refId, const int& position, char& base);
     bool GetSequence(const int& refId, const int& start, const int& stop, std::string& sequence);
@@ -55,18 +55,18 @@ struct Fasta::FastaPrivate {
         bool GetNameFromHeader(const std::string& header, std::string& name);
         bool GetNextHeader(std::string& header);
         bool GetNextSequence(std::string& sequence);
-        bool LoadIndexData(void);
-        bool Rewind(void);
-        bool WriteIndexData(void);
+        bool LoadIndexData();
+        bool Rewind();
+        bool WriteIndexData();
 };
 
-Fasta::FastaPrivate::FastaPrivate(void)
+Fasta::FastaPrivate::FastaPrivate()
     : IsOpen(false)
     , HasIndex(false)
     , IsIndexOpen(false)
 { }
 
-Fasta::FastaPrivate::~FastaPrivate(void) {
+Fasta::FastaPrivate::~FastaPrivate() {
     Close();
 }
 
@@ -91,7 +91,7 @@ void Fasta::FastaPrivate::Chomp(char* sequence) {
     }
 }
 
-bool Fasta::FastaPrivate::Close(void) {
+bool Fasta::FastaPrivate::Close() {
 
     // close fasta file
     if ( IsOpen ) {
@@ -477,7 +477,7 @@ bool Fasta::FastaPrivate::GetSequence(const int& refId, const int& start, const 
     return true;
 }
 
-bool Fasta::FastaPrivate::LoadIndexData(void) {
+bool Fasta::FastaPrivate::LoadIndexData() {
 
     // skip if no index file available
     if ( !IsIndexOpen ) return false;
@@ -553,12 +553,12 @@ bool Fasta::FastaPrivate::Open(const std::string& filename, const std::string& i
     return success;
 }
 
-bool Fasta::FastaPrivate::Rewind(void) {
+bool Fasta::FastaPrivate::Rewind() {
     if ( !IsOpen ) return false;
     return ( fseeko(Stream, 0, SEEK_SET) == 0 );
 }
 
-bool Fasta::FastaPrivate::WriteIndexData(void) {
+bool Fasta::FastaPrivate::WriteIndexData() {
 
     // skip if no index file available
     if ( !IsIndexOpen ) return false;
@@ -592,16 +592,16 @@ bool Fasta::FastaPrivate::WriteIndexData(void) {
 // --------------------------------
 // Fasta implementation
 
-Fasta::Fasta(void) {
+Fasta::Fasta() {
     d = new FastaPrivate;
 }
 
-Fasta::~Fasta(void) {
+Fasta::~Fasta() {
     delete d;
     d = 0;
 }
 
-bool Fasta::Close(void) {
+bool Fasta::Close() {
     return d->Close();
 }
 

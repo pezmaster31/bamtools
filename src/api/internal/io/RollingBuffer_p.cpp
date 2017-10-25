@@ -34,9 +34,9 @@ RollingBuffer::RollingBuffer(size_t growth)
     Clear();
 }
 
-RollingBuffer::~RollingBuffer(void) { }
+RollingBuffer::~RollingBuffer() { }
 
-size_t RollingBuffer::BlockSize(void) const {
+size_t RollingBuffer::BlockSize() const {
 
     // if only one byte array in buffer <- needed?
     if ( m_tailBufferIndex == 0 )
@@ -47,7 +47,7 @@ size_t RollingBuffer::BlockSize(void) const {
     return first.Size() - m_head;
 }
 
-bool RollingBuffer::CanReadLine(void) const {
+bool RollingBuffer::CanReadLine() const {
     return IndexOf('\n') != std::string::npos;
 }
 
@@ -95,7 +95,7 @@ void RollingBuffer::Chop(size_t n) {
         Clear();
 }
 
-void RollingBuffer::Clear(void) {
+void RollingBuffer::Clear() {
 
     // remove all byte arrays (except first)
     m_data.erase( m_data.begin()+1, m_data.end() );
@@ -196,7 +196,7 @@ size_t RollingBuffer::IndexOf(char c) const {
     return std::string::npos;
 }
 
-bool RollingBuffer::IsEmpty(void) const {
+bool RollingBuffer::IsEmpty() const {
     return (m_tailBufferIndex == 0) && (m_tail == 0);
 }
 
@@ -245,7 +245,7 @@ size_t RollingBuffer::ReadLine(char* dest, size_t max) {
     return bytesReadSoFar;
 }
 
-const char* RollingBuffer::ReadPointer(void) const {
+const char* RollingBuffer::ReadPointer() const {
 
     // return null if empty buffer
     if ( m_data.empty() )
@@ -303,7 +303,7 @@ char* RollingBuffer::Reserve(size_t n) {
     return m_data[m_tailBufferIndex].Data();
 }
 
-size_t RollingBuffer::Size(void) const {
+size_t RollingBuffer::Size() const {
     return m_totalBufferSize;
 }
 

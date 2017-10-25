@@ -17,11 +17,11 @@ namespace BamTools {
 class RevertTool : public AbstractTool {
 
     public:
-        RevertTool(void);
-        ~RevertTool(void);
+        RevertTool();
+        ~RevertTool();
 
     public:
-        int Help(void);
+        int Help();
         int Run(int argc, char* argv[]);
 
     private:

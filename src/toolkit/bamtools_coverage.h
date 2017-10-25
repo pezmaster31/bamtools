@@ -17,11 +17,11 @@ namespace BamTools {
 class CoverageTool : public AbstractTool {
 
     public:
-        CoverageTool(void);
-        ~CoverageTool(void);
+        CoverageTool();
+        ~CoverageTool();
 
     public:
-        int Help(void);
+        int Help();
         int Run(int argc, char* argv[]);
 
     private:

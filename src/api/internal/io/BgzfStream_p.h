@@ -34,15 +34,15 @@ class BgzfStream {
 
     // constructor & destructor
     public:
-        BgzfStream(void);
-        ~BgzfStream(void);
+        BgzfStream();
+        ~BgzfStream();
 
     // main interface methods
     public:
         // closes BGZF file
-        void Close(void);
+        void Close();
         // returns true if BgzfStream open for IO
-        bool IsOpen(void) const;
+        bool IsOpen() const;
         // opens the BGZF file
         void Open(const std::string& filename, const IBamIODevice::OpenMode mode);
         // reads BGZF data into a byte buffer
@@ -54,7 +54,7 @@ class BgzfStream {
         // enable/disable compressed output
         void SetWriteCompressed(bool ok);
         // get file position in BGZF file
-        int64_t Tell(void) const;
+        int64_t Tell() const;
         // writes the supplied data into the BGZF buffer
         size_t Write(const char* data, const size_t dataLength);
 
@@ -63,11 +63,11 @@ class BgzfStream {
         // compresses the current block
         size_t DeflateBlock(int32_t blockLength);
         // flushes the data in the BGZF block
-        void FlushBlock(void);
+        void FlushBlock();
         // de-compresses the current block
         size_t InflateBlock(const size_t& blockLength);
         // reads a BGZF block
-        void ReadBlock(void);
+        void ReadBlock();
 
     // static 'utility' methods
     public:

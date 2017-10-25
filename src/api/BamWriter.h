@@ -35,17 +35,17 @@ class API_EXPORT BamWriter {
 
     // ctor & dtor
     public:
-        BamWriter(void);
-        ~BamWriter(void);
+        BamWriter();
+        ~BamWriter();
 
     // public interface
     public:
         //  closes the current BAM file
-        void Close(void);
+        void Close();
         // returns a human-readable description of the last error that occurred
-        std::string GetErrorString(void) const;
+        std::string GetErrorString() const;
         // returns true if BAM file is open for writing
-        bool IsOpen(void) const;
+        bool IsOpen() const;
         // opens a BAM file for writing
         bool Open(const std::string& filename,
                   const std::string& samHeaderText,

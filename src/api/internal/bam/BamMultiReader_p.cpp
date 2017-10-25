@@ -22,19 +22,19 @@ using namespace BamTools::Internal;
 #include <sstream>
 
 // ctor
-BamMultiReaderPrivate::BamMultiReaderPrivate(void)
+BamMultiReaderPrivate::BamMultiReaderPrivate()
     : m_alignmentCache(0)
     , m_hasUserMergeOrder(false)
     , m_mergeOrder(BamMultiReader::RoundRobinMerge)
 { }
 
 // dtor
-BamMultiReaderPrivate::~BamMultiReaderPrivate(void) {
+BamMultiReaderPrivate::~BamMultiReaderPrivate() {
     Close();
 }
 
 // close all BAM files
-bool BamMultiReaderPrivate::Close(void) {
+bool BamMultiReaderPrivate::Close() {
 
     m_errorString.clear();
 
@@ -170,7 +170,7 @@ bool BamMultiReaderPrivate::CreateIndexes(const BamIndex::IndexType& type) {
         return true;
 }
 
-IMultiMerger* BamMultiReaderPrivate::CreateAlignmentCache(void) {
+IMultiMerger* BamMultiReaderPrivate::CreateAlignmentCache() {
 
     // if no merge order set explicitly, use SAM header to lookup proper order
     if ( !m_hasUserMergeOrder ) {
@@ -212,7 +212,7 @@ IMultiMerger* BamMultiReaderPrivate::CreateAlignmentCache(void) {
     }
 }
 
-const std::vector<std::string> BamMultiReaderPrivate::Filenames(void) const {
+const std::vector<std::string> BamMultiReaderPrivate::Filenames() const {
 
     // init filename container
     std::vector<std::string> filenames;
@@ -236,17 +236,17 @@ const std::vector<std::string> BamMultiReaderPrivate::Filenames(void) const {
     return filenames;
 }
 
-std::string BamMultiReaderPrivate::GetErrorString(void) const {
+std::string BamMultiReaderPrivate::GetErrorString() const {
     return m_errorString;
 }
 
-SamHeader BamMultiReaderPrivate::GetHeader(void) const {
+SamHeader BamMultiReaderPrivate::GetHeader() const {
     const std::string& text = GetHeaderText();
     return SamHeader(text);
 }
 
 // makes a virtual, unified header for all the bam files in the multireader
-std::string BamMultiReaderPrivate::GetHeaderText(void) const {
+std::string BamMultiReaderPrivate::GetHeaderText() const {
 
     // N.B. - right now, simply copies all header data from first BAM,
     //        and then appends RG's from other BAM files
@@ -282,7 +282,7 @@ std::string BamMultiReaderPrivate::GetHeaderText(void) const {
     return mergedHeader.ToString();
 }
 
-BamMultiReader::MergeOrder BamMultiReaderPrivate::GetMergeOrder(void) const {
+BamMultiReader::MergeOrder BamMultiReaderPrivate::GetMergeOrder() const {
     return m_mergeOrder;
 }
 
@@ -307,7 +307,7 @@ bool BamMultiReaderPrivate::GetNextAlignmentCore(BamAlignment& al) {
 // ---------------------------------------------------------------------------------------
 
 // returns the number of reference sequences
-int BamMultiReaderPrivate::GetReferenceCount(void) const {
+int BamMultiReaderPrivate::GetReferenceCount() const {
 
     // handle empty multireader
     if ( m_readers.empty() ) return 0;
@@ -321,7 +321,7 @@ int BamMultiReaderPrivate::GetReferenceCount(void) const {
 }
 
 // returns vector of reference objects
-const RefVector BamMultiReaderPrivate::GetReferenceData(void) const {
+const RefVector BamMultiReaderPrivate::GetReferenceData() const {
 
     // handle empty multireader
     if ( m_readers.empty() ) return RefVector();
@@ -351,7 +351,7 @@ int BamMultiReaderPrivate::GetReferenceID(const std::string& refName) const {
 
 // returns true if all readers have index data available
 // this is useful to indicate whether Jump() or SetRegion() are possible
-bool BamMultiReaderPrivate::HasIndexes(void) const {
+bool BamMultiReaderPrivate::HasIndexes() const {
 
     // handle empty multireader
     if ( m_readers.empty() )
@@ -375,7 +375,7 @@ bool BamMultiReaderPrivate::HasIndexes(void) const {
 }
 
 // returns true if multireader has open readers
-bool BamMultiReaderPrivate::HasOpenReaders(void) {
+bool BamMultiReaderPrivate::HasOpenReaders() {
 
     // iterate over readers
     std::vector<MergeItem>::const_iterator readerIter = m_readers.begin();
@@ -604,7 +604,7 @@ bool BamMultiReaderPrivate::PopNextCachedAlignment(BamAlignment& al, const bool 
 }
 
 // returns BAM file pointers to beginning of alignment data & resets alignment cache
-bool BamMultiReaderPrivate::Rewind(void) {
+bool BamMultiReaderPrivate::Rewind() {
 
     // skip if no readers open
     if ( m_readers.empty() )
@@ -623,7 +623,7 @@ bool BamMultiReaderPrivate::Rewind(void) {
 }
 
 // returns BAM file pointers to beginning of alignment data
-bool BamMultiReaderPrivate::RewindReaders(void) {
+bool BamMultiReaderPrivate::RewindReaders() {
 
     m_errorString.clear();
     bool errorsEncountered = false;
@@ -723,7 +723,7 @@ bool BamMultiReaderPrivate::SetRegion(const BamRegion& region) {
 }
 
 // updates our alignment cache
-bool BamMultiReaderPrivate::UpdateAlignmentCache(void) {
+bool BamMultiReaderPrivate::UpdateAlignmentCache() {
 
     // create alignment cache if not created yet
     if ( m_alignmentCache == 0 ) {
@@ -758,7 +758,7 @@ bool BamMultiReaderPrivate::UpdateAlignmentCache(void) {
 // alignments against the same set of reference sequences, and that the
 // sequences are identically ordered.  If these checks fail the operation of
 // the multireader is undefined, so we force program exit.
-bool BamMultiReaderPrivate::ValidateReaders(void) const {
+bool BamMultiReaderPrivate::ValidateReaders() const {
 
     m_errorString.clear();
 

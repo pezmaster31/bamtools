@@ -58,7 +58,7 @@ struct RandomTool::RandomSettings {
     std::string Region;
 
     // constructor
-    RandomSettings(void)
+    RandomSettings()
         : HasAlignmentCount(false)
         , HasInput(false)
         , HasInputFilelist(false)
@@ -83,18 +83,18 @@ struct RandomTool::RandomToolPrivate {
             : m_settings(settings)
         { }
 
-        ~RandomToolPrivate(void) { }
+        ~RandomToolPrivate() { }
 
     // interface
     public:
-        bool Run(void);
+        bool Run();
 
     // data members
     private:
         RandomTool::RandomSettings* m_settings;
 };
 
-bool RandomTool::RandomToolPrivate::Run(void) {
+bool RandomTool::RandomToolPrivate::Run() {
 
     // set to default stdin if no input files provided
     if ( !m_settings->HasInput && !m_settings->HasInputFilelist )
@@ -230,7 +230,7 @@ bool RandomTool::RandomToolPrivate::Run(void) {
 // ---------------------------------------------
 // RandomTool implementation
 
-RandomTool::RandomTool(void)
+RandomTool::RandomTool()
     : AbstractTool()
     , m_settings(new RandomSettings)
     , m_impl(0)
@@ -254,7 +254,7 @@ RandomTool::RandomTool(void)
                             m_settings->HasRandomNumberSeed, m_settings->RandomNumberSeed, SettingsOpts);
 }
 
-RandomTool::~RandomTool(void) {
+RandomTool::~RandomTool() {
 
     delete m_settings;
     m_settings = 0;
@@ -263,7 +263,7 @@ RandomTool::~RandomTool(void) {
     m_impl = 0;
 }
 
-int RandomTool::Help(void) {
+int RandomTool::Help() {
     Options::DisplayHelp();
     return 0;
 }

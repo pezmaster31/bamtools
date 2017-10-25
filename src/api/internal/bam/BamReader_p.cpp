@@ -35,12 +35,12 @@ BamReaderPrivate::BamReaderPrivate(BamReader* parent)
 }
 
 // destructor
-BamReaderPrivate::~BamReaderPrivate(void) {
+BamReaderPrivate::~BamReaderPrivate() {
     Close();
 }
 
 // closes the BAM file
-bool BamReaderPrivate::Close(void) {
+bool BamReaderPrivate::Close() {
 
     // clear BAM metadata
     m_references.clear();
@@ -89,25 +89,25 @@ bool BamReaderPrivate::CreateIndex(const BamIndex::IndexType& type) {
 }
 
 // return path & filename of current BAM file
-const std::string BamReaderPrivate::Filename(void) const {
+const std::string BamReaderPrivate::Filename() const {
     return m_filename;
 }
 
-const SamHeader& BamReaderPrivate::GetConstSamHeader(void) const {
+const SamHeader& BamReaderPrivate::GetConstSamHeader() const {
     return m_header.ToConstSamHeader();
 }
 
-std::string BamReaderPrivate::GetErrorString(void) const {
+std::string BamReaderPrivate::GetErrorString() const {
     return m_errorString;
 }
 
 // return header data as string
-std::string BamReaderPrivate::GetHeaderText(void) const {
+std::string BamReaderPrivate::GetHeaderText() const {
     return m_header.ToString();
 }
 
 // return header data as SamHeader object
-SamHeader BamReaderPrivate::GetSamHeader(void) const {
+SamHeader BamReaderPrivate::GetSamHeader() const {
     return m_header.ToSamHeader();
 }
 
@@ -193,11 +193,11 @@ bool BamReaderPrivate::GetNextAlignmentCore(BamAlignment& alignment) {
     }
 }
 
-int BamReaderPrivate::GetReferenceCount(void) const {
+int BamReaderPrivate::GetReferenceCount() const {
     return m_references.size();
 }
 
-const RefVector& BamReaderPrivate::GetReferenceData(void) const {
+const RefVector& BamReaderPrivate::GetReferenceData() const {
     return m_references;
 }
 
@@ -217,16 +217,16 @@ int BamReaderPrivate::GetReferenceID(const std::string& refName) const {
     else return index;
 }
 
-bool BamReaderPrivate::HasIndex(void) const {
+bool BamReaderPrivate::HasIndex() const {
     return m_randomAccessController.HasIndex();
 }
 
-bool BamReaderPrivate::IsOpen(void) const {
+bool BamReaderPrivate::IsOpen() const {
     return m_stream.IsOpen();
 }
 
 // load BAM header data
-void BamReaderPrivate::LoadHeaderData(void) {
+void BamReaderPrivate::LoadHeaderData() {
     m_header.Load(&m_stream);
 }
 
@@ -314,7 +314,7 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment) {
 }
 
 // loads reference data from BAM file
-bool BamReaderPrivate::LoadReferenceData(void) {
+bool BamReaderPrivate::LoadReferenceData() {
 
     // get number of reference sequences
     char buffer[sizeof(uint32_t)];
@@ -405,7 +405,7 @@ bool BamReaderPrivate::OpenIndex(const std::string& indexFilename) {
 }
 
 // returns BAM file pointer to beginning of alignment data
-bool BamReaderPrivate::Rewind(void) {
+bool BamReaderPrivate::Rewind() {
 
     // reset region
     m_randomAccessController.ClearRegion();
@@ -464,6 +464,6 @@ bool BamReaderPrivate::SetRegion(const BamRegion& region) {
     }
 }
 
-int64_t BamReaderPrivate::Tell(void) const {
+int64_t BamReaderPrivate::Tell() const {
     return m_stream.Tell();
 }

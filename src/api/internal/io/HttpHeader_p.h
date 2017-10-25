@@ -32,9 +32,9 @@ class HttpHeader {
 
     // ctors & dtor
     public:
-        HttpHeader(void);
+        HttpHeader();
         HttpHeader(const std::string& s);
-        virtual ~HttpHeader(void);
+        virtual ~HttpHeader();
 
     // HttpHeader interface
     public:
@@ -46,14 +46,14 @@ class HttpHeader {
         void SetField(const std::string& key, const std::string& value);
 
         // get formatted header string
-        virtual std::string ToString(void) const;
+        virtual std::string ToString() const;
 
         // query HTTP version used
-        int GetMajorVersion(void) const;
-        int GetMinorVersion(void) const;
+        int GetMajorVersion() const;
+        int GetMinorVersion() const;
 
         // see if header was parsed OK
-        bool IsValid(void) const;
+        bool IsValid() const;
 
     // internal methods
     protected:
@@ -79,16 +79,16 @@ class HttpRequestHeader : public HttpHeader {
                           const std::string& resource,    // filename
                           int majorVersion = 1,           // version info
                           int minorVersion = 1);
-        ~HttpRequestHeader(void);
+        ~HttpRequestHeader();
 
     // HttpRequestHeader interface
     public:
-        std::string GetMethod(void) const;
-        std::string GetResource(void) const;
+        std::string GetMethod() const;
+        std::string GetResource() const;
 
     // HttpHeader implementation
     public:
-        std::string ToString(void) const;
+        std::string ToString() const;
     protected:
         bool ParseLine(const std::string& line, int lineNumber);
 
@@ -107,16 +107,16 @@ class HttpResponseHeader : public HttpHeader {
                            int majorVersion = 1,                       // version info
                            int minorVersion = 1);
         HttpResponseHeader(const std::string& s);
-        ~HttpResponseHeader(void);
+        ~HttpResponseHeader();
 
     // HttpRequestHeader interface
     public:
-        std::string GetReason(void) const;
-        int GetStatusCode(void) const;
+        std::string GetReason() const;
+        int GetStatusCode() const;
 
     // HttpHeader implementation
     public:
-        std::string ToString(void) const;
+        std::string ToString() const;
     protected:
         bool ParseLine(const std::string& line, int lineNumber);
 

@@ -81,7 +81,7 @@ struct API_EXPORT Sort {
         }
 
         // used by BamMultiReader internals
-        static inline bool UsesCharData(void) { return true; }
+        static inline bool UsesCharData() { return true; }
 
         // data members
         private:
@@ -127,7 +127,7 @@ struct API_EXPORT Sort {
         }
 
         // used by BamMultiReader internals
-        static inline bool UsesCharData(void) { return false; }
+        static inline bool UsesCharData() { return false; }
 
         // data members
         private:
@@ -174,7 +174,7 @@ struct API_EXPORT Sort {
         }
 
         // used by BamMultiReader internals
-        static inline bool UsesCharData(void) { return true; }
+        static inline bool UsesCharData() { return true; }
 
         // data members
         private:
@@ -201,7 +201,7 @@ struct API_EXPORT Sort {
         }
 
         // used by BamMultiReader internals
-        static inline bool UsesCharData(void) { return false; }
+        static inline bool UsesCharData() { return false; }
     };
 
     /*! Sorts a std::vector of alignments (in-place), using the provided compare function.

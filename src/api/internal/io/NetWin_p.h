@@ -41,12 +41,12 @@ namespace Internal {
 // use RAII to ensure WSA is initialized
 class WindowsSockInit {
     public:
-        WindowsSockInit(void) {
+        WindowsSockInit() {
             WSAData wsadata;
             WSAStartup(MAKEWORD(2,2), &wsadata); // catch error ?
         }
 
-        ~WindowsSockInit(void) {
+        ~WindowsSockInit() {
             WSACleanup();
         }
 };

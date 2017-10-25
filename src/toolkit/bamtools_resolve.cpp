@@ -739,7 +739,7 @@ void ResolveTool::StatsFileWriter::WriteHeader(void) {
     versionStream << "v"
                   << BAMTOOLS_VERSION_MAJOR << "."
                   << BAMTOOLS_VERSION_MINOR << "."
-                  << BAMTOOLS_VERSION_BUILD;
+                  << BAMTOOLS_VERSION_PATCH;
 
     // # bamtools resolve (vX.Y.Z)
     // #

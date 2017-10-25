@@ -130,7 +130,7 @@ int Version(void) {
     std::stringstream versionStream;
     versionStream << BAMTOOLS_VERSION_MAJOR << "."
                   << BAMTOOLS_VERSION_MINOR << "."
-                  << BAMTOOLS_VERSION_BUILD;
+                  << BAMTOOLS_VERSION_PATCH;
 
     std::cout << std::endl;
     std::cout << "bamtools " << versionStream.str() << std::endl;

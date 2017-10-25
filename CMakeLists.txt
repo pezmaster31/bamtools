@@ -8,8 +8,12 @@
 # CMake requirements
 cmake_minimum_required( VERSION 3.0 )
 
-# set project name
-project( BamTools LANGUAGES CXX )
+# allow setting project version in project()
+# https://cmake.org/cmake/help/v3.0/policy/CMP0048.html#policy:CMP0048
+cmake_policy( SET CMP0048 NEW )
+
+# set project name and version
+project( BamTools LANGUAGES CXX VERSION 2.4.1 )
 
 # on macOS, MACOSX_RPATH is enabled by default on more recent versions
 # of CMake. Disable this behaviour, and let user enable it if need be.
@@ -39,16 +43,11 @@ endmacro( ENSURE_OUT_OF_SOURCE_BUILD )
 
 ensure_out_of_source_build( "
   ${PROJECT_NAME} requires an out of source build.
-  $ mkdir build 
+  $ mkdir build
   $ cd build
   $ cmake ..
-  $ make 
+  $ make
 (or the Windows equivalent)\n" )
-
-# set BamTools version information
-set( BamTools_VERSION_MAJOR 2 )
-set( BamTools_VERSION_MINOR 4 )
-set( BamTools_VERSION_BUILD 1 )
 
 # define compiler flags for all code, copied from Autoconf's AC_SYS_LARGEFILE
 add_definitions( -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE )

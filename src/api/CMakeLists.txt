@@ -42,7 +42,7 @@ add_library( BamTools ${BamToolsAPISources} )
 # The SONAME is bumped on every version increment
 # as Bamtools does not yet guarantee a stable ABI
 set_target_properties( BamTools PROPERTIES
-                       SOVERSION "${BamTools_VERSION_MAJOR}.${BamTools_VERSION_MINOR}.${BamTools_VERSION_BUILD}"
+                       SOVERSION "${BamTools_VERSION}"
                        OUTPUT_NAME "bamtools" )
 target_link_libraries( BamTools ${APILibs} )
 install( TARGETS BamTools

@@ -25,11 +25,11 @@ using namespace Json;
 #include <sstream>
 #include <string>
 #include <vector>
-  
+
 namespace BamTools {
-  
-// -------------------------------  
-// string literal constants  
+
+// -------------------------------
+// string literal constants
 
 // property names
 const std::string ALIGNMENTFLAG_PROPERTY       = "alignmentFlag";
@@ -60,22 +60,22 @@ const std::string TAG_PROPERTY                 = "tag";
 // boolalpha
 const std::string TRUE_STR  = "true";
 const std::string FALSE_STR = "false";
-    
-RefVector filterToolReferences;    
-    
+
+RefVector filterToolReferences;
+
 struct BamAlignmentChecker {
     bool check(const PropertyFilter& filter, const BamAlignment& al) {
-      
+
         bool keepAlignment = true;
         const PropertyMap& properties = filter.Properties;
         PropertyMap::const_iterator propertyIter = properties.begin();
         PropertyMap::const_iterator propertyEnd  = properties.end();
         for ( ; propertyIter != propertyEnd; ++propertyIter ) {
-          
+
             // check alignment data field depending on propertyName
             const std::string& propertyName = (*propertyIter).first;
             const PropertyFilterValue& valueFilter = (*propertyIter).second;
-            
+
             if      ( propertyName == ALIGNMENTFLAG_PROPERTY )  keepAlignment &= valueFilter.check(al.AlignmentFlag);
             else if ( propertyName == CIGAR_PROPERTY ) {
                 std::stringstream cigarSs;
@@ -126,17 +126,17 @@ struct BamAlignmentChecker {
             }
             else if ( propertyName == TAG_PROPERTY ) keepAlignment &= checkAlignmentTag(valueFilter, al);
             else BAMTOOLS_ASSERT_UNREACHABLE;
-            
+
             // if alignment fails at ANY point, just quit and return false
             if ( !keepAlignment ) return false;
         }
-      
+
         BAMTOOLS_ASSERT_MESSAGE( keepAlignment, "Error in BamAlignmentChecker... keepAlignment should be true here");
         return keepAlignment;
     }
-    
+
     bool checkAlignmentTag(const PropertyFilterValue& valueFilter, const BamAlignment& al) {
-     
+
         // ensure filter contains string data
         Variant entireTagFilter = valueFilter.Value;
         if ( !entireTagFilter.is_type<std::string>() ) return false;
@@ -237,10 +237,10 @@ struct BamAlignmentChecker {
 
         return keepAlignment;
     }
-};    
-    
+};
+
 } // namespace BamTools
-  
+
 // ---------------------------------------------
 // FilterSettings implementation
 
@@ -365,16 +365,16 @@ struct FilterTool::FilterSettings {
 // FilterToolPrivate declaration
 
 class FilterTool::FilterToolPrivate {
-      
+
     // ctor & dtor
     public:
         FilterToolPrivate(FilterTool::FilterSettings* settings);
-        ~FilterToolPrivate(void);  
-        
+        ~FilterToolPrivate(void);
+
     // 'public' interface
     public:
         bool Run(void);
-        
+
     // internal methods
     private:
         bool AddPropertyTokensToFilter(const std::string& filterName, const std::map<std::string, std::string>& propertyTokens);
@@ -385,22 +385,22 @@ class FilterTool::FilterToolPrivate {
         bool ParseFilterObject(const std::string& filterName, const Json::Value& filterObject);
         bool ParseScript(void);
         bool SetupFilters(void);
-        
+
     // data members
     private:
         std::vector<std::string> m_propertyNames;
         FilterTool::FilterSettings* m_settings;
         FilterEngine<BamAlignmentChecker> m_filterEngine;
 };
- 
+
 // ---------------------------------------------
 // FilterToolPrivate implementation
-  
-// constructor  
+
+// constructor
 FilterTool::FilterToolPrivate::FilterToolPrivate(FilterTool::FilterSettings* settings)
     : m_settings(settings)
-{ }  
-  
+{ }
+
 // destructor
 FilterTool::FilterToolPrivate::~FilterToolPrivate(void) { }
 
@@ -415,19 +415,19 @@ bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const std::string&
     uint32_t uint32Value;
     std::string stringValue;
     PropertyFilterValue::ValueCompareType type;
-  
+
     // iterate over property token map
     std::map<std::string, std::string>::const_iterator mapIter = propertyTokens.begin();
     std::map<std::string, std::string>::const_iterator mapEnd  = propertyTokens.end();
     for ( ; mapIter != mapEnd; ++mapIter ) {
-      
+
         const std::string& propertyName = (*mapIter).first;
         const std::string& token        = (*mapIter).second;
-        
+
         // ------------------------------
-        // convert token to value & compare type 
+        // convert token to value & compare type
         // then add to filter engine
-        
+
         // bool conversion
         if ( propertyName == ISDUPLICATE_PROPERTY ||
              propertyName == ISFAILEDQC_PROPERTY ||
@@ -441,56 +441,56 @@ bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(const std::string&
              propertyName == ISREVERSESTRAND_PROPERTY ||
              propertyName == ISSECONDMATE_PROPERTY ||
              propertyName == ISSINGLETON_PROPERTY
-           ) 
+           )
         {
             FilterEngine<BamAlignmentChecker>::parseToken(token, boolValue, type);
             m_filterEngine.setProperty(filterName, propertyName, boolValue, type);
         }
-        
+
         // int32_t conversion
         else if ( propertyName == INSERTSIZE_PROPERTY ||
                   propertyName == LENGTH_PROPERTY ||
                   propertyName == MATEPOSITION_PROPERTY ||
-                  propertyName == POSITION_PROPERTY 
-                ) 
+                  propertyName == POSITION_PROPERTY
+                )
         {
             FilterEngine<BamAlignmentChecker>::parseToken(token, int32Value, type);
             m_filterEngine.setProperty(filterName, propertyName, int32Value, type);
         }
-        
+
         // uint16_t conversion
         else if ( propertyName == MAPQUALITY_PROPERTY )
         {
             FilterEngine<BamAlignmentChecker>::parseToken(token, uint16Value, type);
             m_filterEngine.setProperty(filterName, propertyName, uint16Value, type);
         }
-        
+
         // uint32_t conversion
         else if ( propertyName == ALIGNMENTFLAG_PROPERTY )
         {
             FilterEngine<BamAlignmentChecker>::parseToken(token, uint32Value, type);
             m_filterEngine.setProperty(filterName, propertyName, uint32Value, type);
         }
-        
+
         // string conversion
-        else if ( propertyName == CIGAR_PROPERTY || 
+        else if ( propertyName == CIGAR_PROPERTY ||
                   propertyName == MATEREFERENCE_PROPERTY ||
                   propertyName == NAME_PROPERTY ||
                   propertyName == QUERYBASES_PROPERTY ||
-                  propertyName == REFERENCE_PROPERTY 
-                ) 
+                  propertyName == REFERENCE_PROPERTY
+                )
         {
             FilterEngine<BamAlignmentChecker>::parseToken(token, stringValue, type);
             m_filterEngine.setProperty(filterName, propertyName, stringValue, type);
         }
-      
+
         else if ( propertyName == TAG_PROPERTY ) {
             // this will be stored directly as the TAG:VALUE token
             // (VALUE may contain compare ops, will be parsed out later)
             m_filterEngine.setProperty(filterName, propertyName, token, PropertyFilterValue::EXACT);
         }
-      
-        // else unknown property 
+
+        // else unknown property
         else {
             std::cerr << "bamtools filter ERROR: unknown property - " << propertyName << std::endl;
             return false;
@@ -504,7 +504,7 @@ bool FilterTool::FilterToolPrivate::CheckAlignment(const BamAlignment& al) {
 }
 
 const std::string FilterTool::FilterToolPrivate::GetScriptContents(void) {
-  
+
     // open script for reading
     FILE* inFile = fopen(m_settings->ScriptFilename.c_str(), "rb");
     if ( !inFile ) {
@@ -512,37 +512,37 @@ const std::string FilterTool::FilterToolPrivate::GetScriptContents(void) {
              << m_settings->ScriptFilename << " for reading" << std::endl;
         return std::string();
     }
-    
-    // read in entire script contents  
+
+    // read in entire script contents
     char buffer[1024];
     std::ostringstream docStream;
     while ( true ) {
-        
+
         // peek ahead, make sure there is data available
         char ch = fgetc(inFile);
         ungetc(ch, inFile);
         if( feof(inFile) )
             break;
-        
+
         // read next block of data
         if ( fgets(buffer, 1024, inFile) == 0 ) {
             std::cerr << "bamtools filter ERROR: could not read script contents" << std::endl;
             return std::string();
         }
-        
+
         docStream << buffer;
     }
-    
+
     // close script file
     fclose(inFile);
-    
+
     // import buffer contents to document, return
     return docStream.str();
 }
 
 void FilterTool::FilterToolPrivate::InitProperties(void) {
-  
-    // store property names in vector 
+
+    // store property names in vector
     m_propertyNames.push_back(ALIGNMENTFLAG_PROPERTY);
     m_propertyNames.push_back(CIGAR_PROPERTY);
     m_propertyNames.push_back(INSERTSIZE_PROPERTY);
@@ -567,7 +567,7 @@ void FilterTool::FilterToolPrivate::InitProperties(void) {
     m_propertyNames.push_back(QUERYBASES_PROPERTY);
     m_propertyNames.push_back(REFERENCE_PROPERTY);
     m_propertyNames.push_back(TAG_PROPERTY);
-    
+
     // add vector contents to FilterEngine<BamAlignmentChecker>
     std::vector<std::string>::const_iterator propertyNameIter = m_propertyNames.begin();
     std::vector<std::string>::const_iterator propertyNameEnd  = m_propertyNames.end();
@@ -576,7 +576,7 @@ void FilterTool::FilterToolPrivate::InitProperties(void) {
 }
 
 bool FilterTool::FilterToolPrivate::ParseCommandLine(void) {
-  
+
     // add a rule set to filter engine
     const std::string CMD = "COMMAND_LINE";
     m_filterEngine.addFilter(CMD);
@@ -602,45 +602,45 @@ bool FilterTool::FilterToolPrivate::ParseCommandLine(void) {
     if ( m_settings->HasNameFilter )                propertyTokens.insert( make_pair(NAME_PROPERTY,                m_settings->NameFilter) );
     if ( m_settings->HasQueryBasesFilter )          propertyTokens.insert( make_pair(QUERYBASES_PROPERTY,          m_settings->QueryBasesFilter) );
     if ( m_settings->HasTagFilter )                 propertyTokens.insert( make_pair(TAG_PROPERTY,                 m_settings->TagFilter) );
-    
+
     // send add these properties to filter set "COMMAND_LINE"
     return AddPropertyTokensToFilter(CMD, propertyTokens);
 }
 
 bool FilterTool::FilterToolPrivate::ParseFilterObject(const std::string& filterName, const Json::Value& filterObject) {
-  
+
     // filter object parsing variables
     Json::Value null(Json::nullValue);
     Json::Value propertyValue;
-    
+
     // store results
     std::map<std::string, std::string> propertyTokens;
-    
+
     // iterate over known properties
     std::vector<std::string>::const_iterator propertyNameIter = m_propertyNames.begin();
     std::vector<std::string>::const_iterator propertyNameEnd  = m_propertyNames.end();
     for ( ; propertyNameIter != propertyNameEnd; ++propertyNameIter ) {
         const std::string& propertyName = (*propertyNameIter);
-        
+
         // if property defined in filter, add to token list
         propertyValue = filterObject.get(propertyName, null);
-        if ( propertyValue != null ) 
+        if ( propertyValue != null )
             propertyTokens.insert( make_pair(propertyName, propertyValue.asString()) );
     }
-  
+
     // add this filter to engin
     m_filterEngine.addFilter(filterName);
-  
+
     // add token list to this filter
     return AddPropertyTokensToFilter(filterName, propertyTokens);
 }
 
 bool FilterTool::FilterToolPrivate::ParseScript(void) {
-  
+
     // read in script contents from file
     const std::string document = GetScriptContents();
     std::istringstream sin(document);
-    
+
     // set up JsonCPP reader and attempt to parse script
     Json::Value root;
     Json::CharReaderBuilder rbuilder;
@@ -650,42 +650,42 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
         // use built-in error reporting mechanism to alert user what was wrong with the script
         std::cerr  << "bamtools filter ERROR: failed to parse script - see error message(s) below" << std::endl
               << errs;
-        return false;     
+        return false;
     }
 
     // initialize return status
     bool success = true;
-    
+
     // see if root object contains multiple filters
     const Json::Value filters = root["filters"];
     if ( !filters.isNull() ) {
-      
+
         // iterate over any filters found
         int filterIndex = 0;
         Json::Value::const_iterator filtersIter = filters.begin();
         Json::Value::const_iterator filtersEnd  = filters.end();
         for ( ; filtersIter != filtersEnd; ++filtersIter, ++filterIndex ) {
             Json::Value filter = (*filtersIter);
-            
+
             // convert filter index to string
             std::string filterName;
-            
+
             // if id tag supplied
             const Json::Value id = filter["id"];
-            if ( !id.isNull() ) 
+            if ( !id.isNull() )
                 filterName = id.asString();
-            
-            // use array index 
+
+            // use array index
             else {
                 std::stringstream convert;
                 convert << filterIndex;
                 filterName = convert.str();
             }
-            
-            // create & parse filter 
+
+            // create & parse filter
             success &= ParseFilterObject(filterName, filter);
         }
-        
+
         // see if user defined a "rule" for these filters
         // otherwise, use filter engine's default rule behavior
         std::string ruleString;
@@ -693,21 +693,21 @@ bool FilterTool::FilterToolPrivate::ParseScript(void) {
         if ( rule.isString() )
             ruleString = rule.asString();
         m_filterEngine.setRule(ruleString);
-          
+
         // return success/fail
         return success;
-    } 
-    
+    }
+
     // otherwise, root is the only filter (just contains properties)
     // create & parse filter named "ROOT"
     else success = ParseFilterObject("ROOT", root);
-    
+
     // return success/failure
     return success;
 }
 
 bool FilterTool::FilterToolPrivate::Run(void) {
-    
+
     // set to default input if none provided
     if ( !m_settings->HasInput && !m_settings->HasInputFilelist )
         m_settings->InputFiles.push_back(Options::StandardIn());
@@ -741,7 +741,7 @@ bool FilterTool::FilterToolPrivate::Run(void) {
     // retrieve reader header & reference data
     const std::string headerText = reader.GetHeaderText();
     filterToolReferences = reader.GetReferenceData();
-    
+
     // determine compression mode for BamWriter
     bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() &&
                               !m_settings->IsForceCompression );
@@ -757,18 +757,18 @@ bool FilterTool::FilterToolPrivate::Run(void) {
         return false;
     }
 
-    // if no region specified, filter entire file 
+    // if no region specified, filter entire file
     BamAlignment al;
     if ( !m_settings->HasRegion ) {
         while ( reader.GetNextAlignment(al) ) {
-            if ( CheckAlignment(al) ) 
+            if ( CheckAlignment(al) )
                 writer.SaveAlignment(al);
         }
     }
-    
+
     // otherwise attempt to use region as constraint
     else {
-        
+
         // if region string parses OK
         BamRegion region;
         if ( Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
@@ -784,28 +784,28 @@ bool FilterTool::FilterToolPrivate::Run(void) {
                     std::cerr << "bamtools filter ERROR: set region failed. Check that REGION describes a valid range" << std::endl;
                     reader.Close();
                     return false;
-                } 
-              
+                }
+
                 // everything checks out, just iterate through specified region, filtering alignments
                 while ( reader.GetNextAlignment(al) )
-                    if ( CheckAlignment(al) ) 
+                    if ( CheckAlignment(al) )
                         writer.SaveAlignment(al);
                 }
-            
+
             // no index data available, we have to iterate through until we
             // find overlapping alignments
             else {
                 while ( reader.GetNextAlignment(al) ) {
                     if ( (al.RefID >= region.LeftRefID)  && ((al.Position + al.Length) >= region.LeftPosition) &&
-                         (al.RefID <= region.RightRefID) && ( al.Position <= region.RightPosition) ) 
+                         (al.RefID <= region.RightRefID) && ( al.Position <= region.RightPosition) )
                     {
-                        if ( CheckAlignment(al) ) 
+                        if ( CheckAlignment(al) )
                             writer.SaveAlignment(al);
                     }
                 }
             }
-        } 
-        
+        }
+
         // error parsing REGION string
         else {
             std::cerr << "bamtools filter ERROR: could not parse REGION: " << m_settings->Region << std::endl;
@@ -823,14 +823,14 @@ bool FilterTool::FilterToolPrivate::Run(void) {
 }
 
 bool FilterTool::FilterToolPrivate::SetupFilters(void) {
-  
+
     // set up filter engine with supported properties
     InitProperties();
-    
+
     // parse script for filter rules, if given
     if ( m_settings->HasScript )
         return ParseScript();
-    
+
     // otherwise check command line for filters
     else return ParseCommandLine();
 }

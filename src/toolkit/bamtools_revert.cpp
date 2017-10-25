@@ -39,7 +39,7 @@ struct RevertTool::RevertSettings {
     // filenames
     std::string InputFilename;
     std::string OutputFilename;
-    
+
     // constructor
     RevertSettings(void)
         : HasInput(false)
@@ -50,28 +50,28 @@ struct RevertTool::RevertSettings {
         , InputFilename(Options::StandardIn())
         , OutputFilename(Options::StandardOut())
     { }
-};  
+};
 
 // ---------------------------------------------
 // RevertToolPrivate implementation
 
 struct RevertTool::RevertToolPrivate {
-  
+
     // ctor & dtor
     public:
         RevertToolPrivate(RevertTool::RevertSettings* settings)
             : m_settings(settings)
         { }
         ~RevertToolPrivate(void) { }
-  
+
     // 'public' interface
     public:
         bool Run(void);
-        
+
     // internal methods
     private:
         void RevertAlignment(BamAlignment& al);
-        
+
     // data members
     private:
         RevertTool::RevertSettings* m_settings;
@@ -99,7 +99,7 @@ void RevertTool::RevertToolPrivate::RevertAlignment(BamAlignment& al) {
 }
 
 bool RevertTool::RevertToolPrivate::Run(void) {
-  
+
     // opens the BAM file without checking for indexes
     BamReader reader;
     if ( !reader.Open(m_settings->InputFilename) ) {
@@ -111,7 +111,7 @@ bool RevertTool::RevertToolPrivate::Run(void) {
     // get BAM file metadata
     const std::string& headerText = reader.GetHeaderText();
     const RefVector& references = reader.GetReferenceData();
-    
+
     // determine compression mode for BamWriter
     bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() &&
                               !m_settings->IsForceCompression );
@@ -134,11 +134,11 @@ bool RevertTool::RevertToolPrivate::Run(void) {
         RevertAlignment(al);
         writer.SaveAlignment(al);
     }
-    
+
     // clean and exit
     reader.Close();
     writer.Close();
-    return true; 
+    return true;
 }
 
 // ---------------------------------------------
@@ -151,8 +151,8 @@ RevertTool::RevertTool(void)
 {
     // set program details
     Options::SetProgramInfo("bamtools revert", "removes duplicate marks and restores original (non-recalibrated) base qualities", "[-in <filename> -in <filename> ...] [-out <filename> | [-forceCompression]] [revertOptions]");
-    
-    // set up options 
+
+    // set up options
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in",  "BAM filename", "the input BAM file",  "", m_settings->HasInput,  m_settings->InputFilename,  IO_Opts, Options::StandardIn());
     Options::AddValueOption("-out", "BAM filename", "the output BAM file", "", m_settings->HasOutput, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
@@ -167,7 +167,7 @@ RevertTool::~RevertTool(void) {
 
     delete m_settings;
     m_settings = 0;
-    
+
     delete m_impl;
     m_impl = 0;
 }
@@ -178,13 +178,13 @@ int RevertTool::Help(void) {
 }
 
 int RevertTool::Run(int argc, char* argv[]) {
-  
+
     // parse command line arguments
     Options::Parse(argc, argv, 1);
 
     // intialize RevertTool with settings
     m_impl = new RevertToolPrivate(m_settings);
-    
+
     // run RevertTool, return success/fail
     if ( m_impl->Run() )
         return 0;

@@ -451,7 +451,7 @@ void BamStandardIndex::GetOffset(const BamRegion& region, int64_t& offset, bool*
     CalculateCandidateOffsets(refSummary, minOffset, candidateBins, offsets);
     if ( offsets.empty() )
         return;
-    
+
     // ensure that offsets are sorted before processing
     sort( offsets.begin(), offsets.end() );
 

@@ -20,7 +20,7 @@ using namespace BamTools;
 #include <string>
 #include <vector>
 
-// ---------------------------------------------  
+// ---------------------------------------------
 // CountSettings implementation
 
 struct CountTool::CountSettings {
@@ -34,15 +34,15 @@ struct CountTool::CountSettings {
     std::vector<std::string> InputFiles;
     std::string InputFilelist;
     std::string Region;
-    
+
     // constructor
     CountSettings(void)
         : HasInput(false)
         , HasInputFilelist(false)
         , HasRegion(false)
-    { }  
-}; 
-  
+    { }
+};
+
 // ---------------------------------------------
 // CountToolPrivate implementation
 
@@ -161,16 +161,16 @@ bool CountTool::CountToolPrivate::Run(void) {
 // ---------------------------------------------
 // CountTool implementation
 
-CountTool::CountTool(void) 
+CountTool::CountTool(void)
     : AbstractTool()
     , m_settings(new CountSettings)
     , m_impl(0)
-{ 
+{
     // set program details
     Options::SetProgramInfo("bamtools count", "prints number of alignments in BAM file(s)",
                             "[-in <filename> -in <filename> ... | -list <filelist>] [-region <REGION>]");
-    
-    // set up options 
+
+    // set up options
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in",     "BAM filename", "the input BAM file(s)", "", m_settings->HasInput,  m_settings->InputFiles, IO_Opts, Options::StandardIn());
     Options::AddValueOption("-list",   "filename", "the input BAM file list, one line per file", "", m_settings->HasInputFilelist,  m_settings->InputFilelist, IO_Opts);
@@ -179,7 +179,7 @@ CountTool::CountTool(void)
                             "", m_settings->HasRegion, m_settings->Region, IO_Opts);
 }
 
-CountTool::~CountTool(void) { 
+CountTool::~CountTool(void) {
 
     delete m_settings;
     m_settings = 0;
@@ -188,12 +188,12 @@ CountTool::~CountTool(void) {
     m_impl = 0;
 }
 
-int CountTool::Help(void) { 
+int CountTool::Help(void) {
     Options::DisplayHelp();
     return 0;
-} 
+}
 
-int CountTool::Run(int argc, char* argv[]) { 
+int CountTool::Run(int argc, char* argv[]) {
 
     // parse command line arguments
     Options::Parse(argc, argv, 1);

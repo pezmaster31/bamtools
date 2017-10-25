@@ -25,27 +25,27 @@
 namespace BamTools {
 
 class UTILS_EXPORT Variant {
-  
+
     public:
         Variant(void) : data(NULL) { }
-        
-        Variant(const Variant& other) { 
-            if ( other.data != NULL ) 
+
+        Variant(const Variant& other) {
+            if ( other.data != NULL )
                 other.data->AddRef();
             data = other.data;
         }
 
-        ~Variant(void) { 
-            if ( data != NULL ) 
+        ~Variant(void) {
+            if ( data != NULL )
                 data->Release();
         }
 
         // NOTE: This code takes care of self-assignment.
         // DO NOT CHANGE THE ORDER of the statements.
         Variant& operator= (const Variant& rhs) {
-            if ( rhs.data != NULL ) 
+            if ( rhs.data != NULL )
                 rhs.data->AddRef();
-            if ( data != NULL ) 
+            if ( data != NULL )
                 data->Release();
             data = rhs.data;
             return *this;
@@ -54,50 +54,50 @@ class UTILS_EXPORT Variant {
         // This member template constructor allows you to
         // instance a variant_t object with a value of any type.
         template<typename T>
-        Variant(T v) 
-            : data(new Impl<T>(v)) 
-        { 
-            data->AddRef(); 
+        Variant(T v)
+            : data(new Impl<T>(v))
+        {
+            data->AddRef();
         }
 
         // This generic conversion operator let you retrieve
         // the value held. To avoid template specialization conflicts,
         // it returns an instance of type T, which will be a COPY
         // of the value contained.
-        template<typename T> 
-        operator T() const { 
+        template<typename T>
+        operator T() const {
             return CastFromBase<T>(data)->data;
         }
 
         // This forms returns a REFERENCE and not a COPY, which
         // will be significant in some cases.
-        template<typename T> 
-        const T& get(void) const { 
-            return CastFromBase<T>(data)->data; 
+        template<typename T>
+        const T& get(void) const {
+            return CastFromBase<T>(data)->data;
         }
 
-        template<typename T> 
-        bool is_type(void) const { 
-            return typeid(*data)==typeid(Impl<T>); 
+        template<typename T>
+        bool is_type(void) const {
+            return typeid(*data)==typeid(Impl<T>);
         }
 
-        template<typename T> 
-        bool is_type(T v) const { 
-            return typeid(*data)==typeid(v); 
+        template<typename T>
+        bool is_type(T v) const {
+            return typeid(*data)==typeid(v);
         }
 
     private:
         struct ImplBase {
-                
+
             ImplBase() : refs(0) { }
             virtual ~ImplBase(void) { }
-                
+
             void AddRef(void) { ++refs; }
-            void Release(void) { 
+            void Release(void) {
                 --refs;
                 if ( refs == 0 ) delete this;
             }
-                
+
             size_t refs;
         };
 
@@ -110,12 +110,12 @@ class UTILS_EXPORT Variant {
 
         // The following method is static because it doesn't
         // operate on variant_t instances.
-        template<typename T> 
+        template<typename T>
         static Impl<T>* CastFromBase(ImplBase* v) {
             // This upcast will fail if T is other than the T used
             // with the constructor of variant_t.
             Impl<T>* p = dynamic_cast< Impl<T>* > (v);
-            if ( p == NULL ) 
+            if ( p == NULL )
                 throw std::invalid_argument( typeid(T).name() + std::string(" is not a valid type") );
             return p;
         }

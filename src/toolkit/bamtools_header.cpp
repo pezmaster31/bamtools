@@ -18,7 +18,7 @@ using namespace BamTools;
 #include <iostream>
 #include <string>
 #include <vector>
-  
+
 // ---------------------------------------------
 // HeaderSettings implementation
 
@@ -31,13 +31,13 @@ struct HeaderTool::HeaderSettings {
     // filenames
     std::vector<std::string> InputFiles;
     std::string InputFilelist;
-    
+
     // constructor
     HeaderSettings(void)
         : HasInput(false)
         , HasInputFilelist(false)
     { }
-};  
+};
 
 struct HeaderTool::HeaderToolPrivate {
 
@@ -103,8 +103,8 @@ HeaderTool::HeaderTool(void)
 {
     // set program details
     Options::SetProgramInfo("bamtools header", "prints header from BAM file(s)", "[-in <filename> -in <filename> ... | -list <filelist>]");
-    
-    // set up options 
+
+    // set up options
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in", "BAM filename", "the input BAM file(s)", "", m_settings->HasInput, m_settings->InputFiles, IO_Opts, Options::StandardIn());
     Options::AddValueOption("-list", "filename", "the input BAM file list, one line per file", "", m_settings->HasInputFilelist,  m_settings->InputFilelist, IO_Opts);
@@ -125,10 +125,10 @@ int HeaderTool::Help(void) {
 }
 
 int HeaderTool::Run(int argc, char* argv[]) {
-  
+
     // parse command line arguments
     Options::Parse(argc, argv, 1);
-  
+
     // initialize HeaderTool with settings
     m_impl = new HeaderToolPrivate(m_settings);
 

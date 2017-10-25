@@ -47,7 +47,7 @@ class API_EXPORT BamWriter {
         // returns true if BAM file is open for writing
         bool IsOpen(void) const;
         // opens a BAM file for writing
-        bool Open(const std::string& filename, 
+        bool Open(const std::string& filename,
                   const std::string& samHeaderText,
                   const RefVector& referenceSequences);
         // opens a BAM file for writing

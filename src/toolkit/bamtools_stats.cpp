@@ -35,35 +35,35 @@ struct StatsTool::StatsSettings {
     // filenames
     std::vector<std::string> InputFiles;
     std::string InputFilelist;
-    
+
     // constructor
     StatsSettings(void)
         : HasInput(false)
         , HasInputFilelist(false)
         , IsShowingInsertSizeSummary(false)
     { }
-};  
+};
 
 // ---------------------------------------------
 // StatsToolPrivate implementation
 
 struct StatsTool::StatsToolPrivate {
-  
+
     // ctor & dtor
     public:
         StatsToolPrivate(StatsTool::StatsSettings* _settings);
         ~StatsToolPrivate(void) { }
-  
+
     // 'public' interface
     public:
         bool Run(void);
-        
+
     // internal methods
     private:
-        bool CalculateMedian(std::vector<int>& data, double& median); 
+        bool CalculateMedian(std::vector<int>& data, double& median);
         void PrintStats(void);
         void ProcessAlignment(const BamAlignment& al);
-        
+
     // data members
     private:
         StatsTool::StatsSettings* m_settings;
@@ -96,14 +96,14 @@ StatsTool::StatsToolPrivate::StatsToolPrivate(StatsTool::StatsSettings* settings
     , m_numSingletons(0)
     , m_numFailedQC(0)
     , m_numDuplicates(0)
-{ 
+{
     m_insertSizes.reserve(100000);
 }
 
 // median is of type double because in the case of even number of data elements,
 // we need to return the average of middle 2 elements
-bool StatsTool::StatsToolPrivate::CalculateMedian(std::vector<int>& data, double& median) { 
-  
+bool StatsTool::StatsToolPrivate::CalculateMedian(std::vector<int>& data, double& median) {
+
     // skip if data empty
     if ( data.empty() )
         return false;
@@ -112,13 +112,13 @@ bool StatsTool::StatsToolPrivate::CalculateMedian(std::vector<int>& data, double
     size_t middleIndex = data.size() / 2;
     std::vector<int>::iterator target = data.begin() + middleIndex;
     nth_element(data.begin(), target, data.end());
-    
+
     // odd number of elements
     if ( (data.size() % 2) != 0) {
         median = (double)(*target);
         return true;
     }
-    
+
     // even number of elements
     else {
         double rightTarget = (double)(*target);
@@ -131,7 +131,7 @@ bool StatsTool::StatsToolPrivate::CalculateMedian(std::vector<int>& data, double
 
 // print BAM file alignment stats
 void StatsTool::StatsToolPrivate::PrintStats(void) {
-  
+
     std::cout << std::endl;
     std::cout << "**********************************************" << std::endl;
     std::cout << "Stats for BAM file(s): " << std::endl;
@@ -144,7 +144,7 @@ void StatsTool::StatsToolPrivate::PrintStats(void) {
     std::cout << "Failed QC:         " << m_numFailedQC << "\t(" << ((float)m_numFailedQC/m_numReads)*100 << "%)" << std::endl;
     std::cout << "Duplicates:        " << m_numDuplicates << "\t(" << ((float)m_numDuplicates/m_numReads)*100 << "%)" << std::endl;
     std::cout << "Paired-end reads:  " << m_numPaired << "\t(" << ((float)m_numPaired/m_numReads)*100 << "%)" << std::endl;
-    
+
     if ( m_numPaired != 0 ) {
         std::cout << "'Proper-pairs':    " << m_numProperPair << "\t(" << ((float)m_numProperPair/m_numPaired)*100 << "%)" << std::endl;
         std::cout << "Both pairs mapped: " << m_numBothMatesMapped << "\t(" << ((float)m_numBothMatesMapped/m_numPaired)*100 << "%)" << std::endl;
@@ -152,15 +152,15 @@ void StatsTool::StatsToolPrivate::PrintStats(void) {
         std::cout << "Read 2:            " << m_numSecondMate << std::endl;
         std::cout << "Singletons:        " << m_numSingletons << "\t(" << ((float)m_numSingletons/m_numPaired)*100 << "%)" << std::endl;
     }
-    
+
     if ( m_settings->IsShowingInsertSizeSummary ) {
-      
+
         double avgInsertSize = 0.0;
         if ( !m_insertSizes.empty() ) {
             avgInsertSize = ( accumulate(m_insertSizes.begin(), m_insertSizes.end(), 0.0) / (double)m_insertSizes.size() );
             std::cout << "Average insert size (absolute value): " << avgInsertSize << std::endl;
         }
-        
+
         double medianInsertSize = 0.0;
         if ( CalculateMedian(m_insertSizes, medianInsertSize) )
             std::cout << "Median insert size (absolute value): " << medianInsertSize << std::endl;
@@ -170,46 +170,46 @@ void StatsTool::StatsToolPrivate::PrintStats(void) {
 
 // use current input alignment to update BAM file alignment stats
 void StatsTool::StatsToolPrivate::ProcessAlignment(const BamAlignment& al) {
-  
+
     // increment total alignment counter
     ++m_numReads;
-    
+
     // incrememt counters for pairing-independent flags
     if ( al.IsDuplicate() ) ++m_numDuplicates;
     if ( al.IsFailedQC()  ) ++m_numFailedQC;
     if ( al.IsMapped()    ) ++m_numMapped;
-    
+
     // increment strand counters
-    if ( al.IsReverseStrand() ) 
+    if ( al.IsReverseStrand() )
         ++m_numReverseStrand;
-    else 
+    else
         ++m_numForwardStrand;
-    
+
     // if alignment is paired-end
     if ( al.IsPaired() ) {
-      
+
         // increment PE counter
         ++m_numPaired;
-      
+
         // increment first mate/second mate counters
         if ( al.IsFirstMate()  ) ++m_numFirstMate;
         if ( al.IsSecondMate() ) ++m_numSecondMate;
-        
+
         // if alignment is mapped, check mate status
         if ( al.IsMapped() ) {
             // if mate mapped
-            if ( al.IsMateMapped() ) 
+            if ( al.IsMateMapped() )
                 ++m_numBothMatesMapped;
             // else singleton
-            else 
+            else
                 ++m_numSingletons;
         }
-        
+
         // check for explicit proper pair flag
         if ( al.IsProperPair() )
             ++m_numProperPair;
-        
-        // store insert size for first mate 
+
+        // store insert size for first mate
         if ( m_settings->IsShowingInsertSizeSummary && al.IsFirstMate() && (al.InsertSize != 0) ) {
             int insertSize = abs(al.InsertSize);
             m_insertSizes.push_back( insertSize );
@@ -218,7 +218,7 @@ void StatsTool::StatsToolPrivate::ProcessAlignment(const BamAlignment& al) {
 }
 
 bool StatsTool::StatsToolPrivate::Run() {
-  
+
     // set to default input if none provided
     if ( !m_settings->HasInput && !m_settings->HasInputFilelist )
         m_settings->InputFiles.push_back(Options::StandardIn());
@@ -244,16 +244,16 @@ bool StatsTool::StatsToolPrivate::Run() {
         reader.Close();
         return false;
     }
-    
+
     // plow through alignments, keeping track of stats
     BamAlignment al;
     while ( reader.GetNextAlignmentCore(al) )
         ProcessAlignment(al);
     reader.Close();
-    
+
     // print stats & exit
     PrintStats();
-    return true; 
+    return true;
 }
 
 // ---------------------------------------------
@@ -266,12 +266,12 @@ StatsTool::StatsTool(void)
 {
     // set program details
     Options::SetProgramInfo("bamtools stats", "prints general alignment statistics", "[-in <filename> -in <filename> ... | -list <filelist>] [statsOptions]");
-    
-    // set up options 
+
+    // set up options
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in", "BAM filename", "the input BAM file", "", m_settings->HasInput,  m_settings->InputFiles,  IO_Opts, Options::StandardIn());
     Options::AddValueOption("-list",  "filename", "the input BAM file list, one line per file", "", m_settings->HasInputFilelist,  m_settings->InputFilelist, IO_Opts);
-    
+
     OptionGroup* AdditionalOpts = Options::CreateOptionGroup("Additional Stats");
     Options::AddOption("-insert", "summarize insert size data", m_settings->IsShowingInsertSizeSummary, AdditionalOpts);
 }
@@ -280,7 +280,7 @@ StatsTool::~StatsTool(void) {
 
     delete m_settings;
     m_settings = 0;
-    
+
     delete m_impl;
     m_impl = 0;
 }
@@ -291,13 +291,13 @@ int StatsTool::Help(void) {
 }
 
 int StatsTool::Run(int argc, char* argv[]) {
-  
+
     // parse command line arguments
     Options::Parse(argc, argv, 1);
-    
+
     // initialize StatsTool with settings
     m_impl = new StatsToolPrivate(m_settings);
-    
+
     // run StatsTool, return success/fail
     if ( m_impl->Run() )
         return 0;

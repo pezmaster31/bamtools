@@ -17,7 +17,7 @@
 #include <string>
 
 namespace BamTools {
-  
+
 namespace Internal {
     class BamReaderPrivate;
 } // namespace Internal
@@ -108,7 +108,7 @@ class API_EXPORT BamReader {
 
         // returns a human-readable description of the last error that occurred
         std::string GetErrorString(void) const;
-        
+
     // private implementation
     private:
         Internal::BamReaderPrivate* d;

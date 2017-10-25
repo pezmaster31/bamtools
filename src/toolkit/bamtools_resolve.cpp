@@ -203,7 +203,7 @@ ReadGroupResolver::ReadGroupResolver(void)
         Models.push_back( ModelType(i+1) );
 }
 
-bool ReadGroupResolver::IsValidInsertSize(const BamAlignment& al) const {  
+bool ReadGroupResolver::IsValidInsertSize(const BamAlignment& al) const {
     const int32_t absInsertSize = abs(al.InsertSize);
     return ( absInsertSize >= MinFragmentLength &&
              absInsertSize <= MaxFragmentLength );
@@ -229,7 +229,7 @@ void ReadGroupResolver::DetermineTopModels(const std::string& readGroupName) {
     if ( activeModelCountSum == 0 ) return; // skip if no data in this read group
     const unsigned int unusedModelCountSum = Models[2].size() + Models[3].size() +
                                              Models[4].size() + Models[5].size() +
-                                             Models[6].size() + Models[7].size();    
+                                             Models[6].size() + Models[7].size();
     const double unusedPercentage = (double)unusedModelCountSum / (double)activeModelCountSum;
     if ( unusedPercentage > UnusedModelThreshold ) {
         std::cerr << "WARNING: " << readGroupName << " does not have clearly defined 'top models'" << std::endl

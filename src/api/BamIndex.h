@@ -40,12 +40,12 @@ class API_EXPORT BamIndex {
         enum IndexType { BAMTOOLS = 0
                        , STANDARD
                        };
-  
+
     // ctor & dtor
     public:
         BamIndex(Internal::BamReaderPrivate* reader) : m_reader(reader) { }
         virtual ~BamIndex(void) { }
-        
+
     // index interface
     public:
         // builds index from associated BAM file & writes out to index file

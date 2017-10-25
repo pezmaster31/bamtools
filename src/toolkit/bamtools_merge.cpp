@@ -31,15 +31,15 @@ struct MergeTool::MergeSettings {
     bool HasOutput;
     bool IsForceCompression;
     bool HasRegion;
-    
+
     // filenames
     std::vector<std::string> InputFiles;
     std::string InputFilelist;
-    
+
     // other parameters
     std::string OutputFilename;
     std::string Region;
-    
+
     // constructor
     MergeSettings(void)
         : HasInput(false)
@@ -49,7 +49,7 @@ struct MergeTool::MergeSettings {
         , HasRegion(false)
         , OutputFilename(Options::StandardOut())
     { }
-};  
+};
 
 // ---------------------------------------------
 // MergeToolPrivate implementation
@@ -200,8 +200,8 @@ MergeTool::MergeTool(void)
     // set program details
     Options::SetProgramInfo("bamtools merge", "merges multiple BAM files into one",
                             "[-in <filename> -in <filename> ... | -list <filelist>] [-out <filename> | [-forceCompression]] [-region <REGION>]");
-    
-    // set up options 
+
+    // set up options
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in",  "BAM filename", "the input BAM file(s)", "", m_settings->HasInput,  m_settings->InputFiles,     IO_Opts);
     Options::AddValueOption("-list",  "filename", "the input BAM file list, one line per file", "", m_settings->HasInputFilelist,  m_settings->InputFilelist, IO_Opts);
@@ -221,14 +221,14 @@ MergeTool::~MergeTool(void) {
 
 int MergeTool::Help(void) {
     Options::DisplayHelp();
-    return 0; 
+    return 0;
 }
 
 int MergeTool::Run(int argc, char* argv[]) {
-  
+
     // parse command line arguments
     Options::Parse(argc, argv, 1);
-    
+
     // initialize MergeTool with settings
     m_impl = new MergeToolPrivate(m_settings);
 

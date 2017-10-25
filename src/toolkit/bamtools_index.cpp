@@ -27,14 +27,14 @@ struct IndexTool::IndexSettings {
 
     // filenames
     std::string InputBamFilename;
-    
+
     // constructor
     IndexSettings(void)
         : HasInputBamFilename(false)
         , IsUsingBamtoolsIndex(false)
         , InputBamFilename(Options::StandardIn())
     { }
-};  
+};
 
 // ---------------------------------------------
 // IndexToolPrivate implementation
@@ -88,8 +88,8 @@ IndexTool::IndexTool(void)
 {
     // set program details
     Options::SetProgramInfo("bamtools index", "creates index for BAM file", "[-in <filename>] [-bti]");
-    
-    // set up options 
+
+    // set up options
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
     Options::AddValueOption("-in", "BAM filename", "the input BAM file", "", m_settings->HasInputBamFilename, m_settings->InputBamFilename, IO_Opts, Options::StandardIn());
     Options::AddOption("-bti", "create (non-standard) BamTools index file (*.bti). Default behavior is to create standard BAM index (*.bai)", m_settings->IsUsingBamtoolsIndex, IO_Opts);
@@ -110,10 +110,10 @@ int IndexTool::Help(void) {
 }
 
 int IndexTool::Run(int argc, char* argv[]) {
-  
+
     // parse command line arguments
     Options::Parse(argc, argv, 1);
-    
+
     // initialize IndexTool with settings
     m_impl = new IndexToolPrivate(m_settings);
 

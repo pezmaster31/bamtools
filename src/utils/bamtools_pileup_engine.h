@@ -20,7 +20,7 @@ namespace BamTools {
 // contains auxiliary data about a single BamAlignment
 // at current position considered
 struct UTILS_EXPORT PileupAlignment {
-  
+
     // data members
     BamAlignment Alignment;
     int32_t PositionInAlignment;
@@ -31,7 +31,7 @@ struct UTILS_EXPORT PileupAlignment {
     int InsertionLength;
     bool IsSegmentBegin;
     bool IsSegmentEnd;
-    
+
     // ctor
     PileupAlignment(const BamAlignment& al)
         : Alignment(al)
@@ -45,10 +45,10 @@ struct UTILS_EXPORT PileupAlignment {
         , IsSegmentEnd(false)
     { }
 };
-  
+
 // contains all data at a position
 struct UTILS_EXPORT PileupPosition {
-  
+
     // data members
     int RefId;
     int Position;
@@ -56,35 +56,35 @@ struct UTILS_EXPORT PileupPosition {
 
     // ctor
     PileupPosition(const int& refId = 0,
-                   const int& position = 0, 
+                   const int& position = 0,
                    const std::vector<PileupAlignment>& alignments = std::vector<PileupAlignment>())
         : RefId(refId)
         , Position(position)
         , PileupAlignments(alignments)
     { }
 };
-  
+
 class UTILS_EXPORT PileupVisitor {
-  
+
     public:
         PileupVisitor(void) { }
         virtual ~PileupVisitor(void) { }
-  
+
     public:
         virtual void Visit(const PileupPosition& pileupData) =0;
 };
 
 class UTILS_EXPORT PileupEngine {
-  
+
     public:
         PileupEngine(void);
         ~PileupEngine(void);
-        
+
     public:
         bool AddAlignment(const BamAlignment& al);
         void AddVisitor(PileupVisitor* visitor);
         void Flush(void);
-        
+
     private:
         struct PileupEnginePrivate;
         PileupEnginePrivate* d;

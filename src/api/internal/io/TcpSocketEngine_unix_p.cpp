@@ -13,7 +13,7 @@ using namespace BamTools;
 using namespace BamTools::Internal;
 
 #ifdef SUN_OS
-#include <sys/filio.h> 
+#include <sys/filio.h>
 #endif
 
 #include <cerrno>

@@ -24,8 +24,8 @@ class BamReader;
 class BamMultiReader;
 
 class UTILS_EXPORT Utilities {
-  
-    public: 
+
+    public:
         // returns true if 'source' contains 'pattern' or 'c'
         static bool Contains(const std::string& source, const std::string& pattern);
         static bool Contains(const std::string& source, const char c);
@@ -36,7 +36,7 @@ class UTILS_EXPORT Utilities {
 
         // check if a file exists
         static bool FileExists(const std::string& fname);
-        
+
         // Parses a region string, uses reader to do validation (valid ID's, positions), stores in Region struct
         // Returns success (true/false)
         static bool ParseRegionString(const std::string& regionString,
@@ -61,5 +61,5 @@ class UTILS_EXPORT Utilities {
 };
 
 } // namespace BamTools
-  
+
 #endif // BAMTOOLS_UTILITIES_H

@@ -19,12 +19,12 @@ using namespace BamTools::Internal;
 #include <cstring>
 
 // ctor
-BamWriterPrivate::BamWriterPrivate(void)
+BamWriterPrivate::BamWriterPrivate()
     : m_isBigEndian( BamTools::SystemIsBigEndian() )
 { }
 
 // dtor
-BamWriterPrivate::~BamWriterPrivate(void) {
+BamWriterPrivate::~BamWriterPrivate() {
     Close();
 }
 
@@ -40,7 +40,7 @@ uint32_t BamWriterPrivate::CalculateMinimumBin(const int begin, int end) const {
 }
 
 // closes the alignment archive
-void BamWriterPrivate::Close(void) {
+void BamWriterPrivate::Close() {
 
     // skip if file not open
     if ( !IsOpen() ) return;
@@ -142,12 +142,12 @@ void BamWriterPrivate::EncodeQuerySequence(const std::string& query, std::string
 }
 
 // returns a description of the last error that occurred
-std::string BamWriterPrivate::GetErrorString(void) const {
+std::string BamWriterPrivate::GetErrorString() const {
     return m_errorString;
 }
 
 // returns whether BAM file is open for writing or not
-bool BamWriterPrivate::IsOpen(void) const {
+bool BamWriterPrivate::IsOpen() const {
     return m_stream.IsOpen();
 }
 
@@ -427,7 +427,7 @@ void BamWriterPrivate::WriteCoreAlignment(const BamAlignment& al) {
                    al.SupportData.BlockLength-Constants::BAM_CORE_SIZE);
 }
 
-void BamWriterPrivate::WriteMagicNumber(void) {
+void BamWriterPrivate::WriteMagicNumber() {
     // write BAM file 'magic number'
     m_stream.Write(Constants::BAM_HEADER_MAGIC, Constants::BAM_HEADER_MAGIC_LENGTH);
 }

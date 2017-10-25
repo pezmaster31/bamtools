@@ -35,30 +35,30 @@ class BamHttp : public IBamIODevice {
     // ctor & dtor
     public:
         BamHttp(const std::string& url);
-        ~BamHttp(void);
+        ~BamHttp();
 
     // IBamIODevice implementation
     public:
-        void Close(void);
-        bool IsOpen(void) const;
-        bool IsRandomAccess(void) const;
+        void Close();
+        bool IsOpen() const;
+        bool IsRandomAccess() const;
         bool Open(const IBamIODevice::OpenMode mode);
         int64_t Read(char* data, const unsigned int numBytes);
         bool Seek(const int64_t& position, const int origin = SEEK_SET);
-        int64_t Tell(void) const;
+        int64_t Tell() const;
         int64_t Write(const char* data, const unsigned int numBytes);
 
     // internal methods
     private:
-        void ClearResponse(void);
-        bool ConnectSocket(void);
-        void DisconnectSocket(void);
-        bool EnsureSocketConnection(void);
+        void ClearResponse();
+        bool ConnectSocket();
+        void DisconnectSocket();
+        bool EnsureSocketConnection();
         void ParseUrl(const std::string& url);
         int64_t ReadFromSocket(char* data, const unsigned int numBytes);
-        bool ReceiveResponse(void);
+        bool ReceiveResponse();
         bool SendGetRequest(const size_t numBytes = 0x10000);
-        bool SendHeadRequest(void);
+        bool SendHeadRequest();
         int64_t WriteToSocket(const char* data, const unsigned int numBytes);
 
     // data members

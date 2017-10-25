@@ -41,7 +41,7 @@ struct MergeTool::MergeSettings {
     std::string Region;
 
     // constructor
-    MergeSettings(void)
+    MergeSettings()
         : HasInput(false)
         , HasInputFilelist(false)
         , HasOutput(false)
@@ -62,18 +62,18 @@ struct MergeTool::MergeToolPrivate {
             : m_settings(settings)
         { }
 
-        ~MergeToolPrivate(void) { }
+        ~MergeToolPrivate() { }
 
     // interface
     public:
-        bool Run(void);
+        bool Run();
 
     // data members
     private:
         MergeTool::MergeSettings* m_settings;
 };
 
-bool MergeTool::MergeToolPrivate::Run(void) {
+bool MergeTool::MergeToolPrivate::Run() {
 
     // set to default input if none provided
     if ( !m_settings->HasInput && !m_settings->HasInputFilelist )
@@ -192,7 +192,7 @@ bool MergeTool::MergeToolPrivate::Run(void) {
 // ---------------------------------------------
 // MergeTool implementation
 
-MergeTool::MergeTool(void)
+MergeTool::MergeTool()
     : AbstractTool()
     , m_settings(new MergeSettings)
     , m_impl(0)
@@ -210,7 +210,7 @@ MergeTool::MergeTool(void)
     Options::AddValueOption("-region", "REGION", "genomic region. See README for more details", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
 }
 
-MergeTool::~MergeTool(void) {
+MergeTool::~MergeTool() {
 
     delete m_settings;
     m_settings = 0;
@@ -219,7 +219,7 @@ MergeTool::~MergeTool(void) {
     m_impl = 0;
 }
 
-int MergeTool::Help(void) {
+int MergeTool::Help() {
     Options::DisplayHelp();
     return 0;
 }

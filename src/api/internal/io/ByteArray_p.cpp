@@ -18,7 +18,7 @@ using namespace BamTools::Internal;
 // ByteArray implementation
 // --------------------------
 
-ByteArray::ByteArray(void)
+ByteArray::ByteArray()
     : m_data()
 { }
 
@@ -39,22 +39,22 @@ ByteArray::ByteArray(const ByteArray& other)
     : m_data(other.m_data)
 { }
 
-ByteArray::~ByteArray(void) { }
+ByteArray::~ByteArray() { }
 
 ByteArray& ByteArray::operator=(const ByteArray& other) {
     m_data = other.m_data;
     return *this;
 }
 
-void ByteArray::Clear(void) {
+void ByteArray::Clear() {
     m_data.clear();
 }
 
-const char* ByteArray::ConstData(void) const {
+const char* ByteArray::ConstData() const {
     return &m_data[0];
 }
 
-char* ByteArray::Data(void) {
+char* ByteArray::Data() {
     return &m_data[0];
 }
 
@@ -100,11 +100,11 @@ void ByteArray::Resize(size_t n) {
     m_data.resize(n, 0);
 }
 
-size_t ByteArray::Size(void) const {
+size_t ByteArray::Size() const {
     return m_data.size();
 }
 
-void ByteArray::Squeeze(void) {
+void ByteArray::Squeeze() {
     std::vector<char> t(m_data);
     t.swap(m_data);
 }

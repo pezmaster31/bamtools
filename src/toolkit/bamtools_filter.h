@@ -17,11 +17,11 @@ namespace BamTools {
 class FilterTool : public AbstractTool {
 
     public:
-        FilterTool(void);
-        ~FilterTool(void);
+        FilterTool();
+        ~FilterTool();
 
     public:
-        int Help(void);
+        int Help();
         int Run(int argc, char* argv[]);
 
     private:

@@ -30,7 +30,7 @@ namespace Internal {
 struct IPv6Address {
 
     // ctor
-    inline IPv6Address(void) { memset(&data, 0, sizeof(uint8_t)*16); }
+    inline IPv6Address() { memset(&data, 0, sizeof(uint8_t)*16); }
 
     // data access (no bounds checking)
     inline uint8_t& operator[](size_t index)       { return data[index]; }
@@ -51,24 +51,24 @@ class HostAddress {
 
     // ctors & dtor
     public:
-        HostAddress(void);
+        HostAddress();
         explicit HostAddress(const uint32_t ip4Address);
         explicit HostAddress(const uint8_t* ip6Address);
         explicit HostAddress(const IPv6Address& ip6Address);
         explicit HostAddress(const std::string& address);
         HostAddress(const HostAddress& other);
-        ~HostAddress(void);
+        ~HostAddress();
 
     // HostAddress interface
     public:
-        void Clear(void);
-        bool HasIPAddress(void) const; // returns whether string address could be converted to IP address
-        bool IsNull(void) const;
+        void Clear();
+        bool HasIPAddress() const; // returns whether string address could be converted to IP address
+        bool IsNull() const;
 
-        uint32_t    GetIPv4Address(void) const;
-        IPv6Address GetIPv6Address(void) const;
-        std::string GetIPString(void) const;
-        HostAddress::NetworkProtocol GetProtocol(void) const;
+        uint32_t    GetIPv4Address() const;
+        IPv6Address GetIPv6Address() const;
+        std::string GetIPString() const;
+        HostAddress::NetworkProtocol GetProtocol() const;
 
         void SetAddress(const uint32_t ip4Address);
         void SetAddress(const uint8_t* ip6Address);
@@ -83,7 +83,7 @@ class HostAddress {
 
     // internal methods
     private:
-        bool ParseAddress(void);
+        bool ParseAddress();
 
     // data members
     private:

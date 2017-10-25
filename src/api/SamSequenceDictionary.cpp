@@ -18,10 +18,10 @@ using namespace BamTools;
     Provides methods for operating on a collection of SamSequence entries.
 */
 
-/*! \fn SamSequenceDictionary::SamSequenceDictionary(void)
+/*! \fn SamSequenceDictionary::SamSequenceDictionary()
     \brief constructor
 */
-SamSequenceDictionary::SamSequenceDictionary(void) { }
+SamSequenceDictionary::SamSequenceDictionary() { }
 
 /*! \fn SamSequenceDictionary::SamSequenceDictionary(const SamSequenceDictionary& other)
     \brief copy constructor
@@ -31,10 +31,10 @@ SamSequenceDictionary::SamSequenceDictionary(const SamSequenceDictionary& other)
     , m_lookupData(other.m_lookupData)
 { }
 
-/*! \fn SamSequenceDictionary::~SamSequenceDictionary(void)
+/*! \fn SamSequenceDictionary::~SamSequenceDictionary()
     \brief destructor
 */
-SamSequenceDictionary::~SamSequenceDictionary(void) { }
+SamSequenceDictionary::~SamSequenceDictionary() { }
 
 /*! \fn void SamSequenceDictionary::Add(const SamSequence& sequence)
     \brief Appends a sequence to the dictionary.
@@ -111,46 +111,46 @@ void SamSequenceDictionary::Add(const std::map<std::string, int>& sequenceMap) {
     }
 }
 
-/*! \fn SamSequenceIterator SamSequenceDictionary::Begin(void)
+/*! \fn SamSequenceIterator SamSequenceDictionary::Begin()
     \return an STL iterator pointing to the first sequence
     \sa ConstBegin(), End()
 */
-SamSequenceIterator SamSequenceDictionary::Begin(void) {
+SamSequenceIterator SamSequenceDictionary::Begin() {
     return m_data.begin();
 }
 
-/*! \fn SamSequenceConstIterator SamSequenceDictionary::Begin(void) const
+/*! \fn SamSequenceConstIterator SamSequenceDictionary::Begin() const
     \return an STL const_iterator pointing to the first sequence
 
     This is an overloaded function.
 
     \sa ConstBegin(), End()
 */
-SamSequenceConstIterator SamSequenceDictionary::Begin(void) const {
+SamSequenceConstIterator SamSequenceDictionary::Begin() const {
     return m_data.begin();
 }
 
-/*! \fn void SamSequenceDictionary::Clear(void)
+/*! \fn void SamSequenceDictionary::Clear()
     \brief Clears all sequence entries.
 */
-void SamSequenceDictionary::Clear(void) {
+void SamSequenceDictionary::Clear() {
     m_data.clear();
     m_lookupData.clear();
 }
 
-/*! \fn SamSequenceConstIterator SamSequenceDictionary::ConstBegin(void) const
+/*! \fn SamSequenceConstIterator SamSequenceDictionary::ConstBegin() const
     \return an STL const_iterator pointing to the first sequence
     \sa Begin(), ConstEnd()
 */
-SamSequenceConstIterator SamSequenceDictionary::ConstBegin(void) const {
+SamSequenceConstIterator SamSequenceDictionary::ConstBegin() const {
     return m_data.begin();
 }
 
-/*! \fn SamSequenceConstIterator SamSequenceDictionary::ConstEnd(void) const
+/*! \fn SamSequenceConstIterator SamSequenceDictionary::ConstEnd() const
     \return an STL const_iterator pointing to the imaginary entry after the last sequence
     \sa End(), ConstBegin()
 */
-SamSequenceConstIterator SamSequenceDictionary::ConstEnd(void) const {
+SamSequenceConstIterator SamSequenceDictionary::ConstEnd() const {
     return m_data.end();
 }
 
@@ -176,30 +176,30 @@ bool SamSequenceDictionary::Contains(const SamSequence& sequence) const {
     return Contains(sequence.Name);
 }
 
-/*! \fn SamSequenceIterator SamSequenceDictionary::End(void)
+/*! \fn SamSequenceIterator SamSequenceDictionary::End()
     \return an STL iterator pointing to the imaginary entry after the last sequence
     \sa Begin(), ConstEnd()
 */
-SamSequenceIterator SamSequenceDictionary::End(void) {
+SamSequenceIterator SamSequenceDictionary::End() {
     return m_data.end();
 }
 
-/*! \fn SamSequenceConstIterator SamSequenceDictionary::End(void) const
+/*! \fn SamSequenceConstIterator SamSequenceDictionary::End() const
     \return an STL const_iterator pointing to the imaginary entry after the last sequence
 
     This is an overloaded function.
 
     \sa Begin(), ConstEnd()
 */
-SamSequenceConstIterator SamSequenceDictionary::End(void) const {
+SamSequenceConstIterator SamSequenceDictionary::End() const {
     return m_data.end();
 }
 
-/*! \fn bool SamSequenceDictionary::IsEmpty(void) const
+/*! \fn bool SamSequenceDictionary::IsEmpty() const
     \brief Returns \c true if dictionary contains no sequences
     \sa Size()
 */
-bool SamSequenceDictionary::IsEmpty(void) const {
+bool SamSequenceDictionary::IsEmpty() const {
     return m_data.empty();
 }
 
@@ -269,11 +269,11 @@ void SamSequenceDictionary::Remove(const std::vector<std::string>& sequenceNames
         Remove(*rgIter);
 }
 
-/*! \fn int SamSequenceDictionary::Size(void) const
+/*! \fn int SamSequenceDictionary::Size() const
     \brief Returns number of sequences in dictionary.
     \sa IsEmpty()
 */
-int SamSequenceDictionary::Size(void) const {
+int SamSequenceDictionary::Size() const {
     return m_data.size();
 }
 

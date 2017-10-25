@@ -17,11 +17,11 @@ namespace BamTools {
 class SortTool : public AbstractTool {
 
     public:
-        SortTool(void);
-        ~SortTool(void);
+        SortTool();
+        ~SortTool();
 
     public:
-        int Help(void);
+        int Help();
         int Run(int argc, char* argv[]);
 
     private:

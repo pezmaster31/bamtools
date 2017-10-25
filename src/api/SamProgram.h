@@ -21,20 +21,20 @@ class SamProgramChain;
 struct API_EXPORT SamProgram {
 
     // ctor & dtor
-    SamProgram(void);
+    SamProgram();
     SamProgram(const std::string& id);
     SamProgram(const SamProgram& other);
-    ~SamProgram(void);
+    ~SamProgram();
 
     // query/modify entire program record
-    void Clear(void);                      // clears all data fields
+    void Clear();                      // clears all data fields
 
     // convenience query methods
-    bool HasCommandLine(void) const;       // returns true if program record has a command line entry
-    bool HasID(void) const;                // returns true if program record has an ID
-    bool HasName(void) const;              // returns true if program record has a name
-    bool HasPreviousProgramID(void) const; // returns true if program record has a 'previous program ID'
-    bool HasVersion(void) const;           // returns true if program record has a version
+    bool HasCommandLine() const;       // returns true if program record has a command line entry
+    bool HasID() const;                // returns true if program record has an ID
+    bool HasName() const;              // returns true if program record has a name
+    bool HasPreviousProgramID() const; // returns true if program record has a 'previous program ID'
+    bool HasVersion() const;           // returns true if program record has a version
 
     // data members
     std::string CommandLine;               // CL:<CommandLine>
@@ -46,7 +46,7 @@ struct API_EXPORT SamProgram {
 
     // internal (non-standard) methods & fields
     private:
-        bool HasNextProgramID(void) const;
+        bool HasNextProgramID() const;
         std::string NextProgramID;
         friend class BamTools::SamProgramChain;
 };

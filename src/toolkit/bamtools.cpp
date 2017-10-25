@@ -125,7 +125,7 @@ int Help(int argc, char* argv[]) {
 }
 
 // print version info
-int Version(void) {
+int Version() {
 
     std::stringstream versionStream;
     versionStream << BAMTOOLS_VERSION_MAJOR << "."

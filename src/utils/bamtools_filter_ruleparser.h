@@ -102,19 +102,19 @@ class RuleParser {
             ignoreQuotes();
         }
 
-        ~RuleParser(void) { }
+        ~RuleParser() { }
 
     // public interface
     public:
-        void parse(void);
-        std::queue<std::string> results(void) const { return m_ruleQueue; }
+        void parse();
+        std::queue<std::string> results() const { return m_ruleQueue; }
 
     // internal methods
     private:
-        char getNextChar(void);
-        void ignoreQuotes(void);
+        char getNextChar();
+        void ignoreQuotes();
         bool readToken(RuleToken& token);
-        void skipSpaces(void);
+        void skipSpaces();
 
     // data members
     private:
@@ -128,19 +128,19 @@ class RuleParser {
 };
 
 inline
-char RuleParser::getNextChar(void) {
+char RuleParser::getNextChar() {
    if ( m_current == m_end ) return 0;
    return *m_current++;
 }
 
 inline
-void RuleParser::ignoreQuotes(void) {
+void RuleParser::ignoreQuotes() {
     if ( *m_begin == '\"' ) ++m_begin;
     if ( *m_end   == '\"' ) --m_end;
 }
 
 inline
-void RuleParser::parse(void) {
+void RuleParser::parse() {
 
     // clear out any prior data
     while ( !m_ruleQueue.empty() )
@@ -305,7 +305,7 @@ bool RuleParser::readToken(RuleToken& token) {
 }
 
 inline
-void RuleParser::skipSpaces(void) {
+void RuleParser::skipSpaces() {
     while ( m_current != m_end ) {
         const char c = *m_current;
         if ( c == ' ' || c == '\t' || c == '\r' || c == '\n')

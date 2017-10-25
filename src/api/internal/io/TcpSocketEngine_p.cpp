@@ -17,7 +17,7 @@
 using namespace BamTools;
 using namespace BamTools::Internal;
 
-TcpSocketEngine::TcpSocketEngine(void)
+TcpSocketEngine::TcpSocketEngine()
     : m_socketDescriptor(-1)
 //    , m_localPort(0)
     , m_remotePort(0)
@@ -36,11 +36,11 @@ TcpSocketEngine::TcpSocketEngine(const TcpSocketEngine& other)
     , m_errorString(other.m_errorString)
 { }
 
-TcpSocketEngine::~TcpSocketEngine(void) {
+TcpSocketEngine::~TcpSocketEngine() {
     Close();
 }
 
-void TcpSocketEngine::Close(void) {
+void TcpSocketEngine::Close() {
 
     // close socket if we have valid FD
     if ( m_socketDescriptor != -1 ) {
@@ -77,35 +77,35 @@ bool TcpSocketEngine::Connect(const HostAddress& address, const uint16_t port) {
     return true;
 }
 
-std::string TcpSocketEngine::GetErrorString(void) const {
+std::string TcpSocketEngine::GetErrorString() const {
     return m_errorString;
 }
 
-//HostAddress TcpSocketEngine::GetLocalAddress(void) const {
+//HostAddress TcpSocketEngine::GetLocalAddress() const {
 //    return m_localAddress;
 //}
 
-//uint16_t TcpSocketEngine::GetLocalPort(void) const {
+//uint16_t TcpSocketEngine::GetLocalPort() const {
 //    return m_localPort;
 //}
 
-HostAddress TcpSocketEngine::GetRemoteAddress(void) const {
+HostAddress TcpSocketEngine::GetRemoteAddress() const {
     return m_remoteAddress;
 }
 
-uint16_t TcpSocketEngine::GetRemotePort(void) const {
+uint16_t TcpSocketEngine::GetRemotePort() const {
     return m_remotePort;
 }
 
-int TcpSocketEngine::GetSocketDescriptor(void) const {
+int TcpSocketEngine::GetSocketDescriptor() const {
     return m_socketDescriptor;
 }
 
-TcpSocket::SocketError TcpSocketEngine::GetSocketError(void) {
+TcpSocket::SocketError TcpSocketEngine::GetSocketError() {
     return m_socketError;
 }
 
-TcpSocket::SocketState TcpSocketEngine::GetSocketState(void) {
+TcpSocket::SocketState TcpSocketEngine::GetSocketState() {
     return m_socketState;
 }
 
@@ -119,11 +119,11 @@ bool TcpSocketEngine::Initialize(HostAddress::NetworkProtocol protocol) {
     return nativeCreateSocket(protocol);
 }
 
-bool TcpSocketEngine::IsValid(void) const {
+bool TcpSocketEngine::IsValid() const {
     return (m_socketDescriptor != -1);
 }
 
-int64_t TcpSocketEngine::NumBytesAvailable(void) const {
+int64_t TcpSocketEngine::NumBytesAvailable() const {
 
     // return 0 if socket FD is invalid
     if ( !IsValid() ) {

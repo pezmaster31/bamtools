@@ -37,25 +37,25 @@ class RollingBuffer {
     // ctors & dtor
     public:
         RollingBuffer(size_t growth);
-        ~RollingBuffer(void);
+        ~RollingBuffer();
 
     // RollingBuffer interface
     public:
 
         // returns current buffer size
-        size_t BlockSize(void) const;
+        size_t BlockSize() const;
         // checks buffer for new line
-        bool CanReadLine(void) const;
+        bool CanReadLine() const;
         // frees @n bytes from end of buffer
         void Chop(size_t n);
         // clears entire buffer structure
-        void Clear(void);
+        void Clear();
         // frees @n bytes from front of buffer
         void Free(size_t n);
         // checks buffer for @c
         size_t IndexOf(char c) const;
         // returns whether buffer contains data
-        bool IsEmpty(void) const;
+        bool IsEmpty() const;
         // reads up to @maxLen bytes into @dest
         // returns exactly how many bytes were read from buffer
         size_t Read(char* dest, size_t max);
@@ -63,11 +63,11 @@ class RollingBuffer {
         // returns exactly how many bytes were read from buffer
         size_t ReadLine(char* dest, size_t max);
         // returns a C-fxn compatible char* to byte data
-        const char* ReadPointer(void) const;
+        const char* ReadPointer() const;
         // ensures that buffer contains space for @n incoming bytes, returns write-able char*
         char* Reserve(size_t n);
         // returns current number of bytes stored in buffer
-        size_t Size(void) const;
+        size_t Size() const;
         // reserves space for @n bytes, then appends contents of @src to buffer
         void Write(const char* src, size_t n);
 

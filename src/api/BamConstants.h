@@ -154,7 +154,7 @@ template<typename T>
 struct TagTypeHelper {
     static bool CanConvertFrom(const char) { assert(false); return false; }
     static bool CanConvertTo(const char) { assert(false); return false; }
-    static char TypeCode(void) { assert(false); return 0; }
+    static char TypeCode() { assert(false); return 0; }
 };
 
 template<>
@@ -170,7 +170,7 @@ struct TagTypeHelper<uint8_t> {
                  c == Constants::BAM_TAG_TYPE_UINT32 );
     }
 
-    static char TypeCode(void) { return Constants::BAM_TAG_TYPE_UINT8; }
+    static char TypeCode() { return Constants::BAM_TAG_TYPE_UINT8; }
 };
 
 template<>
@@ -185,7 +185,7 @@ struct TagTypeHelper<int8_t> {
                  c == Constants::BAM_TAG_TYPE_INT16 ||
                  c == Constants::BAM_TAG_TYPE_INT32 );
     }
-    static char TypeCode(void) { return Constants::BAM_TAG_TYPE_INT8; }
+    static char TypeCode() { return Constants::BAM_TAG_TYPE_INT8; }
 };
 
 template<>
@@ -199,7 +199,7 @@ struct TagTypeHelper<uint16_t> {
         return ( c == Constants::BAM_TAG_TYPE_UINT16 ||
                  c == Constants::BAM_TAG_TYPE_UINT32);
     }
-    static char TypeCode(void) { return Constants::BAM_TAG_TYPE_UINT16; }
+    static char TypeCode() { return Constants::BAM_TAG_TYPE_UINT16; }
 };
 
 template<>
@@ -213,7 +213,7 @@ struct TagTypeHelper<int16_t> {
         return ( c == Constants::BAM_TAG_TYPE_INT16 ||
                  c == Constants::BAM_TAG_TYPE_INT32);
     }
-    static char TypeCode(void) { return Constants::BAM_TAG_TYPE_INT16; }
+    static char TypeCode() { return Constants::BAM_TAG_TYPE_INT16; }
 };
 
 template<>
@@ -227,7 +227,7 @@ struct TagTypeHelper<uint32_t> {
     static bool CanConvertTo(const char c) {
         return ( c == Constants::BAM_TAG_TYPE_UINT32 );
     }
-    static char TypeCode(void) { return Constants::BAM_TAG_TYPE_UINT32; }
+    static char TypeCode() { return Constants::BAM_TAG_TYPE_UINT32; }
 };
 
 template<>
@@ -241,7 +241,7 @@ struct TagTypeHelper<int32_t> {
     static bool CanConvertTo(const char c) {
         return ( c == Constants::BAM_TAG_TYPE_INT32 );
     }
-    static char TypeCode(void) { return Constants::BAM_TAG_TYPE_INT32; }
+    static char TypeCode() { return Constants::BAM_TAG_TYPE_INT32; }
 };
 
 template<>
@@ -259,7 +259,7 @@ struct TagTypeHelper<float> {
     static bool CanConvertTo(const char c) {
         return ( c == Constants::BAM_TAG_TYPE_FLOAT );
     }
-    static char TypeCode(void) { return Constants::BAM_TAG_TYPE_FLOAT; }
+    static char TypeCode() { return Constants::BAM_TAG_TYPE_FLOAT; }
 };
 
 template<>
@@ -272,7 +272,7 @@ struct TagTypeHelper<std::string> {
         return ( c == Constants::BAM_TAG_TYPE_HEX ||
                  c == Constants::BAM_TAG_TYPE_STRING );
     }
-    static char TypeCode(void) { return Constants::BAM_TAG_TYPE_STRING; }
+    static char TypeCode() { return Constants::BAM_TAG_TYPE_STRING; }
 };
 
 //! \endcond

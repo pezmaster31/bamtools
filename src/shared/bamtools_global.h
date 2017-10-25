@@ -76,7 +76,7 @@
 #endif // BAMTOOLS_TYPES
 
 //! \internal
-inline void bamtools_noop(void) { }
+inline void bamtools_noop() { }
 
 /*! \brief Assert definitions
     \internal

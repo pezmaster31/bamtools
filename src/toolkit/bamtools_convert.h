@@ -17,11 +17,11 @@ namespace BamTools {
 class ConvertTool : public AbstractTool {
 
     public:
-        ConvertTool(void);
-        ~ConvertTool(void);
+        ConvertTool();
+        ~ConvertTool();
 
     public:
-        int Help(void);
+        int Help();
         int Run(int argc, char* argv[]);
 
     private:

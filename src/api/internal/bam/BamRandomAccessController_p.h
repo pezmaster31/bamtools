@@ -41,31 +41,31 @@ class BamRandomAccessController {
 
     // ctor & dtor
     public:
-        BamRandomAccessController(void);
-        ~BamRandomAccessController(void);
+        BamRandomAccessController();
+        ~BamRandomAccessController();
 
     // BamRandomAccessController interface
     public:
 
         // index methods
-        void ClearIndex(void);
+        void ClearIndex();
         bool CreateIndex(BamReaderPrivate* reader, const BamIndex::IndexType& type);
-        bool HasIndex(void) const;
+        bool HasIndex() const;
         bool IndexHasAlignmentsForReference(const int& refId);
         bool LocateIndex(BamReaderPrivate* reader, const BamIndex::IndexType& preferredType);
         bool OpenIndex(const std::string& indexFilename, BamReaderPrivate* reader);
         void SetIndex(BamIndex* index);
 
         // region methods
-        void ClearRegion(void);
-        bool HasRegion(void) const;
+        void ClearRegion();
+        bool HasRegion() const;
         RegionState AlignmentState(const BamAlignment& alignment) const;
-        bool RegionHasAlignments(void) const;
+        bool RegionHasAlignments() const;
         bool SetRegion(const BamRegion& region, const int& referenceCount);
 
         // general methods
-        void Close(void);
-        std::string GetErrorString(void) const;
+        void Close();
+        std::string GetErrorString() const;
 
     // internal methods
     private:

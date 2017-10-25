@@ -37,11 +37,11 @@ const int BamToolsIndex::SIZEOF_BLOCK         = sizeof(int32_t)*2 + sizeof(int64
 // RaiiWrapper implementation
 // ----------------------------
 
-BamToolsIndex::RaiiWrapper::RaiiWrapper(void)
+BamToolsIndex::RaiiWrapper::RaiiWrapper()
     : Device(0)
 { }
 
-BamToolsIndex::RaiiWrapper::~RaiiWrapper(void) {
+BamToolsIndex::RaiiWrapper::~RaiiWrapper() {
     if ( Device ) {
         Device->Close();
         delete Device;
@@ -64,11 +64,11 @@ BamToolsIndex::BamToolsIndex(Internal::BamReaderPrivate* reader)
 }
 
 // dtor
-BamToolsIndex::~BamToolsIndex(void) {
+BamToolsIndex::~BamToolsIndex() {
     CloseFile();
 }
 
-void BamToolsIndex::CheckMagicNumber(void) {
+void BamToolsIndex::CheckMagicNumber() {
 
     // read magic number
     char magic[4];
@@ -82,7 +82,7 @@ void BamToolsIndex::CheckMagicNumber(void) {
 }
 
 // check index file version, return true if OK
-void BamToolsIndex::CheckVersion(void) {
+void BamToolsIndex::CheckVersion() {
 
     // read version from file
     const int64_t numBytesRead = m_resources.Device->Read((char*)&m_inputVersion, sizeof(m_inputVersion));
@@ -120,7 +120,7 @@ void BamToolsIndex::ClearReferenceEntry(BtiReferenceEntry& refEntry) {
     refEntry.Blocks.clear();
 }
 
-void BamToolsIndex::CloseFile(void) {
+void BamToolsIndex::CloseFile() {
     if ( IsDeviceOpen() ) {
         m_resources.Device->Close();
         delete m_resources.Device;
@@ -130,7 +130,7 @@ void BamToolsIndex::CloseFile(void) {
 }
 
 // builds index from associated BAM file & writes out to index file
-bool BamToolsIndex::Create(void) {
+bool BamToolsIndex::Create() {
 
     // skip if BamReader is invalid or not open
     if ( m_reader == 0 || !m_reader->IsOpen() ) {
@@ -274,7 +274,7 @@ bool BamToolsIndex::Create(void) {
 }
 
 // returns format's file extension
-const std::string BamToolsIndex::Extension(void) {
+const std::string BamToolsIndex::Extension() {
     return BamToolsIndex::BTI_EXTENSION;
 }
 
@@ -359,7 +359,7 @@ void BamToolsIndex::InitializeFileSummary(const int& numReferences) {
 }
 
 // returns true if the index stream is open
-bool BamToolsIndex::IsDeviceOpen(void) const {
+bool BamToolsIndex::IsDeviceOpen() const {
     if ( m_resources.Device == 0 )
         return false;
     return m_resources.Device->IsOpen();
@@ -421,7 +421,7 @@ bool BamToolsIndex::Load(const std::string& filename) {
     }
 }
 
-void BamToolsIndex::LoadFileSummary(void) {
+void BamToolsIndex::LoadFileSummary() {
 
     // load number of reference sequences
     int numReferences;
@@ -437,7 +437,7 @@ void BamToolsIndex::LoadFileSummary(void) {
         LoadReferenceSummary(*summaryIter);
 }
 
-void BamToolsIndex::LoadHeader(void) {
+void BamToolsIndex::LoadHeader() {
 
     // check BTI file metadata
     CheckMagicNumber();
@@ -557,7 +557,7 @@ void BamToolsIndex::SkipBlocks(const int& numBlocks) {
     Seek( numBlocks*BamToolsIndex::SIZEOF_BLOCK, SEEK_CUR );
 }
 
-int64_t BamToolsIndex::Tell(void) const {
+int64_t BamToolsIndex::Tell() const {
     return m_resources.Device->Tell();
 }
 
@@ -596,7 +596,7 @@ void BamToolsIndex::WriteBlocks(const BtiBlockVector& blocks) {
         WriteBlock(*blockIter);
 }
 
-void BamToolsIndex::WriteHeader(void) {
+void BamToolsIndex::WriteHeader() {
 
     int64_t numBytesWritten = 0 ;
 

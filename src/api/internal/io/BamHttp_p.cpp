@@ -83,7 +83,7 @@ BamHttp::BamHttp(const std::string& url)
     ParseUrl(url);
 }
 
-BamHttp::~BamHttp(void) {
+BamHttp::~BamHttp() {
 
     // close connection & clean up
     Close();
@@ -91,14 +91,14 @@ BamHttp::~BamHttp(void) {
         delete m_socket;
 }
 
-void BamHttp::ClearResponse(void) {
+void BamHttp::ClearResponse() {
     if ( m_response ) {
         delete m_response;
         m_response = 0;
     }
 }
 
-void BamHttp::Close(void) {
+void BamHttp::Close() {
 
     // disconnect socket & clear related resources
     DisconnectSocket();
@@ -111,7 +111,7 @@ void BamHttp::Close(void) {
     m_mode = IBamIODevice::NotOpen;
 }
 
-bool BamHttp::ConnectSocket(void) {
+bool BamHttp::ConnectSocket() {
 
     BT_ASSERT_X(m_socket, "null socket?");
 
@@ -125,7 +125,7 @@ bool BamHttp::ConnectSocket(void) {
     return true;
 }
 
-void BamHttp::DisconnectSocket(void) {
+void BamHttp::DisconnectSocket() {
 
     // disconnect socket & clean up
     m_socket->DisconnectFromHost();
@@ -136,17 +136,17 @@ void BamHttp::DisconnectSocket(void) {
     }
 }
 
-bool BamHttp::EnsureSocketConnection(void) {
+bool BamHttp::EnsureSocketConnection() {
     if ( m_socket->IsConnected() )
         return true;
     return ConnectSocket();
 }
 
-bool BamHttp::IsOpen(void) const {
+bool BamHttp::IsOpen() const {
     return IBamIODevice::IsOpen() && m_isUrlParsed;
 }
 
-bool BamHttp::IsRandomAccess(void) const {
+bool BamHttp::IsRandomAccess() const {
     return true;
 }
 
@@ -317,7 +317,7 @@ int64_t BamHttp::ReadFromSocket(char* data, const unsigned int maxNumBytes) {
     return m_socket->Read(data, maxNumBytes);
 }
 
-bool BamHttp::ReceiveResponse(void) {
+bool BamHttp::ReceiveResponse() {
 
     // fetch header, up until double new line
     std::string responseHeader;
@@ -478,7 +478,7 @@ bool BamHttp::SendGetRequest(const size_t numBytes) {
     return false;
 }
 
-bool BamHttp::SendHeadRequest(void) {
+bool BamHttp::SendHeadRequest() {
 
     // ensure clean slate
     ClearResponse();
@@ -523,7 +523,7 @@ bool BamHttp::SendHeadRequest(void) {
     return m_socket->GetError() == TcpSocket::NoError;
 }
 
-int64_t BamHttp::Tell(void) const {
+int64_t BamHttp::Tell() const {
     return ( IsOpen() ? m_filePosition : -1 );
 }
 

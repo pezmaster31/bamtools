@@ -95,7 +95,7 @@ static std::string Trim(const std::string& source) {
 // HttpHeader implementation
 // ---------------------------
 
-HttpHeader::HttpHeader(void)
+HttpHeader::HttpHeader()
     : m_isValid(true)
     , m_majorVersion(1)
     , m_minorVersion(1)
@@ -109,17 +109,17 @@ HttpHeader::HttpHeader(const std::string& s)
     Parse(s);
 }
 
-HttpHeader::~HttpHeader(void) { }
+HttpHeader::~HttpHeader() { }
 
 bool HttpHeader::ContainsKey(const std::string& key) const {
     return ( m_fields.find(key) != m_fields.end() );
 }
 
-int HttpHeader::GetMajorVersion(void) const {
+int HttpHeader::GetMajorVersion() const {
     return m_majorVersion;
 }
 
-int HttpHeader::GetMinorVersion(void) const {
+int HttpHeader::GetMinorVersion() const {
     return m_minorVersion;
 }
 
@@ -129,7 +129,7 @@ std::string HttpHeader::GetValue(const std::string& key) {
     else return std::string();
 }
 
-bool HttpHeader::IsValid(void) const {
+bool HttpHeader::IsValid() const {
     return m_isValid;
 }
 
@@ -211,7 +211,7 @@ void HttpHeader::SetVersion(int major, int minor) {
     m_minorVersion = minor;
 }
 
-std::string HttpHeader::ToString(void) const {
+std::string HttpHeader::ToString() const {
     std::string result;
     if ( m_isValid ) {
         std::map<std::string, std::string>::const_iterator fieldIter = m_fields.begin();
@@ -242,13 +242,13 @@ HttpRequestHeader::HttpRequestHeader(const std::string& method,
     SetVersion(majorVersion, minorVersion);
 }
 
-HttpRequestHeader::~HttpRequestHeader(void) { }
+HttpRequestHeader::~HttpRequestHeader() { }
 
-std::string HttpRequestHeader::GetMethod(void) const {
+std::string HttpRequestHeader::GetMethod() const {
     return m_method;
 }
 
-std::string HttpRequestHeader::GetResource(void) const {
+std::string HttpRequestHeader::GetResource() const {
     return m_resource;
 }
 
@@ -292,7 +292,7 @@ bool HttpRequestHeader::ParseLine(const std::string& line, int lineNumber) {
     return true;
 }
 
-std::string HttpRequestHeader::ToString(void) const {
+std::string HttpRequestHeader::ToString() const {
     std::stringstream request;
     request << m_method   << Constants::SPACE_CHAR
             << m_resource << Constants::SPACE_CHAR
@@ -326,13 +326,13 @@ HttpResponseHeader::HttpResponseHeader(const std::string& s)
     Parse(s);
 }
 
-HttpResponseHeader::~HttpResponseHeader(void) { }
+HttpResponseHeader::~HttpResponseHeader() { }
 
-std::string HttpResponseHeader::GetReason(void) const  {
+std::string HttpResponseHeader::GetReason() const  {
     return m_reason;
 }
 
-int HttpResponseHeader::GetStatusCode(void) const {
+int HttpResponseHeader::GetStatusCode() const {
     return m_statusCode;
 }
 
@@ -381,7 +381,7 @@ bool HttpResponseHeader::ParseLine(const std::string& line, int lineNumber) {
     return true;
 }
 
-std::string HttpResponseHeader::ToString(void) const {
+std::string HttpResponseHeader::ToString() const {
     std::stringstream response;
     response << Constants::HTTP_STRING << GetMajorVersion() << Constants::DOT_CHAR << GetMinorVersion()
              << Constants::SPACE_CHAR  << m_statusCode

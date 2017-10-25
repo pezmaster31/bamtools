@@ -75,10 +75,10 @@ using namespace BamTools;
     \brief name of BAM file which this alignment comes from
 */
 
-/*! \fn BamAlignment::BamAlignment(void)
+/*! \fn BamAlignment::BamAlignment()
     \brief constructor
 */
-BamAlignment::BamAlignment(void)
+BamAlignment::BamAlignment()
     : Length(0)
     , RefID(-1)
     , Position(-1)
@@ -113,12 +113,12 @@ BamAlignment::BamAlignment(const BamAlignment& other)
     , SupportData(other.SupportData)
 { }
 
-/*! \fn BamAlignment::~BamAlignment(void)
+/*! \fn BamAlignment::~BamAlignment()
     \brief destructor
 */
-BamAlignment::~BamAlignment(void) { }
+BamAlignment::~BamAlignment() { }
 
-/*! \fn bool BamAlignment::BuildCharData(void)
+/*! \fn bool BamAlignment::BuildCharData()
     \brief Populates alignment string fields (read name, bases, qualities, tag data).
 
     An alignment retrieved using BamReader::GetNextAlignmentCore() lacks this data.
@@ -130,7 +130,7 @@ BamAlignment::~BamAlignment(void) { }
 
     \return \c true if character data populated successfully (or was already available to begin with)
 */
-bool BamAlignment::BuildCharData(void) {
+bool BamAlignment::BuildCharData() {
 
     // skip if char data already parsed
     if ( !SupportData.HasCoreOnly )
@@ -516,7 +516,7 @@ int BamAlignment::GetEndPosition(bool usePadded, bool closedInterval) const {
     return alignEnd;
 }
 
-/*! \fn std::string BamAlignment::GetErrorString(void) const
+/*! \fn std::string BamAlignment::GetErrorString() const
     \brief Returns a human-readable description of the last error that occurred
 
     This method allows elimination of STDERR pollution. Developers of client code
@@ -524,7 +524,7 @@ int BamAlignment::GetEndPosition(bool usePadded, bool closedInterval) const {
 
     \return error description
 */
-std::string BamAlignment::GetErrorString(void) const {
+std::string BamAlignment::GetErrorString() const {
     return ErrorString;
 }
 
@@ -616,7 +616,7 @@ bool BamAlignment::GetSoftClips(std::vector<int>& clipSizes,
     return softClipFound;
 }
 
-/*! \fn std::vector<std::string> BamAlignment::GetTagNames(void) const
+/*! \fn std::vector<std::string> BamAlignment::GetTagNames() const
     \brief Retrieves the BAM tag names.
 
     When paired with GetTagType() and GetTag(), this method allows you
@@ -626,7 +626,7 @@ bool BamAlignment::GetSoftClips(std::vector<int>& clipSizes,
     \return \c vector containing all tag names found (empty if none available)
     \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
-std::vector<std::string> BamAlignment::GetTagNames(void) const {
+std::vector<std::string> BamAlignment::GetTagNames() const {
 
     std::vector<std::string> result;
     if ( SupportData.HasCoreOnly || TagData.empty() )
@@ -734,80 +734,80 @@ bool BamAlignment::HasTag(const std::string& tag) const {
     return FindTag(tag, pTagData, tagDataLength, numBytesParsed);
 }
 
-/*! \fn bool BamAlignment::IsDuplicate(void) const
+/*! \fn bool BamAlignment::IsDuplicate() const
     \return \c true if this read is a PCR duplicate
 */
-bool BamAlignment::IsDuplicate(void) const {
+bool BamAlignment::IsDuplicate() const {
     return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_DUPLICATE) != 0 );
 }
 
-/*! \fn bool BamAlignment::IsFailedQC(void) const
+/*! \fn bool BamAlignment::IsFailedQC() const
     \return \c true if this read failed quality control
 */
-bool BamAlignment::IsFailedQC(void) const {
+bool BamAlignment::IsFailedQC() const {
     return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_QC_FAILED) != 0 );
 }
 
-/*! \fn bool BamAlignment::IsFirstMate(void) const
+/*! \fn bool BamAlignment::IsFirstMate() const
     \return \c true if alignment is first mate on paired-end read
 */
-bool BamAlignment::IsFirstMate(void) const {
+bool BamAlignment::IsFirstMate() const {
     return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_READ_1) != 0 );
 }
 
-/*! \fn bool BamAlignment::IsMapped(void) const
+/*! \fn bool BamAlignment::IsMapped() const
     \return \c true if alignment is mapped
 */
-bool BamAlignment::IsMapped(void) const {
+bool BamAlignment::IsMapped() const {
     return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_UNMAPPED) == 0 );
 }
 
-/*! \fn bool BamAlignment::IsMateMapped(void) const
+/*! \fn bool BamAlignment::IsMateMapped() const
     \return \c true if alignment's mate is mapped
 */
-bool BamAlignment::IsMateMapped(void) const {
+bool BamAlignment::IsMateMapped() const {
     return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_MATE_UNMAPPED) == 0 );
 }
 
-/*! \fn bool BamAlignment::IsMateReverseStrand(void) const
+/*! \fn bool BamAlignment::IsMateReverseStrand() const
     \return \c true if alignment's mate mapped to reverse strand
 */
-bool BamAlignment::IsMateReverseStrand(void) const {
+bool BamAlignment::IsMateReverseStrand() const {
     return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_MATE_REVERSE_STRAND) != 0 );
 }
 
-/*! \fn bool BamAlignment::IsPaired(void) const
+/*! \fn bool BamAlignment::IsPaired() const
     \return \c true if alignment part of paired-end read
 */
-bool BamAlignment::IsPaired(void) const {
+bool BamAlignment::IsPaired() const {
     return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_PAIRED) != 0 );
 }
 
-/*! \fn bool BamAlignment::IsPrimaryAlignment(void) const
+/*! \fn bool BamAlignment::IsPrimaryAlignment() const
     \return \c true if reported position is primary alignment
 */
-bool BamAlignment::IsPrimaryAlignment(void) const  {
+bool BamAlignment::IsPrimaryAlignment() const  {
     return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_SECONDARY) == 0 );
 }
 
-/*! \fn bool BamAlignment::IsProperPair(void) const
+/*! \fn bool BamAlignment::IsProperPair() const
     \return \c true if alignment is part of read that satisfied paired-end resolution
 */
-bool BamAlignment::IsProperPair(void) const {
+bool BamAlignment::IsProperPair() const {
     return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_PROPER_PAIR) != 0 );
 }
 
-/*! \fn bool BamAlignment::IsReverseStrand(void) const
+/*! \fn bool BamAlignment::IsReverseStrand() const
     \return \c true if alignment mapped to reverse strand
 */
-bool BamAlignment::IsReverseStrand(void) const {
+bool BamAlignment::IsReverseStrand() const {
     return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_REVERSE_STRAND) != 0 );
 }
 
-/*! \fn bool BamAlignment::IsSecondMate(void) const
+/*! \fn bool BamAlignment::IsSecondMate() const
     \return \c true if alignment is second mate on read
 */
-bool BamAlignment::IsSecondMate(void) const {
+bool BamAlignment::IsSecondMate() const {
     return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_READ_2) != 0 );
 }
 

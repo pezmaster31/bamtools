@@ -36,7 +36,7 @@ struct CountTool::CountSettings {
     std::string Region;
 
     // constructor
-    CountSettings(void)
+    CountSettings()
         : HasInput(false)
         , HasInputFilelist(false)
         , HasRegion(false)
@@ -54,18 +54,18 @@ struct CountTool::CountToolPrivate {
             : m_settings(settings)
         { }
 
-        ~CountToolPrivate(void) { }
+        ~CountToolPrivate() { }
 
     // interface
     public:
-        bool Run(void);
+        bool Run();
 
     // data members
     private:
         CountTool::CountSettings* m_settings;
 };
 
-bool CountTool::CountToolPrivate::Run(void) {
+bool CountTool::CountToolPrivate::Run() {
 
     // set to default input if none provided
     if ( !m_settings->HasInput && !m_settings->HasInputFilelist )
@@ -161,7 +161,7 @@ bool CountTool::CountToolPrivate::Run(void) {
 // ---------------------------------------------
 // CountTool implementation
 
-CountTool::CountTool(void)
+CountTool::CountTool()
     : AbstractTool()
     , m_settings(new CountSettings)
     , m_impl(0)
@@ -179,7 +179,7 @@ CountTool::CountTool(void)
                             "", m_settings->HasRegion, m_settings->Region, IO_Opts);
 }
 
-CountTool::~CountTool(void) {
+CountTool::~CountTool() {
 
     delete m_settings;
     m_settings = 0;
@@ -188,7 +188,7 @@ CountTool::~CountTool(void) {
     m_impl = 0;
 }
 
-int CountTool::Help(void) {
+int CountTool::Help() {
     Options::DisplayHelp();
     return 0;
 }

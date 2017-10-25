@@ -26,9 +26,9 @@ class API_EXPORT SamSequenceDictionary {
 
     // ctor & dtor
     public:
-        SamSequenceDictionary(void);
+        SamSequenceDictionary();
         SamSequenceDictionary(const SamSequenceDictionary& other);
-        ~SamSequenceDictionary(void);
+        ~SamSequenceDictionary();
 
     // query/modify sequence data
     public:
@@ -42,14 +42,14 @@ class API_EXPORT SamSequenceDictionary {
         void Add(const std::map<std::string, int>& sequenceMap);
 
         // clears all sequence entries
-        void Clear(void);
+        void Clear();
 
         // returns true if dictionary contains this sequence
         bool Contains(const SamSequence& sequence) const;
         bool Contains(const std::string& sequenceName) const;
 
         // returns true if dictionary is empty
-        bool IsEmpty(void) const;
+        bool IsEmpty() const;
 
         // removes sequence, if found
         void Remove(const SamSequence& sequence);
@@ -60,19 +60,19 @@ class API_EXPORT SamSequenceDictionary {
         void Remove(const std::vector<std::string>& sequenceNames);
 
         // returns number of sequences in dictionary
-        int Size(void) const;
+        int Size() const;
 
         // retrieves a modifiable reference to the SamSequence object associated with this name
         SamSequence& operator[](const std::string& sequenceName);
 
     // retrieve STL-compatible iterators
     public:
-        SamSequenceIterator      Begin(void);               // returns iterator to begin()
-        SamSequenceConstIterator Begin(void) const;         // returns const_iterator to begin()
-        SamSequenceConstIterator ConstBegin(void) const;    // returns const_iterator to begin()
-        SamSequenceIterator      End(void);                 // returns iterator to end()
-        SamSequenceConstIterator End(void) const;           // returns const_iterator to end()
-        SamSequenceConstIterator ConstEnd(void) const;      // returns const_iterator to end()
+        SamSequenceIterator      Begin();               // returns iterator to begin()
+        SamSequenceConstIterator Begin() const;         // returns const_iterator to begin()
+        SamSequenceConstIterator ConstBegin() const;    // returns const_iterator to begin()
+        SamSequenceIterator      End();                 // returns iterator to end()
+        SamSequenceConstIterator End() const;           // returns const_iterator to end()
+        SamSequenceConstIterator ConstEnd() const;      // returns const_iterator to end()
 
     // data members
     private:

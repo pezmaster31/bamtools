@@ -190,7 +190,7 @@ bool ParseIp6(const std::string& address, uint8_t* maybeIp6 ) {
 // HostAddress implementation
 // ----------------------------
 
-HostAddress::HostAddress(void)
+HostAddress::HostAddress()
     : m_protocol(HostAddress::UnknownNetworkProtocol)
     , m_ip4Address(0)
     , m_hasIpAddress(true)
@@ -235,7 +235,7 @@ HostAddress::HostAddress(const HostAddress& other)
     , m_hasIpAddress(other.m_hasIpAddress)
 { }
 
-HostAddress::~HostAddress(void) { }
+HostAddress::~HostAddress() { }
 
 bool HostAddress::operator==(const HostAddress& other) const {
 
@@ -275,7 +275,7 @@ bool HostAddress::operator<(const HostAddress& other) const {
     return m_protocol < other.m_protocol;
 }
 
-void HostAddress::Clear(void) {
+void HostAddress::Clear() {
 
     m_protocol = HostAddress::UnknownNetworkProtocol;
     m_ip4Address = 0;
@@ -289,23 +289,23 @@ void HostAddress::Clear(void) {
     m_hasIpAddress = true;
 }
 
-bool HostAddress::HasIPAddress(void) const {
+bool HostAddress::HasIPAddress() const {
     return m_hasIpAddress;
 }
 
-bool HostAddress::IsNull(void) const {
+bool HostAddress::IsNull() const {
     return m_protocol == HostAddress::UnknownNetworkProtocol;
 }
 
-uint32_t HostAddress::GetIPv4Address(void) const {
+uint32_t HostAddress::GetIPv4Address() const {
     return m_ip4Address;
 }
 
-IPv6Address HostAddress::GetIPv6Address(void) const {
+IPv6Address HostAddress::GetIPv6Address() const {
     return m_ip6Address;
 }
 
-std::string HostAddress::GetIPString(void) const {
+std::string HostAddress::GetIPString() const {
 
     std::stringstream ss;
 
@@ -333,11 +333,11 @@ std::string HostAddress::GetIPString(void) const {
     return ss.str();
 }
 
-HostAddress::NetworkProtocol HostAddress::GetProtocol(void) const {
+HostAddress::NetworkProtocol HostAddress::GetProtocol() const {
     return m_protocol;
 }
 
-bool HostAddress::ParseAddress(void) {
+bool HostAddress::ParseAddress() {
 
     // all IPv6 addresses should have a ':'
     std::string s = m_ipString;

@@ -67,8 +67,8 @@ struct UTILS_EXPORT PileupPosition {
 class UTILS_EXPORT PileupVisitor {
 
     public:
-        PileupVisitor(void) { }
-        virtual ~PileupVisitor(void) { }
+        PileupVisitor() { }
+        virtual ~PileupVisitor() { }
 
     public:
         virtual void Visit(const PileupPosition& pileupData) =0;
@@ -77,13 +77,13 @@ class UTILS_EXPORT PileupVisitor {
 class UTILS_EXPORT PileupEngine {
 
     public:
-        PileupEngine(void);
-        ~PileupEngine(void);
+        PileupEngine();
+        ~PileupEngine();
 
     public:
         bool AddAlignment(const BamAlignment& al);
         void AddVisitor(PileupVisitor* visitor);
-        void Flush(void);
+        void Flush();
 
     private:
         struct PileupEnginePrivate;

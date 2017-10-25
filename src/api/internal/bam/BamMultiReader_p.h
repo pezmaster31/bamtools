@@ -37,56 +37,56 @@ class BamMultiReaderPrivate {
 
     // constructor / destructor
     public:
-        BamMultiReaderPrivate(void);
-        ~BamMultiReaderPrivate(void);
+        BamMultiReaderPrivate();
+        ~BamMultiReaderPrivate();
 
     // public interface
     public:
 
         // file operations
-        bool Close(void);
+        bool Close();
         bool CloseFile(const std::string& filename);
-        const std::vector<std::string> Filenames(void) const;
+        const std::vector<std::string> Filenames() const;
         bool Jump(int refID, int position = 0);
         bool Open(const std::vector<std::string>& filenames);
         bool OpenFile(const std::string& filename);
-        bool Rewind(void);
+        bool Rewind();
         bool SetRegion(const BamRegion& region);
 
         // access alignment data
-        BamMultiReader::MergeOrder GetMergeOrder(void) const;
+        BamMultiReader::MergeOrder GetMergeOrder() const;
         bool GetNextAlignment(BamAlignment& al);
         bool GetNextAlignmentCore(BamAlignment& al);
-        bool HasOpenReaders(void);
+        bool HasOpenReaders();
         bool SetExplicitMergeOrder(BamMultiReader::MergeOrder order);
 
         // access auxiliary data
-        SamHeader GetHeader(void) const;
-        std::string GetHeaderText(void) const;
-        int GetReferenceCount(void) const;
-        const BamTools::RefVector GetReferenceData(void) const;
+        SamHeader GetHeader() const;
+        std::string GetHeaderText() const;
+        int GetReferenceCount() const;
+        const BamTools::RefVector GetReferenceData() const;
         int GetReferenceID(const std::string& refName) const;
 
         // BAM index operations
         bool CreateIndexes(const BamIndex::IndexType& type = BamIndex::STANDARD);
-        bool HasIndexes(void) const;
+        bool HasIndexes() const;
         bool LocateIndexes(const BamIndex::IndexType& preferredType = BamIndex::STANDARD);
         bool OpenIndexes(const std::vector<std::string>& indexFilenames);
 
         // error handling
-        std::string GetErrorString(void) const;
+        std::string GetErrorString() const;
 
     // 'internal' methods
     public:
 
         bool CloseFiles(const std::vector<std::string>& filenames);
-        IMultiMerger* CreateAlignmentCache(void);
+        IMultiMerger* CreateAlignmentCache();
         bool PopNextCachedAlignment(BamAlignment& al, const bool needCharData);
-        bool RewindReaders(void);
+        bool RewindReaders();
         void SaveNextAlignment(BamReader* reader, BamAlignment* alignment);
         void SetErrorString(const std::string& where, const std::string& what) const; //
-        bool UpdateAlignmentCache(void);
-        bool ValidateReaders(void) const;
+        bool UpdateAlignmentCache();
+        bool ValidateReaders() const;
 
     // data members
     public:

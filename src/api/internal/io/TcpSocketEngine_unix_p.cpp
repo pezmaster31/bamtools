@@ -34,7 +34,7 @@ namespace Internal {
 // TcpSocketEngine implementation
 // --------------------------------
 
-void TcpSocketEngine::nativeClose(void) {
+void TcpSocketEngine::nativeClose() {
     close(m_socketDescriptor);
 }
 
@@ -175,7 +175,7 @@ bool TcpSocketEngine::nativeCreateSocket(HostAddress::NetworkProtocol protocol) 
     return true;
 }
 
-int64_t TcpSocketEngine::nativeNumBytesAvailable(void) const {
+int64_t TcpSocketEngine::nativeNumBytesAvailable() const {
 
     // fetch number of bytes, return 0 on error
     int numBytes(0);

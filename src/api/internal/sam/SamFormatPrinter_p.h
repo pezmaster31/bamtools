@@ -34,11 +34,11 @@ class SamFormatPrinter {
     // ctor & dtor
     public:
         SamFormatPrinter(const BamTools::SamHeader& header);
-        ~SamFormatPrinter(void);
+        ~SamFormatPrinter();
 
     // generates SAM-formatted string from header data
     public:
-        const std::string ToString(void) const;
+        const std::string ToString() const;
 
     // internal methods
     private:

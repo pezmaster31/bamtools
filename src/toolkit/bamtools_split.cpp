@@ -34,7 +34,7 @@ static const std::string SPLIT_SINGLE_TOKEN    = ".SINGLE_END";
 static const std::string SPLIT_REFERENCE_TOKEN = ".REF_";
 static const std::string SPLIT_TAG_TOKEN       = ".TAG_";
 
-std::string GetTimestampString(void) {
+std::string GetTimestampString() {
 
     // get human readable timestamp
     time_t currentTime;
@@ -86,7 +86,7 @@ struct SplitTool::SplitSettings {
     std::string ListTagDelimiter;
 
     // constructor
-    SplitSettings(void)
+    SplitSettings()
         : HasInputFilename(false)
         , HasCustomOutputStub(false)
         , HasCustomRefPrefix(false)
@@ -116,13 +116,13 @@ class SplitTool::SplitToolPrivate {
             : m_settings(settings)
         { }
 
-        ~SplitToolPrivate(void) {
+        ~SplitToolPrivate() {
             m_reader.Close();
         }
 
     // 'public' interface
     public:
-        bool Run(void);
+        bool Run();
 
     // internal methods
     private:
@@ -130,18 +130,18 @@ class SplitTool::SplitToolPrivate {
         template<typename T>
         void CloseWriters(std::map<T, BamWriter*>& writers);
         // calculate output stub based on IO args given
-        void DetermineOutputFilenameStub(void);
+        void DetermineOutputFilenameStub();
         // open our BamReader
-        bool OpenReader(void);
+        bool OpenReader();
         // split alignments in BAM file based on isMapped property
-        bool SplitMapped(void);
+        bool SplitMapped();
         // split alignments in BAM file based on isPaired property
-        bool SplitPaired(void);
+        bool SplitPaired();
         // split alignments in BAM file based on refID property
-        bool SplitReference(void);
+        bool SplitReference();
         // finds first alignment and calls corresponding SplitTagImpl<>
         // depending on tag type
-        bool SplitTag(void);
+        bool SplitTag();
 
     public:
 
@@ -162,7 +162,7 @@ class SplitTool::SplitToolPrivate {
         RefVector m_references;
 };
 
-void SplitTool::SplitToolPrivate::DetermineOutputFilenameStub(void) {
+void SplitTool::SplitToolPrivate::DetermineOutputFilenameStub() {
 
     // if user supplied output filename stub, use that
     if ( m_settings->HasCustomOutputStub )
@@ -177,7 +177,7 @@ void SplitTool::SplitToolPrivate::DetermineOutputFilenameStub(void) {
     else m_outputFilenameStub = GetTimestampString();
 }
 
-bool SplitTool::SplitToolPrivate::OpenReader(void) {
+bool SplitTool::SplitToolPrivate::OpenReader() {
 
     // attempt to open BAM file
     if ( !m_reader.Open(m_settings->InputFilename) ) {
@@ -191,7 +191,7 @@ bool SplitTool::SplitToolPrivate::OpenReader(void) {
     return true;
 }
 
-bool SplitTool::SplitToolPrivate::Run(void) {
+bool SplitTool::SplitToolPrivate::Run() {
 
     // determine output stub
     DetermineOutputFilenameStub();
@@ -212,7 +212,7 @@ bool SplitTool::SplitToolPrivate::Run(void) {
     return false;
 }
 
-bool SplitTool::SplitToolPrivate::SplitMapped(void) {
+bool SplitTool::SplitToolPrivate::SplitMapped() {
 
     // set up splitting data structure
     std::map<bool, BamWriter*> outputFiles;
@@ -261,7 +261,7 @@ bool SplitTool::SplitToolPrivate::SplitMapped(void) {
     return true;
 }
 
-bool SplitTool::SplitToolPrivate::SplitPaired(void) {
+bool SplitTool::SplitToolPrivate::SplitPaired() {
 
     // set up splitting data structure
     std::map<bool, BamWriter*> outputFiles;
@@ -310,7 +310,7 @@ bool SplitTool::SplitToolPrivate::SplitPaired(void) {
     return true;
 }
 
-bool SplitTool::SplitToolPrivate::SplitReference(void) {
+bool SplitTool::SplitToolPrivate::SplitReference() {
 
     // set up splitting data structure
     std::map<int32_t, BamWriter*> outputFiles;
@@ -377,7 +377,7 @@ bool SplitTool::SplitToolPrivate::SplitReference(void) {
 }
 
 // finds first alignment and calls corresponding SplitTagImpl<>() depending on tag type
-bool SplitTool::SplitToolPrivate::SplitTag(void) {
+bool SplitTool::SplitToolPrivate::SplitTag() {
 
     // iterate through alignments, until we hit TAG
     BamAlignment al;
@@ -635,7 +635,7 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al) {
 // ---------------------------------------------
 // SplitTool implementation
 
-SplitTool::SplitTool(void)
+SplitTool::SplitTool()
     : AbstractTool()
     , m_settings(new SplitSettings)
     , m_impl(0)
@@ -667,7 +667,7 @@ SplitTool::SplitTool(void)
                             m_settings->IsSplittingTag, m_settings->TagToSplit, SplitOpts);
 }
 
-SplitTool::~SplitTool(void) {
+SplitTool::~SplitTool() {
 
     delete m_settings;
     m_settings = 0;
@@ -676,7 +676,7 @@ SplitTool::~SplitTool(void) {
     m_impl = 0;
 }
 
-int SplitTool::Help(void) {
+int SplitTool::Help() {
     Options::DisplayHelp();
     return 0;
 }

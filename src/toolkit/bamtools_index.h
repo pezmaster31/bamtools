@@ -17,11 +17,11 @@ namespace BamTools {
 class IndexTool : public AbstractTool {
 
     public:
-        IndexTool(void);
-        ~IndexTool(void);
+        IndexTool();
+        ~IndexTool();
 
     public:
-        int Help(void);
+        int Help();
         int Run(int argc, char* argv[]);
 
     private:

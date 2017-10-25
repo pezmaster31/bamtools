@@ -20,7 +20,7 @@ using namespace BamTools::Internal;
 // TcpSocketEngine implementation
 // --------------------------------
 
-void TcpSocketEngine::nativeClose(void) {
+void TcpSocketEngine::nativeClose() {
     closesocket(m_socketDescriptor);
 }
 
@@ -167,7 +167,7 @@ bool TcpSocketEngine::nativeCreateSocket(HostAddress::NetworkProtocol protocol) 
     return true;
 }
 
-int64_t TcpSocketEngine::nativeNumBytesAvailable(void) const {
+int64_t TcpSocketEngine::nativeNumBytesAvailable() const {
 
     int64_t numBytes(0);
     int64_t dummy(0);

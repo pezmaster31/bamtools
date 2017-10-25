@@ -14,11 +14,11 @@ using namespace BamTools::Internal;
 #include <cstdio>
 #include <iostream>
 
-BamPipe::BamPipe(void) : ILocalIODevice() { }
+BamPipe::BamPipe() : ILocalIODevice() { }
 
-BamPipe::~BamPipe(void) { }
+BamPipe::~BamPipe() { }
 
-bool BamPipe::IsRandomAccess(void) const {
+bool BamPipe::IsRandomAccess() const {
     return false;
 }
 

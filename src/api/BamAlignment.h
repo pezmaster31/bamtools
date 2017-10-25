@@ -33,23 +33,23 @@ class API_EXPORT BamAlignment {
 
     // constructors & destructor
     public:
-        BamAlignment(void);
+        BamAlignment();
         BamAlignment(const BamAlignment& other);
-        ~BamAlignment(void);
+        ~BamAlignment();
 
     // queries against alignment flags
     public:
-        bool IsDuplicate(void) const;         // returns true if this read is a PCR duplicate
-        bool IsFailedQC(void) const;          // returns true if this read failed quality control
-        bool IsFirstMate(void) const;         // returns true if alignment is first mate on read
-        bool IsMapped(void) const;            // returns true if alignment is mapped
-        bool IsMateMapped(void) const;        // returns true if alignment's mate is mapped
-        bool IsMateReverseStrand(void) const; // returns true if alignment's mate mapped to reverse strand
-        bool IsPaired(void) const;            // returns true if alignment part of paired-end read
-        bool IsPrimaryAlignment(void) const;  // returns true if reported position is primary alignment
-        bool IsProperPair(void) const;        // returns true if alignment is part of read that satisfied paired-end resolution
-        bool IsReverseStrand(void) const;     // returns true if alignment mapped to reverse strand
-        bool IsSecondMate(void) const;        // returns true if alignment is second mate on read
+        bool IsDuplicate() const;         // returns true if this read is a PCR duplicate
+        bool IsFailedQC() const;          // returns true if this read failed quality control
+        bool IsFirstMate() const;         // returns true if alignment is first mate on read
+        bool IsMapped() const;            // returns true if alignment is mapped
+        bool IsMateMapped() const;        // returns true if alignment's mate is mapped
+        bool IsMateReverseStrand() const; // returns true if alignment's mate mapped to reverse strand
+        bool IsPaired() const;            // returns true if alignment part of paired-end read
+        bool IsPrimaryAlignment() const;  // returns true if reported position is primary alignment
+        bool IsProperPair() const;        // returns true if alignment is part of read that satisfied paired-end resolution
+        bool IsReverseStrand() const;     // returns true if alignment mapped to reverse strand
+        bool IsSecondMate() const;        // returns true if alignment is second mate on read
 
     // manipulate alignment flags
     public:
@@ -81,7 +81,7 @@ class API_EXPORT BamAlignment {
         template<typename T> bool GetTag(const std::string& tag, std::vector<T>& destination) const;
 
         // retrieves all current tag names
-        std::vector<std::string> GetTagNames(void) const;
+        std::vector<std::string> GetTagNames() const;
 
         // retrieves the SAM/BAM type-code for requested tag name
         bool GetTagType(const std::string& tag, char& type) const;
@@ -98,13 +98,13 @@ class API_EXPORT BamAlignment {
     // additional methods
     public:
         // populates alignment string fields
-        bool BuildCharData(void);
+        bool BuildCharData();
 
         // calculates alignment end position
         int GetEndPosition(bool usePadded = false, bool closedInterval = false) const;
 
         // returns a description of the last error that occurred
-        std::string GetErrorString(void) const;
+        std::string GetErrorString() const;
 
         // retrieves the size, read locations and reference locations of soft-clip operations
         bool GetSoftClips(std::vector<int>& clipSizes,
@@ -158,7 +158,7 @@ class API_EXPORT BamAlignment {
             bool        HasCoreOnly;
 
             // constructor
-            BamAlignmentSupportData(void)
+            BamAlignmentSupportData()
                 : BlockLength(0)
                 , NumCigarOperations(0)
                 , QueryNameLength(0)

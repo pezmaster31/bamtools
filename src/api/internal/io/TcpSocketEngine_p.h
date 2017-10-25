@@ -34,21 +34,21 @@ class TcpSocketEngine {
 
     // ctors & dtor
     public:
-        TcpSocketEngine(void);
+        TcpSocketEngine();
         TcpSocketEngine(const TcpSocketEngine& other);
-        ~TcpSocketEngine(void);
+        ~TcpSocketEngine();
 
     // TcpSocketEngine interface
     public:
 
         // connection-related methods
-        void Close(void);
+        void Close();
         bool Connect(const HostAddress& address, const uint16_t port);
         bool Initialize(HostAddress::NetworkProtocol protocol);
-        bool IsValid(void) const;
+        bool IsValid() const;
 
         // IO-related methods
-        int64_t NumBytesAvailable(void) const;
+        int64_t NumBytesAvailable() const;
         int64_t Read(char* dest, size_t max);
         int64_t Write(const char* data, size_t length);
 
@@ -56,25 +56,25 @@ class TcpSocketEngine {
         bool WaitForWrite(int msec, bool* timedOut);
 
         // query connection state
-//        HostAddress GetLocalAddress(void) const;
-//        uint16_t GetLocalPort(void) const;
-        HostAddress GetRemoteAddress(void) const;
-        uint16_t    GetRemotePort(void) const;
+//        HostAddress GetLocalAddress() const;
+//        uint16_t GetLocalPort() const;
+        HostAddress GetRemoteAddress() const;
+        uint16_t    GetRemotePort() const;
 
-        int GetSocketDescriptor(void) const;
-        TcpSocket::SocketError GetSocketError(void);
-        TcpSocket::SocketState GetSocketState(void);
+        int GetSocketDescriptor() const;
+        TcpSocket::SocketError GetSocketError();
+        TcpSocket::SocketState GetSocketState();
 
-        std::string GetErrorString(void) const;
+        std::string GetErrorString() const;
 
     // platform-dependent internal methods
     // provided in the corresponding TcpSocketEngine_<OS>_p.cpp
     private:
-        void    nativeClose(void);
+        void    nativeClose();
         bool    nativeConnect(const HostAddress& address, const uint16_t port);
         bool    nativeCreateSocket(HostAddress::NetworkProtocol protocol);
-        void    nativeDisconnect(void);
-        int64_t nativeNumBytesAvailable(void) const;
+        void    nativeDisconnect();
+        int64_t nativeNumBytesAvailable() const;
         int64_t nativeRead(char* dest, size_t max);
         int     nativeSelect(int msecs, bool isRead) const;
         int64_t nativeWrite(const char* data, size_t length);

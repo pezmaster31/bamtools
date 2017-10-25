@@ -44,15 +44,15 @@ class API_EXPORT BamIndex {
     // ctor & dtor
     public:
         BamIndex(Internal::BamReaderPrivate* reader) : m_reader(reader) { }
-        virtual ~BamIndex(void) { }
+        virtual ~BamIndex() { }
 
     // index interface
     public:
         // builds index from associated BAM file & writes out to index file
-        virtual bool Create(void) =0;
+        virtual bool Create() =0;
 
         // returns a human-readable description of the last error encountered
-        std::string GetErrorString(void) { return m_errorString; }
+        std::string GetErrorString() { return m_errorString; }
 
         // returns whether reference has alignments or no
         virtual bool HasAlignments(const int& referenceID) const =0;
@@ -67,7 +67,7 @@ class API_EXPORT BamIndex {
         virtual bool Load(const std::string& filename) =0;
 
         // returns the 'type' enum for derived index format
-        virtual BamIndex::IndexType Type(void) const =0;
+        virtual BamIndex::IndexType Type() const =0;
 
     //! \cond
 

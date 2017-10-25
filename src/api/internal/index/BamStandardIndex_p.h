@@ -89,7 +89,7 @@ struct BaiReferenceSummary {
     uint64_t FirstLinearOffsetFilePosition;
 
     // ctor
-    BaiReferenceSummary(void)
+    BaiReferenceSummary()
         : NumBins(0)
         , NumLinearOffsets(0)
         , FirstBinFilePosition(0)
@@ -108,12 +108,12 @@ class BamStandardIndex : public BamIndex {
     // ctor & dtor
     public:
         BamStandardIndex(Internal::BamReaderPrivate* reader);
-        ~BamStandardIndex(void);
+        ~BamStandardIndex();
 
     // BamIndex implementation
     public:
         // builds index from associated BAM file & writes out to index file
-        bool Create(void);
+        bool Create();
         // returns whether reference has alignments or no
         bool HasAlignments(const int& referenceID) const;
         // attempts to use index data to jump to @region, returns success/fail
@@ -123,21 +123,21 @@ class BamStandardIndex : public BamIndex {
         bool Jump(const BamTools::BamRegion& region, bool* hasAlignmentsInRegion);
         // loads existing data from file into memory
         bool Load(const std::string& filename);
-        BamIndex::IndexType Type(void) const { return BamIndex::STANDARD; }
+        BamIndex::IndexType Type() const { return BamIndex::STANDARD; }
     public:
         // returns format's file extension
-        static const std::string Extension(void);
+        static const std::string Extension();
 
     // internal methods
     private:
 
         // index file ops
-        void CheckMagicNumber(void);
-        void CloseFile(void);
-        bool IsDeviceOpen(void) const;
+        void CheckMagicNumber();
+        void CloseFile();
+        bool IsDeviceOpen() const;
         void OpenFile(const std::string& filename, IBamIODevice::OpenMode mode);
         void Seek(const int64_t& position, const int origin);
-        int64_t Tell(void) const;
+        int64_t Tell() const;
 
         // BAI index building methods
         void ClearReferenceEntry(BaiReferenceEntry& refEntry);
@@ -170,7 +170,7 @@ class BamStandardIndex : public BamIndex {
         void SkipBins(const int& numBins);
         void SkipLinearOffsets(const int& numLinearOffsets);
         void SummarizeBins(BaiReferenceSummary& refSummary);
-        void SummarizeIndexFile(void);
+        void SummarizeIndexFile();
         void SummarizeLinearOffsets(BaiReferenceSummary& refSummary);
         void SummarizeReference(BaiReferenceSummary& refSummary);
 
@@ -191,7 +191,7 @@ class BamStandardIndex : public BamIndex {
         void WriteAlignmentChunks(BaiAlignmentChunkVector& chunks);
         void WriteBin(const uint32_t& binId, BaiAlignmentChunkVector& chunks);
         void WriteBins(const int& refId, BaiBinMap& bins);
-        void WriteHeader(void);
+        void WriteHeader();
         void WriteLinearOffsets(const int& refId, BaiLinearOffsetVector& linearOffsets);
         void WriteReferenceEntry(BaiReferenceEntry& refEntry);
 
@@ -205,8 +205,8 @@ class BamStandardIndex : public BamIndex {
         struct RaiiWrapper {
             IBamIODevice* Device;
             char* Buffer;
-            RaiiWrapper(void);
-            ~RaiiWrapper(void);
+            RaiiWrapper();
+            ~RaiiWrapper();
         };
         RaiiWrapper m_resources;
 

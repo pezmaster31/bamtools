@@ -19,12 +19,12 @@ class UTILS_EXPORT Fasta {
 
     // ctor & dtor
     public:
-        Fasta(void);
-        ~Fasta(void);
+        Fasta();
+        ~Fasta();
 
     // file-handling methods
     public:
-        bool Close(void);
+        bool Close();
         bool Open(const std::string& filename, const std::string& indexFilename = "");
 
     // sequence access methods

@@ -71,7 +71,7 @@ SamHeaderValidator::SamHeaderValidator(const SamHeader& header)
     : m_header(header)
 { }
 
-SamHeaderValidator::~SamHeaderValidator(void) { }
+SamHeaderValidator::~SamHeaderValidator() { }
 
 void SamHeaderValidator::AddError(const std::string& message) {
     m_errorMessages.push_back(ERROR_PREFIX + message + NEWLINE);
@@ -119,7 +119,7 @@ void SamHeaderValidator::PrintWarningMessages(std::ostream& stream) {
 }
 
 // entry point for validation
-bool SamHeaderValidator::Validate(void) {
+bool SamHeaderValidator::Validate() {
     bool isValid = true;
     isValid &= ValidateMetadata();
     isValid &= ValidateSequenceDictionary();
@@ -129,7 +129,7 @@ bool SamHeaderValidator::Validate(void) {
 }
 
 // check all SAM header 'metadata'
-bool SamHeaderValidator::ValidateMetadata(void) {
+bool SamHeaderValidator::ValidateMetadata() {
     bool isValid = true;
     isValid &= ValidateVersion();
     isValid &= ValidateSortOrder();
@@ -138,7 +138,7 @@ bool SamHeaderValidator::ValidateMetadata(void) {
 }
 
 // check SAM header version tag
-bool SamHeaderValidator::ValidateVersion(void) {
+bool SamHeaderValidator::ValidateVersion() {
 
     const std::string& version = m_header.Version;
 
@@ -183,7 +183,7 @@ bool SamHeaderValidator::ContainsOnlyDigits(const std::string& s) {
 }
 
 // validate SAM header sort order tag
-bool SamHeaderValidator::ValidateSortOrder(void) {
+bool SamHeaderValidator::ValidateSortOrder() {
 
     const std::string& sortOrder = m_header.SortOrder;
 
@@ -208,7 +208,7 @@ bool SamHeaderValidator::ValidateSortOrder(void) {
 }
 
 // validate SAM header group order tag
-bool SamHeaderValidator::ValidateGroupOrder(void) {
+bool SamHeaderValidator::ValidateGroupOrder() {
 
     const std::string& groupOrder = m_header.GroupOrder;
 
@@ -231,7 +231,7 @@ bool SamHeaderValidator::ValidateGroupOrder(void) {
 }
 
 // validate SAM header sequence dictionary
-bool SamHeaderValidator::ValidateSequenceDictionary(void) {
+bool SamHeaderValidator::ValidateSequenceDictionary() {
 
     bool isValid = true;
 
@@ -252,7 +252,7 @@ bool SamHeaderValidator::ValidateSequenceDictionary(void) {
 }
 
 // make sure all SQ names are unique
-bool SamHeaderValidator::ContainsUniqueSequenceNames(void) {
+bool SamHeaderValidator::ContainsUniqueSequenceNames() {
 
     bool isValid = true;
     std::set<std::string> sequenceNames;
@@ -335,7 +335,7 @@ bool SamHeaderValidator::CheckLengthInRange(const std::string& length) {
 }
 
 // validate SAM header read group dictionary
-bool SamHeaderValidator::ValidateReadGroupDictionary(void) {
+bool SamHeaderValidator::ValidateReadGroupDictionary() {
 
     bool isValid = true;
 
@@ -356,7 +356,7 @@ bool SamHeaderValidator::ValidateReadGroupDictionary(void) {
 }
 
 // make sure RG IDs and platform units are unique
-bool SamHeaderValidator::ContainsUniqueIDsAndPlatformUnits(void) {
+bool SamHeaderValidator::ContainsUniqueIDsAndPlatformUnits() {
 
     bool isValid = true;
     std::set<std::string> readGroupIds;
@@ -455,7 +455,7 @@ bool SamHeaderValidator::CheckSequencingTechnology(const std::string& technology
 }
 
 // validate the SAM header "program chain"
-bool SamHeaderValidator::ValidateProgramChain(void) {
+bool SamHeaderValidator::ValidateProgramChain() {
     bool isValid = true;
     isValid &= ContainsUniqueProgramIds();
     isValid &= ValidatePreviousProgramIds();
@@ -463,7 +463,7 @@ bool SamHeaderValidator::ValidateProgramChain(void) {
 }
 
 // make sure all PG IDs are unique
-bool SamHeaderValidator::ContainsUniqueProgramIds(void) {
+bool SamHeaderValidator::ContainsUniqueProgramIds() {
 
     bool isValid = true;
     std::set<std::string> programIds;
@@ -495,7 +495,7 @@ bool SamHeaderValidator::ContainsUniqueProgramIds(void) {
 }
 
 // make sure that any PP tags present point to existing @PG IDs
-bool SamHeaderValidator::ValidatePreviousProgramIds(void) {
+bool SamHeaderValidator::ValidatePreviousProgramIds() {
 
     bool isValid = true;
 

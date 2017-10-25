@@ -18,11 +18,11 @@ namespace BamTools {
 class HeaderTool : public AbstractTool {
 
     public:
-        HeaderTool(void);
-        ~HeaderTool(void);
+        HeaderTool();
+        ~HeaderTool();
 
     public:
-        int Help(void);
+        int Help();
         int Run(int argc, char* argv[]);
 
     private:

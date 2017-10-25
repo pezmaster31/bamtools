@@ -37,20 +37,20 @@ class HostInfo {
 
     // ctors & dtor
     public:
-        HostInfo(void);
+        HostInfo();
         HostInfo(const HostInfo& other);
-        ~HostInfo(void);
+        ~HostInfo();
 
     // HostInfo interface
     public:
-        std::string HostName(void) const;
+        std::string HostName() const;
         void SetHostName(const std::string& name);
 
-        std::vector<HostAddress> Addresses(void) const;
+        std::vector<HostAddress> Addresses() const;
         void SetAddresses(const std::vector<HostAddress>& addresses);
 
-        HostInfo::ErrorType GetError(void) const;
-        std::string GetErrorString(void) const;
+        HostInfo::ErrorType GetError() const;
+        std::string GetErrorString() const;
 
     // internal methods
     private:

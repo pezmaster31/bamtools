@@ -31,7 +31,7 @@ class SamHeaderVersion {
 
     // ctors & dtor
     public:
-        SamHeaderVersion(void)
+        SamHeaderVersion()
             : m_majorVersion(0)
             , m_minorVersion(0)
         { }
@@ -48,18 +48,18 @@ class SamHeaderVersion {
             , m_minorVersion(minor)
         { }
 
-        ~SamHeaderVersion(void) {
+        ~SamHeaderVersion() {
             m_majorVersion = 0;
             m_minorVersion = 0;
         }
 
     // acess data
     public:
-        unsigned int MajorVersion(void) const { return m_majorVersion; }
-        unsigned int MinorVersion(void) const { return m_minorVersion; }
+        unsigned int MajorVersion() const { return m_majorVersion; }
+        unsigned int MinorVersion() const { return m_minorVersion; }
 
         void SetVersion(const std::string& version);
-        std::string ToString(void) const;
+        std::string ToString() const;
 
     // data members
     private:
@@ -103,7 +103,7 @@ void SamHeaderVersion::SetVersion(const std::string& version) {
 // -----------------------------------------------------
 // printing
 
-inline std::string SamHeaderVersion::ToString(void) const {
+inline std::string SamHeaderVersion::ToString() const {
     std::stringstream version;
     version << m_majorVersion << Constants::SAM_PERIOD << m_minorVersion;
     return version.str();

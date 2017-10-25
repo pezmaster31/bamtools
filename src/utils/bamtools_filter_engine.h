@@ -73,7 +73,7 @@ class UTILS_EXPORT FilterEngine {
 
     // ctor & dtor
     public:
-        FilterEngine(void)
+        FilterEngine()
             : m_ruleString("")
             , m_isRuleQueueGenerated(false)
             , m_defaultCompareType(FilterCompareType::OR)
@@ -82,7 +82,7 @@ class UTILS_EXPORT FilterEngine {
             , NOT_OPERATOR("!")
         { }
 
-        ~FilterEngine(void) { }
+        ~FilterEngine() { }
 
     // 'filter set' methods
     public:
@@ -90,7 +90,7 @@ class UTILS_EXPORT FilterEngine {
         bool addFilter(const std::string& filterName);
 
         // return list of current filter names
-        const std::vector<std::string> filterNames(void);
+        const std::vector<std::string> filterNames();
 
     // 'property' methods
     public:
@@ -107,10 +107,10 @@ class UTILS_EXPORT FilterEngine {
                          const PropertyFilterValue::ValueCompareType& type = PropertyFilterValue::EXACT);
 
         // returns list of all properties known by FilterEngine  ( any created using addProperty() )
-        const std::vector<std::string> allPropertyNames(void);
+        const std::vector<std::string> allPropertyNames();
 
         // returns list of property names that are 'enabled' ( only those touched by setProperty() )
-        const std::vector<std::string> enabledPropertyNames(void);
+        const std::vector<std::string> enabledPropertyNames();
 
      // 'rule' methods
     public:
@@ -136,8 +136,8 @@ class UTILS_EXPORT FilterEngine {
 
     // internal rule-handling methods
     private:
-        void buildDefaultRuleString(void);
-        void buildRuleQueue(void);
+        void buildDefaultRuleString();
+        void buildRuleQueue();
         template<typename T>
         bool evaluateFilterRules(const T& query);
 
@@ -199,7 +199,7 @@ inline bool FilterEngine<FilterChecker>::addProperty(const std::string& property
 // returns list of all properties known by FilterEngine
 // ( any that were created using addProperty() )
 template<typename FilterChecker>
-inline const std::vector<std::string> FilterEngine<FilterChecker>::allPropertyNames(void) {
+inline const std::vector<std::string> FilterEngine<FilterChecker>::allPropertyNames() {
     // set up stringlist
     std::vector<std::string> names;
     names.reserve(m_properties.size());
@@ -215,7 +215,7 @@ inline const std::vector<std::string> FilterEngine<FilterChecker>::allPropertyNa
 // builds a default rule string based on m_defaultCompareType
 // used if user supplied an explicit rule string
 template<typename FilterChecker>
-inline void FilterEngine<FilterChecker>::buildDefaultRuleString(void) {
+inline void FilterEngine<FilterChecker>::buildDefaultRuleString() {
 
     // set up temp string stream
     std::stringstream ruleStream;
@@ -238,7 +238,7 @@ inline void FilterEngine<FilterChecker>::buildDefaultRuleString(void) {
 
 // build expression queue based on ruleString
 template<typename FilterChecker>
-inline void FilterEngine<FilterChecker>::buildRuleQueue(void) {
+inline void FilterEngine<FilterChecker>::buildRuleQueue() {
 
     // skip if no filters present
     if ( m_filters.empty() ) return;
@@ -270,7 +270,7 @@ bool FilterEngine<FilterChecker>::check(const T& query) {
 
 // returns list of property names that are 'enabled' ( only those touched by setProperty() )
 template<typename FilterChecker>
-inline const std::vector<std::string> FilterEngine<FilterChecker>::enabledPropertyNames(void) {
+inline const std::vector<std::string> FilterEngine<FilterChecker>::enabledPropertyNames() {
     // initialize stringlist
     std::vector<std::string> names;
     names.reserve(m_properties.size());
@@ -341,7 +341,7 @@ bool FilterEngine<FilterChecker>::evaluateFilterRules(const T& query) {
 
 // return list of current filter names
 template<typename FilterChecker>
-inline const std::vector<std::string> FilterEngine<FilterChecker>::filterNames(void) {
+inline const std::vector<std::string> FilterEngine<FilterChecker>::filterNames() {
     // initialize stringlist
     std::vector<std::string> names;
     names.reserve(m_filters.size());

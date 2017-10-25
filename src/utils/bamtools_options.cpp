@@ -61,7 +61,7 @@ OptionGroup* Options::CreateOptionGroup(const std::string& groupName) {
 }
 
 // displays the help menu
-void Options::DisplayHelp(void) {
+void Options::DisplayHelp() {
 
     // initialize
     char argumentBuffer[ARGUMENT_LENGTH + 1];
@@ -280,7 +280,7 @@ void Options::SetProgramInfo(const std::string& programName,
 }
 
 // return string representations of stdin
-const std::string& Options::StandardIn(void) { return m_stdin; }
+const std::string& Options::StandardIn() { return m_stdin; }
 
 // return string representations of stdout
-const std::string& Options::StandardOut(void) { return m_stdout; }
+const std::string& Options::StandardOut() { return m_stdout; }

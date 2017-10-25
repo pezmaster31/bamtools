@@ -41,7 +41,7 @@ struct RevertTool::RevertSettings {
     std::string OutputFilename;
 
     // constructor
-    RevertSettings(void)
+    RevertSettings()
         : HasInput(false)
         , HasOutput(false)
         , IsForceCompression(false)
@@ -62,11 +62,11 @@ struct RevertTool::RevertToolPrivate {
         RevertToolPrivate(RevertTool::RevertSettings* settings)
             : m_settings(settings)
         { }
-        ~RevertToolPrivate(void) { }
+        ~RevertToolPrivate() { }
 
     // 'public' interface
     public:
-        bool Run(void);
+        bool Run();
 
     // internal methods
     private:
@@ -98,7 +98,7 @@ void RevertTool::RevertToolPrivate::RevertAlignment(BamAlignment& al) {
         al.SetIsDuplicate(false);
 }
 
-bool RevertTool::RevertToolPrivate::Run(void) {
+bool RevertTool::RevertToolPrivate::Run() {
 
     // opens the BAM file without checking for indexes
     BamReader reader;
@@ -144,7 +144,7 @@ bool RevertTool::RevertToolPrivate::Run(void) {
 // ---------------------------------------------
 // RevertTool implementation
 
-RevertTool::RevertTool(void)
+RevertTool::RevertTool()
     : AbstractTool()
     , m_settings(new RevertSettings)
     , m_impl(0)
@@ -163,7 +163,7 @@ RevertTool::RevertTool(void)
     Options::AddOption("-keepQualities", "keep base qualities (do not replace with OQ contents)", m_settings->IsKeepQualities, RevertOpts);
 }
 
-RevertTool::~RevertTool(void) {
+RevertTool::~RevertTool() {
 
     delete m_settings;
     m_settings = 0;
@@ -172,7 +172,7 @@ RevertTool::~RevertTool(void) {
     m_impl = 0;
 }
 
-int RevertTool::Help(void) {
+int RevertTool::Help() {
     Options::DisplayHelp();
     return 0;
 }

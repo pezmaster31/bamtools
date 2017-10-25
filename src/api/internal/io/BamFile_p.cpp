@@ -19,16 +19,16 @@ BamFile::BamFile(const std::string& filename)
     , m_filename(filename)
 { }
 
-BamFile::~BamFile(void) { }
+BamFile::~BamFile() { }
 
-void BamFile::Close(void) {
+void BamFile::Close() {
     if ( IsOpen() ) {
         m_filename.clear();
         ILocalIODevice::Close();
     }
 }
 
-bool BamFile::IsRandomAccess(void) const {
+bool BamFile::IsRandomAccess() const {
     return true;
 }
 

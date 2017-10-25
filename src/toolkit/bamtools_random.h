@@ -17,11 +17,11 @@ namespace BamTools {
 class RandomTool : public AbstractTool {
 
     public:
-        RandomTool(void);
-        ~RandomTool(void);
+        RandomTool();
+        ~RandomTool();
 
     public:
-        int Help(void);
+        int Help();
         int Run(int argc, char* argv[]);
 
     private:

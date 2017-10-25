@@ -26,9 +26,9 @@ class API_EXPORT SamReadGroupDictionary {
 
     // ctor & dtor
     public:
-        SamReadGroupDictionary(void);
+        SamReadGroupDictionary();
         SamReadGroupDictionary(const SamReadGroupDictionary& other);
-        ~SamReadGroupDictionary(void);
+        ~SamReadGroupDictionary();
 
     // query/modify read group data
     public:
@@ -42,14 +42,14 @@ class API_EXPORT SamReadGroupDictionary {
         void Add(const std::vector<std::string>& readGroupIds);
 
         // clears all read group entries
-        void Clear(void);
+        void Clear();
 
         // returns true if dictionary contains this read group
         bool Contains(const SamReadGroup& readGroup) const;
         bool Contains(const std::string& readGroupId) const;
 
         // returns true if dictionary is empty
-        bool IsEmpty(void) const;
+        bool IsEmpty() const;
 
         // removes read group, if found
         void Remove(const SamReadGroup& readGroup);
@@ -60,19 +60,19 @@ class API_EXPORT SamReadGroupDictionary {
         void Remove(const std::vector<std::string>& readGroupIds);
 
         // returns number of read groups in dictionary
-        int Size(void) const;
+        int Size() const;
 
         // retrieves a modifiable reference to the SamReadGroup object associated with this ID
         SamReadGroup& operator[](const std::string& readGroupId);
 
     // retrieve STL-compatible iterators
     public:
-        SamReadGroupIterator      Begin(void);              // returns iterator to begin()
-        SamReadGroupConstIterator Begin(void) const;        // returns const_iterator to begin()
-        SamReadGroupConstIterator ConstBegin(void) const;   // returns const_iterator to begin()
-        SamReadGroupIterator      End(void);                // returns iterator to end()
-        SamReadGroupConstIterator End(void) const;          // returns const_iterator to end()
-        SamReadGroupConstIterator ConstEnd(void) const;     // returns const_iterator to end()
+        SamReadGroupIterator      Begin();              // returns iterator to begin()
+        SamReadGroupConstIterator Begin() const;        // returns const_iterator to begin()
+        SamReadGroupConstIterator ConstBegin() const;   // returns const_iterator to begin()
+        SamReadGroupIterator      End();                // returns iterator to end()
+        SamReadGroupConstIterator End() const;          // returns const_iterator to end()
+        SamReadGroupConstIterator ConstEnd() const;     // returns const_iterator to end()
 
     // data members
     private:

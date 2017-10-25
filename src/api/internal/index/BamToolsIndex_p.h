@@ -73,7 +73,7 @@ struct BtiReferenceSummary {
     uint64_t FirstBlockFilePosition;
 
     // ctor
-    BtiReferenceSummary(void)
+    BtiReferenceSummary()
         : NumBlocks(0)
         , FirstBlockFilePosition(0)
     { }
@@ -103,12 +103,12 @@ class BamToolsIndex : public BamIndex {
     // ctor & dtor
     public:
         BamToolsIndex(Internal::BamReaderPrivate* reader);
-        ~BamToolsIndex(void);
+        ~BamToolsIndex();
 
     // BamIndex implementation
     public:
         // builds index from associated BAM file & writes out to index file
-        bool Create(void);
+        bool Create();
         // returns whether reference has alignments or no
         bool HasAlignments(const int& referenceID) const;
         // attempts to use index data to jump to @region, returns success/fail
@@ -118,28 +118,28 @@ class BamToolsIndex : public BamIndex {
         bool Jump(const BamTools::BamRegion& region, bool* hasAlignmentsInRegion);
         // loads existing data from file into memory
         bool Load(const std::string& filename);
-        BamIndex::IndexType Type(void) const { return BamIndex::BAMTOOLS; }
+        BamIndex::IndexType Type() const { return BamIndex::BAMTOOLS; }
     public:
         // returns format's file extension
-        static const std::string Extension(void);
+        static const std::string Extension();
 
     // internal methods
     private:
 
         // index file ops
-        void CheckMagicNumber(void);
-        void CheckVersion(void);
-        void CloseFile(void);
-        bool IsDeviceOpen(void) const;
+        void CheckMagicNumber();
+        void CheckVersion();
+        void CloseFile();
+        bool IsDeviceOpen() const;
         void OpenFile(const std::string& filename, IBamIODevice::OpenMode mode);
         void Seek(const int64_t& position, const int origin);
-        int64_t Tell(void) const;
+        int64_t Tell() const;
 
         // index-creation methods
         void ClearReferenceEntry(BtiReferenceEntry& refEntry);
         void WriteBlock(const BtiBlock& block);
         void WriteBlocks(const BtiBlockVector& blocks);
-        void WriteHeader(void);
+        void WriteHeader();
         void WriteReferenceEntry(const BtiReferenceEntry& refEntry);
 
         // random-access methods
@@ -150,8 +150,8 @@ class BamToolsIndex : public BamIndex {
 
         // BTI summary data methods
         void InitializeFileSummary(const int& numReferences);
-        void LoadFileSummary(void);
-        void LoadHeader(void);
+        void LoadFileSummary();
+        void LoadHeader();
         void LoadNumBlocks(int& numBlocks);
         void LoadNumReferences(int& numReferences);
         void LoadReferenceSummary(BtiReferenceSummary& refSummary);
@@ -167,8 +167,8 @@ class BamToolsIndex : public BamIndex {
 
         struct RaiiWrapper {
             IBamIODevice* Device;
-            RaiiWrapper(void);
-            ~RaiiWrapper(void);
+            RaiiWrapper();
+            ~RaiiWrapper();
         };
         RaiiWrapper m_resources;
 

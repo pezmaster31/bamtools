@@ -35,8 +35,8 @@ class API_EXPORT BamMultiReader {
 
     // constructor / destructor
     public:
-        BamMultiReader(void);
-        ~BamMultiReader(void);
+        BamMultiReader();
+        ~BamMultiReader();
 
     // public interface
     public:
@@ -46,15 +46,15 @@ class API_EXPORT BamMultiReader {
         // ----------------------
 
         // closes all open BAM files
-        bool Close(void);
+        bool Close();
         // close only the requested BAM file
         bool CloseFile(const std::string& filename);
         // returns list of filenames for all open BAM files
-        const std::vector<std::string> Filenames(void) const;
+        const std::vector<std::string> Filenames() const;
         // returns curent merge order strategy
-        BamMultiReader::MergeOrder GetMergeOrder(void) const;
+        BamMultiReader::MergeOrder GetMergeOrder() const;
         // returns true if multireader has any open BAM files
-        bool HasOpenReaders(void) const;
+        bool HasOpenReaders() const;
         // performs random-access jump within current BAM files
         bool Jump(int refID, int position = 0);
         // opens BAM files
@@ -62,7 +62,7 @@ class API_EXPORT BamMultiReader {
         // opens a single BAM file, adding to any other current BAM files
         bool OpenFile(const std::string& filename);
         // returns file pointers to beginning of alignments
-        bool Rewind(void);
+        bool Rewind();
         // sets an explicit merge order, regardless of the BAM files' SO header tag
         bool SetExplicitMergeOrder(BamMultiReader::MergeOrder order);
         // sets the target region of interest
@@ -87,13 +87,13 @@ class API_EXPORT BamMultiReader {
         // ----------------------
 
         // returns unified SAM header for all files
-        SamHeader GetHeader(void) const;
+        SamHeader GetHeader() const;
         // returns unified SAM header text for all files
-        std::string GetHeaderText(void) const;
+        std::string GetHeaderText() const;
         // returns number of reference sequences
-        int GetReferenceCount(void) const;
+        int GetReferenceCount() const;
         // returns all reference sequence entries.
-        const BamTools::RefVector GetReferenceData(void) const;
+        const BamTools::RefVector GetReferenceData() const;
         // returns the ID of the reference with this name.
         int GetReferenceID(const std::string& refName) const;
 
@@ -104,7 +104,7 @@ class API_EXPORT BamMultiReader {
         // creates index files for current BAM files
         bool CreateIndexes(const BamIndex::IndexType& type = BamIndex::STANDARD);
         // returns true if all BAM files have index data available
-        bool HasIndexes(void) const;
+        bool HasIndexes() const;
         // looks for index files that match current BAM files
         bool LocateIndexes(const BamIndex::IndexType& preferredType = BamIndex::STANDARD);
         // opens index files for current BAM files.
@@ -115,7 +115,7 @@ class API_EXPORT BamMultiReader {
         // ----------------------
 
         // returns a human-readable description of the last error that occurred
-        std::string GetErrorString(void) const;
+        std::string GetErrorString() const;
 
     // private implementation
     private:

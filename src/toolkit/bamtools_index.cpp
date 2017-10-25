@@ -29,7 +29,7 @@ struct IndexTool::IndexSettings {
     std::string InputBamFilename;
 
     // constructor
-    IndexSettings(void)
+    IndexSettings()
         : HasInputBamFilename(false)
         , IsUsingBamtoolsIndex(false)
         , InputBamFilename(Options::StandardIn())
@@ -47,18 +47,18 @@ struct IndexTool::IndexToolPrivate {
             : m_settings(settings)
         { }
 
-        ~IndexToolPrivate(void) { }
+        ~IndexToolPrivate() { }
 
     // interface
     public:
-        bool Run(void);
+        bool Run();
 
     // data members
     private:
         IndexTool::IndexSettings* m_settings;
 };
 
-bool IndexTool::IndexToolPrivate::Run(void) {
+bool IndexTool::IndexToolPrivate::Run() {
 
     // open our BAM reader
     BamReader reader;
@@ -81,7 +81,7 @@ bool IndexTool::IndexToolPrivate::Run(void) {
 // ---------------------------------------------
 // IndexTool implementation
 
-IndexTool::IndexTool(void)
+IndexTool::IndexTool()
     : AbstractTool()
     , m_settings(new IndexSettings)
     , m_impl(0)
@@ -95,7 +95,7 @@ IndexTool::IndexTool(void)
     Options::AddOption("-bti", "create (non-standard) BamTools index file (*.bti). Default behavior is to create standard BAM index (*.bai)", m_settings->IsUsingBamtoolsIndex, IO_Opts);
 }
 
-IndexTool::~IndexTool(void) {
+IndexTool::~IndexTool() {
 
     delete m_settings;
     m_settings = 0;
@@ -104,7 +104,7 @@ IndexTool::~IndexTool(void) {
     m_impl = 0;
 }
 
-int IndexTool::Help(void) {
+int IndexTool::Help() {
     Options::DisplayHelp();
     return 0;
 }

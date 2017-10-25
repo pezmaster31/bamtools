@@ -3,7 +3,7 @@ includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
 
 Name: BamTools
 Description: BamTools is a C++ library for reading and manipulating BAM files
-Version: @BamTools_VERSION_MAJOR@.@BamTools_VERSION_MINOR@.@BamTools_VERSION_BUILD@
+Version: @BamTools_VERSION@
 
 Libs: -L${libdir} -lbamtools
 Cflags: -I${includedir}

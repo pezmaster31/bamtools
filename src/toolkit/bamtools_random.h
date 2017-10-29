@@ -14,24 +14,25 @@
 
 namespace BamTools {
 
-class RandomTool : public AbstractTool {
+class RandomTool : public AbstractTool
+{
 
-    public:
-        RandomTool();
-        ~RandomTool();
+public:
+    RandomTool();
+    ~RandomTool();
 
-    public:
-        int Help();
-        int Run(int argc, char* argv[]);
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
 
-    private:
-        struct RandomSettings;
-        RandomSettings* m_settings;
+private:
+    struct RandomSettings;
+    RandomSettings* m_settings;
 
-        struct RandomToolPrivate;
-        RandomToolPrivate* m_impl;
+    struct RandomToolPrivate;
+    RandomToolPrivate* m_impl;
 };
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // BAMTOOLS_RANDOM _H
+#endif  // BAMTOOLS_RANDOM _H

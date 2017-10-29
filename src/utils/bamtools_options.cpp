@@ -25,35 +25,34 @@ using namespace BamTools;
 #include <iomanip>
 #include <sstream>
 
-std::string Options::m_programName;                   // the program name
-std::string Options::m_description;                   // the main description
-std::string Options::m_exampleArguments;              // the example arguments
-std::vector<OptionGroup> Options::m_optionGroups;     // stores the option groups
+std::string Options::m_programName;                        // the program name
+std::string Options::m_description;                        // the main description
+std::string Options::m_exampleArguments;                   // the example arguments
+std::vector<OptionGroup> Options::m_optionGroups;          // stores the option groups
 std::map<std::string, OptionValue> Options::m_optionsMap;  // stores the options in a map
-const std::string Options::m_stdin  = "stdin";        // string representation of stdin
-const std::string Options::m_stdout = "stdout";       // string representation of stdout
+const std::string Options::m_stdin = "stdin";              // string representation of stdin
+const std::string Options::m_stdout = "stdout";            // string representation of stdout
 
 // adds a simple option to the parser
-void Options::AddOption(const std::string& argument,
-                        const std::string& optionDescription,
-                        bool& foundArgument,
-                        OptionGroup* group)
+void Options::AddOption(const std::string& argument, const std::string& optionDescription,
+                        bool& foundArgument, OptionGroup* group)
 {
     Option o;
-    o.Argument    = argument;
+    o.Argument = argument;
     o.Description = optionDescription;
-    o.StoreValue  = false;
+    o.StoreValue = false;
     group->Options.push_back(o);
 
     OptionValue ov;
     ov.pFoundArgument = &foundArgument;
-    ov.StoreValue     = false;
+    ov.StoreValue = false;
 
     m_optionsMap[argument] = ov;
 }
 
 // creates an option group
-OptionGroup* Options::CreateOptionGroup(const std::string& groupName) {
+OptionGroup* Options::CreateOptionGroup(const std::string& groupName)
+{
     OptionGroup og;
     og.Name = groupName;
     m_optionGroups.push_back(og);
@@ -61,7 +60,8 @@ OptionGroup* Options::CreateOptionGroup(const std::string& groupName) {
 }
 
 // displays the help menu
-void Options::DisplayHelp() {
+void Options::DisplayHelp()
+{
 
     // initialize
     char argumentBuffer[ARGUMENT_LENGTH + 1];
@@ -77,16 +77,18 @@ void Options::DisplayHelp() {
     printf("%s", m_programName.c_str());
     printf(" %s\n\n", m_exampleArguments.c_str());
 
-    std::vector<Option>::const_iterator      optionIter;
+    std::vector<Option>::const_iterator optionIter;
     std::vector<OptionGroup>::const_iterator groupIter;
     for (groupIter = m_optionGroups.begin(); groupIter != m_optionGroups.end(); ++groupIter) {
 
         printf("%s:\n", groupIter->Name.c_str());
 
-        for (optionIter = groupIter->Options.begin(); optionIter != groupIter->Options.end(); ++optionIter) {
+        for (optionIter = groupIter->Options.begin(); optionIter != groupIter->Options.end();
+             ++optionIter) {
 
             if (optionIter->StoreValue)
-                snprintf(argumentBuffer, ARGUMENT_LENGTH + 1, "  %s <%s>", optionIter->Argument.c_str(), optionIter->ValueDescription.c_str());
+                snprintf(argumentBuffer, ARGUMENT_LENGTH + 1, "  %s <%s>",
+                         optionIter->Argument.c_str(), optionIter->ValueDescription.c_str());
             else
                 snprintf(argumentBuffer, ARGUMENT_LENGTH + 1, "  %s", optionIter->Argument.c_str());
             printf("%-35s ", argumentBuffer);
@@ -111,8 +113,10 @@ void Options::DisplayHelp() {
                     const std::string stringValue = optionIter->DefaultValue;
                     sb << stringValue;
                 } else {
-                    printf("ERROR: Found an unsupported data type for argument %s when casting the default value.\n",
-                           optionIter->Argument.c_str());
+                    printf(
+                        "ERROR: Found an unsupported data type for argument %s when casting the "
+                        "default value.\n",
+                        optionIter->Argument.c_str());
                     std::exit(EXIT_FAILURE);
                 }
 
@@ -120,23 +124,23 @@ void Options::DisplayHelp() {
                 description = sb.str();
             }
 
-            if ( description.size() <= DESC_LENGTH_FIRST_ROW ) {
+            if (description.size() <= DESC_LENGTH_FIRST_ROW) {
                 printf("%s\n", description.c_str());
             } else {
 
                 // handle the first row
                 const char* pDescription = description.data();
                 unsigned int cutIndex = DESC_LENGTH_FIRST_ROW;
-                while(pDescription[cutIndex] != ' ')
+                while (pDescription[cutIndex] != ' ')
                     cutIndex--;
                 printf("%s\n", description.substr(0, cutIndex).c_str());
                 description = description.substr(cutIndex + 1);
 
                 // handle subsequent rows
-                while(description.size() > DESC_LENGTH) {
+                while (description.size() > DESC_LENGTH) {
                     pDescription = description.data();
                     cutIndex = DESC_LENGTH;
-                    while(pDescription[cutIndex] != ' ')
+                    while (pDescription[cutIndex] != ' ')
                         cutIndex--;
                     printf("%s%s\n", indentBuffer, description.substr(0, cutIndex).c_str());
                     description = description.substr(cutIndex + 1);
@@ -156,7 +160,8 @@ void Options::DisplayHelp() {
 }
 
 // parses the command line
-void Options::Parse(int argc, char* argv[], int offset) {
+void Options::Parse(int argc, char* argv[], int offset)
+{
 
     // initialize
     std::map<std::string, OptionValue>::const_iterator ovMapIter;
@@ -172,22 +177,23 @@ void Options::Parse(int argc, char* argv[], int offset) {
     if (argc > 1) {
         for (int i = 1; i < argc; i++) {
             const std::string argument = argv[i];
-            if ( (argument == "-h") || (argument == "--help") || (argument == "help") )
+            if ((argument == "-h") || (argument == "--help") || (argument == "help"))
                 showHelpMenu = true;
         }
-    } else showHelpMenu = true;
+    } else
+        showHelpMenu = true;
 
-    if (showHelpMenu)
-        DisplayHelp();
+    if (showHelpMenu) DisplayHelp();
 
     // check each argument
-    for (int i = offset+1; i < argc; i++) {
+    for (int i = offset + 1; i < argc; i++) {
 
         const std::string argument = argv[i];
         ovMapIter = m_optionsMap.find(argument);
 
         if (ovMapIter == m_optionsMap.end()) {
-            errorBuilder << ERROR_SPACER << "An unrecognized argument was found: " << argument << std::endl;
+            errorBuilder << ERROR_SPACER << "An unrecognized argument was found: " << argument
+                         << std::endl;
             foundError = true;
         } else {
 
@@ -207,11 +213,13 @@ void Options::Parse(int argc, char* argv[], int offset) {
                         ++i;
 
                         if (ovMapIter->second.VariantValue.is_type<unsigned int>()) {
-                            const unsigned int uint32 = (unsigned int)strtoul(val.c_str(), &end_ptr, 10);
+                            const unsigned int uint32 =
+                                (unsigned int)strtoul(val.c_str(), &end_ptr, 10);
                             unsigned int* varValue = (unsigned int*)ovMapIter->second.pValue;
                             *varValue = uint32;
                         } else if (ovMapIter->second.VariantValue.is_type<unsigned char>()) {
-                            const unsigned char uint8 = (unsigned char)strtoul(val.c_str(), &end_ptr, 10);
+                            const unsigned char uint8 =
+                                (unsigned char)strtoul(val.c_str(), &end_ptr, 10);
                             unsigned char* varValue = (unsigned char*)ovMapIter->second.pValue;
                             *varValue = uint8;
                         } else if (ovMapIter->second.VariantValue.is_type<uint64_t>()) {
@@ -229,12 +237,16 @@ void Options::Parse(int argc, char* argv[], int offset) {
                         } else if (ovMapIter->second.VariantValue.is_type<std::string>()) {
                             std::string* pStringValue = (std::string*)ovMapIter->second.pValue;
                             *pStringValue = val;
-                        } else if (ovMapIter->second.VariantValue.is_type<std::vector<std::string> >()) {
-                            std::vector<std::string>* pVectorValue = (std::vector<std::string>*)ovMapIter->second.pValue;
+                        } else if (ovMapIter->second.VariantValue
+                                       .is_type<std::vector<std::string> >()) {
+                            std::vector<std::string>* pVectorValue =
+                                (std::vector<std::string>*)ovMapIter->second.pValue;
                             pVectorValue->push_back(val);
                         } else {
-                            printf("ERROR: Found an unsupported data type for argument %s when parsing the arguments.\n",
-                                   argument.c_str());
+                            printf(
+                                "ERROR: Found an unsupported data type for argument %s when "
+                                "parsing the arguments.\n",
+                                argument.c_str());
                             std::exit(EXIT_FAILURE);
                         }
                     } else {
@@ -255,7 +267,8 @@ void Options::Parse(int argc, char* argv[], int offset) {
     for (ovMapIter = m_optionsMap.begin(); ovMapIter != m_optionsMap.end(); ++ovMapIter) {
         if (ovMapIter->second.IsRequired && !*ovMapIter->second.pFoundArgument) {
             errorBuilder << ERROR_SPACER << ovMapIter->second.ValueTypeDescription
-                         << " was not specified. Please use the " << ovMapIter->first << " parameter." << std::endl;
+                         << " was not specified. Please use the " << ovMapIter->first
+                         << " parameter." << std::endl;
             foundError = true;
         }
     }
@@ -264,23 +277,29 @@ void Options::Parse(int argc, char* argv[], int offset) {
     if (foundError) {
         printf("ERROR: Some problems were encountered when parsing the command line options:\n");
         printf("%s\n", errorBuilder.str().c_str());
-        printf("For a complete list of command line options, type \"%s help %s\"\n", argv[0], argv[1]);
+        printf("For a complete list of command line options, type \"%s help %s\"\n", argv[0],
+               argv[1]);
         std::exit(EXIT_FAILURE);
     }
 }
 
 // sets the program info
-void Options::SetProgramInfo(const std::string& programName,
-                             const std::string& description,
+void Options::SetProgramInfo(const std::string& programName, const std::string& description,
                              const std::string& arguments)
 {
-    m_programName      = programName;
-    m_description      = description;
+    m_programName = programName;
+    m_description = description;
     m_exampleArguments = arguments;
 }
 
 // return string representations of stdin
-const std::string& Options::StandardIn() { return m_stdin; }
+const std::string& Options::StandardIn()
+{
+    return m_stdin;
+}
 
 // return string representations of stdout
-const std::string& Options::StandardOut() { return m_stdout; }
+const std::string& Options::StandardOut()
+{
+    return m_stdout;
+}

@@ -10,18 +10,18 @@
 #ifndef SAM_HEADER_H
 #define SAM_HEADER_H
 
-#include "api/api_global.h"
+#include <string>
+#include <vector>
 #include "api/BamAux.h"
 #include "api/SamProgramChain.h"
 #include "api/SamReadGroupDictionary.h"
 #include "api/SamSequenceDictionary.h"
-#include <string>
-#include <vector>
+#include "api/api_global.h"
 
 namespace BamTools {
 
-
-struct API_EXPORT SamHeader {
+struct API_EXPORT SamHeader
+{
 
     // ctor & dtor
     SamHeader(const std::string& headerText = "");
@@ -29,12 +29,13 @@ struct API_EXPORT SamHeader {
     ~SamHeader();
 
     // query/modify entire SamHeader
-    void Clear();                                   // clears all header contents
+    void Clear();  // clears all header contents
     std::string GetErrorString() const;
     bool HasError() const;
-    bool IsValid(bool verbose = false) const;           // returns true if SAM header is well-formed
-    void SetHeaderText(const std::string& headerText);  // replaces data fields with contents of SAM-formatted text
-    std::string ToString() const;                   // returns the printable, SAM-formatted header text
+    bool IsValid(bool verbose = false) const;  // returns true if SAM header is well-formed
+    void SetHeaderText(
+        const std::string& headerText);  // replaces data fields with contents of SAM-formatted text
+    std::string ToString() const;        // returns the printable, SAM-formatted header text
 
     // convenience query methods
     bool HasVersion() const;     // returns true if header contains format version entry
@@ -50,10 +51,10 @@ struct API_EXPORT SamHeader {
     // --------------
 
     // header metadata (@HD line)
-    std::string Version;             // VN:<Version>  *Required, if @HD record is present*
-    std::string SortOrder;           // SO:<SortOrder>
-    std::string GroupOrder;          // GO:<GroupOrder>
-    std::vector<CustomHeaderTag> CustomTags; // optional custom tags on @HD line
+    std::string Version;                      // VN:<Version>  *Required, if @HD record is present*
+    std::string SortOrder;                    // SO:<SortOrder>
+    std::string GroupOrder;                   // GO:<GroupOrder>
+    std::vector<CustomHeaderTag> CustomTags;  // optional custom tags on @HD line
 
     // header sequences (@SQ entries)
     SamSequenceDictionary Sequences;
@@ -68,10 +69,10 @@ struct API_EXPORT SamHeader {
     std::vector<std::string> Comments;
 
     // internal data
-    private:
-        mutable std::string m_errorString;
+private:
+    mutable std::string m_errorString;
 };
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // SAM_HEADER_H
+#endif  // SAM_HEADER_H

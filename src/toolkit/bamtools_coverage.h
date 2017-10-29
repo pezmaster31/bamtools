@@ -14,24 +14,25 @@
 
 namespace BamTools {
 
-class CoverageTool : public AbstractTool {
+class CoverageTool : public AbstractTool
+{
 
-    public:
-        CoverageTool();
-        ~CoverageTool();
+public:
+    CoverageTool();
+    ~CoverageTool();
 
-    public:
-        int Help();
-        int Run(int argc, char* argv[]);
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
 
-    private:
-        struct CoverageSettings;
-        CoverageSettings* m_settings;
+private:
+    struct CoverageSettings;
+    CoverageSettings* m_settings;
 
-        struct CoverageToolPrivate;
-        CoverageToolPrivate* m_impl;
+    struct CoverageToolPrivate;
+    CoverageToolPrivate* m_impl;
 };
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // BAMTOOLS_COVERAGE_H
+#endif  // BAMTOOLS_COVERAGE_H

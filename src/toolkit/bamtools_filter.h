@@ -14,24 +14,25 @@
 
 namespace BamTools {
 
-class FilterTool : public AbstractTool {
+class FilterTool : public AbstractTool
+{
 
-    public:
-        FilterTool();
-        ~FilterTool();
+public:
+    FilterTool();
+    ~FilterTool();
 
-    public:
-        int Help();
-        int Run(int argc, char* argv[]);
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
 
-    private:
-        struct FilterSettings;
-        FilterSettings* m_settings;
+private:
+    struct FilterSettings;
+    FilterSettings* m_settings;
 
-        class FilterToolPrivate;
-        FilterToolPrivate* m_impl;
+    class FilterToolPrivate;
+    FilterToolPrivate* m_impl;
 };
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // BAMTOOLS_FILTER_H
+#endif  // BAMTOOLS_FILTER_H

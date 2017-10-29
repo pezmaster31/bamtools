@@ -25,26 +25,27 @@
 namespace BamTools {
 namespace Internal {
 
-class ILocalIODevice : public IBamIODevice {
+class ILocalIODevice : public IBamIODevice
+{
 
     // ctor & dtor
-    public:
-        ILocalIODevice();
-        virtual ~ILocalIODevice();
+public:
+    ILocalIODevice();
+    virtual ~ILocalIODevice();
 
     // IBamIODevice implementation
-    public:
-        virtual void Close();
-        virtual int64_t Read(char* data, const unsigned int numBytes);
-        virtual int64_t Tell() const;
-        virtual int64_t Write(const char* data, const unsigned int numBytes);
+public:
+    virtual void Close();
+    virtual int64_t Read(char* data, const unsigned int numBytes);
+    virtual int64_t Tell() const;
+    virtual int64_t Write(const char* data, const unsigned int numBytes);
 
     // data members
-    protected:
-        FILE* m_stream;
+protected:
+    FILE* m_stream;
 };
 
-} // namespace Internal
-} // namespace BamTools
+}  // namespace Internal
+}  // namespace BamTools
 
-#endif // ILOCALIODEVICE_P_H
+#endif  // ILOCALIODEVICE_P_H

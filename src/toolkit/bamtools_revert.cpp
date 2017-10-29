@@ -22,12 +22,13 @@ namespace BamTools {
 
 static const std::string OQ_TAG = "OQ";
 
-} // namespace BamTools;
+}  // namespace BamTools
 
 // ---------------------------------------------
 // RevertSettings implementation
 
-struct RevertTool::RevertSettings {
+struct RevertTool::RevertSettings
+{
 
     // flags
     bool HasInput;
@@ -49,32 +50,33 @@ struct RevertTool::RevertSettings {
         , IsKeepQualities(false)
         , InputFilename(Options::StandardIn())
         , OutputFilename(Options::StandardOut())
-    { }
+    {}
 };
 
 // ---------------------------------------------
 // RevertToolPrivate implementation
 
-struct RevertTool::RevertToolPrivate {
+struct RevertTool::RevertToolPrivate
+{
 
     // ctor & dtor
-    public:
-        RevertToolPrivate(RevertTool::RevertSettings* settings)
-            : m_settings(settings)
-        { }
-        ~RevertToolPrivate() { }
+public:
+    RevertToolPrivate(RevertTool::RevertSettings* settings)
+        : m_settings(settings)
+    {}
+    ~RevertToolPrivate() {}
 
     // 'public' interface
-    public:
-        bool Run();
+public:
+    bool Run();
 
     // internal methods
-    private:
-        void RevertAlignment(BamAlignment& al);
+private:
+    void RevertAlignment(BamAlignment& al);
 
     // data members
-    private:
-        RevertTool::RevertSettings* m_settings;
+private:
+    RevertTool::RevertSettings* m_settings;
 };
 
 // 'reverts' a BAM alignment
@@ -82,29 +84,30 @@ struct RevertTool::RevertToolPrivate {
 //   1 - replace Qualities with OQ contents
 //   2 - clear IsDuplicate flag
 // can override default behavior using command line options
-void RevertTool::RevertToolPrivate::RevertAlignment(BamAlignment& al) {
+void RevertTool::RevertToolPrivate::RevertAlignment(BamAlignment& al)
+{
 
     // replace Qualities with OQ contents, if requested
-    if ( !m_settings->IsKeepQualities ) {
+    if (!m_settings->IsKeepQualities) {
         std::string originalQualities;
-        if ( al.GetTag(OQ_TAG, originalQualities) ) {
+        if (al.GetTag(OQ_TAG, originalQualities)) {
             al.Qualities = originalQualities;
             al.RemoveTag(OQ_TAG);
         }
     }
 
     // clear duplicate flag, if requested
-    if ( !m_settings->IsKeepDuplicateFlag )
-        al.SetIsDuplicate(false);
+    if (!m_settings->IsKeepDuplicateFlag) al.SetIsDuplicate(false);
 }
 
-bool RevertTool::RevertToolPrivate::Run() {
+bool RevertTool::RevertToolPrivate::Run()
+{
 
     // opens the BAM file without checking for indexes
     BamReader reader;
-    if ( !reader.Open(m_settings->InputFilename) ) {
+    if (!reader.Open(m_settings->InputFilename)) {
         std::cerr << "bamtools revert ERROR: could not open " << m_settings->InputFilename
-             << " for reading... Aborting." << std::endl;
+                  << " for reading... Aborting." << std::endl;
         return false;
     }
 
@@ -113,24 +116,24 @@ bool RevertTool::RevertToolPrivate::Run() {
     const RefVector& references = reader.GetReferenceData();
 
     // determine compression mode for BamWriter
-    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() &&
-                              !m_settings->IsForceCompression );
+    bool writeUncompressed =
+        (m_settings->OutputFilename == Options::StandardOut() && !m_settings->IsForceCompression);
     BamWriter::CompressionMode compressionMode = BamWriter::Compressed;
-    if ( writeUncompressed ) compressionMode = BamWriter::Uncompressed;
+    if (writeUncompressed) compressionMode = BamWriter::Uncompressed;
 
     // open BamWriter
     BamWriter writer;
     writer.SetCompressionMode(compressionMode);
-    if ( !writer.Open(m_settings->OutputFilename, headerText, references) ) {
+    if (!writer.Open(m_settings->OutputFilename, headerText, references)) {
         std::cerr << "bamtools revert ERROR: could not open " << m_settings->OutputFilename
-             << " for writing... Aborting." << std::endl;
+                  << " for writing... Aborting." << std::endl;
         reader.Close();
         return false;
     }
 
     // plow through file, reverting alignments
     BamAlignment al;
-    while ( reader.GetNextAlignment(al) ) {
+    while (reader.GetNextAlignment(al)) {
         RevertAlignment(al);
         writer.SaveAlignment(al);
     }
@@ -150,20 +153,34 @@ RevertTool::RevertTool()
     , m_impl(0)
 {
     // set program details
-    Options::SetProgramInfo("bamtools revert", "removes duplicate marks and restores original (non-recalibrated) base qualities", "[-in <filename> -in <filename> ...] [-out <filename> | [-forceCompression]] [revertOptions]");
+    Options::SetProgramInfo(
+        "bamtools revert",
+        "removes duplicate marks and restores original (non-recalibrated) base qualities",
+        "[-in <filename> -in <filename> ...] [-out <filename> | [-forceCompression]] "
+        "[revertOptions]");
 
     // set up options
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",  "BAM filename", "the input BAM file",  "", m_settings->HasInput,  m_settings->InputFilename,  IO_Opts, Options::StandardIn());
-    Options::AddValueOption("-out", "BAM filename", "the output BAM file", "", m_settings->HasOutput, m_settings->OutputFilename, IO_Opts, Options::StandardOut());
-    Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
+    Options::AddValueOption("-in", "BAM filename", "the input BAM file", "", m_settings->HasInput,
+                            m_settings->InputFilename, IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-out", "BAM filename", "the output BAM file", "",
+                            m_settings->HasOutput, m_settings->OutputFilename, IO_Opts,
+                            Options::StandardOut());
+    Options::AddOption("-forceCompression",
+                       "if results are sent to stdout (like when piping to another tool), default "
+                       "behavior is to leave output uncompressed. Use this flag to override and "
+                       "force compression",
+                       m_settings->IsForceCompression, IO_Opts);
 
     OptionGroup* RevertOpts = Options::CreateOptionGroup("Revert Options");
-    Options::AddOption("-keepDuplicate", "keep duplicates marked", m_settings->IsKeepDuplicateFlag, RevertOpts);
-    Options::AddOption("-keepQualities", "keep base qualities (do not replace with OQ contents)", m_settings->IsKeepQualities, RevertOpts);
+    Options::AddOption("-keepDuplicate", "keep duplicates marked", m_settings->IsKeepDuplicateFlag,
+                       RevertOpts);
+    Options::AddOption("-keepQualities", "keep base qualities (do not replace with OQ contents)",
+                       m_settings->IsKeepQualities, RevertOpts);
 }
 
-RevertTool::~RevertTool() {
+RevertTool::~RevertTool()
+{
 
     delete m_settings;
     m_settings = 0;
@@ -172,12 +189,14 @@ RevertTool::~RevertTool() {
     m_impl = 0;
 }
 
-int RevertTool::Help() {
+int RevertTool::Help()
+{
     Options::DisplayHelp();
     return 0;
 }
 
-int RevertTool::Run(int argc, char* argv[]) {
+int RevertTool::Run(int argc, char* argv[])
+{
 
     // parse command line arguments
     Options::Parse(argc, argv, 1);
@@ -186,7 +205,7 @@ int RevertTool::Run(int argc, char* argv[]) {
     m_impl = new RevertToolPrivate(m_settings);
 
     // run RevertTool, return success/fail
-    if ( m_impl->Run() )
+    if (m_impl->Run())
         return 0;
     else
         return 1;

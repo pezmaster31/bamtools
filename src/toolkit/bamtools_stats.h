@@ -14,24 +14,25 @@
 
 namespace BamTools {
 
-class StatsTool : public AbstractTool {
+class StatsTool : public AbstractTool
+{
 
-    public:
-        StatsTool();
-        ~StatsTool();
+public:
+    StatsTool();
+    ~StatsTool();
 
-    public:
-        int Help();
-        int Run(int argc, char* argv[]);
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
 
-    private:
-        struct StatsSettings;
-        StatsSettings* m_settings;
+private:
+    struct StatsSettings;
+    StatsSettings* m_settings;
 
-        struct StatsToolPrivate;
-        StatsToolPrivate* m_impl;
+    struct StatsToolPrivate;
+    StatsToolPrivate* m_impl;
 };
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // BAMTOOLS_STATS_H
+#endif  // BAMTOOLS_STATS_H

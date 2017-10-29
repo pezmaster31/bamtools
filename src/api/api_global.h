@@ -13,9 +13,9 @@
 #include "shared/bamtools_global.h"
 
 #ifdef BAMTOOLS_API_LIBRARY
-#  define API_EXPORT BAMTOOLS_LIBRARY_EXPORT
+#define API_EXPORT BAMTOOLS_LIBRARY_EXPORT
 #else
-#  define API_EXPORT BAMTOOLS_LIBRARY_IMPORT
+#define API_EXPORT BAMTOOLS_LIBRARY_IMPORT
 #endif
 
-#endif // API_GLOBAL_H
+#endif  // API_GLOBAL_H

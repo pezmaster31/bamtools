@@ -14,24 +14,25 @@
 
 namespace BamTools {
 
-class SortTool : public AbstractTool {
+class SortTool : public AbstractTool
+{
 
-    public:
-        SortTool();
-        ~SortTool();
+public:
+    SortTool();
+    ~SortTool();
 
-    public:
-        int Help();
-        int Run(int argc, char* argv[]);
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
 
-    private:
-        struct SortSettings;
-        SortSettings* m_settings;
+private:
+    struct SortSettings;
+    SortSettings* m_settings;
 
-        class SortToolPrivate;
-        SortToolPrivate* m_impl;
+    class SortToolPrivate;
+    SortToolPrivate* m_impl;
 };
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // BAMTOOLS_SORT_H
+#endif  // BAMTOOLS_SORT_H

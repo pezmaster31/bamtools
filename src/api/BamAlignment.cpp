@@ -88,7 +88,7 @@ BamAlignment::BamAlignment()
     , MateRefID(-1)
     , MatePosition(-1)
     , InsertSize(0)
-{ }
+{}
 
 /*! \fn BamAlignment::BamAlignment(const BamAlignment& other)
     \brief copy constructor
@@ -111,12 +111,12 @@ BamAlignment::BamAlignment(const BamAlignment& other)
     , InsertSize(other.InsertSize)
     , Filename(other.Filename)
     , SupportData(other.SupportData)
-{ }
+{}
 
 /*! \fn BamAlignment::~BamAlignment()
     \brief destructor
 */
-BamAlignment::~BamAlignment() { }
+BamAlignment::~BamAlignment() {}
 
 /*! \fn bool BamAlignment::BuildCharData()
     \brief Populates alignment string fields (read name, bases, qualities, tag data).
@@ -130,37 +130,39 @@ BamAlignment::~BamAlignment() { }
 
     \return \c true if character data populated successfully (or was already available to begin with)
 */
-bool BamAlignment::BuildCharData() {
+bool BamAlignment::BuildCharData()
+{
 
     // skip if char data already parsed
-    if ( !SupportData.HasCoreOnly )
-        return true;
+    if (!SupportData.HasCoreOnly) return true;
 
     // check system endianness
     bool IsBigEndian = BamTools::SystemIsBigEndian();
 
     // calculate character lengths/offsets
-    const unsigned int dataLength     = SupportData.BlockLength - Constants::BAM_CORE_SIZE;
-    const unsigned int seqDataOffset  = SupportData.QueryNameLength + (SupportData.NumCigarOperations*4);
-    const unsigned int qualDataOffset = seqDataOffset + (SupportData.QuerySequenceLength+1)/2;
-    const unsigned int tagDataOffset  = qualDataOffset + SupportData.QuerySequenceLength;
-    const unsigned int tagDataLength  = dataLength - tagDataOffset;
+    const unsigned int dataLength = SupportData.BlockLength - Constants::BAM_CORE_SIZE;
+    const unsigned int seqDataOffset =
+        SupportData.QueryNameLength + (SupportData.NumCigarOperations * 4);
+    const unsigned int qualDataOffset = seqDataOffset + (SupportData.QuerySequenceLength + 1) / 2;
+    const unsigned int tagDataOffset = qualDataOffset + SupportData.QuerySequenceLength;
+    const unsigned int tagDataLength = dataLength - tagDataOffset;
 
     // check offsets to see what char data exists
-    const bool hasSeqData  = ( seqDataOffset  < qualDataOffset );
-    const bool hasQualData = ( qualDataOffset < tagDataOffset );
-    const bool hasTagData  = ( tagDataOffset  < dataLength );
+    const bool hasSeqData = (seqDataOffset < qualDataOffset);
+    const bool hasQualData = (qualDataOffset < tagDataOffset);
+    const bool hasTagData = (tagDataOffset < dataLength);
 
     // store alignment name (relies on null char in name as terminator)
     Name.assign(SupportData.AllCharData.data());
 
     // save query sequence
     QueryBases.clear();
-    if ( hasSeqData ) {
+    if (hasSeqData) {
         const char* seqData = SupportData.AllCharData.data() + seqDataOffset;
         QueryBases.reserve(SupportData.QuerySequenceLength);
-        for ( size_t i = 0; i < SupportData.QuerySequenceLength; ++i ) {
-            const char singleBase = Constants::BAM_DNA_LOOKUP[ ( (seqData[(i/2)] >> (4*(1-(i%2)))) & 0xf ) ];
+        for (size_t i = 0; i < SupportData.QuerySequenceLength; ++i) {
+            const char singleBase =
+                Constants::BAM_DNA_LOOKUP[((seqData[(i / 2)] >> (4 * (1 - (i % 2)))) & 0xf)];
             QueryBases.append(1, singleBase);
         }
     }
@@ -168,18 +170,18 @@ bool BamAlignment::BuildCharData() {
     // save qualities
 
     Qualities.clear();
-    if ( hasQualData ) {
+    if (hasQualData) {
         const char* qualData = SupportData.AllCharData.data() + qualDataOffset;
 
         // if marked as unstored (sequence of 0xFF) - don't do conversion, just fill with 0xFFs
-        if ( qualData[0] == (char)0xFF )
+        if (qualData[0] == (char)0xFF)
             Qualities.resize(SupportData.QuerySequenceLength, (char)0xFF);
 
         // otherwise convert from numeric QV to 'FASTQ-style' ASCII character
         else {
             Qualities.reserve(SupportData.QuerySequenceLength);
-            for ( size_t i = 0; i < SupportData.QuerySequenceLength; ++i )
-                Qualities.append(1, qualData[i]+33);
+            for (size_t i = 0; i < SupportData.QuerySequenceLength; ++i)
+                Qualities.append(1, qualData[i] + 33);
         }
     }
 
@@ -188,7 +190,7 @@ bool BamAlignment::BuildCharData() {
 
     // if QueryBases has data, build AlignedBases using CIGAR data
     // otherwise, AlignedBases will remain empty (this case IS allowed)
-    if ( !QueryBases.empty() && QueryBases != "*" ) {
+    if (!QueryBases.empty() && QueryBases != "*") {
 
         // resize AlignedBases
         AlignedBases.reserve(SupportData.QuerySequenceLength);
@@ -196,48 +198,49 @@ bool BamAlignment::BuildCharData() {
         // iterate over CigarOps
         int k = 0;
         std::vector<CigarOp>::const_iterator cigarIter = CigarData.begin();
-        std::vector<CigarOp>::const_iterator cigarEnd  = CigarData.end();
-        for ( ; cigarIter != cigarEnd; ++cigarIter ) {
+        std::vector<CigarOp>::const_iterator cigarEnd = CigarData.end();
+        for (; cigarIter != cigarEnd; ++cigarIter) {
             const CigarOp& op = (*cigarIter);
 
-            switch ( op.Type ) {
+            switch (op.Type) {
 
                 // for 'M', 'I', '=', 'X' - write bases
-                case (Constants::BAM_CIGAR_MATCH_CHAR)    :
-                case (Constants::BAM_CIGAR_INS_CHAR)      :
-                case (Constants::BAM_CIGAR_SEQMATCH_CHAR) :
-                case (Constants::BAM_CIGAR_MISMATCH_CHAR) :
+                case (Constants::BAM_CIGAR_MATCH_CHAR):
+                case (Constants::BAM_CIGAR_INS_CHAR):
+                case (Constants::BAM_CIGAR_SEQMATCH_CHAR):
+                case (Constants::BAM_CIGAR_MISMATCH_CHAR):
                     AlignedBases.append(QueryBases.substr(k, op.Length));
                     // fall through
 
                 // for 'S' - soft clip, do not write bases
                 // but increment placeholder 'k'
-                case (Constants::BAM_CIGAR_SOFTCLIP_CHAR) :
+                case (Constants::BAM_CIGAR_SOFTCLIP_CHAR):
                     k += op.Length;
                     break;
 
                 // for 'D' - write gap character
-                case (Constants::BAM_CIGAR_DEL_CHAR) :
+                case (Constants::BAM_CIGAR_DEL_CHAR):
                     AlignedBases.append(op.Length, Constants::BAM_DNA_DEL);
                     break;
 
                 // for 'P' - write padding character
-                case (Constants::BAM_CIGAR_PAD_CHAR) :
-                    AlignedBases.append( op.Length, Constants::BAM_DNA_PAD );
+                case (Constants::BAM_CIGAR_PAD_CHAR):
+                    AlignedBases.append(op.Length, Constants::BAM_DNA_PAD);
                     break;
 
                 // for 'N' - write N's, skip bases in original query sequence
-                case (Constants::BAM_CIGAR_REFSKIP_CHAR) :
-                    AlignedBases.append( op.Length, Constants::BAM_DNA_N );
+                case (Constants::BAM_CIGAR_REFSKIP_CHAR):
+                    AlignedBases.append(op.Length, Constants::BAM_DNA_N);
                     break;
 
                 // for 'H' - hard clip, do nothing to AlignedBases, move to next op
-                case (Constants::BAM_CIGAR_HARDCLIP_CHAR) :
+                case (Constants::BAM_CIGAR_HARDCLIP_CHAR):
                     break;
 
                 // invalid CIGAR op-code
                 default:
-                    const std::string message = std::string("invalid CIGAR operation type: ") + op.Type;
+                    const std::string message =
+                        std::string("invalid CIGAR operation type: ") + op.Type;
                     SetErrorString("BamAlignment::BuildCharData", message);
                     return false;
             }
@@ -246,13 +249,13 @@ bool BamAlignment::BuildCharData() {
 
     // save tag data
     TagData.clear();
-    if ( hasTagData ) {
+    if (hasTagData) {
 
         char* tagData = (((char*)SupportData.AllCharData.data()) + tagDataOffset);
 
-        if ( IsBigEndian ) {
+        if (IsBigEndian) {
             size_t i = 0;
-            while ( i < tagDataLength ) {
+            while (i < tagDataLength) {
 
                 i += Constants::BAM_TAG_TAGSIZE;  // skip tag chars (e.g. "RG", "NM", etc.)
                 const char type = tagData[i];     // get tag type at position i
@@ -260,36 +263,36 @@ bool BamAlignment::BuildCharData() {
 
                 switch (type) {
 
-                    case(Constants::BAM_TAG_TYPE_ASCII) :
-                    case(Constants::BAM_TAG_TYPE_INT8)  :
-                    case(Constants::BAM_TAG_TYPE_UINT8) :
+                    case (Constants::BAM_TAG_TYPE_ASCII):
+                    case (Constants::BAM_TAG_TYPE_INT8):
+                    case (Constants::BAM_TAG_TYPE_UINT8):
                         // no endian swapping necessary for single-byte data
                         ++i;
                         break;
 
-                    case(Constants::BAM_TAG_TYPE_INT16)  :
-                    case(Constants::BAM_TAG_TYPE_UINT16) :
+                    case (Constants::BAM_TAG_TYPE_INT16):
+                    case (Constants::BAM_TAG_TYPE_UINT16):
                         BamTools::SwapEndian_16p(&tagData[i]);
                         i += sizeof(uint16_t);
                         break;
 
-                    case(Constants::BAM_TAG_TYPE_FLOAT)  :
-                    case(Constants::BAM_TAG_TYPE_INT32)  :
-                    case(Constants::BAM_TAG_TYPE_UINT32) :
+                    case (Constants::BAM_TAG_TYPE_FLOAT):
+                    case (Constants::BAM_TAG_TYPE_INT32):
+                    case (Constants::BAM_TAG_TYPE_UINT32):
                         BamTools::SwapEndian_32p(&tagData[i]);
                         i += sizeof(uint32_t);
                         break;
 
-                    case(Constants::BAM_TAG_TYPE_HEX) :
-                    case(Constants::BAM_TAG_TYPE_STRING) :
+                    case (Constants::BAM_TAG_TYPE_HEX):
+                    case (Constants::BAM_TAG_TYPE_STRING):
                         // no endian swapping necessary for hex-string/string data
-                        while ( tagData[i] )
+                        while (tagData[i])
                             ++i;
                         // increment one more for null terminator
                         ++i;
                         break;
 
-                    case(Constants::BAM_TAG_TYPE_ARRAY) :
+                    case (Constants::BAM_TAG_TYPE_ARRAY):
 
                     {
                         // read array type
@@ -303,26 +306,27 @@ bool BamAlignment::BuildCharData() {
                         i += sizeof(uint32_t);
 
                         // swap endian-ness of array elements
-                        for ( size_t j = 0; j < numElements; ++j ) {
+                        for (size_t j = 0; j < numElements; ++j) {
                             switch (arrayType) {
-                                case (Constants::BAM_TAG_TYPE_INT8)  :
-                                case (Constants::BAM_TAG_TYPE_UINT8) :
+                                case (Constants::BAM_TAG_TYPE_INT8):
+                                case (Constants::BAM_TAG_TYPE_UINT8):
                                     // no endian-swapping necessary
                                     ++i;
                                     break;
-                                case (Constants::BAM_TAG_TYPE_INT16)  :
-                                case (Constants::BAM_TAG_TYPE_UINT16) :
+                                case (Constants::BAM_TAG_TYPE_INT16):
+                                case (Constants::BAM_TAG_TYPE_UINT16):
                                     BamTools::SwapEndian_16p(&tagData[i]);
                                     i += sizeof(uint16_t);
                                     break;
-                                case (Constants::BAM_TAG_TYPE_FLOAT)  :
-                                case (Constants::BAM_TAG_TYPE_INT32)  :
-                                case (Constants::BAM_TAG_TYPE_UINT32) :
+                                case (Constants::BAM_TAG_TYPE_FLOAT):
+                                case (Constants::BAM_TAG_TYPE_INT32):
+                                case (Constants::BAM_TAG_TYPE_UINT32):
                                     BamTools::SwapEndian_32p(&tagData[i]);
                                     i += sizeof(uint32_t);
                                     break;
                                 default:
-                                    const std::string message = std::string("invalid binary array type: ") + arrayType;
+                                    const std::string message =
+                                        std::string("invalid binary array type: ") + arrayType;
                                     SetErrorString("BamAlignment::BuildCharData", message);
                                     return false;
                             }
@@ -332,7 +336,7 @@ bool BamAlignment::BuildCharData() {
                     }
 
                     // invalid tag type-code
-                    default :
+                    default:
                         const std::string message = std::string("invalid tag type: ") + type;
                         SetErrorString("BamAlignment::BuildCharData", message);
                         return false;
@@ -366,27 +370,24 @@ bool BamAlignment::BuildCharData() {
           \a numBytesParsed will correspond to the position in the full TagData string.
 
 */
-bool BamAlignment::FindTag(const std::string& tag,
-                           char*& pTagData,
-                           const unsigned int& tagDataLength,
-                           unsigned int& numBytesParsed) const
+bool BamAlignment::FindTag(const std::string& tag, char*& pTagData,
+                           const unsigned int& tagDataLength, unsigned int& numBytesParsed) const
 {
 
-    while ( numBytesParsed < tagDataLength ) {
+    while (numBytesParsed < tagDataLength) {
 
-        const char* pTagType        = pTagData;
+        const char* pTagType = pTagData;
         const char* pTagStorageType = pTagData + 2;
-        pTagData       += 3;
+        pTagData += 3;
         numBytesParsed += 3;
 
         // check the current tag, return true on match
-        if ( strncmp(pTagType, tag.c_str(), 2) == 0 )
-            return true;
+        if (strncmp(pTagType, tag.c_str(), 2) == 0) return true;
 
         // get the storage class and find the next tag
-        if ( *pTagStorageType == '\0' ) return false;
-        if ( !SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) ) return false;
-        if ( *pTagData == '\0' ) return false;
+        if (*pTagStorageType == '\0') return false;
+        if (!SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed)) return false;
+        if (*pTagData == '\0') return false;
     }
 
     // checked all tags, none match
@@ -402,16 +403,17 @@ bool BamAlignment::FindTag(const std::string& tag,
     \return \c true if found. False if not found, or if tag is not an array type.
     \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
-bool BamAlignment::GetArrayTagType(const std::string& tag, char& type) const {
+bool BamAlignment::GetArrayTagType(const std::string& tag, char& type) const
+{
 
     // skip if alignment is core-only
-    if ( SupportData.HasCoreOnly ) {
+    if (SupportData.HasCoreOnly) {
         // TODO: set error string?
         return false;
     }
 
     // skip if no tags present
-    if ( TagData.empty() ) {
+    if (TagData.empty()) {
         // TODO: set error string?
         return false;
     }
@@ -422,30 +424,30 @@ bool BamAlignment::GetArrayTagType(const std::string& tag, char& type) const {
     unsigned int numBytesParsed = 0;
 
     // if tag not found, return failure
-    if ( !FindTag(tag, pTagData, tagDataLength, numBytesParsed) ){
+    if (!FindTag(tag, pTagData, tagDataLength, numBytesParsed)) {
         // TODO: set error string?
         return false;
     }
 
     // check that tag type code is array
     type = *(pTagData - 1);
-    if ( type != Constants::BAM_TAG_TYPE_ARRAY ) {
+    if (type != Constants::BAM_TAG_TYPE_ARRAY) {
         // TODO: set error string
         return false;
     }
 
     // fetch element type
     const char elementType = *pTagData;
-    switch ( elementType ) {
+    switch (elementType) {
 
         // allowable types
-        case (Constants::BAM_TAG_TYPE_INT8)   :
-        case (Constants::BAM_TAG_TYPE_UINT8)  :
-        case (Constants::BAM_TAG_TYPE_INT16)  :
-        case (Constants::BAM_TAG_TYPE_UINT16) :
-        case (Constants::BAM_TAG_TYPE_INT32)  :
-        case (Constants::BAM_TAG_TYPE_UINT32) :
-        case (Constants::BAM_TAG_TYPE_FLOAT)  :
+        case (Constants::BAM_TAG_TYPE_INT8):
+        case (Constants::BAM_TAG_TYPE_UINT8):
+        case (Constants::BAM_TAG_TYPE_INT16):
+        case (Constants::BAM_TAG_TYPE_UINT16):
+        case (Constants::BAM_TAG_TYPE_INT32):
+        case (Constants::BAM_TAG_TYPE_UINT32):
+        case (Constants::BAM_TAG_TYPE_FLOAT):
             type = elementType;
             break;
 
@@ -457,7 +459,6 @@ bool BamAlignment::GetArrayTagType(const std::string& tag, char& type) const {
     // if we get here, return success
     return true;
 }
-
 
 /*! \fn int BamAlignment::GetEndPosition(bool usePadded = false, bool closedInterval = false) const
     \brief Calculates alignment end position, based on its starting position and CIGAR data.
@@ -474,43 +475,42 @@ bool BamAlignment::GetArrayTagType(const std::string& tag, char& type) const {
 
     \return alignment end position
 */
-int BamAlignment::GetEndPosition(bool usePadded, bool closedInterval) const {
+int BamAlignment::GetEndPosition(bool usePadded, bool closedInterval) const
+{
 
     // initialize alignment end to starting position
     int alignEnd = Position;
 
     // iterate over cigar operations
     std::vector<CigarOp>::const_iterator cigarIter = CigarData.begin();
-    std::vector<CigarOp>::const_iterator cigarEnd  = CigarData.end();
-    for ( ; cigarIter != cigarEnd; ++cigarIter) {
+    std::vector<CigarOp>::const_iterator cigarEnd = CigarData.end();
+    for (; cigarIter != cigarEnd; ++cigarIter) {
         const CigarOp& op = (*cigarIter);
 
-        switch ( op.Type ) {
+        switch (op.Type) {
 
             // increase end position on CIGAR chars [DMXN=]
-            case Constants::BAM_CIGAR_DEL_CHAR      :
-            case Constants::BAM_CIGAR_MATCH_CHAR    :
-            case Constants::BAM_CIGAR_MISMATCH_CHAR :
-            case Constants::BAM_CIGAR_REFSKIP_CHAR  :
-            case Constants::BAM_CIGAR_SEQMATCH_CHAR :
+            case Constants::BAM_CIGAR_DEL_CHAR:
+            case Constants::BAM_CIGAR_MATCH_CHAR:
+            case Constants::BAM_CIGAR_MISMATCH_CHAR:
+            case Constants::BAM_CIGAR_REFSKIP_CHAR:
+            case Constants::BAM_CIGAR_SEQMATCH_CHAR:
                 alignEnd += op.Length;
                 break;
 
             // increase end position on insertion, only if @usePadded is true
-            case Constants::BAM_CIGAR_INS_CHAR :
-                if ( usePadded )
-                    alignEnd += op.Length;
+            case Constants::BAM_CIGAR_INS_CHAR:
+                if (usePadded) alignEnd += op.Length;
                 break;
 
             // all other CIGAR chars do not affect end position
-            default :
+            default:
                 break;
         }
     }
 
     // adjust for closedInterval, if requested
-    if ( closedInterval )
-        alignEnd -= 1;
+    if (closedInterval) alignEnd -= 1;
 
     // return result
     return alignEnd;
@@ -524,7 +524,8 @@ int BamAlignment::GetEndPosition(bool usePadded, bool closedInterval) const {
 
     \return error description
 */
-std::string BamAlignment::GetErrorString() const {
+std::string BamAlignment::GetErrorString() const
+{
     return ErrorString;
 }
 
@@ -541,43 +542,40 @@ std::string BamAlignment::GetErrorString() const {
 
     \return \c true if any soft clips were found in the alignment
 */
-bool BamAlignment::GetSoftClips(std::vector<int>& clipSizes,
-                                std::vector<int>& readPositions,
-                                std::vector<int>& genomePositions,
-                                bool usePadded) const
+bool BamAlignment::GetSoftClips(std::vector<int>& clipSizes, std::vector<int>& readPositions,
+                                std::vector<int>& genomePositions, bool usePadded) const
 {
     // initialize positions & flags
-    int refPosition  = Position;
+    int refPosition = Position;
     int readPosition = 0;
     bool softClipFound = false;
-    bool firstCigarOp  = true;
+    bool firstCigarOp = true;
 
     // iterate over cigar operations
     std::vector<CigarOp>::const_iterator cigarIter = CigarData.begin();
-    std::vector<CigarOp>::const_iterator cigarEnd  = CigarData.end();
-    for ( ; cigarIter != cigarEnd; ++cigarIter) {
+    std::vector<CigarOp>::const_iterator cigarEnd = CigarData.end();
+    for (; cigarIter != cigarEnd; ++cigarIter) {
         const CigarOp& op = (*cigarIter);
 
-        switch ( op.Type ) {
+        switch (op.Type) {
 
             // increase both read & genome positions on CIGAR chars [DMXN=]
-            case Constants::BAM_CIGAR_DEL_CHAR      :
-            case Constants::BAM_CIGAR_MATCH_CHAR    :
-            case Constants::BAM_CIGAR_MISMATCH_CHAR :
-            case Constants::BAM_CIGAR_REFSKIP_CHAR  :
-            case Constants::BAM_CIGAR_SEQMATCH_CHAR :
-                refPosition  += op.Length;
+            case Constants::BAM_CIGAR_DEL_CHAR:
+            case Constants::BAM_CIGAR_MATCH_CHAR:
+            case Constants::BAM_CIGAR_MISMATCH_CHAR:
+            case Constants::BAM_CIGAR_REFSKIP_CHAR:
+            case Constants::BAM_CIGAR_SEQMATCH_CHAR:
+                refPosition += op.Length;
                 readPosition += op.Length;
                 break;
 
             // increase read position on insertion, genome position only if @usePadded is true
-            case Constants::BAM_CIGAR_INS_CHAR :
+            case Constants::BAM_CIGAR_INS_CHAR:
                 readPosition += op.Length;
-                if ( usePadded )
-                    refPosition += op.Length;
+                if (usePadded) refPosition += op.Length;
                 break;
 
-            case Constants::BAM_CIGAR_SOFTCLIP_CHAR :
+            case Constants::BAM_CIGAR_SOFTCLIP_CHAR:
 
                 softClipFound = true;
 
@@ -595,8 +593,7 @@ bool BamAlignment::GetSoftClips(std::vector<int>& clipSizes,
                 //
                 // NOTE: This only needs to be done if the soft clip is the _first_ CIGAR op.
                 //////////////////////////////////////////////////////////////////////////////
-                if ( firstCigarOp )
-                    readPosition += op.Length;
+                if (firstCigarOp) readPosition += op.Length;
 
                 // track the soft clip's size, read position, and genome position
                 clipSizes.push_back(op.Length);
@@ -604,7 +601,7 @@ bool BamAlignment::GetSoftClips(std::vector<int>& clipSizes,
                 genomePositions.push_back(refPosition);
 
             // any other CIGAR operations have no effect
-            default :
+            default:
                 break;
         }
 
@@ -626,30 +623,30 @@ bool BamAlignment::GetSoftClips(std::vector<int>& clipSizes,
     \return \c vector containing all tag names found (empty if none available)
     \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
-std::vector<std::string> BamAlignment::GetTagNames() const {
+std::vector<std::string> BamAlignment::GetTagNames() const
+{
 
     std::vector<std::string> result;
-    if ( SupportData.HasCoreOnly || TagData.empty() )
-        return result;
+    if (SupportData.HasCoreOnly || TagData.empty()) return result;
 
     char* pTagData = (char*)TagData.data();
     const unsigned int tagDataLength = TagData.size();
     unsigned int numBytesParsed = 0;
-    while ( numBytesParsed < tagDataLength ) {
+    while (numBytesParsed < tagDataLength) {
 
         // get current tag name & type
         const char* pTagName = pTagData;
         const char* pTagType = pTagData + 2;
-        pTagData       += 3;
-        numBytesParsed +=3;
+        pTagData += 3;
+        numBytesParsed += 3;
 
         // store tag name
-        result.push_back( std::string(pTagName, 2)  );
+        result.push_back(std::string(pTagName, 2));
 
         // find the next tag
-        if ( *pTagType == '\0' ) break;
-        if ( !SkipToNextTag(*pTagType, pTagData, numBytesParsed) ) break;
-        if ( *pTagData == '\0' ) break;
+        if (*pTagType == '\0') break;
+        if (!SkipToNextTag(*pTagType, pTagData, numBytesParsed)) break;
+        if (*pTagData == '\0') break;
     }
 
     return result;
@@ -664,16 +661,17 @@ std::vector<std::string> BamAlignment::GetTagNames() const {
     \return \c true if found
     \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
-bool BamAlignment::GetTagType(const std::string& tag, char& type) const {
+bool BamAlignment::GetTagType(const std::string& tag, char& type) const
+{
 
     // skip if alignment is core-only
-    if ( SupportData.HasCoreOnly ) {
+    if (SupportData.HasCoreOnly) {
         // TODO: set error string?
         return false;
     }
 
     // skip if no tags present
-    if ( TagData.empty() ) {
+    if (TagData.empty()) {
         // TODO: set error string?
         return false;
     }
@@ -684,25 +682,25 @@ bool BamAlignment::GetTagType(const std::string& tag, char& type) const {
     unsigned int numBytesParsed = 0;
 
     // if tag not found, return failure
-    if ( !FindTag(tag, pTagData, tagDataLength, numBytesParsed) ){
+    if (!FindTag(tag, pTagData, tagDataLength, numBytesParsed)) {
         // TODO: set error string?
         return false;
     }
 
     // otherwise, retrieve & validate tag type code
     type = *(pTagData - 1);
-    switch ( type ) {
-        case (Constants::BAM_TAG_TYPE_ASCII)  :
-        case (Constants::BAM_TAG_TYPE_INT8)   :
-        case (Constants::BAM_TAG_TYPE_UINT8)  :
-        case (Constants::BAM_TAG_TYPE_INT16)  :
-        case (Constants::BAM_TAG_TYPE_UINT16) :
-        case (Constants::BAM_TAG_TYPE_INT32)  :
-        case (Constants::BAM_TAG_TYPE_UINT32) :
-        case (Constants::BAM_TAG_TYPE_FLOAT)  :
-        case (Constants::BAM_TAG_TYPE_STRING) :
-        case (Constants::BAM_TAG_TYPE_HEX)    :
-        case (Constants::BAM_TAG_TYPE_ARRAY)  :
+    switch (type) {
+        case (Constants::BAM_TAG_TYPE_ASCII):
+        case (Constants::BAM_TAG_TYPE_INT8):
+        case (Constants::BAM_TAG_TYPE_UINT8):
+        case (Constants::BAM_TAG_TYPE_INT16):
+        case (Constants::BAM_TAG_TYPE_UINT16):
+        case (Constants::BAM_TAG_TYPE_INT32):
+        case (Constants::BAM_TAG_TYPE_UINT32):
+        case (Constants::BAM_TAG_TYPE_FLOAT):
+        case (Constants::BAM_TAG_TYPE_STRING):
+        case (Constants::BAM_TAG_TYPE_HEX):
+        case (Constants::BAM_TAG_TYPE_ARRAY):
             return true;
 
         // unknown tag type
@@ -719,11 +717,11 @@ bool BamAlignment::GetTagType(const std::string& tag, char& type) const {
     \param[in] tag 2-character tag name
     \return \c true if alignment has a record for tag
 */
-bool BamAlignment::HasTag(const std::string& tag) const {
+bool BamAlignment::HasTag(const std::string& tag) const
+{
 
     // return false if no tag data present
-    if ( SupportData.HasCoreOnly || TagData.empty() )
-        return false;
+    if (SupportData.HasCoreOnly || TagData.empty()) return false;
 
     // localize the tag data for lookup
     char* pTagData = (char*)TagData.data();
@@ -737,78 +735,89 @@ bool BamAlignment::HasTag(const std::string& tag) const {
 /*! \fn bool BamAlignment::IsDuplicate() const
     \return \c true if this read is a PCR duplicate
 */
-bool BamAlignment::IsDuplicate() const {
-    return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_DUPLICATE) != 0 );
+bool BamAlignment::IsDuplicate() const
+{
+    return ((AlignmentFlag & Constants::BAM_ALIGNMENT_DUPLICATE) != 0);
 }
 
 /*! \fn bool BamAlignment::IsFailedQC() const
     \return \c true if this read failed quality control
 */
-bool BamAlignment::IsFailedQC() const {
-    return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_QC_FAILED) != 0 );
+bool BamAlignment::IsFailedQC() const
+{
+    return ((AlignmentFlag & Constants::BAM_ALIGNMENT_QC_FAILED) != 0);
 }
 
 /*! \fn bool BamAlignment::IsFirstMate() const
     \return \c true if alignment is first mate on paired-end read
 */
-bool BamAlignment::IsFirstMate() const {
-    return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_READ_1) != 0 );
+bool BamAlignment::IsFirstMate() const
+{
+    return ((AlignmentFlag & Constants::BAM_ALIGNMENT_READ_1) != 0);
 }
 
 /*! \fn bool BamAlignment::IsMapped() const
     \return \c true if alignment is mapped
 */
-bool BamAlignment::IsMapped() const {
-    return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_UNMAPPED) == 0 );
+bool BamAlignment::IsMapped() const
+{
+    return ((AlignmentFlag & Constants::BAM_ALIGNMENT_UNMAPPED) == 0);
 }
 
 /*! \fn bool BamAlignment::IsMateMapped() const
     \return \c true if alignment's mate is mapped
 */
-bool BamAlignment::IsMateMapped() const {
-    return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_MATE_UNMAPPED) == 0 );
+bool BamAlignment::IsMateMapped() const
+{
+    return ((AlignmentFlag & Constants::BAM_ALIGNMENT_MATE_UNMAPPED) == 0);
 }
 
 /*! \fn bool BamAlignment::IsMateReverseStrand() const
     \return \c true if alignment's mate mapped to reverse strand
 */
-bool BamAlignment::IsMateReverseStrand() const {
-    return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_MATE_REVERSE_STRAND) != 0 );
+bool BamAlignment::IsMateReverseStrand() const
+{
+    return ((AlignmentFlag & Constants::BAM_ALIGNMENT_MATE_REVERSE_STRAND) != 0);
 }
 
 /*! \fn bool BamAlignment::IsPaired() const
     \return \c true if alignment part of paired-end read
 */
-bool BamAlignment::IsPaired() const {
-    return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_PAIRED) != 0 );
+bool BamAlignment::IsPaired() const
+{
+    return ((AlignmentFlag & Constants::BAM_ALIGNMENT_PAIRED) != 0);
 }
 
 /*! \fn bool BamAlignment::IsPrimaryAlignment() const
     \return \c true if reported position is primary alignment
 */
-bool BamAlignment::IsPrimaryAlignment() const  {
-    return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_SECONDARY) == 0 );
+bool BamAlignment::IsPrimaryAlignment() const
+{
+    return ((AlignmentFlag & Constants::BAM_ALIGNMENT_SECONDARY) == 0);
 }
 
 /*! \fn bool BamAlignment::IsProperPair() const
     \return \c true if alignment is part of read that satisfied paired-end resolution
 */
-bool BamAlignment::IsProperPair() const {
-    return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_PROPER_PAIR) != 0 );
+bool BamAlignment::IsProperPair() const
+{
+    return ((AlignmentFlag & Constants::BAM_ALIGNMENT_PROPER_PAIR) != 0);
 }
 
 /*! \fn bool BamAlignment::IsReverseStrand() const
     \return \c true if alignment mapped to reverse strand
 */
-bool BamAlignment::IsReverseStrand() const {
-    return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_REVERSE_STRAND) != 0 );
+bool BamAlignment::IsReverseStrand() const
+{
+    return ((AlignmentFlag & Constants::BAM_ALIGNMENT_REVERSE_STRAND) != 0);
 }
 
 /*! \fn bool BamAlignment::IsSecondMate() const
     \return \c true if alignment is second mate on read
 */
-bool BamAlignment::IsSecondMate() const {
-    return ( (AlignmentFlag & Constants::BAM_ALIGNMENT_READ_2) != 0 );
+bool BamAlignment::IsSecondMate() const
+{
+    return ((AlignmentFlag & Constants::BAM_ALIGNMENT_READ_2) != 0);
 }
 
 /*! \fn bool BamAlignment::IsValidSize(const std::string& tag, const std::string& type) const
@@ -820,8 +829,9 @@ bool BamAlignment::IsSecondMate() const {
     \param type[in] BAM tag type-code
     \return \c true if both input strings are valid sizes
 */
-bool BamAlignment::IsValidSize(const std::string& tag, const std::string& type) const {
-    return (tag.size()  == Constants::BAM_TAG_TAGSIZE) &&
+bool BamAlignment::IsValidSize(const std::string& tag, const std::string& type) const
+{
+    return (tag.size() == Constants::BAM_TAG_TAGSIZE) &&
            (type.size() == Constants::BAM_TAG_TYPESIZE);
 }
 
@@ -830,15 +840,14 @@ bool BamAlignment::IsValidSize(const std::string& tag, const std::string& type) 
 
     \param[in] tag 2-character name of field to remove
 */
-void BamAlignment::RemoveTag(const std::string& tag) {
+void BamAlignment::RemoveTag(const std::string& tag)
+{
 
     // if char data not populated, do that first
-    if ( SupportData.HasCoreOnly )
-        BuildCharData();
+    if (SupportData.HasCoreOnly) BuildCharData();
 
     // skip if no tags available
-    if ( TagData.empty() )
-        return;
+    if (TagData.empty()) return;
 
     // localize the tag data
     char* pOriginalTagData = (char*)TagData.data();
@@ -848,14 +857,13 @@ void BamAlignment::RemoveTag(const std::string& tag) {
     unsigned int numBytesParsed = 0;
 
     // skip if tag not found
-    if  ( !FindTag(tag, pTagData, originalTagDataLength, numBytesParsed) )
-        return;
+    if (!FindTag(tag, pTagData, originalTagDataLength, numBytesParsed)) return;
 
     // otherwise, remove it
     RaiiBuffer newTagData(originalTagDataLength);
 
     // copy original tag data up til desired tag
-    pTagData       -= 3;
+    pTagData -= 3;
     numBytesParsed -= 3;
     const unsigned int beginningTagDataLength = numBytesParsed;
     newTagDataLength += beginningTagDataLength;
@@ -863,14 +871,15 @@ void BamAlignment::RemoveTag(const std::string& tag) {
 
     // attemp to skip to next tag
     const char* pTagStorageType = pTagData + 2;
-    pTagData       += 3;
+    pTagData += 3;
     numBytesParsed += 3;
-    if ( SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed) ) {
+    if (SkipToNextTag(*pTagStorageType, pTagData, numBytesParsed)) {
 
         // squeeze remaining tag data
         const unsigned int skippedDataLength = (numBytesParsed - beginningTagDataLength);
-        const unsigned int endTagDataLength = originalTagDataLength - beginningTagDataLength - skippedDataLength;
-        memcpy(newTagData.Buffer + beginningTagDataLength, pTagData, endTagDataLength );
+        const unsigned int endTagDataLength =
+            originalTagDataLength - beginningTagDataLength - skippedDataLength;
+        memcpy(newTagData.Buffer + beginningTagDataLength, pTagData, endTagDataLength);
 
         // save modified tag data in alignment
         TagData.assign(newTagData.Buffer, beginningTagDataLength + endTagDataLength);
@@ -885,7 +894,8 @@ void BamAlignment::RemoveTag(const std::string& tag) {
     \param[in] where class/method where error occurred
     \param[in] what  description of error
 */
-void BamAlignment::SetErrorString(const std::string& where, const std::string& what) const {
+void BamAlignment::SetErrorString(const std::string& where, const std::string& what) const
+{
     static const std::string SEPARATOR(": ");
     ErrorString = where + SEPARATOR + what;
 }
@@ -893,89 +903,122 @@ void BamAlignment::SetErrorString(const std::string& where, const std::string& w
 /*! \fn void BamAlignment::SetIsDuplicate(bool ok)
     \brief Sets value of "PCR duplicate" flag to \a ok.
 */
-void BamAlignment::SetIsDuplicate(bool ok) {
-    if (ok) AlignmentFlag |=  Constants::BAM_ALIGNMENT_DUPLICATE;
-    else    AlignmentFlag &= ~Constants::BAM_ALIGNMENT_DUPLICATE;
+void BamAlignment::SetIsDuplicate(bool ok)
+{
+    if (ok)
+        AlignmentFlag |= Constants::BAM_ALIGNMENT_DUPLICATE;
+    else
+        AlignmentFlag &= ~Constants::BAM_ALIGNMENT_DUPLICATE;
 }
 
 /*! \fn void BamAlignment::SetIsFailedQC(bool ok)
     \brief Sets "failed quality control" flag to \a ok.
 */
-void BamAlignment::SetIsFailedQC(bool ok) {
-    if (ok) AlignmentFlag |=  Constants::BAM_ALIGNMENT_QC_FAILED;
-    else    AlignmentFlag &= ~Constants::BAM_ALIGNMENT_QC_FAILED;
+void BamAlignment::SetIsFailedQC(bool ok)
+{
+    if (ok)
+        AlignmentFlag |= Constants::BAM_ALIGNMENT_QC_FAILED;
+    else
+        AlignmentFlag &= ~Constants::BAM_ALIGNMENT_QC_FAILED;
 }
 
 /*! \fn void BamAlignment::SetIsFirstMate(bool ok)
     \brief Sets "alignment is first mate" flag to \a ok.
 */
-void BamAlignment::SetIsFirstMate(bool ok) {
-    if (ok) AlignmentFlag |=  Constants::BAM_ALIGNMENT_READ_1;
-    else    AlignmentFlag &= ~Constants::BAM_ALIGNMENT_READ_1;
+void BamAlignment::SetIsFirstMate(bool ok)
+{
+    if (ok)
+        AlignmentFlag |= Constants::BAM_ALIGNMENT_READ_1;
+    else
+        AlignmentFlag &= ~Constants::BAM_ALIGNMENT_READ_1;
 }
 
 /*! \fn void BamAlignment::SetIsMapped(bool ok)
     \brief Sets "alignment is mapped" flag to \a ok.
 */
-void BamAlignment::SetIsMapped(bool ok) {
-    if (ok) AlignmentFlag &= ~Constants::BAM_ALIGNMENT_UNMAPPED;
-    else    AlignmentFlag |=  Constants::BAM_ALIGNMENT_UNMAPPED;
+void BamAlignment::SetIsMapped(bool ok)
+{
+    if (ok)
+        AlignmentFlag &= ~Constants::BAM_ALIGNMENT_UNMAPPED;
+    else
+        AlignmentFlag |= Constants::BAM_ALIGNMENT_UNMAPPED;
 }
 
 /*! \fn void BamAlignment::SetIsMateMapped(bool ok)
     \brief Sets "alignment's mate is mapped" flag to \a ok.
 */
-void BamAlignment::SetIsMateMapped(bool ok) {
-    if (ok) AlignmentFlag &= ~Constants::BAM_ALIGNMENT_MATE_UNMAPPED;
-    else    AlignmentFlag |=  Constants::BAM_ALIGNMENT_MATE_UNMAPPED;
+void BamAlignment::SetIsMateMapped(bool ok)
+{
+    if (ok)
+        AlignmentFlag &= ~Constants::BAM_ALIGNMENT_MATE_UNMAPPED;
+    else
+        AlignmentFlag |= Constants::BAM_ALIGNMENT_MATE_UNMAPPED;
 }
 
 /*! \fn void BamAlignment::SetIsMateReverseStrand(bool ok)
     \brief Sets "alignment's mate mapped to reverse strand" flag to \a ok.
 */
-void BamAlignment::SetIsMateReverseStrand(bool ok) {
-    if (ok) AlignmentFlag |=  Constants::BAM_ALIGNMENT_MATE_REVERSE_STRAND;
-    else    AlignmentFlag &= ~Constants::BAM_ALIGNMENT_MATE_REVERSE_STRAND;
+void BamAlignment::SetIsMateReverseStrand(bool ok)
+{
+    if (ok)
+        AlignmentFlag |= Constants::BAM_ALIGNMENT_MATE_REVERSE_STRAND;
+    else
+        AlignmentFlag &= ~Constants::BAM_ALIGNMENT_MATE_REVERSE_STRAND;
 }
 
 /*! \fn void BamAlignment::SetIsPaired(bool ok)
     \brief Sets "alignment part of paired-end read" flag to \a ok.
 */
-void BamAlignment::SetIsPaired(bool ok) {
-    if (ok) AlignmentFlag |=  Constants::BAM_ALIGNMENT_PAIRED;
-    else    AlignmentFlag &= ~Constants::BAM_ALIGNMENT_PAIRED;
+void BamAlignment::SetIsPaired(bool ok)
+{
+    if (ok)
+        AlignmentFlag |= Constants::BAM_ALIGNMENT_PAIRED;
+    else
+        AlignmentFlag &= ~Constants::BAM_ALIGNMENT_PAIRED;
 }
 
 /*! \fn void BamAlignment::SetIsPrimaryAlignment(bool ok)
     \brief Sets "position is primary alignment" flag to \a ok.
 */
-void BamAlignment::SetIsPrimaryAlignment(bool ok) {
-    if (ok) AlignmentFlag &= ~Constants::BAM_ALIGNMENT_SECONDARY;
-    else    AlignmentFlag |=  Constants::BAM_ALIGNMENT_SECONDARY;
+void BamAlignment::SetIsPrimaryAlignment(bool ok)
+{
+    if (ok)
+        AlignmentFlag &= ~Constants::BAM_ALIGNMENT_SECONDARY;
+    else
+        AlignmentFlag |= Constants::BAM_ALIGNMENT_SECONDARY;
 }
 
 /*! \fn void BamAlignment::SetIsProperPair(bool ok)
     \brief Sets "alignment is part of read that satisfied paired-end resolution" flag to \a ok.
 */
-void BamAlignment::SetIsProperPair(bool ok) {
-    if (ok) AlignmentFlag |=  Constants::BAM_ALIGNMENT_PROPER_PAIR;
-    else    AlignmentFlag &= ~Constants::BAM_ALIGNMENT_PROPER_PAIR;
+void BamAlignment::SetIsProperPair(bool ok)
+{
+    if (ok)
+        AlignmentFlag |= Constants::BAM_ALIGNMENT_PROPER_PAIR;
+    else
+        AlignmentFlag &= ~Constants::BAM_ALIGNMENT_PROPER_PAIR;
 }
 
 /*! \fn void BamAlignment::SetIsReverseStrand(bool ok)
     \brief Sets "alignment mapped to reverse strand" flag to \a ok.
 */
-void BamAlignment::SetIsReverseStrand(bool ok) {
-    if (ok) AlignmentFlag |=  Constants::BAM_ALIGNMENT_REVERSE_STRAND;
-    else    AlignmentFlag &= ~Constants::BAM_ALIGNMENT_REVERSE_STRAND;
+void BamAlignment::SetIsReverseStrand(bool ok)
+{
+    if (ok)
+        AlignmentFlag |= Constants::BAM_ALIGNMENT_REVERSE_STRAND;
+    else
+        AlignmentFlag &= ~Constants::BAM_ALIGNMENT_REVERSE_STRAND;
 }
 
 /*! \fn void BamAlignment::SetIsSecondMate(bool ok)
     \brief Sets "alignment is second mate on read" flag to \a ok.
 */
-void BamAlignment::SetIsSecondMate(bool ok) {
-    if (ok) AlignmentFlag |=  Constants::BAM_ALIGNMENT_READ_2;
-    else    AlignmentFlag &= ~Constants::BAM_ALIGNMENT_READ_2;
+void BamAlignment::SetIsSecondMate(bool ok)
+{
+    if (ok)
+        AlignmentFlag |= Constants::BAM_ALIGNMENT_READ_2;
+    else
+        AlignmentFlag &= ~Constants::BAM_ALIGNMENT_READ_2;
 }
 
 /*! \fn bool BamAlignment::SkipToNextTag(const char storageType, char*& pTagData, unsigned int& numBytesParsed) const
@@ -992,35 +1035,34 @@ void BamAlignment::SetIsSecondMate(bool ok) {
     \post \a pTagData       will point to the byte where the next tag data begins.
           \a numBytesParsed will correspond to the cursor's position in the full TagData string.
 */
-bool BamAlignment::SkipToNextTag(const char storageType,
-                                 char*& pTagData,
+bool BamAlignment::SkipToNextTag(const char storageType, char*& pTagData,
                                  unsigned int& numBytesParsed) const
 {
     switch (storageType) {
 
-        case (Constants::BAM_TAG_TYPE_ASCII) :
-        case (Constants::BAM_TAG_TYPE_INT8)  :
-        case (Constants::BAM_TAG_TYPE_UINT8) :
+        case (Constants::BAM_TAG_TYPE_ASCII):
+        case (Constants::BAM_TAG_TYPE_INT8):
+        case (Constants::BAM_TAG_TYPE_UINT8):
             ++numBytesParsed;
             ++pTagData;
             break;
 
-        case (Constants::BAM_TAG_TYPE_INT16)  :
-        case (Constants::BAM_TAG_TYPE_UINT16) :
+        case (Constants::BAM_TAG_TYPE_INT16):
+        case (Constants::BAM_TAG_TYPE_UINT16):
             numBytesParsed += sizeof(uint16_t);
-            pTagData       += sizeof(uint16_t);
+            pTagData += sizeof(uint16_t);
             break;
 
-        case (Constants::BAM_TAG_TYPE_FLOAT)  :
-        case (Constants::BAM_TAG_TYPE_INT32)  :
-        case (Constants::BAM_TAG_TYPE_UINT32) :
+        case (Constants::BAM_TAG_TYPE_FLOAT):
+        case (Constants::BAM_TAG_TYPE_INT32):
+        case (Constants::BAM_TAG_TYPE_UINT32):
             numBytesParsed += sizeof(uint32_t);
-            pTagData       += sizeof(uint32_t);
+            pTagData += sizeof(uint32_t);
             break;
 
-        case (Constants::BAM_TAG_TYPE_STRING) :
-        case (Constants::BAM_TAG_TYPE_HEX)    :
-            while( *pTagData ) {
+        case (Constants::BAM_TAG_TYPE_STRING):
+        case (Constants::BAM_TAG_TYPE_HEX):
+            while (*pTagData) {
                 ++numBytesParsed;
                 ++pTagData;
             }
@@ -1029,7 +1071,7 @@ bool BamAlignment::SkipToNextTag(const char storageType,
             ++pTagData;
             break;
 
-        case (Constants::BAM_TAG_TYPE_ARRAY) :
+        case (Constants::BAM_TAG_TYPE_ARRAY):
 
         {
             // read array type
@@ -1039,35 +1081,36 @@ bool BamAlignment::SkipToNextTag(const char storageType,
 
             // read number of elements
             int32_t numElements;
-            memcpy(&numElements, pTagData, sizeof(uint32_t)); // already endian-swapped, if needed
+            memcpy(&numElements, pTagData, sizeof(uint32_t));  // already endian-swapped, if needed
             numBytesParsed += sizeof(uint32_t);
-            pTagData       += sizeof(uint32_t);
+            pTagData += sizeof(uint32_t);
 
             // calculate number of bytes to skip
             int bytesToSkip = 0;
             switch (arrayType) {
-                case (Constants::BAM_TAG_TYPE_INT8)  :
-                case (Constants::BAM_TAG_TYPE_UINT8) :
+                case (Constants::BAM_TAG_TYPE_INT8):
+                case (Constants::BAM_TAG_TYPE_UINT8):
                     bytesToSkip = numElements;
                     break;
-                case (Constants::BAM_TAG_TYPE_INT16)  :
-                case (Constants::BAM_TAG_TYPE_UINT16) :
-                    bytesToSkip = numElements*sizeof(uint16_t);
+                case (Constants::BAM_TAG_TYPE_INT16):
+                case (Constants::BAM_TAG_TYPE_UINT16):
+                    bytesToSkip = numElements * sizeof(uint16_t);
                     break;
-                case (Constants::BAM_TAG_TYPE_FLOAT)  :
-                case (Constants::BAM_TAG_TYPE_INT32)  :
-                case (Constants::BAM_TAG_TYPE_UINT32) :
-                    bytesToSkip = numElements*sizeof(uint32_t);
+                case (Constants::BAM_TAG_TYPE_FLOAT):
+                case (Constants::BAM_TAG_TYPE_INT32):
+                case (Constants::BAM_TAG_TYPE_UINT32):
+                    bytesToSkip = numElements * sizeof(uint32_t);
                     break;
                 default:
-                    const std::string message = std::string("invalid binary array type: ") + arrayType;
+                    const std::string message =
+                        std::string("invalid binary array type: ") + arrayType;
                     SetErrorString("BamAlignment::SkipToNextTag", message);
                     return false;
             }
 
             // skip binary array contents
             numBytesParsed += bytesToSkip;
-            pTagData       += bytesToSkip;
+            pTagData += bytesToSkip;
             break;
         }
 

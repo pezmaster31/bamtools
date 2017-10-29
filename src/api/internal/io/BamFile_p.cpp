@@ -17,32 +17,35 @@ using namespace BamTools::Internal;
 BamFile::BamFile(const std::string& filename)
     : ILocalIODevice()
     , m_filename(filename)
-{ }
+{}
 
-BamFile::~BamFile() { }
+BamFile::~BamFile() {}
 
-void BamFile::Close() {
-    if ( IsOpen() ) {
+void BamFile::Close()
+{
+    if (IsOpen()) {
         m_filename.clear();
         ILocalIODevice::Close();
     }
 }
 
-bool BamFile::IsRandomAccess() const {
+bool BamFile::IsRandomAccess() const
+{
     return true;
 }
 
-bool BamFile::Open(const IBamIODevice::OpenMode mode) {
+bool BamFile::Open(const IBamIODevice::OpenMode mode)
+{
 
     // make sure we're starting with a fresh file stream
     Close();
 
     // attempt to open FILE* depending on requested openmode
-    if ( mode == IBamIODevice::ReadOnly )
+    if (mode == IBamIODevice::ReadOnly)
         m_stream = fopen(m_filename.c_str(), "rb");
-    else if ( mode == IBamIODevice::WriteOnly )
+    else if (mode == IBamIODevice::WriteOnly)
         m_stream = fopen(m_filename.c_str(), "wb");
-    else if ( mode == IBamIODevice::ReadWrite )
+    else if (mode == IBamIODevice::ReadWrite)
         m_stream = fopen(m_filename.c_str(), "w+b");
     else {
         SetErrorString("BamFile::Open", "unknown open mode requested");
@@ -50,9 +53,10 @@ bool BamFile::Open(const IBamIODevice::OpenMode mode) {
     }
 
     // check that we obtained a valid FILE*
-    if ( m_stream == 0 ) {
+    if (m_stream == 0) {
         const std::string message_base = std::string("could not open file handle for ");
-        const std::string message = message_base + ( (m_filename.empty()) ? "empty filename" : m_filename );
+        const std::string message =
+            message_base + ((m_filename.empty()) ? "empty filename" : m_filename);
         SetErrorString("BamFile::Open", message);
         return false;
     }
@@ -62,7 +66,8 @@ bool BamFile::Open(const IBamIODevice::OpenMode mode) {
     return true;
 }
 
-bool BamFile::Seek(const int64_t& position, const int origin) {
-    BT_ASSERT_X( m_stream, "BamFile::Seek() - null stream" );
-    return ( fseek64(m_stream, position, origin) == 0 );
+bool BamFile::Seek(const int64_t& position, const int origin)
+{
+    BT_ASSERT_X(m_stream, "BamFile::Seek() - null stream");
+    return (fseek64(m_stream, position, origin) == 0);
 }

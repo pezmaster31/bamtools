@@ -14,24 +14,25 @@
 
 namespace BamTools {
 
-class RevertTool : public AbstractTool {
+class RevertTool : public AbstractTool
+{
 
-    public:
-        RevertTool();
-        ~RevertTool();
+public:
+    RevertTool();
+    ~RevertTool();
 
-    public:
-        int Help();
-        int Run(int argc, char* argv[]);
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
 
-    private:
-        struct RevertSettings;
-        RevertSettings* m_settings;
+private:
+    struct RevertSettings;
+    RevertSettings* m_settings;
 
-        struct RevertToolPrivate;
-        RevertToolPrivate* m_impl;
+    struct RevertToolPrivate;
+    RevertToolPrivate* m_impl;
 };
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // BAMTOOLS_REVERT_H
+#endif  // BAMTOOLS_REVERT_H

@@ -13,9 +13,9 @@ using namespace BamTools::Internal;
 
 // platorm-specifics
 #ifdef _WIN32
-#  include "api/internal/io/NetWin_p.h"
+#include "api/internal/io/NetWin_p.h"
 #else
-#  include "api/internal/io/NetUnix_p.h"
+#include "api/internal/io/NetUnix_p.h"
 #endif
 
 // standard C++ includes
@@ -29,46 +29,54 @@ using namespace BamTools::Internal;
 
 HostInfo::HostInfo()
     : m_error(HostInfo::NoError)
-{ }
+{}
 
 HostInfo::HostInfo(const HostInfo& other)
     : m_hostName(other.m_hostName)
     , m_addresses(other.m_addresses)
     , m_error(other.m_error)
     , m_errorString(other.m_errorString)
-{ }
+{}
 
-HostInfo::~HostInfo() { }
+HostInfo::~HostInfo() {}
 
-std::vector<HostAddress> HostInfo::Addresses() const {
+std::vector<HostAddress> HostInfo::Addresses() const
+{
     return m_addresses;
 }
 
-HostInfo::ErrorType HostInfo::GetError() const {
+HostInfo::ErrorType HostInfo::GetError() const
+{
     return m_error;
 }
 
-std::string HostInfo::GetErrorString() const {
+std::string HostInfo::GetErrorString() const
+{
     return m_errorString;
 }
 
-std::string HostInfo::HostName() const {
+std::string HostInfo::HostName() const
+{
     return m_hostName;
 }
 
-void HostInfo::SetAddresses(const std::vector<HostAddress>& addresses) {
+void HostInfo::SetAddresses(const std::vector<HostAddress>& addresses)
+{
     m_addresses = addresses;
 }
 
-void HostInfo::SetError(const HostInfo::ErrorType error) {
+void HostInfo::SetError(const HostInfo::ErrorType error)
+{
     m_error = error;
 }
 
-void HostInfo::SetErrorString(const std::string& errorString) {
+void HostInfo::SetErrorString(const std::string& errorString)
+{
     m_errorString = errorString;
 }
 
-void HostInfo::SetHostName(const std::string& name) {
+void HostInfo::SetHostName(const std::string& name)
+{
     m_hostName = name;
 }
 
@@ -77,7 +85,8 @@ void HostInfo::SetHostName(const std::string& name) {
 //  - the real "heavy-lifter" here
 // ---------------------------------
 
-HostInfo HostInfo::Lookup(const std::string& hostname, const std::string& port) {
+HostInfo HostInfo::Lookup(const std::string& hostname, const std::string& port)
+{
 
     HostInfo result;
     result.SetHostName(hostname);
@@ -99,17 +108,17 @@ HostInfo HostInfo::Lookup(const std::string& hostname, const std::string& port) 
     //       getnameinfo() on test sites just returns original IP string. BUT this is likely a rare
     //       case that client code tries to use an IP string and the connection should work fine
     //       anyway. GetHostName() just won't quite show what I was hoping for. :(
-    if ( address.HasIPAddress() ) {
+    if (address.HasIPAddress()) {
 
-        const uint16_t portNum = static_cast<uint16_t>( std::atoi(port.c_str()) );
+        const uint16_t portNum = static_cast<uint16_t>(std::atoi(port.c_str()));
 
-        sockaddr_in  sa4;
+        sockaddr_in sa4;
         sockaddr_in6 sa6;
         sockaddr* sa = 0;
         BT_SOCKLEN_T saSize = 0;
 
         // IPv4
-        if ( address.GetProtocol() == HostAddress::IPv4Protocol ) {
+        if (address.GetProtocol() == HostAddress::IPv4Protocol) {
             sa = (sockaddr*)&sa4;
             saSize = sizeof(sa4);
             memset(&sa4, 0, sizeof(sa4));
@@ -119,27 +128,28 @@ HostInfo HostInfo::Lookup(const std::string& hostname, const std::string& port) 
         }
 
         // IPv6
-        else if ( address.GetProtocol() == HostAddress::IPv4Protocol ){
+        else if (address.GetProtocol() == HostAddress::IPv4Protocol) {
             sa = (sockaddr*)&sa6;
             saSize = sizeof(sa6);
             memset(&sa6, 0, sizeof(sa6));
             sa6.sin6_family = AF_INET6;
-            memcpy(sa6.sin6_addr.s6_addr, address.GetIPv6Address().data, sizeof(sa6.sin6_addr.s6_addr));
+            memcpy(sa6.sin6_addr.s6_addr, address.GetIPv6Address().data,
+                   sizeof(sa6.sin6_addr.s6_addr));
             sa6.sin6_port = htons(portNum);
         }
 
         // unknown (should be unreachable)
-        else BT_ASSERT_X(false, "HostInfo::Lookup: unknown network protocol");
+        else
+            BT_ASSERT_X(false, "HostInfo::Lookup: unknown network protocol");
 
         // lookup name for IP
         char hbuf[NI_MAXHOST];
         char serv[NI_MAXSERV];
-        if ( sa && (getnameinfo(sa, saSize, hbuf, sizeof(hbuf), serv, sizeof(serv), 0) == 0) )
+        if (sa && (getnameinfo(sa, saSize, hbuf, sizeof(hbuf), serv, sizeof(serv), 0) == 0))
             result.SetHostName(std::string(hbuf));
 
         // if no domain name found, just use the original address's IP string
-        if ( result.HostName().empty() )
-            result.SetHostName(address.GetIPString());
+        if (result.HostName().empty()) result.SetHostName(address.GetIPString());
 
         // store address in HostInfo
         uniqueAddresses.insert(address);
@@ -152,30 +162,30 @@ HostInfo HostInfo::Lookup(const std::string& hostname, const std::string& port) 
         // setup address lookup 'hints'
         addrinfo hints;
         memset(&hints, 0, sizeof(hints));
-        hints.ai_family   = AF_UNSPEC;   // allow either IPv4 or IPv6
-        hints.ai_socktype = SOCK_STREAM; // for TCP
+        hints.ai_family = AF_UNSPEC;      // allow either IPv4 or IPv6
+        hints.ai_socktype = SOCK_STREAM;  // for TCP
         hints.ai_protocol = IPPROTO_TCP;
 
         // fetch addresses for requested hostname/port
         addrinfo* res;
-        int status = getaddrinfo(hostname.c_str(), port.c_str(), &hints, &res );
+        int status = getaddrinfo(hostname.c_str(), port.c_str(), &hints, &res);
 
         // if everything OK
-        if ( status == 0 ) {
+        if (status == 0) {
 
             // iterate over all IP addresses found
             addrinfo* p = res;
-            for ( ; p != NULL; p = p->ai_next ) {
+            for (; p != NULL; p = p->ai_next) {
 
                 // IPv4
-                if ( p->ai_family == AF_INET ) {
+                if (p->ai_family == AF_INET) {
                     sockaddr_in* ipv4 = (sockaddr_in*)p->ai_addr;
-                    HostAddress a( ntohl(ipv4->sin_addr.s_addr) );
+                    HostAddress a(ntohl(ipv4->sin_addr.s_addr));
                     uniqueAddresses.insert(a);
                 }
 
                 // IPv6
-                else if ( p->ai_family == AF_INET6 ) {
+                else if (p->ai_family == AF_INET6) {
                     sockaddr_in6* ipv6 = (sockaddr_in6*)p->ai_addr;
                     HostAddress a(ipv6->sin6_addr.s6_addr);
                     uniqueAddresses.insert(a);
@@ -183,7 +193,7 @@ HostInfo HostInfo::Lookup(const std::string& hostname, const std::string& port) 
             }
 
             // if we iterated, but no addresses were stored
-            if ( uniqueAddresses.empty() && (p == NULL) ) {
+            if (uniqueAddresses.empty() && (p == NULL)) {
                 result.SetError(HostInfo::UnknownError);
                 result.SetErrorString("HostInfo: unknown address types found");
             }
@@ -192,23 +202,19 @@ HostInfo HostInfo::Lookup(const std::string& hostname, const std::string& port) 
         // handle error cases
         else if (
 #ifndef _WIN32
-                     status == EAI_NONAME
-                  || status == EAI_FAIL
-#  ifdef EAI_NODATA
-                  || status == EAI_NODATA  // officially deprecated, but just in case we happen to hit it
-#  endif // EAI_NODATA
+            status == EAI_NONAME || status == EAI_FAIL
+#ifdef EAI_NODATA
+            || status == EAI_NODATA  // officially deprecated, but just in case we happen to hit it
+#endif                               // EAI_NODATA
 
-#else  // _WIN32
-                     WSAGetLastError() == WSAHOST_NOT_FOUND
-                  || WSAGetLastError() == WSANO_DATA
-                  || WSAGetLastError() == WSANO_RECOVERY
-#endif // _WIN32
-                )
-        {
+#else   // _WIN32
+            WSAGetLastError() == WSAHOST_NOT_FOUND || WSAGetLastError() == WSANO_DATA ||
+            WSAGetLastError() == WSANO_RECOVERY
+#endif  // _WIN32
+        ) {
             result.SetError(HostInfo::HostNotFound);
             result.SetErrorString("HostInfo: host not found");
-        }
-        else {
+        } else {
             result.SetError(HostInfo::UnknownError);
             result.SetErrorString("HostInfo: unknown error encountered");
         }
@@ -218,6 +224,6 @@ HostInfo HostInfo::Lookup(const std::string& hostname, const std::string& port) 
     }
 
     // store fetched addresses (converting set -> vector) in result & return
-    result.SetAddresses( std::vector<HostAddress>(uniqueAddresses.begin(), uniqueAddresses.end()) );
+    result.SetAddresses(std::vector<HostAddress>(uniqueAddresses.begin(), uniqueAddresses.end()));
     return result;
 }

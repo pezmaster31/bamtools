@@ -11,15 +11,15 @@
 #ifndef ALGORITHMS_SORT_H
 #define ALGORITHMS_SORT_H
 
-#include "api/api_global.h"
-#include "api/BamAlignment.h"
-#include "api/BamReader.h"
-#include "api/BamMultiReader.h"
-#include <cassert>
 #include <algorithm>
+#include <cassert>
 #include <functional>
 #include <string>
 #include <vector>
+#include "api/BamAlignment.h"
+#include "api/BamMultiReader.h"
+#include "api/BamReader.h"
+#include "api/api_global.h"
 
 namespace BamTools {
 namespace Algorithms {
@@ -27,26 +27,38 @@ namespace Algorithms {
 /*! \struct BamTools::Algorithms::Sort
     \brief Provides classes & methods related to sorting BamAlignments
 */
-struct API_EXPORT Sort {
+struct API_EXPORT Sort
+{
 
     //! Provides explicit values for specifying desired sort ordering
-    enum Order { AscendingOrder = 0
-               , DescendingOrder
-               };
+    enum Order
+    {
+        AscendingOrder = 0,
+        DescendingOrder
+    };
 
     /*! \fn template<typename ElemType> static inline bool sort_helper(const Sort::Order& order, const ElemType& lhs, const ElemType& rhs)
         \internal
 
         Determines necessary STL function object depending on requested Sort::Order
     */
-    template<typename ElemType>
-    static inline bool sort_helper(const Sort::Order& order, const ElemType& lhs, const ElemType& rhs) {
-        switch ( order ) {
-            case ( Sort::AscendingOrder  ) : { std::less<ElemType> comp;    return comp(lhs, rhs); }
-            case ( Sort::DescendingOrder ) : { std::greater<ElemType> comp; return comp(lhs, rhs); }
-            default : BT_ASSERT_UNREACHABLE;
+    template <typename ElemType>
+    static inline bool sort_helper(const Sort::Order& order, const ElemType& lhs,
+                                   const ElemType& rhs)
+    {
+        switch (order) {
+            case (Sort::AscendingOrder): {
+                std::less<ElemType> comp;
+                return comp(lhs, rhs);
+            }
+            case (Sort::DescendingOrder): {
+                std::greater<ElemType> comp;
+                return comp(lhs, rhs);
+            }
+            default:
+                BT_ASSERT_UNREACHABLE;
         }
-        return false; // <-- unreachable
+        return false;  // <-- unreachable
     }
 
     //! Base class for our sorting function objects
@@ -68,24 +80,29 @@ struct API_EXPORT Sort {
             std::sort( a.begin(), a.end(), Sort::ByName(Sort::DescendingOrder) );
         \endcode
     */
-    struct ByName : public AlignmentSortBase {
+    struct ByName : public AlignmentSortBase
+    {
 
         // ctor
         ByName(const Sort::Order& order = Sort::AscendingOrder)
             : m_order(order)
-        { }
+        {}
 
         // comparison function
-        bool operator()(const BamTools::BamAlignment& lhs, const BamTools::BamAlignment& rhs) {
+        bool operator()(const BamTools::BamAlignment& lhs, const BamTools::BamAlignment& rhs)
+        {
             return sort_helper(m_order, lhs.Name, rhs.Name);
         }
 
         // used by BamMultiReader internals
-        static inline bool UsesCharData() { return true; }
+        static inline bool UsesCharData()
+        {
+            return true;
+        }
 
         // data members
-        private:
-            const Sort::Order m_order;
+    private:
+        const Sort::Order m_order;
     };
 
     /*! \struct BamTools::Algorithms::Sort::ByPosition
@@ -104,34 +121,38 @@ struct API_EXPORT Sort {
             std::sort( a.begin(), a.end(), Sort::ByPosition(Sort::DescendingOrder) );
         \endcode
     */
-    struct ByPosition : public AlignmentSortBase {
+    struct ByPosition : public AlignmentSortBase
+    {
 
         // ctor
         ByPosition(const Sort::Order& order = Sort::AscendingOrder)
             : m_order(order)
-        { }
+        {}
 
         // comparison function
-        bool operator()(const BamTools::BamAlignment& lhs, const BamTools::BamAlignment& rhs) {
+        bool operator()(const BamTools::BamAlignment& lhs, const BamTools::BamAlignment& rhs)
+        {
 
             // force unmapped aligmnents to end
-            if ( lhs.RefID == -1 ) return false;
-            if ( rhs.RefID == -1 ) return true;
+            if (lhs.RefID == -1) return false;
+            if (rhs.RefID == -1) return true;
 
             // if on same reference, sort on position
-            if ( lhs.RefID == rhs.RefID )
-                return sort_helper(m_order, lhs.Position, rhs.Position);
+            if (lhs.RefID == rhs.RefID) return sort_helper(m_order, lhs.Position, rhs.Position);
 
             // otherwise sort on reference ID
             return sort_helper(m_order, lhs.RefID, rhs.RefID);
         }
 
         // used by BamMultiReader internals
-        static inline bool UsesCharData() { return false; }
+        static inline bool UsesCharData()
+        {
+            return false;
+        }
 
         // data members
-        private:
-            const Sort::Order m_order;
+    private:
+        const Sort::Order m_order;
     };
 
     /*! \struct BamTools::Algorithms::Sort::ByTag
@@ -150,36 +171,40 @@ struct API_EXPORT Sort {
             std::sort( a.begin(), a.end(), Sort::ByTag<int>("NM", Sort::DescendingOrder) );
         \endcode
     */
-    template<typename T>
-    struct ByTag : public AlignmentSortBase {
+    template <typename T>
+    struct ByTag : public AlignmentSortBase
+    {
 
         // ctor
-        ByTag(const std::string& tag,
-              const Sort::Order& order = Sort::AscendingOrder)
+        ByTag(const std::string& tag, const Sort::Order& order = Sort::AscendingOrder)
             : m_tag(tag)
             , m_order(order)
-        { }
+        {}
 
         // comparison function
-        bool operator()(const BamTools::BamAlignment& lhs, const BamTools::BamAlignment& rhs) {
+        bool operator()(const BamTools::BamAlignment& lhs, const BamTools::BamAlignment& rhs)
+        {
 
             // force alignments without tag to end
             T lhsTagValue;
             T rhsTagValue;
-            if ( !lhs.GetTag(m_tag, lhsTagValue) ) return false;
-            if ( !rhs.GetTag(m_tag, rhsTagValue) ) return true;
+            if (!lhs.GetTag(m_tag, lhsTagValue)) return false;
+            if (!rhs.GetTag(m_tag, rhsTagValue)) return true;
 
             // otherwise compare on tag values
             return sort_helper(m_order, lhsTagValue, rhsTagValue);
         }
 
         // used by BamMultiReader internals
-        static inline bool UsesCharData() { return true; }
+        static inline bool UsesCharData()
+        {
+            return true;
+        }
 
         // data members
-        private:
-            const std::string m_tag;
-            const Sort::Order m_order;
+    private:
+        const std::string m_tag;
+        const Sort::Order m_order;
     };
 
     /*! \struct BamTools::Algorithms::Sort::Unsorted
@@ -193,15 +218,20 @@ struct API_EXPORT Sort {
             std::set<BamAlignment, Sort::Unsorted>; // STL set, unsorted (but probably insertion order)
         \endcode
     */
-    struct Unsorted : public AlignmentSortBase {
+    struct Unsorted : public AlignmentSortBase
+    {
 
         // comparison function
-        inline bool operator()(const BamTools::BamAlignment&, const BamTools::BamAlignment&) {
-            return false;   // returning false tends to retain insertion order
+        inline bool operator()(const BamTools::BamAlignment&, const BamTools::BamAlignment&)
+        {
+            return false;  // returning false tends to retain insertion order
         }
 
         // used by BamMultiReader internals
-        static inline bool UsesCharData() { return false; }
+        static inline bool UsesCharData()
+        {
+            return false;
+        }
     };
 
     /*! Sorts a std::vector of alignments (in-place), using the provided compare function.
@@ -217,7 +247,7 @@ struct API_EXPORT Sort {
         \param[in,out] data vector of alignments to be sorted
         \param[in]     comp comparison function object
     */
-    template<typename Compare>
+    template <typename Compare>
     static inline void SortAlignments(std::vector<BamAlignment>& data,
                                       const Compare& comp = Compare())
     {
@@ -239,7 +269,7 @@ struct API_EXPORT Sort {
         \param[in] comp  comparison function object
         \return sorted copy of the input data
     */
-    template<typename Compare>
+    template <typename Compare>
     static inline std::vector<BamAlignment> SortAlignments(const std::vector<BamAlignment>& input,
                                                            const Compare& comp = Compare())
     {
@@ -268,19 +298,18 @@ struct API_EXPORT Sort {
         \param[in] comp   comparison function object
         \return sorted vector of the region's alignments
     */
-    template<typename Compare>
-    static std::vector<BamAlignment> GetSortedRegion(BamReader& reader,
-                                                     const BamRegion& region,
+    template <typename Compare>
+    static std::vector<BamAlignment> GetSortedRegion(BamReader& reader, const BamRegion& region,
                                                      const Compare& comp = Compare())
     {
         // return empty container if unable to find region
-        if ( !reader.IsOpen() )          return std::vector<BamAlignment>();
-        if ( !reader.SetRegion(region) ) return std::vector<BamAlignment>();
+        if (!reader.IsOpen()) return std::vector<BamAlignment>();
+        if (!reader.SetRegion(region)) return std::vector<BamAlignment>();
 
         // iterate through region, grabbing alignments
         BamAlignment al;
         std::vector<BamAlignment> results;
-        while ( reader.GetNextAlignmentCore(al) )
+        while (reader.GetNextAlignmentCore(al))
             results.push_back(al);
 
         // sort & return alignments
@@ -308,19 +337,19 @@ struct API_EXPORT Sort {
         \param[in] comp   comparison function object
         \return sorted vector of the region's alignments
     */
-    template<typename Compare>
+    template <typename Compare>
     static std::vector<BamAlignment> GetSortedRegion(BamMultiReader& reader,
                                                      const BamRegion& region,
                                                      const Compare& comp = Compare())
     {
         // return empty container if unable to find region
-        if ( !reader.HasOpenReaders() )  return std::vector<BamAlignment>();
-        if ( !reader.SetRegion(region) ) return std::vector<BamAlignment>();
+        if (!reader.HasOpenReaders()) return std::vector<BamAlignment>();
+        if (!reader.SetRegion(region)) return std::vector<BamAlignment>();
 
         // iterate through region, grabbing alignments
         BamAlignment al;
         std::vector<BamAlignment> results;
-        while ( reader.GetNextAlignmentCore(al) )
+        while (reader.GetNextAlignmentCore(al))
             results.push_back(al);
 
         // sort & return alignments
@@ -329,7 +358,7 @@ struct API_EXPORT Sort {
     }
 };
 
-} // namespace Algorithms
-} // namespace BamTools
+}  // namespace Algorithms
+}  // namespace BamTools
 
-#endif // ALGORITHMS_SORT_H
+#endif  // ALGORITHMS_SORT_H

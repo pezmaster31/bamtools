@@ -7,17 +7,17 @@
 // Provides reading/writing of BAM files on HTTP server
 // ***************************************************************************
 
-#include "api/BamAux.h"
 #include "api/internal/io/BamHttp_p.h"
+#include "api/BamAux.h"
 #include "api/internal/io/HttpHeader_p.h"
 #include "api/internal/io/TcpSocket_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
 
+#include <algorithm>
 #include <cassert>
 #include <cctype>
 #include <cstdlib>
-#include <algorithm>
 #include <sstream>
 
 namespace BamTools {
@@ -27,43 +27,43 @@ namespace Internal {
 // constants
 // -----------
 
-static const std::string HTTP_PORT   = "80";
+static const std::string HTTP_PORT = "80";
 static const std::string HTTP_PREFIX = "http://";
 static const size_t HTTP_PREFIX_LENGTH = 7;
 
 static const std::string DOUBLE_NEWLINE = "\n\n";
 
-static const std::string GET_METHOD   = "GET";
-static const std::string HEAD_METHOD  = "HEAD";
-static const std::string HOST_HEADER  = "Host";
+static const std::string GET_METHOD = "GET";
+static const std::string HEAD_METHOD = "HEAD";
+static const std::string HOST_HEADER = "Host";
 static const std::string RANGE_HEADER = "Range";
 static const std::string BYTES_PREFIX = "bytes=";
 static const std::string CONTENT_LENGTH_HEADER = "Content-Length";
 
-static const char HOST_SEPARATOR  = '/';
+static const char HOST_SEPARATOR = '/';
 static const char PROXY_SEPARATOR = ':';
 
 // -----------------
 // utility methods
 // -----------------
 
-static inline
-bool endsWith(const std::string& source, const std::string& pattern) {
-    return ( source.find(pattern) == (source.length() - pattern.length()) );
+static inline bool endsWith(const std::string& source, const std::string& pattern)
+{
+    return (source.find(pattern) == (source.length() - pattern.length()));
 }
 
-static inline
-std::string toLower(const std::string& s) {
+static inline std::string toLower(const std::string& s)
+{
     std::string out;
     const size_t sSize = s.size();
     out.reserve(sSize);
-    for ( size_t i = 0; i < sSize; ++i )
+    for (size_t i = 0; i < sSize; ++i)
         out[i] = tolower(s[i]);
     return out;
 }
 
-} // namespace Internal
-} // namespace BamTools
+}  // namespace Internal
+}  // namespace BamTools
 
 // ------------------------
 // BamHttp implementation
@@ -83,40 +83,43 @@ BamHttp::BamHttp(const std::string& url)
     ParseUrl(url);
 }
 
-BamHttp::~BamHttp() {
+BamHttp::~BamHttp()
+{
 
     // close connection & clean up
     Close();
-    if ( m_socket )
-        delete m_socket;
+    if (m_socket) delete m_socket;
 }
 
-void BamHttp::ClearResponse() {
-    if ( m_response ) {
+void BamHttp::ClearResponse()
+{
+    if (m_response) {
         delete m_response;
         m_response = 0;
     }
 }
 
-void BamHttp::Close() {
+void BamHttp::Close()
+{
 
     // disconnect socket & clear related resources
     DisconnectSocket();
 
     // reset state
     m_isUrlParsed = false;
-    m_filePosition     = -1;
-    m_fileEndPosition  = -1;
+    m_filePosition = -1;
+    m_fileEndPosition = -1;
     m_rangeEndPosition = -1;
     m_mode = IBamIODevice::NotOpen;
 }
 
-bool BamHttp::ConnectSocket() {
+bool BamHttp::ConnectSocket()
+{
 
     BT_ASSERT_X(m_socket, "null socket?");
 
     // any state checks, etc?
-    if ( !m_socket->ConnectToHost(m_hostname, m_port, m_mode) ) {
+    if (!m_socket->ConnectToHost(m_hostname, m_port, m_mode)) {
         SetErrorString("BamHttp::ConnectSocket", m_socket->GetErrorString());
         return false;
     }
@@ -125,53 +128,57 @@ bool BamHttp::ConnectSocket() {
     return true;
 }
 
-void BamHttp::DisconnectSocket() {
+void BamHttp::DisconnectSocket()
+{
 
     // disconnect socket & clean up
     m_socket->DisconnectFromHost();
     ClearResponse();
-    if ( m_request )  {
+    if (m_request) {
         delete m_request;
         m_request = 0;
     }
 }
 
-bool BamHttp::EnsureSocketConnection() {
-    if ( m_socket->IsConnected() )
-        return true;
+bool BamHttp::EnsureSocketConnection()
+{
+    if (m_socket->IsConnected()) return true;
     return ConnectSocket();
 }
 
-bool BamHttp::IsOpen() const {
+bool BamHttp::IsOpen() const
+{
     return IBamIODevice::IsOpen() && m_isUrlParsed;
 }
 
-bool BamHttp::IsRandomAccess() const {
+bool BamHttp::IsRandomAccess() const
+{
     return true;
 }
 
-bool BamHttp::Open(const IBamIODevice::OpenMode mode) {
+bool BamHttp::Open(const IBamIODevice::OpenMode mode)
+{
 
     // BamHttp only supports read-only access
-    if ( mode != IBamIODevice::ReadOnly ) {
+    if (mode != IBamIODevice::ReadOnly) {
         SetErrorString("BamHttp::Open", "writing on this device is not supported");
         return false;
     }
     m_mode = mode;
 
     // attempt connection to socket
-    if ( !ConnectSocket() ) {
+    if (!ConnectSocket()) {
         SetErrorString("BamHttp::Open", m_socket->GetErrorString());
         return false;
     }
 
     // initialize our file positions
-    m_filePosition     = 0;
-    m_fileEndPosition  = 0;
+    m_filePosition = 0;
+    m_fileEndPosition = 0;
     m_rangeEndPosition = 0;
 
     // attempt to send initial request (just 'HEAD' to check connection)
-    if ( !SendHeadRequest() ) {
+    if (!SendHeadRequest()) {
         SetErrorString("BamHttp::Open", m_socket->GetErrorString());
         return false;
     }
@@ -183,7 +190,8 @@ bool BamHttp::Open(const IBamIODevice::OpenMode mode) {
     return true;
 }
 
-void BamHttp::ParseUrl(const std::string& url) {
+void BamHttp::ParseUrl(const std::string& url)
+{
 
     // clear flag to start
     m_isUrlParsed = false;
@@ -192,20 +200,20 @@ void BamHttp::ParseUrl(const std::string& url) {
     std::string tempUrl(url);
     toLower(tempUrl);
     const size_t prefixFound = tempUrl.find(HTTP_PREFIX);
-    if ( prefixFound == std::string::npos )
-        return;
+    if (prefixFound == std::string::npos) return;
 
     // find end of host name portion (first '/' hit after the prefix)
     const size_t firstSlashFound = tempUrl.find(HOST_SEPARATOR, HTTP_PREFIX_LENGTH);
-    if ( firstSlashFound == std::string::npos ) {
+    if (firstSlashFound == std::string::npos) {
         ;  // no slash found... no filename given along with host?
     }
 
     // fetch hostname (check for proxy port)
-    std::string hostname = tempUrl.substr(HTTP_PREFIX_LENGTH, (firstSlashFound - HTTP_PREFIX_LENGTH));
+    std::string hostname =
+        tempUrl.substr(HTTP_PREFIX_LENGTH, (firstSlashFound - HTTP_PREFIX_LENGTH));
     const size_t colonFound = hostname.find(PROXY_SEPARATOR);
-    if ( colonFound != std::string::npos ) {
-        ; // TODO: handle proxy port (later, just skip for now)
+    if (colonFound != std::string::npos) {
+        ;  // TODO: handle proxy port (later, just skip for now)
     } else {
         m_hostname = hostname;
         m_port = HTTP_PORT;
@@ -213,29 +221,27 @@ void BamHttp::ParseUrl(const std::string& url) {
 
     // store remainder of URL as filename (must be non-empty)
     std::string filename = tempUrl.substr(firstSlashFound);
-    if ( filename.empty() )
-        return;
+    if (filename.empty()) return;
     m_filename = filename;
 
     // set parsed OK flag
     m_isUrlParsed = true;
 }
 
-int64_t BamHttp::Read(char* data, const unsigned int numBytes) {
+int64_t BamHttp::Read(char* data, const unsigned int numBytes)
+{
 
     // if BamHttp not in a valid state
-    if ( !IsOpen() )
-        return -1;
+    if (!IsOpen()) return -1;
 
     int64_t numBytesReadSoFar = 0;
-    while ( numBytesReadSoFar < numBytes ) {
+    while (numBytesReadSoFar < numBytes) {
 
-        const size_t remaining = static_cast<size_t>( numBytes - numBytesReadSoFar );
+        const size_t remaining = static_cast<size_t>(numBytes - numBytesReadSoFar);
 
         // if we're not holding a valid GET reponse, get one
-        if ( m_response == 0 ) {
-            if ( !SendGetRequest(remaining) )
-                return -1;
+        if (m_response == 0) {
+            if (!SendGetRequest(remaining)) return -1;
         }
         BT_ASSERT_X(m_response, "null HTTP response");
 
@@ -243,64 +249,61 @@ int64_t BamHttp::Read(char* data, const unsigned int numBytes) {
         const int statusCode = m_response->GetStatusCode();
 
         // if we receieved full file contents in response
-        if ( statusCode == 200 ) {
+        if (statusCode == 200) {
 
             // try to read 'remaining' bytes from socket
-            const int64_t socketBytesRead = ReadFromSocket(data+numBytesReadSoFar, remaining);
+            const int64_t socketBytesRead = ReadFromSocket(data + numBytesReadSoFar, remaining);
 
             // if error
-            if ( socketBytesRead < 0 ) {
+            if (socketBytesRead < 0) {
                 SetErrorString("BamHttp::Read", m_socket->GetErrorString());
                 return -1;
             }
 
             // EOF
-            else if ( socketBytesRead == 0 )
+            else if (socketBytesRead == 0)
                 return numBytesReadSoFar;
 
             // update counters
             numBytesReadSoFar += socketBytesRead;
-            m_filePosition    += socketBytesRead;
+            m_filePosition += socketBytesRead;
 
         }
 
         // else if we received a range of bytes in response
-        else if ( statusCode == 206 ) {
+        else if (statusCode == 206) {
 
             // if we've exhausted the last request
-            if ( m_filePosition == m_rangeEndPosition ) {
-                if ( !SendGetRequest(remaining) )
-                    return -1;
+            if (m_filePosition == m_rangeEndPosition) {
+                if (!SendGetRequest(remaining)) return -1;
             }
 
             else {
 
                 // try to read 'remaining' bytes from socket
-                const int64_t socketBytesRead = ReadFromSocket(data+numBytesReadSoFar, remaining);
+                const int64_t socketBytesRead = ReadFromSocket(data + numBytesReadSoFar, remaining);
 
                 // if error
-                if ( socketBytesRead < 0 ) {
+                if (socketBytesRead < 0) {
                     SetErrorString("BamHttp::Read", m_socket->GetErrorString());
                     return -1;
                 }
 
                 // maybe EOF
-                else if ( socketBytesRead == 0 ) {
+                else if (socketBytesRead == 0) {
 
                     // if we know we're not at end position, fire off a new request
-                    if ( m_fileEndPosition > 0 && m_filePosition < m_fileEndPosition ) {
-                        if ( !SendGetRequest() )
-                            return -1;
+                    if (m_fileEndPosition > 0 && m_filePosition < m_fileEndPosition) {
+                        if (!SendGetRequest()) return -1;
                     } else
                         return numBytesReadSoFar;
                 }
 
                 // update counters
                 numBytesReadSoFar += socketBytesRead;
-                m_filePosition    += socketBytesRead;
+                m_filePosition += socketBytesRead;
             }
         }
-
 
         // else some other HTTP status
         else {
@@ -313,28 +316,29 @@ int64_t BamHttp::Read(char* data, const unsigned int numBytes) {
     return numBytesReadSoFar;
 }
 
-int64_t BamHttp::ReadFromSocket(char* data, const unsigned int maxNumBytes) {
+int64_t BamHttp::ReadFromSocket(char* data, const unsigned int maxNumBytes)
+{
     return m_socket->Read(data, maxNumBytes);
 }
 
-bool BamHttp::ReceiveResponse() {
+bool BamHttp::ReceiveResponse()
+{
 
     // fetch header, up until double new line
     std::string responseHeader;
     do {
 
         // make sure we can read a line
-        if ( !m_socket->WaitForReadLine() )
-            return false;
+        if (!m_socket->WaitForReadLine()) return false;
 
         // read line & append to full header
         const std::string headerLine = m_socket->ReadLine();
         responseHeader += headerLine;
 
-    } while ( !endsWith(responseHeader, DOUBLE_NEWLINE) );
+    } while (!endsWith(responseHeader, DOUBLE_NEWLINE));
 
     // sanity check
-    if ( responseHeader.empty() ) {
+    if (responseHeader.empty()) {
         SetErrorString("BamHttp::ReceiveResponse", "empty HTTP response");
         Close();
         return false;
@@ -342,7 +346,7 @@ bool BamHttp::ReceiveResponse() {
 
     // create response from header text
     m_response = new HttpResponseHeader(responseHeader);
-    if ( !m_response->IsValid() ) {
+    if (!m_response->IsValid()) {
         SetErrorString("BamHttp::ReceiveResponse", "could not parse HTTP response");
         Close();
         return false;
@@ -352,26 +356,31 @@ bool BamHttp::ReceiveResponse() {
     return true;
 }
 
-bool BamHttp::Seek(const int64_t& position, const int origin) {
+bool BamHttp::Seek(const int64_t& position, const int origin)
+{
 
     // if HTTP device not in a valid state
-    if ( !IsOpen() ) {
+    if (!IsOpen()) {
         SetErrorString("BamHttp::Seek", "cannot seek on unopen connection");
         return false;
     }
 
     // reset the connection
     DisconnectSocket();
-    if ( !ConnectSocket() ) {
+    if (!ConnectSocket()) {
         SetErrorString("BamHttp::Seek", m_socket->GetErrorString());
         return false;
     }
 
     // udpate file position
-    switch ( origin ) {
-        case SEEK_CUR : m_filePosition += position; break;
-        case SEEK_SET : m_filePosition  = position; break;
-        default :
+    switch (origin) {
+        case SEEK_CUR:
+            m_filePosition += position;
+            break;
+        case SEEK_SET:
+            m_filePosition = position;
+            break;
+        default:
             SetErrorString("BamHttp::Seek", "unsupported seek origin");
             return false;
     }
@@ -380,17 +389,16 @@ bool BamHttp::Seek(const int64_t& position, const int origin) {
     return true;
 }
 
-bool BamHttp::SendGetRequest(const size_t numBytes) {
+bool BamHttp::SendGetRequest(const size_t numBytes)
+{
 
     // clear previous data
     ClearResponse();
-    if ( m_request )
-        delete m_request;
+    if (m_request) delete m_request;
     m_socket->ClearBuffer();
 
     // make sure we're connected
-    if ( !EnsureSocketConnection() )
-        return false;
+    if (!EnsureSocketConnection()) return false;
 
     // create range string
     const int64_t endPosition = m_filePosition + std::max(static_cast<size_t>(0x10000), numBytes);
@@ -399,13 +407,13 @@ bool BamHttp::SendGetRequest(const size_t numBytes) {
 
     // create request
     m_request = new HttpRequestHeader(GET_METHOD, m_filename);
-    m_request->SetField(HOST_HEADER,  m_hostname);
+    m_request->SetField(HOST_HEADER, m_hostname);
     m_request->SetField(RANGE_HEADER, range.str());
 
     // send request
     const std::string requestHeader = m_request->ToString();
-    const int64_t headerSize   = requestHeader.size();
-    if ( WriteToSocket(requestHeader.c_str(), headerSize) != headerSize ) {
+    const int64_t headerSize = requestHeader.size();
+    if (WriteToSocket(requestHeader.c_str(), headerSize) != headerSize) {
         SetErrorString("BamHttp::SendHeadRequest", m_socket->GetErrorString());
         return false;
     }
@@ -414,7 +422,7 @@ bool BamHttp::SendGetRequest(const size_t numBytes) {
     m_socket->ClearBuffer();
 
     // wait for response
-    if ( !ReceiveResponse() ) {
+    if (!ReceiveResponse()) {
         SetErrorString("BamHttp::SendGetRequest", m_socket->GetErrorString());
         Close();
         return false;
@@ -424,39 +432,39 @@ bool BamHttp::SendGetRequest(const size_t numBytes) {
 
     // check response status code
     const int statusCode = m_response->GetStatusCode();
-    switch ( statusCode ) {
+    switch (statusCode) {
 
         // ranged response, as requested
-        case 206 :
+        case 206:
             // get content length if available
-            if ( m_response->ContainsKey(CONTENT_LENGTH_HEADER) ) {
+            if (m_response->ContainsKey(CONTENT_LENGTH_HEADER)) {
                 const std::string contentLengthString = m_response->GetValue(CONTENT_LENGTH_HEADER);
-                m_rangeEndPosition = m_filePosition + std::atoi( contentLengthString.c_str() );
+                m_rangeEndPosition = m_filePosition + std::atoi(contentLengthString.c_str());
             }
             return true;
 
         // full contents, not range
-        case 200 :
-        {
+        case 200: {
             // skip up to current file position
             RaiiBuffer tmp(0x8000);
             int64_t numBytesRead = 0;
-            while ( numBytesRead < m_filePosition ) {
+            while (numBytesRead < m_filePosition) {
 
                 // read data from response
                 const int64_t remaining = m_filePosition - numBytesRead;
-                const size_t bytesToRead = static_cast<size_t>( (remaining > 0x8000) ? 0x8000 : remaining );
+                const size_t bytesToRead =
+                    static_cast<size_t>((remaining > 0x8000) ? 0x8000 : remaining);
                 const int64_t socketBytesRead = ReadFromSocket(tmp.Buffer, bytesToRead);
 
                 // if error
-                if ( socketBytesRead < 0 ) {
+                if (socketBytesRead < 0) {
                     SetErrorString("BamHttp::SendGetRequest", m_socket->GetErrorString());
                     Close();
                     return false;
                 }
 
                 // else if EOF
-                else if ( socketBytesRead == 0 && m_socket->BufferBytesAvailable() == 0 )
+                else if (socketBytesRead == 0 && m_socket->BufferBytesAvailable() == 0)
                     break;
 
                 // update byte counter
@@ -464,7 +472,7 @@ bool BamHttp::SendGetRequest(const size_t numBytes) {
             }
 
             // return success
-            return ( numBytesRead == m_filePosition);
+            return (numBytesRead == m_filePosition);
         }
 
         // any other status codes
@@ -478,17 +486,16 @@ bool BamHttp::SendGetRequest(const size_t numBytes) {
     return false;
 }
 
-bool BamHttp::SendHeadRequest() {
+bool BamHttp::SendHeadRequest()
+{
 
     // ensure clean slate
     ClearResponse();
-    if ( m_request )
-        delete m_request;
+    if (m_request) delete m_request;
     m_socket->ClearBuffer();
 
     // make sure we're connected
-    if ( !EnsureSocketConnection() )
-        return false;
+    if (!EnsureSocketConnection()) return false;
 
     // create request
     m_request = new HttpRequestHeader(HEAD_METHOD, m_filename);
@@ -496,8 +503,8 @@ bool BamHttp::SendHeadRequest() {
 
     // send request
     const std::string requestHeader = m_request->ToString();
-    const int64_t headerSize   = requestHeader.size();
-    if ( WriteToSocket(requestHeader.c_str(), headerSize) != headerSize ) {
+    const int64_t headerSize = requestHeader.size();
+    if (WriteToSocket(requestHeader.c_str(), headerSize) != headerSize) {
         SetErrorString("BamHttp::SendHeadRequest", m_socket->GetErrorString());
         return false;
     }
@@ -505,7 +512,7 @@ bool BamHttp::SendHeadRequest() {
     m_socket->ClearBuffer();
 
     // wait for response from server
-    if ( !ReceiveResponse() ) {
+    if (!ReceiveResponse()) {
         SetErrorString("BamHttp::SendHeadRequest", m_socket->GetErrorString());
         Close();
         return false;
@@ -514,20 +521,22 @@ bool BamHttp::SendHeadRequest() {
     BT_ASSERT_X(m_response->IsValid(), "BamHttp::SendHeadRequest : invalid HttpResponse");
 
     // get content length if available
-    if ( m_response->ContainsKey(CONTENT_LENGTH_HEADER) ) {
+    if (m_response->ContainsKey(CONTENT_LENGTH_HEADER)) {
         const std::string contentLengthString = m_response->GetValue(CONTENT_LENGTH_HEADER);
-        m_fileEndPosition = std::atoi( contentLengthString.c_str() ) - 1;
+        m_fileEndPosition = std::atoi(contentLengthString.c_str()) - 1;
     }
 
     // return whether we found any errors
     return m_socket->GetError() == TcpSocket::NoError;
 }
 
-int64_t BamHttp::Tell() const {
-    return ( IsOpen() ? m_filePosition : -1 );
+int64_t BamHttp::Tell() const
+{
+    return (IsOpen() ? m_filePosition : -1);
 }
 
-int64_t BamHttp::Write(const char* data, const unsigned int numBytes) {
+int64_t BamHttp::Write(const char* data, const unsigned int numBytes)
+{
     (void)data;
     (void)numBytes;
     BT_ASSERT_X(false, "BamHttp::Write : write-mode not supported on this device");
@@ -535,9 +544,9 @@ int64_t BamHttp::Write(const char* data, const unsigned int numBytes) {
     return -1;
 }
 
-int64_t BamHttp::WriteToSocket(const char* data, const unsigned int numBytes) {
-    if ( !m_socket->IsConnected() )
-        return -1;
+int64_t BamHttp::WriteToSocket(const char* data, const unsigned int numBytes)
+{
+    if (!m_socket->IsConnected()) return -1;
     m_socket->ClearBuffer();
     return m_socket->Write(data, numBytes);
 }

@@ -15,24 +15,25 @@
 
 namespace BamTools {
 
-class SplitTool : public AbstractTool {
+class SplitTool : public AbstractTool
+{
 
-    public:
-        SplitTool();
-        ~SplitTool();
+public:
+    SplitTool();
+    ~SplitTool();
 
-    public:
-        int Help();
-        int Run(int argc, char* argv[]);
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
 
-    private:
-        struct SplitSettings;
-        SplitSettings* m_settings;
+private:
+    struct SplitSettings;
+    SplitSettings* m_settings;
 
-        class SplitToolPrivate;
-        SplitToolPrivate* m_impl;
+    class SplitToolPrivate;
+    SplitToolPrivate* m_impl;
 };
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // BAMTOOLS_SPLIT_H
+#endif  // BAMTOOLS_SPLIT_H

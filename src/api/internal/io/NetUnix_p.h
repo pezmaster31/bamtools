@@ -20,24 +20,24 @@
 //
 // We mean it.
 
-#ifndef _WIN32 // <-- source files only include the proper Net*_p.h, but this is a double-check
+#ifndef _WIN32  // <-- source files only include the proper Net*_p.h, but this is a double-check
 
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <netdb.h>
 #include <unistd.h>
 
 #ifdef __FreeBSD__
-#  include <netinet/in.h>
+#include <netinet/in.h>
 #endif
 
-#ifndef   BT_SOCKLEN_T
-#  define BT_SOCKLEN_T socklen_t
+#ifndef BT_SOCKLEN_T
+#define BT_SOCKLEN_T socklen_t
 #endif
 
-#endif // _WIN32
-#endif // NETUNIX_P_H
+#endif  // _WIN32
+#endif  // NETUNIX_P_H

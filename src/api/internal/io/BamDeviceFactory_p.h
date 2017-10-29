@@ -20,18 +20,19 @@
 //
 // We mean it.
 
-#include "api/IBamIODevice.h"
 #include <string>
+#include "api/IBamIODevice.h"
 
 namespace BamTools {
 namespace Internal {
 
-class BamDeviceFactory {
-    public:
-        static IBamIODevice* CreateDevice(const std::string& source);
+class BamDeviceFactory
+{
+public:
+    static IBamIODevice* CreateDevice(const std::string& source);
 };
 
-} // namespace Internal
-} // namespace BamTools
+}  // namespace Internal
+}  // namespace BamTools
 
-#endif // BAMDEVICEFACTORY_P_H
+#endif  // BAMDEVICEFACTORY_P_H

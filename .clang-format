@@ -1,0 +1,18 @@
+BasedOnStyle:  Google
+BreakBeforeBraces: Mozilla
+
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLoopsOnASingleLine: false
+AccessModifierOffset: -4
+BreakConstructorInitializersBeforeComma: true
+BreakConstructorInitializers: BeforeColon
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+ColumnLimit: 100
+IndentWidth: 4
+DerivePointerAlignment: false
+PointerAlignment: Left
+TabWidth: 4
+Standard: Cpp03
+
+ReflowComments: false  # protect ASCII art in comments
+KeepEmptyLinesAtTheStartOfBlocks: true

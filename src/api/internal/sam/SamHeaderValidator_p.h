@@ -32,74 +32,72 @@ struct SamSequence;
 
 namespace Internal {
 
-class SamHeaderValidator {
+class SamHeaderValidator
+{
 
     // ctor & dtor
-    public:
-        SamHeaderValidator(const SamHeader& header);
-        ~SamHeaderValidator();
+public:
+    SamHeaderValidator(const SamHeader& header);
+    ~SamHeaderValidator();
 
     // SamHeaderValidator interface
-    public:
+public:
+    // prints error & warning messages
+    void PrintMessages(std::ostream& stream);
 
-        // prints error & warning messages
-        void PrintMessages(std::ostream& stream);
-
-        // validates SamHeader data, returns true/false accordingly
-        bool Validate();
+    // validates SamHeader data, returns true/false accordingly
+    bool Validate();
 
     // internal methods
-    private:
+private:
+    // validate header metadata
+    bool ValidateMetadata();
+    bool ValidateVersion();
+    bool ContainsOnlyDigits(const std::string& s);
+    bool ValidateSortOrder();
+    bool ValidateGroupOrder();
 
-        // validate header metadata
-        bool ValidateMetadata();
-        bool ValidateVersion();
-        bool ContainsOnlyDigits(const std::string& s);
-        bool ValidateSortOrder();
-        bool ValidateGroupOrder();
+    // validate sequence dictionary
+    bool ValidateSequenceDictionary();
+    bool ContainsUniqueSequenceNames();
+    bool CheckNameFormat(const std::string& name);
+    bool ValidateSequence(const SamSequence& seq);
+    bool CheckLengthInRange(const std::string& length);
 
-        // validate sequence dictionary
-        bool ValidateSequenceDictionary();
-        bool ContainsUniqueSequenceNames();
-        bool CheckNameFormat(const std::string& name);
-        bool ValidateSequence(const SamSequence& seq);
-        bool CheckLengthInRange(const std::string& length);
+    // validate read group dictionary
+    bool ValidateReadGroupDictionary();
+    bool ContainsUniqueIDsAndPlatformUnits();
+    bool ValidateReadGroup(const SamReadGroup& rg);
+    bool CheckReadGroupID(const std::string& id);
+    bool CheckSequencingTechnology(const std::string& technology);
 
-        // validate read group dictionary
-        bool ValidateReadGroupDictionary();
-        bool ContainsUniqueIDsAndPlatformUnits();
-        bool ValidateReadGroup(const SamReadGroup& rg);
-        bool CheckReadGroupID(const std::string& id);
-        bool CheckSequencingTechnology(const std::string& technology);
+    // validate program data
+    bool ValidateProgramChain();
+    bool ContainsUniqueProgramIds();
+    bool ValidatePreviousProgramIds();
 
-        // validate program data
-        bool ValidateProgramChain();
-        bool ContainsUniqueProgramIds();
-        bool ValidatePreviousProgramIds();
-
-        // error reporting
-        void AddError(const std::string& message);
-        void AddWarning(const std::string& message);
-        void PrintErrorMessages(std::ostream& stream);
-        void PrintWarningMessages(std::ostream& stream);
+    // error reporting
+    void AddError(const std::string& message);
+    void AddWarning(const std::string& message);
+    void PrintErrorMessages(std::ostream& stream);
+    void PrintWarningMessages(std::ostream& stream);
 
     // data members
-    private:
+private:
+    // SamHeader being validated
+    const SamHeader& m_header;
 
-        // SamHeader being validated
-        const SamHeader& m_header;
+    // error reporting helpers
+    static const std::string ERROR_PREFIX;
+    static const std::string WARN_PREFIX;
+    static const std::string NEWLINE;
 
-        // error reporting helpers
-        static const std::string ERROR_PREFIX;
-        static const std::string WARN_PREFIX;
-        static const std::string NEWLINE;
-
-        // error reporting messages
-        std::vector<std::string> m_errorMessages;
-        std::vector<std::string> m_warningMessages;
+    // error reporting messages
+    std::vector<std::string> m_errorMessages;
+    std::vector<std::string> m_warningMessages;
 };
 
-} // namespace Internal
-} // namespace BamTools
+}  // namespace Internal
+}  // namespace BamTools
 
-#endif // SAM_HEADER_VALIDATOR_P_H
+#endif  // SAM_HEADER_VALIDATOR_P_H

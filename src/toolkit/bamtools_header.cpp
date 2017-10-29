@@ -22,7 +22,8 @@ using namespace BamTools;
 // ---------------------------------------------
 // HeaderSettings implementation
 
-struct HeaderTool::HeaderSettings {
+struct HeaderTool::HeaderSettings
+{
 
     // flags
     bool HasInput;
@@ -36,52 +37,56 @@ struct HeaderTool::HeaderSettings {
     HeaderSettings()
         : HasInput(false)
         , HasInputFilelist(false)
-    { }
+    {}
 };
 
-struct HeaderTool::HeaderToolPrivate {
+struct HeaderTool::HeaderToolPrivate
+{
 
     // ctor & dtor
-    public:
-        HeaderToolPrivate(HeaderTool::HeaderSettings* settings)
-            : m_settings(settings)
-        { }
+public:
+    HeaderToolPrivate(HeaderTool::HeaderSettings* settings)
+        : m_settings(settings)
+    {}
 
-        ~HeaderToolPrivate() { }
+    ~HeaderToolPrivate() {}
 
     // interface
-    public:
-        bool Run();
+public:
+    bool Run();
 
     // data members
-    private:
-        HeaderTool::HeaderSettings* m_settings;
+private:
+    HeaderTool::HeaderSettings* m_settings;
 };
 
-bool HeaderTool::HeaderToolPrivate::Run() {
+bool HeaderTool::HeaderToolPrivate::Run()
+{
 
     // set to default input if none provided
-    if ( !m_settings->HasInput && !m_settings->HasInputFilelist )
+    if (!m_settings->HasInput && !m_settings->HasInputFilelist)
         m_settings->InputFiles.push_back(Options::StandardIn());
 
     // add files in the filelist to the input file list
-    if ( m_settings->HasInputFilelist ) {
+    if (m_settings->HasInputFilelist) {
 
         std::ifstream filelist(m_settings->InputFilelist.c_str(), std::ios::in);
-        if ( !filelist.is_open() ) {
-            std::cerr << "bamtools header ERROR: could not open input BAM file list... Aborting." << std::endl;
+        if (!filelist.is_open()) {
+            std::cerr << "bamtools header ERROR: could not open input BAM file list... Aborting."
+                      << std::endl;
             return false;
         }
 
         std::string line;
-        while ( std::getline(filelist, line) )
+        while (std::getline(filelist, line))
             m_settings->InputFiles.push_back(line);
     }
 
     // attemp to open BAM files
     BamMultiReader reader;
-    if ( !reader.Open(m_settings->InputFiles) ) {
-        std::cerr << "bamtools header ERROR: could not open BAM file(s) for reading... Aborting." << std::endl;
+    if (!reader.Open(m_settings->InputFiles)) {
+        std::cerr << "bamtools header ERROR: could not open BAM file(s) for reading... Aborting."
+                  << std::endl;
         return false;
     }
 
@@ -102,15 +107,20 @@ HeaderTool::HeaderTool()
     , m_impl(0)
 {
     // set program details
-    Options::SetProgramInfo("bamtools header", "prints header from BAM file(s)", "[-in <filename> -in <filename> ... | -list <filelist>]");
+    Options::SetProgramInfo("bamtools header", "prints header from BAM file(s)",
+                            "[-in <filename> -in <filename> ... | -list <filelist>]");
 
     // set up options
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in", "BAM filename", "the input BAM file(s)", "", m_settings->HasInput, m_settings->InputFiles, IO_Opts, Options::StandardIn());
-    Options::AddValueOption("-list", "filename", "the input BAM file list, one line per file", "", m_settings->HasInputFilelist,  m_settings->InputFilelist, IO_Opts);
+    Options::AddValueOption("-in", "BAM filename", "the input BAM file(s)", "",
+                            m_settings->HasInput, m_settings->InputFiles, IO_Opts,
+                            Options::StandardIn());
+    Options::AddValueOption("-list", "filename", "the input BAM file list, one line per file", "",
+                            m_settings->HasInputFilelist, m_settings->InputFilelist, IO_Opts);
 }
 
-HeaderTool::~HeaderTool() {
+HeaderTool::~HeaderTool()
+{
 
     delete m_settings;
     m_settings = 0;
@@ -119,12 +129,14 @@ HeaderTool::~HeaderTool() {
     m_impl = 0;
 }
 
-int HeaderTool::Help() {
+int HeaderTool::Help()
+{
     Options::DisplayHelp();
     return 0;
 }
 
-int HeaderTool::Run(int argc, char* argv[]) {
+int HeaderTool::Run(int argc, char* argv[])
+{
 
     // parse command line arguments
     Options::Parse(argc, argv, 1);
@@ -133,7 +145,7 @@ int HeaderTool::Run(int argc, char* argv[]) {
     m_impl = new HeaderToolPrivate(m_settings);
 
     // run HeaderTool, return success/fail
-    if ( m_impl->Run() )
+    if (m_impl->Run())
         return 0;
     else
         return 1;

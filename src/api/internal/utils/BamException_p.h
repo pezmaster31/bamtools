@@ -26,26 +26,28 @@
 namespace BamTools {
 namespace Internal {
 
-class BamException : public std::exception {
+class BamException : public std::exception
+{
 
-    public:
-        inline BamException(const std::string& where, const std::string& message)
-            : std::exception()
-            , m_errorString(where + SEPARATOR + message)
-        { }
+public:
+    inline BamException(const std::string& where, const std::string& message)
+        : std::exception()
+        , m_errorString(where + SEPARATOR + message)
+    {}
 
-        inline ~BamException() throw() { }
+    inline ~BamException() throw() {}
 
-        inline const char* what() const throw() {
-            return m_errorString.c_str();
-        }
+    inline const char* what() const throw()
+    {
+        return m_errorString.c_str();
+    }
 
-    private:
-        std::string m_errorString;
-        static const std::string SEPARATOR;
+private:
+    std::string m_errorString;
+    static const std::string SEPARATOR;
 };
 
-} // namespace Internal
-} // namespace BamTools
+}  // namespace Internal
+}  // namespace BamTools
 
-#endif // BAMEXCEPTION_P_H
+#endif  // BAMEXCEPTION_P_H

@@ -10,38 +10,39 @@
 #ifndef BAMTOOLS_FASTA_H
 #define BAMTOOLS_FASTA_H
 
-#include "utils/utils_global.h"
 #include <string>
+#include "utils/utils_global.h"
 
 namespace BamTools {
 
-class UTILS_EXPORT Fasta {
+class UTILS_EXPORT Fasta
+{
 
     // ctor & dtor
-    public:
-        Fasta();
-        ~Fasta();
+public:
+    Fasta();
+    ~Fasta();
 
     // file-handling methods
-    public:
-        bool Close();
-        bool Open(const std::string& filename, const std::string& indexFilename = "");
+public:
+    bool Close();
+    bool Open(const std::string& filename, const std::string& indexFilename = "");
 
     // sequence access methods
-    public:
-        bool GetBase(const int& refID, const int& position, char& base);
-        bool GetSequence(const int& refId, const int& start, const int& stop, std::string& sequence);
+public:
+    bool GetBase(const int& refID, const int& position, char& base);
+    bool GetSequence(const int& refId, const int& start, const int& stop, std::string& sequence);
 
     // index-handling methods
-    public:
-        bool CreateIndex(const std::string& indexFilename);
+public:
+    bool CreateIndex(const std::string& indexFilename);
 
     // internal implementation
-    private:
-        struct FastaPrivate;
-        FastaPrivate* d;
+private:
+    struct FastaPrivate;
+    FastaPrivate* d;
 };
 
-} // BAMTOOLS_FASTA_H
+}  // namespace BamTools
 
-#endif // BAMTOOLS_FASTA_H
+#endif  // BAMTOOLS_FASTA_H

@@ -14,24 +14,25 @@
 
 namespace BamTools {
 
-class CountTool : public AbstractTool {
+class CountTool : public AbstractTool
+{
 
-    public:
-        CountTool();
-        ~CountTool();
+public:
+    CountTool();
+    ~CountTool();
 
-    public:
-        int Help();
-        int Run(int argc, char* argv[]);
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
 
-    private:
-        struct CountSettings;
-        CountSettings* m_settings;
+private:
+    struct CountSettings;
+    CountSettings* m_settings;
 
-        struct CountToolPrivate;
-        CountToolPrivate* m_impl;
+    struct CountToolPrivate;
+    CountToolPrivate* m_impl;
 };
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // BAMTOOLS_COUNT_H
+#endif  // BAMTOOLS_COUNT_H

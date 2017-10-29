@@ -14,24 +14,25 @@
 
 namespace BamTools {
 
-class ConvertTool : public AbstractTool {
+class ConvertTool : public AbstractTool
+{
 
-    public:
-        ConvertTool();
-        ~ConvertTool();
+public:
+    ConvertTool();
+    ~ConvertTool();
 
-    public:
-        int Help();
-        int Run(int argc, char* argv[]);
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
 
-    private:
-        struct ConvertSettings;
-        ConvertSettings* m_settings;
+private:
+    struct ConvertSettings;
+    ConvertSettings* m_settings;
 
-        struct ConvertToolPrivate;
-        ConvertToolPrivate* m_impl;
+    struct ConvertToolPrivate;
+    ConvertToolPrivate* m_impl;
 };
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // BAMTOOLS_CONVERT_H
+#endif  // BAMTOOLS_CONVERT_H

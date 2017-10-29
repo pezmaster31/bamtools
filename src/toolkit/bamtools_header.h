@@ -15,24 +15,25 @@
 
 namespace BamTools {
 
-class HeaderTool : public AbstractTool {
+class HeaderTool : public AbstractTool
+{
 
-    public:
-        HeaderTool();
-        ~HeaderTool();
+public:
+    HeaderTool();
+    ~HeaderTool();
 
-    public:
-        int Help();
-        int Run(int argc, char* argv[]);
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
 
-    private:
-        struct HeaderSettings;
-        HeaderSettings* m_settings;
+private:
+    struct HeaderSettings;
+    HeaderSettings* m_settings;
 
-        struct HeaderToolPrivate;
-        HeaderToolPrivate* m_impl;
+    struct HeaderToolPrivate;
+    HeaderToolPrivate* m_impl;
 };
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // BAMTOOLS_HEADER_H
+#endif  // BAMTOOLS_HEADER_H

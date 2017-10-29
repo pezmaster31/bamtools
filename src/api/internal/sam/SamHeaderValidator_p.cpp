@@ -7,9 +7,9 @@
 // Provides functionality for validating SamHeader data
 // ***************************************************************************
 
+#include "api/internal/sam/SamHeaderValidator_p.h"
 #include "api/SamConstants.h"
 #include "api/SamHeader.h"
-#include "api/internal/sam/SamHeaderValidator_p.h"
 #include "api/internal/sam/SamHeaderVersion_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
@@ -22,19 +22,17 @@ using namespace BamTools::Internal;
 // static utility methods
 // -------------------------
 
-static
-bool caseInsensitiveCompare(const std::string& lhs, const std::string& rhs) {
+static bool caseInsensitiveCompare(const std::string& lhs, const std::string& rhs)
+{
 
     // can omit checking chars if lengths not equal
     const int lhsLength = lhs.length();
     const int rhsLength = rhs.length();
-    if ( lhsLength != rhsLength )
-        return false;
+    if (lhsLength != rhsLength) return false;
 
     // do *basic* toupper checks on each string char's
-    for ( int i = 0; i < lhsLength; ++i ) {
-        if ( toupper( (int)lhs.at(i)) != toupper( (int)rhs.at(i)) )
-            return false;
+    for (int i = 0; i < lhsLength; ++i) {
+        if (toupper((int)lhs.at(i)) != toupper((int)rhs.at(i))) return false;
     }
 
     // otherwise OK
@@ -52,11 +50,11 @@ bool caseInsensitiveCompare(const std::string& lhs, const std::string& rhs) {
 // else
 //     // use rule introduced with version 2.0
 
-static const SamHeaderVersion SAM_VERSION_1_0 = SamHeaderVersion(1,0);
-static const SamHeaderVersion SAM_VERSION_1_1 = SamHeaderVersion(1,1);
-static const SamHeaderVersion SAM_VERSION_1_2 = SamHeaderVersion(1,2);
-static const SamHeaderVersion SAM_VERSION_1_3 = SamHeaderVersion(1,3);
-static const SamHeaderVersion SAM_VERSION_1_4 = SamHeaderVersion(1,4);
+static const SamHeaderVersion SAM_VERSION_1_0 = SamHeaderVersion(1, 0);
+static const SamHeaderVersion SAM_VERSION_1_1 = SamHeaderVersion(1, 1);
+static const SamHeaderVersion SAM_VERSION_1_2 = SamHeaderVersion(1, 2);
+static const SamHeaderVersion SAM_VERSION_1_3 = SamHeaderVersion(1, 3);
+static const SamHeaderVersion SAM_VERSION_1_4 = SamHeaderVersion(1, 4);
 
 // TODO: This functionality is currently unused.
 //       Make validation "version-aware."
@@ -64,62 +62,66 @@ static const SamHeaderVersion SAM_VERSION_1_4 = SamHeaderVersion(1,4);
 // ------------------------------------------------------------------------
 
 const std::string SamHeaderValidator::ERROR_PREFIX = "ERROR: ";
-const std::string SamHeaderValidator::WARN_PREFIX  = "WARNING: ";
-const std::string SamHeaderValidator::NEWLINE      = "\n";
+const std::string SamHeaderValidator::WARN_PREFIX = "WARNING: ";
+const std::string SamHeaderValidator::NEWLINE = "\n";
 
 SamHeaderValidator::SamHeaderValidator(const SamHeader& header)
     : m_header(header)
-{ }
+{}
 
-SamHeaderValidator::~SamHeaderValidator() { }
+SamHeaderValidator::~SamHeaderValidator() {}
 
-void SamHeaderValidator::AddError(const std::string& message) {
+void SamHeaderValidator::AddError(const std::string& message)
+{
     m_errorMessages.push_back(ERROR_PREFIX + message + NEWLINE);
 }
 
-void SamHeaderValidator::AddWarning(const std::string& message) {
+void SamHeaderValidator::AddWarning(const std::string& message)
+{
     m_warningMessages.push_back(WARN_PREFIX + message + NEWLINE);
 }
 
-void SamHeaderValidator::PrintErrorMessages(std::ostream& stream) {
+void SamHeaderValidator::PrintErrorMessages(std::ostream& stream)
+{
 
     // skip if no error messages
-    if ( m_errorMessages.empty() )
-        return;
+    if (m_errorMessages.empty()) return;
 
     // print error header line
     stream << "* SAM header has " << m_errorMessages.size() << " errors:" << std::endl;
 
     // print each error message
     std::vector<std::string>::const_iterator errorIter = m_errorMessages.begin();
-    std::vector<std::string>::const_iterator errorEnd  = m_errorMessages.end();
-    for ( ; errorIter != errorEnd; ++errorIter )
+    std::vector<std::string>::const_iterator errorEnd = m_errorMessages.end();
+    for (; errorIter != errorEnd; ++errorIter)
         stream << (*errorIter);
 }
 
-void SamHeaderValidator::PrintMessages(std::ostream& stream) {
+void SamHeaderValidator::PrintMessages(std::ostream& stream)
+{
     PrintErrorMessages(stream);
     PrintWarningMessages(stream);
 }
 
-void SamHeaderValidator::PrintWarningMessages(std::ostream& stream) {
+void SamHeaderValidator::PrintWarningMessages(std::ostream& stream)
+{
 
     // skip if no warning messages
-    if ( m_warningMessages.empty() )
-        return;
+    if (m_warningMessages.empty()) return;
 
     // print warning header line
     stream << "* SAM header has " << m_warningMessages.size() << " warnings:" << std::endl;
 
     // print each warning message
     std::vector<std::string>::const_iterator warnIter = m_warningMessages.begin();
-    std::vector<std::string>::const_iterator warnEnd  = m_warningMessages.end();
-    for ( ; warnIter != warnEnd; ++warnIter )
+    std::vector<std::string>::const_iterator warnEnd = m_warningMessages.end();
+    for (; warnIter != warnEnd; ++warnIter)
         stream << (*warnIter);
 }
 
 // entry point for validation
-bool SamHeaderValidator::Validate() {
+bool SamHeaderValidator::Validate()
+{
     bool isValid = true;
     isValid &= ValidateMetadata();
     isValid &= ValidateSequenceDictionary();
@@ -129,7 +131,8 @@ bool SamHeaderValidator::Validate() {
 }
 
 // check all SAM header 'metadata'
-bool SamHeaderValidator::ValidateMetadata() {
+bool SamHeaderValidator::ValidateMetadata()
+{
     bool isValid = true;
     isValid &= ValidateVersion();
     isValid &= ValidateSortOrder();
@@ -138,33 +141,34 @@ bool SamHeaderValidator::ValidateMetadata() {
 }
 
 // check SAM header version tag
-bool SamHeaderValidator::ValidateVersion() {
+bool SamHeaderValidator::ValidateVersion()
+{
 
     const std::string& version = m_header.Version;
 
     // warn if version not present
-    if ( version.empty() ) {
+    if (version.empty()) {
         AddWarning("Version (VN) missing. Not required, but strongly recommended");
         return true;
     }
 
     // invalid if version does not contain a period
     const size_t periodFound = version.find(Constants::SAM_PERIOD);
-    if ( periodFound == std::string::npos ) {
+    if (periodFound == std::string::npos) {
         AddError("Invalid version (VN) format: " + version);
         return false;
     }
 
     // invalid if major version is empty or contains non-digits
     const std::string majorVersion = version.substr(0, periodFound);
-    if ( majorVersion.empty() || !ContainsOnlyDigits(majorVersion) ) {
+    if (majorVersion.empty() || !ContainsOnlyDigits(majorVersion)) {
         AddError("Invalid version (VN) format: " + version);
         return false;
     }
 
     // invalid if major version is empty or contains non-digits
     const std::string minorVersion = version.substr(periodFound + 1);
-    if ( minorVersion.empty() || !ContainsOnlyDigits(minorVersion) ) {
+    if (minorVersion.empty() || !ContainsOnlyDigits(minorVersion)) {
         AddError("Invalid version (VN) format: " + version);
         return false;
     }
@@ -177,28 +181,28 @@ bool SamHeaderValidator::ValidateVersion() {
 }
 
 // assumes non-empty input string
-bool SamHeaderValidator::ContainsOnlyDigits(const std::string& s) {
+bool SamHeaderValidator::ContainsOnlyDigits(const std::string& s)
+{
     const size_t nonDigitPosition = s.find_first_not_of(Constants::SAM_DIGITS);
-    return ( nonDigitPosition == std::string::npos ) ;
+    return (nonDigitPosition == std::string::npos);
 }
 
 // validate SAM header sort order tag
-bool SamHeaderValidator::ValidateSortOrder() {
+bool SamHeaderValidator::ValidateSortOrder()
+{
 
     const std::string& sortOrder = m_header.SortOrder;
 
     // warn if sort order not present
-    if ( sortOrder.empty() ) {
+    if (sortOrder.empty()) {
         AddWarning("Sort order (SO) missing. Not required, but strongly recommended");
         return true;
     }
 
     // if sort order is valid keyword
-    if ( sortOrder == Constants::SAM_HD_SORTORDER_COORDINATE ||
-         sortOrder == Constants::SAM_HD_SORTORDER_QUERYNAME  ||
-         sortOrder == Constants::SAM_HD_SORTORDER_UNSORTED
-       )
-    {
+    if (sortOrder == Constants::SAM_HD_SORTORDER_COORDINATE ||
+        sortOrder == Constants::SAM_HD_SORTORDER_QUERYNAME ||
+        sortOrder == Constants::SAM_HD_SORTORDER_UNSORTED) {
         return true;
     }
 
@@ -208,20 +212,18 @@ bool SamHeaderValidator::ValidateSortOrder() {
 }
 
 // validate SAM header group order tag
-bool SamHeaderValidator::ValidateGroupOrder() {
+bool SamHeaderValidator::ValidateGroupOrder()
+{
 
     const std::string& groupOrder = m_header.GroupOrder;
 
     // if no group order, no problem, just return OK
-    if ( groupOrder.empty() )
-        return true;
+    if (groupOrder.empty()) return true;
 
     // if group order is valid keyword
-    if ( groupOrder == Constants::SAM_HD_GROUPORDER_NONE  ||
-         groupOrder == Constants::SAM_HD_GROUPORDER_QUERY ||
-         groupOrder == Constants::SAM_HD_GROUPORDER_REFERENCE
-       )
-    {
+    if (groupOrder == Constants::SAM_HD_GROUPORDER_NONE ||
+        groupOrder == Constants::SAM_HD_GROUPORDER_QUERY ||
+        groupOrder == Constants::SAM_HD_GROUPORDER_REFERENCE) {
         return true;
     }
 
@@ -231,7 +233,8 @@ bool SamHeaderValidator::ValidateGroupOrder() {
 }
 
 // validate SAM header sequence dictionary
-bool SamHeaderValidator::ValidateSequenceDictionary() {
+bool SamHeaderValidator::ValidateSequenceDictionary()
+{
 
     bool isValid = true;
 
@@ -241,8 +244,8 @@ bool SamHeaderValidator::ValidateSequenceDictionary() {
     // iterate over sequences
     const SamSequenceDictionary& sequences = m_header.Sequences;
     SamSequenceConstIterator seqIter = sequences.ConstBegin();
-    SamSequenceConstIterator seqEnd  = sequences.ConstEnd();
-    for ( ; seqIter != seqEnd; ++seqIter ) {
+    SamSequenceConstIterator seqEnd = sequences.ConstEnd();
+    for (; seqIter != seqEnd; ++seqIter) {
         const SamSequence& seq = (*seqIter);
         isValid &= ValidateSequence(seq);
     }
@@ -252,7 +255,8 @@ bool SamHeaderValidator::ValidateSequenceDictionary() {
 }
 
 // make sure all SQ names are unique
-bool SamHeaderValidator::ContainsUniqueSequenceNames() {
+bool SamHeaderValidator::ContainsUniqueSequenceNames()
+{
 
     bool isValid = true;
     std::set<std::string> sequenceNames;
@@ -261,8 +265,8 @@ bool SamHeaderValidator::ContainsUniqueSequenceNames() {
     // iterate over sequences
     const SamSequenceDictionary& sequences = m_header.Sequences;
     SamSequenceConstIterator seqIter = sequences.ConstBegin();
-    SamSequenceConstIterator seqEnd  = sequences.ConstEnd();
-    for ( ; seqIter != seqEnd; ++seqIter ) {
+    SamSequenceConstIterator seqEnd = sequences.ConstEnd();
+    for (; seqIter != seqEnd; ++seqIter) {
         const SamSequence& seq = (*seqIter);
 
         // lookup sequence name
@@ -270,7 +274,7 @@ bool SamHeaderValidator::ContainsUniqueSequenceNames() {
         nameIter = sequenceNames.find(name);
 
         // error if found (duplicate entry)
-        if ( nameIter != sequenceNames.end() ) {
+        if (nameIter != sequenceNames.end()) {
             AddError("Sequence name (SN): " + name + " is not unique");
             isValid = false;
         }
@@ -284,7 +288,8 @@ bool SamHeaderValidator::ContainsUniqueSequenceNames() {
 }
 
 // validate SAM header sequence entry
-bool SamHeaderValidator::ValidateSequence(const SamSequence& seq) {
+bool SamHeaderValidator::ValidateSequence(const SamSequence& seq)
+{
     bool isValid = true;
     isValid &= CheckNameFormat(seq.Name);
     isValid &= CheckLengthInRange(seq.Length);
@@ -292,17 +297,18 @@ bool SamHeaderValidator::ValidateSequence(const SamSequence& seq) {
 }
 
 // check sequence name is valid format
-bool SamHeaderValidator::CheckNameFormat(const std::string& name) {
+bool SamHeaderValidator::CheckNameFormat(const std::string& name)
+{
 
     // invalid if name is empty
-    if ( name.empty() ) {
+    if (name.empty()) {
         AddError("Sequence entry (@SQ) is missing SN tag");
         return false;
     }
 
     // invalid if first character is a reserved char
     const char firstChar = name.at(0);
-    if ( firstChar == Constants::SAM_EQUAL || firstChar == Constants::SAM_STAR ) {
+    if (firstChar == Constants::SAM_EQUAL || firstChar == Constants::SAM_STAR) {
         AddError("Invalid sequence name (SN): " + name);
         return false;
     }
@@ -311,10 +317,11 @@ bool SamHeaderValidator::CheckNameFormat(const std::string& name) {
 }
 
 // check that sequence length is within accepted range
-bool SamHeaderValidator::CheckLengthInRange(const std::string& length) {
+bool SamHeaderValidator::CheckLengthInRange(const std::string& length)
+{
 
     // invalid if empty
-    if ( length.empty() ) {
+    if (length.empty()) {
         AddError("Sequence entry (@SQ) is missing LN tag");
         return false;
     }
@@ -325,7 +332,8 @@ bool SamHeaderValidator::CheckLengthInRange(const std::string& length) {
     lengthStream >> sequenceLength;
 
     // invalid if length outside accepted range
-    if ( sequenceLength < Constants::SAM_SQ_LENGTH_MIN || sequenceLength > Constants::SAM_SQ_LENGTH_MAX ) {
+    if (sequenceLength < Constants::SAM_SQ_LENGTH_MIN ||
+        sequenceLength > Constants::SAM_SQ_LENGTH_MAX) {
         AddError("Sequence length (LN): " + length + " out of range");
         return false;
     }
@@ -335,7 +343,8 @@ bool SamHeaderValidator::CheckLengthInRange(const std::string& length) {
 }
 
 // validate SAM header read group dictionary
-bool SamHeaderValidator::ValidateReadGroupDictionary() {
+bool SamHeaderValidator::ValidateReadGroupDictionary()
+{
 
     bool isValid = true;
 
@@ -345,8 +354,8 @@ bool SamHeaderValidator::ValidateReadGroupDictionary() {
     // iterate over read groups
     const SamReadGroupDictionary& readGroups = m_header.ReadGroups;
     SamReadGroupConstIterator rgIter = readGroups.ConstBegin();
-    SamReadGroupConstIterator rgEnd  = readGroups.ConstEnd();
-    for ( ; rgIter != rgEnd; ++rgIter ) {
+    SamReadGroupConstIterator rgEnd = readGroups.ConstEnd();
+    for (; rgIter != rgEnd; ++rgIter) {
         const SamReadGroup& rg = (*rgIter);
         isValid &= ValidateReadGroup(rg);
     }
@@ -356,7 +365,8 @@ bool SamHeaderValidator::ValidateReadGroupDictionary() {
 }
 
 // make sure RG IDs and platform units are unique
-bool SamHeaderValidator::ContainsUniqueIDsAndPlatformUnits() {
+bool SamHeaderValidator::ContainsUniqueIDsAndPlatformUnits()
+{
 
     bool isValid = true;
     std::set<std::string> readGroupIds;
@@ -367,8 +377,8 @@ bool SamHeaderValidator::ContainsUniqueIDsAndPlatformUnits() {
     // iterate over sequences
     const SamReadGroupDictionary& readGroups = m_header.ReadGroups;
     SamReadGroupConstIterator rgIter = readGroups.ConstBegin();
-    SamReadGroupConstIterator rgEnd  = readGroups.ConstEnd();
-    for ( ; rgIter != rgEnd; ++rgIter ) {
+    SamReadGroupConstIterator rgEnd = readGroups.ConstEnd();
+    for (; rgIter != rgEnd; ++rgIter) {
         const SamReadGroup& rg = (*rgIter);
 
         // --------------------------------
@@ -379,7 +389,7 @@ bool SamHeaderValidator::ContainsUniqueIDsAndPlatformUnits() {
         idIter = readGroupIds.find(id);
 
         // error if found (duplicate entry)
-        if ( idIter != readGroupIds.end() ) {
+        if (idIter != readGroupIds.end()) {
             AddError("Read group ID (ID): " + id + " is not unique");
             isValid = false;
         }
@@ -395,7 +405,7 @@ bool SamHeaderValidator::ContainsUniqueIDsAndPlatformUnits() {
         puIter = platformUnits.find(pu);
 
         // error if found (duplicate entry)
-        if ( puIter != platformUnits.end() ) {
+        if (puIter != platformUnits.end()) {
             AddError("Platform unit (PU): " + pu + " is not unique");
             isValid = false;
         }
@@ -409,7 +419,8 @@ bool SamHeaderValidator::ContainsUniqueIDsAndPlatformUnits() {
 }
 
 // validate SAM header read group entry
-bool SamHeaderValidator::ValidateReadGroup(const SamReadGroup& rg) {
+bool SamHeaderValidator::ValidateReadGroup(const SamReadGroup& rg)
+{
     bool isValid = true;
     isValid &= CheckReadGroupID(rg.ID);
     isValid &= CheckSequencingTechnology(rg.SequencingTechnology);
@@ -417,10 +428,11 @@ bool SamHeaderValidator::ValidateReadGroup(const SamReadGroup& rg) {
 }
 
 // make sure RG ID exists
-bool SamHeaderValidator::CheckReadGroupID(const std::string& id) {
+bool SamHeaderValidator::CheckReadGroupID(const std::string& id)
+{
 
     // invalid if empty
-    if ( id.empty() ) {
+    if (id.empty()) {
         AddError("Read group entry (@RG) is missing ID tag");
         return false;
     }
@@ -430,22 +442,20 @@ bool SamHeaderValidator::CheckReadGroupID(const std::string& id) {
 }
 
 // make sure RG sequencing tech is one of the accepted keywords
-bool SamHeaderValidator::CheckSequencingTechnology(const std::string& technology) {
+bool SamHeaderValidator::CheckSequencingTechnology(const std::string& technology)
+{
 
     // if no technology provided, no problem, just return OK
-    if ( technology.empty() )
-        return true;
+    if (technology.empty()) return true;
 
     // if technology is valid keyword
-    if ( caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_CAPILLARY)  ||
-         caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_HELICOS)    ||
-         caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_ILLUMINA)   ||
-         caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_IONTORRENT) ||
-         caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_LS454)      ||
-         caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_PACBIO)     ||
-         caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_SOLID)
-       )
-    {
+    if (caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_CAPILLARY) ||
+        caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_HELICOS) ||
+        caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_ILLUMINA) ||
+        caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_IONTORRENT) ||
+        caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_LS454) ||
+        caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_PACBIO) ||
+        caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_SOLID)) {
         return true;
     }
 
@@ -455,7 +465,8 @@ bool SamHeaderValidator::CheckSequencingTechnology(const std::string& technology
 }
 
 // validate the SAM header "program chain"
-bool SamHeaderValidator::ValidateProgramChain() {
+bool SamHeaderValidator::ValidateProgramChain()
+{
     bool isValid = true;
     isValid &= ContainsUniqueProgramIds();
     isValid &= ValidatePreviousProgramIds();
@@ -463,7 +474,8 @@ bool SamHeaderValidator::ValidateProgramChain() {
 }
 
 // make sure all PG IDs are unique
-bool SamHeaderValidator::ContainsUniqueProgramIds() {
+bool SamHeaderValidator::ContainsUniqueProgramIds()
+{
 
     bool isValid = true;
     std::set<std::string> programIds;
@@ -472,8 +484,8 @@ bool SamHeaderValidator::ContainsUniqueProgramIds() {
     // iterate over program records
     const SamProgramChain& programs = m_header.Programs;
     SamProgramConstIterator pgIter = programs.ConstBegin();
-    SamProgramConstIterator pgEnd  = programs.ConstEnd();
-    for ( ; pgIter != pgEnd; ++pgIter ) {
+    SamProgramConstIterator pgEnd = programs.ConstEnd();
+    for (; pgIter != pgEnd; ++pgIter) {
         const SamProgram& pg = (*pgIter);
 
         // lookup program ID
@@ -481,7 +493,7 @@ bool SamHeaderValidator::ContainsUniqueProgramIds() {
         pgIdIter = programIds.find(pgId);
 
         // error if found (duplicate entry)
-        if ( pgIdIter != programIds.end() ) {
+        if (pgIdIter != programIds.end()) {
             AddError("Program ID (ID): " + pgId + " is not unique");
             isValid = false;
         }
@@ -495,24 +507,24 @@ bool SamHeaderValidator::ContainsUniqueProgramIds() {
 }
 
 // make sure that any PP tags present point to existing @PG IDs
-bool SamHeaderValidator::ValidatePreviousProgramIds() {
+bool SamHeaderValidator::ValidatePreviousProgramIds()
+{
 
     bool isValid = true;
 
     // iterate over program records
     const SamProgramChain& programs = m_header.Programs;
     SamProgramConstIterator pgIter = programs.ConstBegin();
-    SamProgramConstIterator pgEnd  = programs.ConstEnd();
-    for ( ; pgIter != pgEnd; ++pgIter ) {
+    SamProgramConstIterator pgEnd = programs.ConstEnd();
+    for (; pgIter != pgEnd; ++pgIter) {
         const SamProgram& pg = (*pgIter);
 
         // ignore record for validation if PreviousProgramID is empty
         const std::string& ppId = pg.PreviousProgramID;
-        if ( ppId.empty() )
-            continue;
+        if (ppId.empty()) continue;
 
         // see if program "chain" contains an entry for ppId
-        if ( !programs.Contains(ppId) ) {
+        if (!programs.Contains(ppId)) {
             AddError("PreviousProgramID (PP): " + ppId + " is not a known ID");
             isValid = false;
         }

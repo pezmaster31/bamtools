@@ -27,12 +27,13 @@ using namespace BamTools::Internal;
 */
 BamReader::BamReader()
     : d(new BamReaderPrivate(this))
-{ }
+{}
 
 /*! \fn BamReader::~BamReader()
     \brief destructor
 */
-BamReader::~BamReader() {
+BamReader::~BamReader()
+{
     delete d;
     d = 0;
 }
@@ -45,7 +46,8 @@ BamReader::~BamReader() {
     \return \c true if file closed OK
     \sa IsOpen(), Open()
 */
-bool BamReader::Close() {
+bool BamReader::Close()
+{
     return d->Close();
 }
 
@@ -56,7 +58,8 @@ bool BamReader::Close() {
     \return \c true if index created OK
     \sa LocateIndex(), OpenIndex()
 */
-bool BamReader::CreateIndex(const BamIndex::IndexType& type) {
+bool BamReader::CreateIndex(const BamIndex::IndexType& type)
+{
     return d->CreateIndex(type);
 }
 
@@ -72,7 +75,8 @@ bool BamReader::CreateIndex(const BamIndex::IndexType& type) {
     \returns const reference to header data object
     \sa GetHeader(), GetHeaderText()
 */
-const SamHeader& BamReader::GetConstSamHeader() const {
+const SamHeader& BamReader::GetConstSamHeader() const
+{
     return d->GetConstSamHeader();
 }
 
@@ -84,7 +88,8 @@ const SamHeader& BamReader::GetConstSamHeader() const {
 
     \return error description
 */
-std::string BamReader::GetErrorString() const {
+std::string BamReader::GetErrorString() const
+{
     return d->GetErrorString();
 }
 
@@ -98,7 +103,8 @@ std::string BamReader::GetErrorString() const {
     \returns name of open BAM file. If no file is open, returns an empty string.
     \sa IsOpen()
 */
-const std::string BamReader::GetFilename() const {
+const std::string BamReader::GetFilename() const
+{
     return d->Filename();
 }
 
@@ -116,7 +122,8 @@ const std::string BamReader::GetFilename() const {
     \returns header data object
     \sa GetConstSamHeader(), GetHeaderText()
 */
-SamHeader BamReader::GetHeader() const {
+SamHeader BamReader::GetHeader() const
+{
     return d->GetSamHeader();
 }
 
@@ -131,7 +138,8 @@ SamHeader BamReader::GetHeader() const {
     \returns SAM-formatted header text
     \sa GetHeader()
 */
-std::string BamReader::GetHeaderText() const {
+std::string BamReader::GetHeaderText() const
+{
     return d->GetHeaderText();
 }
 
@@ -159,7 +167,8 @@ std::string BamReader::GetHeaderText() const {
     \param[out] alignment destination for alignment record data
     \returns \c true if a valid alignment was found
 */
-bool BamReader::GetNextAlignment(BamAlignment& alignment) {
+bool BamReader::GetNextAlignment(BamAlignment& alignment)
+{
     return d->GetNextAlignment(alignment);
 }
 
@@ -177,14 +186,16 @@ bool BamReader::GetNextAlignment(BamAlignment& alignment) {
     \returns \c true if a valid alignment was found
     \sa SetRegion()
 */
-bool BamReader::GetNextAlignmentCore(BamAlignment& alignment) {
+bool BamReader::GetNextAlignmentCore(BamAlignment& alignment)
+{
     return d->GetNextAlignmentCore(alignment);
 }
 
 /*! \fn int BamReader::GetReferenceCount() const
     \brief Returns number of reference sequences.
 */
-int BamReader::GetReferenceCount() const {
+int BamReader::GetReferenceCount() const
+{
     return d->GetReferenceCount();
 }
 
@@ -192,7 +203,8 @@ int BamReader::GetReferenceCount() const {
     \brief Returns all reference sequence entries.
     \sa RefData
 */
-const RefVector& BamReader::GetReferenceData() const {
+const RefVector& BamReader::GetReferenceData() const
+{
     return d->GetReferenceData();
 }
 
@@ -203,21 +215,24 @@ const RefVector& BamReader::GetReferenceData() const {
 
     \param[in] refName name of reference to look up
 */
-int BamReader::GetReferenceID(const std::string& refName) const {
+int BamReader::GetReferenceID(const std::string& refName) const
+{
     return d->GetReferenceID(refName);
 }
 
 /*! \fn bool BamReader::HasIndex() const
     \brief Returns \c true if index data is available.
 */
-bool BamReader::HasIndex() const {
+bool BamReader::HasIndex() const
+{
     return d->HasIndex();
 }
 
 /*! \fn bool BamReader::IsOpen() const
     \brief Returns \c true if a BAM file is open for reading.
 */
-bool BamReader::IsOpen() const {
+bool BamReader::IsOpen() const
+{
     return d->IsOpen();
 }
 
@@ -233,8 +248,9 @@ bool BamReader::IsOpen() const {
     \returns \c true if jump was successful
     \sa HasIndex()
 */
-bool BamReader::Jump(int refID, int position) {
-    return d->SetRegion( BamRegion(refID, position) );
+bool BamReader::Jump(int refID, int position)
+{
+    return d->SetRegion(BamRegion(refID, position));
 }
 
 /*! \fn bool BamReader::LocateIndex(const BamIndex::IndexType& preferredType)
@@ -256,7 +272,8 @@ bool BamReader::Jump(int refID, int position) {
 
     \returns \c true if (any) index file could be found
 */
-bool BamReader::LocateIndex(const BamIndex::IndexType& preferredType) {
+bool BamReader::LocateIndex(const BamIndex::IndexType& preferredType)
+{
     return d->LocateIndex(preferredType);
 }
 
@@ -271,7 +288,8 @@ bool BamReader::LocateIndex(const BamIndex::IndexType& preferredType) {
     \returns \c true if BAM file was opened successfully
     \sa Close(), IsOpen(), OpenIndex()
 */
-bool BamReader::Open(const std::string& filename) {
+bool BamReader::Open(const std::string& filename)
+{
     return d->Open(filename);
 }
 
@@ -283,7 +301,8 @@ bool BamReader::Open(const std::string& filename) {
     \returns \c true if BAM index file was opened & data loaded successfully
     \sa LocateIndex(), Open(), SetIndex()
 */
-bool BamReader::OpenIndex(const std::string& indexFilename) {
+bool BamReader::OpenIndex(const std::string& indexFilename)
+{
     return d->OpenIndex(indexFilename);
 }
 
@@ -299,7 +318,8 @@ bool BamReader::OpenIndex(const std::string& indexFilename) {
     \returns \c true if rewind operation was successful
     \sa Jump(), SetRegion()
 */
-bool BamReader::Rewind() {
+bool BamReader::Rewind()
+{
     return d->Rewind();
 }
 
@@ -322,7 +342,8 @@ bool BamReader::Rewind() {
     \param[in] index custom BamIndex subclass created by client
     \sa CreateIndex(), LocateIndex(), OpenIndex()
 */
-void BamReader::SetIndex(BamIndex* index) {
+void BamReader::SetIndex(BamIndex* index)
+{
     d->SetIndex(index);
 }
 
@@ -349,7 +370,8 @@ void BamReader::SetIndex(BamIndex* index) {
     \returns \c true if reader was able to jump successfully to the region's left boundary
     \sa HasIndex(), Jump()
 */
-bool BamReader::SetRegion(const BamRegion& region) {
+bool BamReader::SetRegion(const BamRegion& region)
+{
     return d->SetRegion(region);
 }
 
@@ -373,10 +395,8 @@ bool BamReader::SetRegion(const BamRegion& region) {
     \returns \c true if reader was able to jump successfully to the region's left boundary
     \sa HasIndex(), Jump()
 */
-bool BamReader::SetRegion(const int& leftRefID,
-                          const int& leftBound,
-                          const int& rightRefID,
+bool BamReader::SetRegion(const int& leftRefID, const int& leftBound, const int& rightRefID,
                           const int& rightBound)
 {
-    return d->SetRegion( BamRegion(leftRefID, leftBound, rightRefID, rightBound) );
+    return d->SetRegion(BamRegion(leftRefID, leftBound, rightRefID, rightBound));
 }

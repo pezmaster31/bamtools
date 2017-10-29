@@ -21,246 +21,258 @@
 //
 // We mean it.
 
-#include "api/BamAlignment.h"
-#include "api/BamReader.h"
-#include "api/algorithms/Sort.h"
 #include <deque>
 #include <functional>
 #include <set>
 #include <string>
+#include "api/BamAlignment.h"
+#include "api/BamReader.h"
+#include "api/algorithms/Sort.h"
 
 namespace BamTools {
 namespace Internal {
 
-struct MergeItem {
+struct MergeItem
+{
 
     // data members
-    BamReader*    Reader;
+    BamReader* Reader;
     BamAlignment* Alignment;
 
     // ctors & dtor
-    MergeItem(BamReader* reader = 0,
-              BamAlignment* alignment = 0)
+    MergeItem(BamReader* reader = 0, BamAlignment* alignment = 0)
         : Reader(reader)
         , Alignment(alignment)
-    { }
+    {}
 
     MergeItem(const MergeItem& other)
         : Reader(other.Reader)
         , Alignment(other.Alignment)
-    { }
+    {}
 
-    ~MergeItem() { }
-};
-
-template<typename Compare>
-struct MergeItemSorter : public std::binary_function<MergeItem, MergeItem, bool> {
-
-    public:
-        MergeItemSorter(const Compare& comp = Compare())
-            : m_comp(comp)
-        { }
-
-        bool operator()(const MergeItem& lhs, const MergeItem& rhs) {
-            const BamAlignment& l = *lhs.Alignment;
-            const BamAlignment& r = *rhs.Alignment;
-            return m_comp(l,r);
-        }
-
-    private:
-        Compare m_comp;
-};
-
-// pure ABC so we can just work polymorphically with any specific merger implementation
-class IMultiMerger {
-
-    public:
-        IMultiMerger() { }
-        virtual ~IMultiMerger() { }
-    public:
-        virtual void Add(MergeItem item) =0;
-        virtual void Clear() =0;
-        virtual const MergeItem& First() const =0;
-        virtual bool IsEmpty() const =0;
-        virtual void Remove(BamReader* reader) =0;
-        virtual int Size() const =0;
-        virtual MergeItem TakeFirst() =0;
-};
-
-// general merger
-template<typename Compare>
-class MultiMerger : public IMultiMerger {
-
-    public:
-        typedef Compare                      CompareType;
-        typedef MergeItemSorter<CompareType> MergeType;
-
-    public:
-        explicit MultiMerger(const Compare& comp = Compare())
-            : IMultiMerger()
-            , m_data( MergeType(comp) )
-        { }
-        ~MultiMerger() { }
-
-    public:
-        void Add(MergeItem item);
-        void Clear();
-        const MergeItem& First() const;
-        bool IsEmpty() const;
-        void Remove(BamReader* reader);
-        int Size() const;
-        MergeItem TakeFirst();
-
-    private:
-        typedef MergeItem                              ValueType;
-        typedef std::multiset<ValueType, MergeType>    ContainerType;
-        typedef typename ContainerType::iterator       DataIterator;
-        typedef typename ContainerType::const_iterator DataConstIterator;
-        ContainerType m_data;
+    ~MergeItem() {}
 };
 
 template <typename Compare>
-inline void MultiMerger<Compare>::Add(MergeItem item) {
+struct MergeItemSorter : public std::binary_function<MergeItem, MergeItem, bool>
+{
+
+public:
+    MergeItemSorter(const Compare& comp = Compare())
+        : m_comp(comp)
+    {}
+
+    bool operator()(const MergeItem& lhs, const MergeItem& rhs)
+    {
+        const BamAlignment& l = *lhs.Alignment;
+        const BamAlignment& r = *rhs.Alignment;
+        return m_comp(l, r);
+    }
+
+private:
+    Compare m_comp;
+};
+
+// pure ABC so we can just work polymorphically with any specific merger implementation
+class IMultiMerger
+{
+
+public:
+    IMultiMerger() {}
+    virtual ~IMultiMerger() {}
+
+public:
+    virtual void Add(MergeItem item) = 0;
+    virtual void Clear() = 0;
+    virtual const MergeItem& First() const = 0;
+    virtual bool IsEmpty() const = 0;
+    virtual void Remove(BamReader* reader) = 0;
+    virtual int Size() const = 0;
+    virtual MergeItem TakeFirst() = 0;
+};
+
+// general merger
+template <typename Compare>
+class MultiMerger : public IMultiMerger
+{
+
+public:
+    typedef Compare CompareType;
+    typedef MergeItemSorter<CompareType> MergeType;
+
+public:
+    explicit MultiMerger(const Compare& comp = Compare())
+        : IMultiMerger()
+        , m_data(MergeType(comp))
+    {}
+    ~MultiMerger() {}
+
+public:
+    void Add(MergeItem item);
+    void Clear();
+    const MergeItem& First() const;
+    bool IsEmpty() const;
+    void Remove(BamReader* reader);
+    int Size() const;
+    MergeItem TakeFirst();
+
+private:
+    typedef MergeItem ValueType;
+    typedef std::multiset<ValueType, MergeType> ContainerType;
+    typedef typename ContainerType::iterator DataIterator;
+    typedef typename ContainerType::const_iterator DataConstIterator;
+    ContainerType m_data;
+};
+
+template <typename Compare>
+inline void MultiMerger<Compare>::Add(MergeItem item)
+{
 
     // N.B. - any future custom Compare types must define this method
     //        see algorithms/Sort.h
 
-    if ( CompareType::UsesCharData() )
-        item.Alignment->BuildCharData();
+    if (CompareType::UsesCharData()) item.Alignment->BuildCharData();
     m_data.insert(item);
 }
 
 template <typename Compare>
-inline void MultiMerger<Compare>::Clear() {
+inline void MultiMerger<Compare>::Clear()
+{
     m_data.clear();
 }
 
 template <typename Compare>
-inline const MergeItem& MultiMerger<Compare>::First() const {
+inline const MergeItem& MultiMerger<Compare>::First() const
+{
     const ValueType& entry = (*m_data.begin());
     return entry;
 }
 
 template <typename Compare>
-inline bool MultiMerger<Compare>::IsEmpty() const {
+inline bool MultiMerger<Compare>::IsEmpty() const
+{
     return m_data.empty();
 }
 template <typename Compare>
-inline void MultiMerger<Compare>::Remove(BamReader* reader) {
+inline void MultiMerger<Compare>::Remove(BamReader* reader)
+{
 
-    if ( reader == 0 ) return;
+    if (reader == 0) return;
     const std::string& filenameToRemove = reader->GetFilename();
 
     // iterate over readers in cache
     DataIterator dataIter = m_data.begin();
-    DataIterator dataEnd  = m_data.end();
-    for ( ; dataIter != dataEnd; ++dataIter ) {
+    DataIterator dataEnd = m_data.end();
+    for (; dataIter != dataEnd; ++dataIter) {
         const MergeItem& item = (*dataIter);
         const BamReader* itemReader = item.Reader;
-        if ( itemReader == 0 ) continue;
+        if (itemReader == 0) continue;
 
         // remove iterator on match
-        if ( itemReader->GetFilename() == filenameToRemove ) {
+        if (itemReader->GetFilename() == filenameToRemove) {
             m_data.erase(dataIter);
             return;
         }
     }
 }
 template <typename Compare>
-inline int MultiMerger<Compare>::Size() const {
+inline int MultiMerger<Compare>::Size() const
+{
     return m_data.size();
 }
 
 template <typename Compare>
-inline MergeItem MultiMerger<Compare>::TakeFirst() {
+inline MergeItem MultiMerger<Compare>::TakeFirst()
+{
     DataIterator firstIter = m_data.begin();
-    MergeItem    firstItem = (*firstIter);
+    MergeItem firstItem = (*firstIter);
     m_data.erase(firstIter);
     return firstItem;
 }
 
 // unsorted "merger"
-template<>
-class MultiMerger<Algorithms::Sort::Unsorted> : public IMultiMerger {
+template <>
+class MultiMerger<Algorithms::Sort::Unsorted> : public IMultiMerger
+{
 
-    public:
-        explicit MultiMerger(const Algorithms::Sort::Unsorted& comp = Algorithms::Sort::Unsorted())
-            : IMultiMerger()
-        { }
-        ~MultiMerger() { }
+public:
+    explicit MultiMerger(const Algorithms::Sort::Unsorted& comp = Algorithms::Sort::Unsorted())
+        : IMultiMerger()
+    {}
+    ~MultiMerger() {}
 
-    public:
-        void Add(MergeItem item);
-        void Clear();
-        const MergeItem& First() const;
-        bool IsEmpty() const;
-        void Remove(BamReader* reader);
-        int Size() const;
-        MergeItem TakeFirst();
+public:
+    void Add(MergeItem item);
+    void Clear();
+    const MergeItem& First() const;
+    bool IsEmpty() const;
+    void Remove(BamReader* reader);
+    int Size() const;
+    MergeItem TakeFirst();
 
-    private:
-        typedef MergeItem                     ValueType;
-        typedef std::deque<ValueType>         ContainerType;
-        typedef ContainerType::iterator       DataIterator;
-        typedef ContainerType::const_iterator DataConstIterator;
-        ContainerType m_data;
+private:
+    typedef MergeItem ValueType;
+    typedef std::deque<ValueType> ContainerType;
+    typedef ContainerType::iterator DataIterator;
+    typedef ContainerType::const_iterator DataConstIterator;
+    ContainerType m_data;
 };
 
-inline
-void MultiMerger<Algorithms::Sort::Unsorted>::Add(MergeItem item) {
+inline void MultiMerger<Algorithms::Sort::Unsorted>::Add(MergeItem item)
+{
     m_data.push_back(item);
 }
 
-inline
-void MultiMerger<Algorithms::Sort::Unsorted>::Clear() {
+inline void MultiMerger<Algorithms::Sort::Unsorted>::Clear()
+{
     m_data.clear();
 }
 
-inline
-const MergeItem& MultiMerger<Algorithms::Sort::Unsorted>::First() const {
+inline const MergeItem& MultiMerger<Algorithms::Sort::Unsorted>::First() const
+{
     return m_data.front();
 }
 
-inline
-bool MultiMerger<Algorithms::Sort::Unsorted>::IsEmpty() const {
+inline bool MultiMerger<Algorithms::Sort::Unsorted>::IsEmpty() const
+{
     return m_data.empty();
 }
 
-inline
-void MultiMerger<Algorithms::Sort::Unsorted>::Remove(BamReader* reader) {
+inline void MultiMerger<Algorithms::Sort::Unsorted>::Remove(BamReader* reader)
+{
 
-    if ( reader == 0 ) return;
+    if (reader == 0) return;
     const std::string filenameToRemove = reader->GetFilename();
 
     // iterate over readers in cache
     DataIterator dataIter = m_data.begin();
-    DataIterator dataEnd  = m_data.end();
-    for ( ; dataIter != dataEnd; ++dataIter ) {
+    DataIterator dataEnd = m_data.end();
+    for (; dataIter != dataEnd; ++dataIter) {
         const MergeItem& item = (*dataIter);
         const BamReader* itemReader = item.Reader;
-        if ( itemReader == 0 ) continue;
+        if (itemReader == 0) continue;
 
         // remove iterator on match
-        if ( itemReader->GetFilename() == filenameToRemove ) {
+        if (itemReader->GetFilename() == filenameToRemove) {
             m_data.erase(dataIter);
             return;
         }
     }
 }
 
-inline
-int MultiMerger<Algorithms::Sort::Unsorted>::Size() const {
+inline int MultiMerger<Algorithms::Sort::Unsorted>::Size() const
+{
     return m_data.size();
 }
 
-inline
-MergeItem MultiMerger<Algorithms::Sort::Unsorted>::TakeFirst() {
+inline MergeItem MultiMerger<Algorithms::Sort::Unsorted>::TakeFirst()
+{
     MergeItem firstItem = m_data.front();
     m_data.pop_front();
     return firstItem;
 }
 
-} // namespace Internal
-} // namespace BamTools
+}  // namespace Internal
+}  // namespace BamTools
 
-#endif // BAMMULTIMERGER_P_H
+#endif  // BAMMULTIMERGER_P_H

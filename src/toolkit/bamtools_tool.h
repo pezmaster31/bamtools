@@ -15,21 +15,22 @@
 
 namespace BamTools {
 
-class AbstractTool {
+class AbstractTool
+{
 
-    public:
-        AbstractTool() { }
-        virtual ~AbstractTool() { }
+public:
+    AbstractTool() {}
+    virtual ~AbstractTool() {}
 
-    public:
-        virtual int Help() =0;
-        virtual int Run(int argc, char* argv[]) =0;
+public:
+    virtual int Help() = 0;
+    virtual int Run(int argc, char* argv[]) = 0;
 
     // derived classes should also provide:
     // static std::string Description();
     // static std::String Name();
 };
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // BAMTOOLS_ABSTRACTTOOL_H
+#endif  // BAMTOOLS_ABSTRACTTOOL_H

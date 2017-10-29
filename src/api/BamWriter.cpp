@@ -7,8 +7,8 @@
 // Provides the basic functionality for producing BAM files
 // ***************************************************************************
 
-#include "api/BamAlignment.h"
 #include "api/BamWriter.h"
+#include "api/BamAlignment.h"
 #include "api/SamHeader.h"
 #include "api/internal/bam/BamWriter_p.h"
 using namespace BamTools;
@@ -36,12 +36,13 @@ using namespace BamTools::Internal;
 */
 BamWriter::BamWriter()
     : d(new BamWriterPrivate)
-{ }
+{}
 
 /*! \fn BamWriter::~BamWriter()
     \brief destructor
 */
-BamWriter::~BamWriter() {
+BamWriter::~BamWriter()
+{
     delete d;
     d = 0;
 }
@@ -50,7 +51,8 @@ BamWriter::~BamWriter() {
     \brief Closes the current BAM file.
     \sa Open()
 */
-void BamWriter::Close() {
+void BamWriter::Close()
+{
     d->Close();
 }
 
@@ -62,7 +64,8 @@ void BamWriter::Close() {
 
     \return error description
 */
-std::string BamWriter::GetErrorString() const {
+std::string BamWriter::GetErrorString() const
+{
     return d->GetErrorString();
 }
 
@@ -70,7 +73,8 @@ std::string BamWriter::GetErrorString() const {
     \brief Returns \c true if BAM file is open for writing.
     \sa Open()
 */
-bool BamWriter::IsOpen() const {
+bool BamWriter::IsOpen() const
+{
     return d->IsOpen();
 }
 
@@ -88,8 +92,7 @@ bool BamWriter::IsOpen() const {
     \return \c true if opened successfully
     \sa Close(), IsOpen(), BamReader::GetHeaderText(), BamReader::GetReferenceData()
 */
-bool BamWriter::Open(const std::string& filename,
-                     const std::string& samHeaderText,
+bool BamWriter::Open(const std::string& filename, const std::string& samHeaderText,
                      const RefVector& referenceSequences)
 {
     return d->Open(filename, samHeaderText, referenceSequences);
@@ -111,8 +114,7 @@ bool BamWriter::Open(const std::string& filename,
     \return \c true if opened successfully
     \sa Close(), IsOpen(), BamReader::GetHeader(), BamReader::GetReferenceData()
 */
-bool BamWriter::Open(const std::string& filename,
-                     const SamHeader& samHeader,
+bool BamWriter::Open(const std::string& filename, const SamHeader& samHeader,
                      const RefVector& referenceSequences)
 {
     return d->Open(filename, samHeader.ToString(), referenceSequences);
@@ -124,7 +126,8 @@ bool BamWriter::Open(const std::string& filename,
     \param[in] alignment BamAlignment record to save
     \sa BamReader::GetNextAlignment(), BamReader::GetNextAlignmentCore()
 */
-bool BamWriter::SaveAlignment(const BamAlignment& alignment) {
+bool BamWriter::SaveAlignment(const BamAlignment& alignment)
+{
     return d->SaveAlignment(alignment);
 }
 
@@ -146,6 +149,7 @@ bool BamWriter::SaveAlignment(const BamAlignment& alignment) {
     \param[in] compressionMode desired output compression behavior
     \sa IsOpen(), Open()
 */
-void BamWriter::SetCompressionMode(const BamWriter::CompressionMode& compressionMode) {
-    d->SetWriteCompressed( compressionMode == BamWriter::Compressed );
+void BamWriter::SetCompressionMode(const BamWriter::CompressionMode& compressionMode)
+{
+    d->SetWriteCompressed(compressionMode == BamWriter::Compressed);
 }

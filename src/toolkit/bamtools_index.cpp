@@ -19,7 +19,8 @@ using namespace BamTools;
 // ---------------------------------------------
 // IndexSettings implementation
 
-struct IndexTool::IndexSettings {
+struct IndexTool::IndexSettings
+{
 
     // flags
     bool HasInputBamFilename;
@@ -33,44 +34,46 @@ struct IndexTool::IndexSettings {
         : HasInputBamFilename(false)
         , IsUsingBamtoolsIndex(false)
         , InputBamFilename(Options::StandardIn())
-    { }
+    {}
 };
 
 // ---------------------------------------------
 // IndexToolPrivate implementation
 
-struct IndexTool::IndexToolPrivate {
+struct IndexTool::IndexToolPrivate
+{
 
     // ctor & dtor
-    public:
-        IndexToolPrivate(IndexTool::IndexSettings* settings)
-            : m_settings(settings)
-        { }
+public:
+    IndexToolPrivate(IndexTool::IndexSettings* settings)
+        : m_settings(settings)
+    {}
 
-        ~IndexToolPrivate() { }
+    ~IndexToolPrivate() {}
 
     // interface
-    public:
-        bool Run();
+public:
+    bool Run();
 
     // data members
-    private:
-        IndexTool::IndexSettings* m_settings;
+private:
+    IndexTool::IndexSettings* m_settings;
 };
 
-bool IndexTool::IndexToolPrivate::Run() {
+bool IndexTool::IndexToolPrivate::Run()
+{
 
     // open our BAM reader
     BamReader reader;
-    if ( !reader.Open(m_settings->InputBamFilename) ) {
+    if (!reader.Open(m_settings->InputBamFilename)) {
         std::cerr << "bamtools index ERROR: could not open BAM file: "
-             << m_settings->InputBamFilename << std::endl;
+                  << m_settings->InputBamFilename << std::endl;
         return false;
     }
 
     // create index for BAM file
-    const BamIndex::IndexType type = ( m_settings->IsUsingBamtoolsIndex ? BamIndex::BAMTOOLS
-                                                                        : BamIndex::STANDARD );
+    const BamIndex::IndexType type =
+        (m_settings->IsUsingBamtoolsIndex ? BamIndex::BAMTOOLS : BamIndex::STANDARD);
     reader.CreateIndex(type);
 
     // clean & exit
@@ -87,15 +90,22 @@ IndexTool::IndexTool()
     , m_impl(0)
 {
     // set program details
-    Options::SetProgramInfo("bamtools index", "creates index for BAM file", "[-in <filename>] [-bti]");
+    Options::SetProgramInfo("bamtools index", "creates index for BAM file",
+                            "[-in <filename>] [-bti]");
 
     // set up options
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in", "BAM filename", "the input BAM file", "", m_settings->HasInputBamFilename, m_settings->InputBamFilename, IO_Opts, Options::StandardIn());
-    Options::AddOption("-bti", "create (non-standard) BamTools index file (*.bti). Default behavior is to create standard BAM index (*.bai)", m_settings->IsUsingBamtoolsIndex, IO_Opts);
+    Options::AddValueOption("-in", "BAM filename", "the input BAM file", "",
+                            m_settings->HasInputBamFilename, m_settings->InputBamFilename, IO_Opts,
+                            Options::StandardIn());
+    Options::AddOption("-bti",
+                       "create (non-standard) BamTools index file (*.bti). Default behavior is to "
+                       "create standard BAM index (*.bai)",
+                       m_settings->IsUsingBamtoolsIndex, IO_Opts);
 }
 
-IndexTool::~IndexTool() {
+IndexTool::~IndexTool()
+{
 
     delete m_settings;
     m_settings = 0;
@@ -104,12 +114,14 @@ IndexTool::~IndexTool() {
     m_impl = 0;
 }
 
-int IndexTool::Help() {
+int IndexTool::Help()
+{
     Options::DisplayHelp();
     return 0;
 }
 
-int IndexTool::Run(int argc, char* argv[]) {
+int IndexTool::Run(int argc, char* argv[])
+{
 
     // parse command line arguments
     Options::Parse(argc, argv, 1);
@@ -118,7 +130,7 @@ int IndexTool::Run(int argc, char* argv[]) {
     m_impl = new IndexToolPrivate(m_settings);
 
     // run IndexTool, return success/fail
-    if ( m_impl->Run() )
+    if (m_impl->Run())
         return 0;
     else
         return 1;

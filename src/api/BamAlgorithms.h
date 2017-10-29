@@ -18,4 +18,4 @@
     \brief Provides convenient classes & methods for working with BAM data
 */
 
-#endif // BAM_ALGORITHMS_H
+#endif  // BAM_ALGORITHMS_H

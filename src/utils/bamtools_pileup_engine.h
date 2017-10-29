@@ -19,7 +19,8 @@ namespace BamTools {
 
 // contains auxiliary data about a single BamAlignment
 // at current position considered
-struct UTILS_EXPORT PileupAlignment {
+struct UTILS_EXPORT PileupAlignment
+{
 
     // data members
     BamAlignment Alignment;
@@ -43,11 +44,12 @@ struct UTILS_EXPORT PileupAlignment {
         , InsertionLength(0)
         , IsSegmentBegin(false)
         , IsSegmentEnd(false)
-    { }
+    {}
 };
 
 // contains all data at a position
-struct UTILS_EXPORT PileupPosition {
+struct UTILS_EXPORT PileupPosition
+{
 
     // data members
     int RefId;
@@ -55,41 +57,42 @@ struct UTILS_EXPORT PileupPosition {
     std::vector<PileupAlignment> PileupAlignments;
 
     // ctor
-    PileupPosition(const int& refId = 0,
-                   const int& position = 0,
+    PileupPosition(const int& refId = 0, const int& position = 0,
                    const std::vector<PileupAlignment>& alignments = std::vector<PileupAlignment>())
         : RefId(refId)
         , Position(position)
         , PileupAlignments(alignments)
-    { }
+    {}
 };
 
-class UTILS_EXPORT PileupVisitor {
+class UTILS_EXPORT PileupVisitor
+{
 
-    public:
-        PileupVisitor() { }
-        virtual ~PileupVisitor() { }
+public:
+    PileupVisitor() {}
+    virtual ~PileupVisitor() {}
 
-    public:
-        virtual void Visit(const PileupPosition& pileupData) =0;
+public:
+    virtual void Visit(const PileupPosition& pileupData) = 0;
 };
 
-class UTILS_EXPORT PileupEngine {
+class UTILS_EXPORT PileupEngine
+{
 
-    public:
-        PileupEngine();
-        ~PileupEngine();
+public:
+    PileupEngine();
+    ~PileupEngine();
 
-    public:
-        bool AddAlignment(const BamAlignment& al);
-        void AddVisitor(PileupVisitor* visitor);
-        void Flush();
+public:
+    bool AddAlignment(const BamAlignment& al);
+    void AddVisitor(PileupVisitor* visitor);
+    void Flush();
 
-    private:
-        struct PileupEnginePrivate;
-        PileupEnginePrivate* d;
+private:
+    struct PileupEnginePrivate;
+    PileupEnginePrivate* d;
 };
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // BAMTOOLS_PILEUP_ENGINE_H
+#endif  // BAMTOOLS_PILEUP_ENGINE_H

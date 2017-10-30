@@ -64,7 +64,7 @@ struct API_EXPORT RefData
     int32_t RefLength;    //!< length of reference sequence
 
     //! constructor
-    RefData(const std::string& name = "", const int32_t& length = 0)
+    RefData(const std::string& name = std::string(), const int32_t& length = 0)
         : RefName(name)
         , RefLength(length)
     {}

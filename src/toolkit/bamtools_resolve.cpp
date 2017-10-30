@@ -376,7 +376,6 @@ struct ResolveTool::ResolveSettings
         , HasUnusedModelThreshold(false)
         , InputBamFilename(Options::StandardIn())
         , OutputBamFilename(Options::StandardOut())
-        , StatsFilename("")
         , ReadNamesFilename(DEFAULT_READNAME_FILE)
         , ConfidenceInterval(DEFAULT_CONFIDENCE_INTERVAL)
         , MinimumMapQuality(DEFAULT_MIN_MAPQUALITY)
@@ -796,7 +795,7 @@ void ResolveTool::StatsFileWriter::WriteHeader()
 
     // stringify current bamtools version
     std::stringstream versionStream;
-    versionStream << "v" << BAMTOOLS_VERSION_MAJOR << "." << BAMTOOLS_VERSION_MINOR << "."
+    versionStream << 'v' << BAMTOOLS_VERSION_MAJOR << '.' << BAMTOOLS_VERSION_MINOR << '.'
                   << BAMTOOLS_VERSION_PATCH;
 
     // # bamtools resolve (vX.Y.Z)
@@ -804,7 +803,7 @@ void ResolveTool::StatsFileWriter::WriteHeader()
     // # MODEL DESCRIPTION - see above for actual text
     // \n
 
-    m_stream << COMMENT_CHAR << " bamtools resolve (" << versionStream.str() << ")" << std::endl
+    m_stream << COMMENT_CHAR << " bamtools resolve (" << versionStream.str() << ')' << std::endl
              << COMMENT_CHAR << std::endl
              << MODEL_DESCRIPTION << std::endl;
 }
@@ -1277,7 +1276,7 @@ bool ResolveTool::ResolveToolPrivate::Run()
     }
 
     // initialize read group map with default (empty name) read group
-    m_readGroups.insert(std::make_pair("", ReadGroupResolver()));
+    m_readGroups.insert(std::make_pair(std::string(), ReadGroupResolver()));
 
     // init readname filename
     // uses (adjusted) stats filename if provided (req'd for makeStats, markPairs modes; optional for twoPass)

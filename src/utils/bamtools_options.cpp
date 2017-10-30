@@ -98,7 +98,7 @@ void Options::DisplayHelp()
             // handle default values
             if (optionIter->HasDefaultValue) {
 
-                sb.str("");
+                sb.str(std::string());
                 sb << description << " [";
 
                 if (optionIter->DefaultValue.is_type<unsigned int>()) {
@@ -120,7 +120,7 @@ void Options::DisplayHelp()
                     std::exit(EXIT_FAILURE);
                 }
 
-                sb << "]";
+                sb << ']';
                 description = sb.str();
             }
 

@@ -26,7 +26,7 @@ public:
     // file-handling methods
 public:
     bool Close();
-    bool Open(const std::string& filename, const std::string& indexFilename = "");
+    bool Open(const std::string& filename, const std::string& indexFilename = std::string());
 
     // sequence access methods
 public:

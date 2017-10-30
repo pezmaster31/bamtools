@@ -140,7 +140,7 @@ int Version()
 {
 
     std::stringstream versionStream;
-    versionStream << BAMTOOLS_VERSION_MAJOR << "." << BAMTOOLS_VERSION_MINOR << "."
+    versionStream << BAMTOOLS_VERSION_MAJOR << '.' << BAMTOOLS_VERSION_MINOR << '.'
                   << BAMTOOLS_VERSION_PATCH;
 
     std::cout << std::endl;

@@ -44,14 +44,7 @@ using namespace BamTools;
 /*! \fn SamSequence::SamSequence()
     \brief default constructor
 */
-SamSequence::SamSequence()
-    : AssemblyID("")
-    , Checksum("")
-    , Length("")
-    , Name("")
-    , Species("")
-    , URI("")
-{}
+SamSequence::SamSequence() {}
 
 /*! \fn SamSequence::SamSequence(const std::string& name, const int& length)
     \brief constructs sequence with \a name and \a length
@@ -60,11 +53,7 @@ SamSequence::SamSequence()
     \param length desired sequence length (numeric value)
 */
 SamSequence::SamSequence(const std::string& name, const int& length)
-    : AssemblyID("")
-    , Checksum("")
-    , Name(name)
-    , Species("")
-    , URI("")
+    : Name(name)
 {
     std::stringstream s;
     s << length;
@@ -78,12 +67,8 @@ SamSequence::SamSequence(const std::string& name, const int& length)
     \param length desired sequence length (string value)
 */
 SamSequence::SamSequence(const std::string& name, const std::string& length)
-    : AssemblyID("")
-    , Checksum("")
-    , Length(length)
+    : Length(length)
     , Name(name)
-    , Species("")
-    , URI("")
 {}
 
 /*! \fn SamSequence::SamSequence(const SamSequence& other)

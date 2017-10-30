@@ -42,14 +42,7 @@ using namespace BamTools;
 /*! \fn SamProgram::SamProgram()
     \brief default constructor
 */
-SamProgram::SamProgram()
-    : CommandLine("")
-    , ID("")
-    , Name("")
-    , PreviousProgramID("")
-    , Version("")
-    , NextProgramID("")
-{}
+SamProgram::SamProgram() {}
 
 /*! \fn SamProgram::SamProgram(const std::string& id)
     \brief constructs program record with \a id
@@ -57,12 +50,7 @@ SamProgram::SamProgram()
     \param id desired program record ID
 */
 SamProgram::SamProgram(const std::string& id)
-    : CommandLine("")
-    , ID(id)
-    , Name("")
-    , PreviousProgramID("")
-    , Version("")
-    , NextProgramID("")
+    : ID(id)
 {}
 
 /*! \fn SamProgram::SamProgram(const SamProgram& other)

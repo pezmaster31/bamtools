@@ -505,7 +505,7 @@ bool Fasta::FastaPrivate::LoadIndexData()
         ungetc(c, IndexStream);
 
         // clear index buffer
-        indexBuffer.str("");
+        indexBuffer.str(std::string());
 
         // read line from index file
         if (fgets(buffer, 1024, IndexStream) == 0) {
@@ -587,12 +587,12 @@ bool Fasta::FastaPrivate::WriteIndexData()
     for (; indexIter != indexEnd; ++indexIter) {
 
         // clear stream
-        indexBuffer.str("");
+        indexBuffer.str(std::string());
 
         // write data to stream
         const FastaIndexData& data = (*indexIter);
-        indexBuffer << data.Name << "\t" << data.Length << "\t" << data.Offset << "\t"
-                    << data.LineLength << "\t" << data.ByteLength << std::endl;
+        indexBuffer << data.Name << '\t' << data.Length << '\t' << data.Offset << '\t'
+                    << data.LineLength << '\t' << data.ByteLength << std::endl;
 
         // write stream to file
         success &= (fputs(indexBuffer.str().c_str(), IndexStream) >= 0);

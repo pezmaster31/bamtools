@@ -63,7 +63,7 @@ bool BamMultiReaderPrivate::CloseFile(const std::string& filename)
     else {
         const std::string currentError = m_errorString;
         const std::string message =
-            std::string("error while closing file: ") + filename + "\n" + currentError;
+            std::string("error while closing file: ") + filename + '\n' + currentError;
         SetErrorString("BamMultiReader::CloseFile", message);
         return false;
     }
@@ -876,7 +876,7 @@ bool BamMultiReaderPrivate::ValidateReaders() const
                 for (; refIter != refEnd; ++refIter) {
                     const RefData& entry = (*refIter);
                     std::stringstream s;
-                    s << entry.RefName << " " << std::endl;
+                    s << entry.RefName << ' ' << std::endl;
                 }
 
                 s << "but found: " << std::endl;
@@ -886,7 +886,7 @@ bool BamMultiReaderPrivate::ValidateReaders() const
                 refEnd = currentReaderRefData.end();
                 for (; refIter != refEnd; ++refIter) {
                     const RefData& entry = (*refIter);
-                    s << entry.RefName << " " << entry.RefLength << std::endl;
+                    s << entry.RefName << ' ' << entry.RefLength << std::endl;
                 }
 
                 SetErrorString("BamMultiReader::ValidateReaders", s.str());

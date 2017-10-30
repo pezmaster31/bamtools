@@ -45,10 +45,10 @@ std::string GetTimestampString()
 
     // convert whitespace to '_'
     std::string timeString = timeStream.str();
-    size_t found = timeString.find(" ");
+    size_t found = timeString.find(' ');
     while (found != std::string::npos) {
-        timeString.replace(found, 1, "_");
-        found = timeString.find(" ", found + 1);
+        timeString.replace(found, 1, 1, '_');
+        found = timeString.find(' ', found + 1);
     }
     return timeString;
 }
@@ -57,7 +57,7 @@ std::string GetTimestampString()
 // (so /path/to/file.txt becomes /path/to/file )
 std::string RemoveFilenameExtension(const std::string& filename)
 {
-    size_t found = filename.rfind(".");
+    size_t found = filename.rfind('.');
     return filename.substr(0, found);
 }
 
@@ -99,11 +99,7 @@ struct SplitTool::SplitSettings
         , IsSplittingPaired(false)
         , IsSplittingReference(false)
         , IsSplittingTag(false)
-        , CustomOutputStub("")
-        , CustomRefPrefix("")
-        , CustomTagPrefix("")
         , InputFilename(Options::StandardIn())
-        , TagToSplit("")
         , ListTagDelimiter("--")
     {}
 };
@@ -334,7 +330,7 @@ bool SplitTool::SplitToolPrivate::SplitReference()
 
     // make sure prefix starts with '.'
     const size_t dotFound = refPrefix.find('.');
-    if (dotFound != 0) refPrefix = std::string(".") + refPrefix;
+    if (dotFound != 0) refPrefix = std::string(1, '.') + refPrefix;
 
     // iterate through alignments
     BamAlignment al;
@@ -512,7 +508,7 @@ bool SplitTool::SplitToolPrivate::SplitListTagImpl(BamAlignment& al)
 
     // make sure prefix starts with '.'
     const size_t dotFound = tagPrefix.find('.');
-    if (dotFound != 0) tagPrefix = std::string(".") + tagPrefix;
+    if (dotFound != 0) tagPrefix = std::string(1, '.') + tagPrefix;
 
     const std::string tag = m_settings->TagToSplit;
     BamWriter* writer;
@@ -544,7 +540,7 @@ bool SplitTool::SplitToolPrivate::SplitListTagImpl(BamAlignment& al)
 
             // open new BamWriter, save first alignment
             std::stringstream outputFilenameStream;
-            outputFilenameStream << m_outputFilenameStub << tagPrefix << tag << "_" << listTagLabel
+            outputFilenameStream << m_outputFilenameStub << tagPrefix << tag << '_' << listTagLabel
                                  << ".bam";
             writer = new BamWriter;
             if (!writer->Open(outputFilenameStream.str(), m_header, m_references)) {
@@ -589,7 +585,7 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al)
 
     // make sure prefix starts with '.'
     const size_t dotFound = tagPrefix.find('.');
-    if (dotFound != 0) tagPrefix = std::string(".") + tagPrefix;
+    if (dotFound != 0) tagPrefix = std::string(1, '.') + tagPrefix;
 
     // local variables
     const std::string tag = m_settings->TagToSplit;
@@ -601,7 +597,7 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al)
     if (al.GetTag(tag, currentValue)) {
 
         // open new BamWriter, save first alignment
-        outputFilenameStream << m_outputFilenameStub << tagPrefix << tag << "_" << currentValue
+        outputFilenameStream << m_outputFilenameStub << tagPrefix << tag << '_' << currentValue
                              << ".bam";
         writer = new BamWriter;
         if (!writer->Open(outputFilenameStream.str(), m_header, m_references)) {
@@ -615,7 +611,7 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al)
         outputFiles.insert(std::make_pair(currentValue, writer));
 
         // reset stream
-        outputFilenameStream.str("");
+        outputFilenameStream.str(std::string());
     }
 
     // iterate through remaining alignments
@@ -631,7 +627,7 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al)
         if (writerIter == outputFiles.end()) {
 
             // open new BamWriter
-            outputFilenameStream << m_outputFilenameStub << tagPrefix << tag << "_" << currentValue
+            outputFilenameStream << m_outputFilenameStub << tagPrefix << tag << '_' << currentValue
                                  << ".bam";
             writer = new BamWriter;
             if (!writer->Open(outputFilenameStream.str(), m_header, m_references)) {
@@ -644,7 +640,7 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al)
             outputFiles.insert(std::make_pair(currentValue, writer));
 
             // reset stream
-            outputFilenameStream.str("");
+            outputFilenameStream.str(std::string());
         }
 
         // else grab corresponding writer

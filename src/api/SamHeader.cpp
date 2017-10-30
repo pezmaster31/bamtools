@@ -50,13 +50,11 @@ using namespace BamTools::Internal;
     \brief corresponds to \@CO entries
 */
 
-/*! \fn SamHeader::SamHeader(const std::string& headerText = "")
+/*! \fn SamHeader::SamHeader(const std::string& headerText = std::string())
     \brief constructor
 */
 SamHeader::SamHeader(const std::string& headerText)
-    : Version("")
-    , SortOrder(Constants::SAM_HD_SORTORDER_UNKNOWN)
-    , GroupOrder("")
+    : SortOrder(Constants::SAM_HD_SORTORDER_UNKNOWN)
 {
     SetHeaderText(headerText);
 }

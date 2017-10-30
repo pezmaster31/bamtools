@@ -63,7 +63,7 @@ static const SamHeaderVersion SAM_VERSION_1_4 = SamHeaderVersion(1, 4);
 
 const std::string SamHeaderValidator::ERROR_PREFIX = "ERROR: ";
 const std::string SamHeaderValidator::WARN_PREFIX = "WARNING: ";
-const std::string SamHeaderValidator::NEWLINE = "\n";
+const std::string SamHeaderValidator::NEWLINE(1, '\n');
 
 SamHeaderValidator::SamHeaderValidator(const SamHeader& header)
     : m_header(header)

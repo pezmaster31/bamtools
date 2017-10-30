@@ -106,7 +106,6 @@ struct ConvertTool::ConvertSettings
         , IsOmittingSamHeader(false)
         , IsPrintingPileupMapQualities(false)
         , OutputFilename(Options::StandardOut())
-        , FastaFilename("")
     {}
 };
 
@@ -306,8 +305,8 @@ void ConvertTool::ConvertToolPrivate::PrintBed(const BamAlignment& a)
     // (e.g. a 50-base read aligned to pos 10 could have BED coordinates (10, 60) instead of BAM coordinates (10, 59) )
     // <chromName> <chromStart> <chromEnd> <readName> <score> <strand>
 
-    m_out << m_references.at(a.RefID).RefName << "\t" << a.Position << "\t" << a.GetEndPosition()
-          << "\t" << a.Name << "\t" << a.MapQuality << "\t" << (a.IsReverseStrand() ? "-" : "+")
+    m_out << m_references.at(a.RefID).RefName << '\t' << a.Position << '\t' << a.GetEndPosition()
+          << '\t' << a.Name << '\t' << a.MapQuality << '\t' << (a.IsReverseStrand() ? '-' : '+')
           << std::endl;
 }
 
@@ -323,7 +322,7 @@ void ConvertTool::ConvertToolPrivate::PrintFasta(const BamAlignment& a)
     // N.B. - QueryBases are reverse-complemented if aligned to reverse strand
 
     // print header
-    m_out << ">" << a.Name << std::endl;
+    m_out << '>' << a.Name << std::endl;
 
     // handle reverse strand alignment - bases
     std::string sequence = a.QueryBases;
@@ -376,9 +375,9 @@ void ConvertTool::ConvertToolPrivate::PrintFastq(const BamAlignment& a)
     }
 
     // write to output stream
-    m_out << "@" << name << std::endl
+    m_out << '@' << name << std::endl
           << sequence << std::endl
-          << "+" << std::endl
+          << '+' << std::endl
           << qualities << std::endl;
 }
 
@@ -394,7 +393,7 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
         m_out << "\"reference\":\"" << m_references[a.RefID].RefName << "\",";
 
     // write position & map quality
-    m_out << "\"position\":" << a.Position + 1 << ",\"mapQuality\":" << a.MapQuality << ",";
+    m_out << "\"position\":" << a.Position + 1 << ",\"mapQuality\":" << a.MapQuality << ',';
 
     // write CIGAR
     const std::vector<CigarOp>& cigarData = a.CigarData;
@@ -405,8 +404,8 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
         std::vector<CigarOp>::const_iterator cigarEnd = cigarData.end();
         for (; cigarIter != cigarEnd; ++cigarIter) {
             const CigarOp& op = (*cigarIter);
-            if (cigarIter != cigarBegin) m_out << ",";
-            m_out << "\"" << op.Length << op.Type << "\"";
+            if (cigarIter != cigarBegin) m_out << ',';
+            m_out << '"' << op.Length << op.Type << '"';
         }
         m_out << "],";
     }
@@ -428,7 +427,7 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
         m_out << "\"qualities\":[" << static_cast<short>(*s) - 33;
         ++s;
         for (; s != a.Qualities.end(); ++s)
-            m_out << "," << static_cast<short>(*s) - 33;
+            m_out << ',' << static_cast<short>(*s) - 33;
         m_out << "],";
     }
 
@@ -445,10 +444,10 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
 
         while (index < tagDataLength) {
 
-            if (index > 0) m_out << ",";
+            if (index > 0) m_out << ',';
 
             // write tag name
-            m_out << "\"" << a.TagData.substr(index, 2) << "\":";
+            m_out << '"' << a.TagData.substr(index, 2) << "\":";
             index += 2;
 
             // get data type
@@ -456,7 +455,7 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
             ++index;
             switch (type) {
                 case (Constants::BAM_TAG_TYPE_ASCII):
-                    m_out << "\"" << tagData[index] << "\"";
+                    m_out << '"' << tagData[index] << '"';
                     ++index;
                     break;
 
@@ -499,7 +498,7 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
 
                 case (Constants::BAM_TAG_TYPE_HEX):
                 case (Constants::BAM_TAG_TYPE_STRING):
-                    m_out << "\"";
+                    m_out << '"';
                     while (tagData[index]) {
                         if (tagData[index] == '\"')
                             m_out << "\\\"";  // escape for json
@@ -507,7 +506,7 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
                             m_out << tagData[index];
                         ++index;
                     }
-                    m_out << "\"";
+                    m_out << '"';
                     ++index;
                     break;
             }
@@ -515,10 +514,10 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
             if (tagData[index] == '\0') break;
         }
 
-        m_out << "}";
+        m_out << '}';
     }
 
-    m_out << "}" << std::endl;
+    m_out << '}' << std::endl;
 }
 
 // print BamAlignment in SAM format
@@ -529,16 +528,16 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a)
     // <QNAME> <FLAG> <RNAME> <POS> <MAPQ> <CIGAR> <MRNM> <MPOS> <ISIZE> <SEQ> <QUAL> [ <TAG>:<VTYPE>:<VALUE> [...] ]
 
     // write name & alignment flag
-    m_out << a.Name << "\t" << a.AlignmentFlag << "\t";
+    m_out << a.Name << '\t' << a.AlignmentFlag << '\t';
 
     // write reference name
     if ((a.RefID >= 0) && (a.RefID < (int)m_references.size()))
-        m_out << m_references[a.RefID].RefName << "\t";
+        m_out << m_references[a.RefID].RefName << '\t';
     else
         m_out << "*\t";
 
     // write position & map quality
-    m_out << a.Position + 1 << "\t" << a.MapQuality << "\t";
+    m_out << a.Position + 1 << '\t' << a.MapQuality << '\t';
 
     // write CIGAR
     const std::vector<CigarOp>& cigarData = a.CigarData;
@@ -551,7 +550,7 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a)
             const CigarOp& op = (*cigarIter);
             m_out << op.Length << op.Type;
         }
-        m_out << "\t";
+        m_out << '\t';
     }
 
     // write mate reference name, mate position, & insert size
@@ -559,8 +558,8 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a)
         if (a.MateRefID == a.RefID)
             m_out << "=\t";
         else
-            m_out << m_references[a.MateRefID].RefName << "\t";
-        m_out << a.MatePosition + 1 << "\t" << a.InsertSize << "\t";
+            m_out << m_references[a.MateRefID].RefName << '\t';
+        m_out << a.MatePosition + 1 << '\t' << a.InsertSize << '\t';
     } else
         m_out << "*\t0\t0\t";
 
@@ -568,11 +567,11 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a)
     if (a.QueryBases.empty())
         m_out << "*\t";
     else
-        m_out << a.QueryBases << "\t";
+        m_out << a.QueryBases << '\t';
 
     // write qualities
     if (a.Qualities.empty() || (a.Qualities.at(0) == (char)0xFF))
-        m_out << "*";
+        m_out << '*';
     else
         m_out << a.Qualities;
 
@@ -585,7 +584,7 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a)
 
         // write tag name
         std::string tagName = a.TagData.substr(index, 2);
-        m_out << "\t" << tagName << ":";
+        m_out << '\t' << tagName << ':';
         index += 2;
 
         // get data type
@@ -636,7 +635,7 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a)
 
             case (Constants::BAM_TAG_TYPE_HEX):  // fall-through
             case (Constants::BAM_TAG_TYPE_STRING):
-                m_out << type << ":";
+                m_out << type << ':';
                 while (tagData[index]) {
                     m_out << tagData[index];
                     ++index;
@@ -657,7 +656,7 @@ void ConvertTool::ConvertToolPrivate::PrintYaml(const BamAlignment& a)
 
     // write alignment name
     m_out << "---" << std::endl;
-    m_out << a.Name << ":" << std::endl;
+    m_out << a.Name << ':' << std::endl;
 
     // write alignment data
     m_out << "   "
@@ -960,7 +959,7 @@ void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData)
     // tab-delimited
     // <refName> <1-based pos> <refBase> <numberAlleles> <bases> <qualities> [mapQuals]
 
-    const std::string TAB = "\t";
+    const std::string TAB(1, '\t');
     *m_out << referenceName << TAB << position + 1 << TAB << referenceBase << TAB << numberAlleles
            << TAB << bases.str() << TAB << baseQualities.str() << TAB << mapQualities.str()
            << std::endl;

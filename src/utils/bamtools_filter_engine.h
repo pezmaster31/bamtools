@@ -78,12 +78,11 @@ class UTILS_EXPORT FilterEngine
     // ctor & dtor
 public:
     FilterEngine()
-        : m_ruleString("")
-        , m_isRuleQueueGenerated(false)
+        : m_isRuleQueueGenerated(false)
         , m_defaultCompareType(FilterCompareType::OR)
-        , AND_OPERATOR("&")
-        , OR_OPERATOR("|")
-        , NOT_OPERATOR("!")
+        , AND_OPERATOR(1, '&')
+        , OR_OPERATOR(1, '|')
+        , NOT_OPERATOR(1, '!')
     {}
 
     ~FilterEngine() {}
@@ -122,7 +121,7 @@ public:
 
     // sets rule string for building expression queue
     // if empty, creates
-    void setRule(const std::string& ruleString = "");
+    void setRule(const std::string& ruleString = std::string());
 
     // token parsing (for property filter generation)
 public:

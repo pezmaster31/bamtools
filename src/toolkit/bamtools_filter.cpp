@@ -180,7 +180,7 @@ struct BamAlignmentChecker
         char tagType = '\0';
         if (!al.GetTagType(tagName, tagType)) return false;
 
-        // remove tagName & ":" from beginning tagFilter
+        // remove tagName & ':' from beginning tagFilter
         std::string tagFilterString = entireTagFilterString.substr(3);
 
         // switch on tag type to set tag query value & parse filter token

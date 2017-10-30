@@ -59,20 +59,7 @@ using namespace BamTools;
 /*! \fn SamReadGroup::SamReadGroup()
     \brief default constructor
 */
-SamReadGroup::SamReadGroup()
-    : Description("")
-    , FlowOrder("")
-    , ID("")
-    , KeySequence("")
-    , Library("")
-    , PlatformUnit("")
-    , PredictedInsertSize("")
-    , ProductionDate("")
-    , Program("")
-    , Sample("")
-    , SequencingCenter("")
-    , SequencingTechnology("")
-{}
+SamReadGroup::SamReadGroup() {}
 
 /*! \fn SamReadGroup::SamReadGroup(const std::string& id)
     \brief constructs read group with \a id
@@ -80,18 +67,7 @@ SamReadGroup::SamReadGroup()
     \param id desired read group ID
 */
 SamReadGroup::SamReadGroup(const std::string& id)
-    : Description("")
-    , FlowOrder("")
-    , ID(id)
-    , KeySequence("")
-    , Library("")
-    , PlatformUnit("")
-    , PredictedInsertSize("")
-    , ProductionDate("")
-    , Program("")
-    , Sample("")
-    , SequencingCenter("")
-    , SequencingTechnology("")
+    : ID(id)
 {}
 
 /*! \fn SamReadGroup::SamReadGroup(const SamReadGroup& other)

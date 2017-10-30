@@ -10,6 +10,7 @@
 #ifndef BAMALIGNMENT_H
 #define BAMALIGNMENT_H
 
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -234,7 +235,7 @@ inline bool BamAlignment::AddTag(const std::string& tag, const std::string& type
 
     // copy original tag data to temp buffer
     const std::string newTag = tag + type;
-    const size_t newTagDataLength =
+    const std::size_t newTagDataLength =
         tagDataLength + newTag.size() + sizeof(T);  // leave room for new T
     RaiiBuffer originalTagData(newTagDataLength);
     memcpy(originalTagData.Buffer, TagData.c_str(),
@@ -283,7 +284,8 @@ inline bool BamAlignment::AddTag<std::string>(const std::string& tag, const std:
 
     // otherwise, copy tag data to temp buffer
     const std::string newTag = tag + type + value;
-    const size_t newTagDataLength = tagDataLength + newTag.size() + 1;  // leave room for null-term
+    const std::size_t newTagDataLength =
+        tagDataLength + newTag.size() + 1;  // leave room for null-term
     RaiiBuffer originalTagData(newTagDataLength);
     memcpy(originalTagData.Buffer, TagData.c_str(),
            tagDataLength + 1);  // '+1' for TagData null-term
@@ -340,7 +342,7 @@ inline bool BamAlignment::AddTag(const std::string& tag, const std::vector<T>& v
     memcpy(newTagBase + 4, &numElements, sizeof(int32_t));
 
     // copy current TagData string to temp buffer, leaving room for new tag's contents
-    const size_t newTagDataLength =
+    const std::size_t newTagDataLength =
         tagDataLength + Constants::BAM_TAG_ARRAYBASE_SIZE + numElements * sizeof(T);
     RaiiBuffer originalTagData(newTagDataLength);
     memcpy(originalTagData.Buffer, TagData.c_str(),

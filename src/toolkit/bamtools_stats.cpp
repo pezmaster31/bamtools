@@ -15,6 +15,7 @@ using namespace BamTools;
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -111,7 +112,7 @@ bool StatsTool::StatsToolPrivate::CalculateMedian(std::vector<int>& data, double
     if (data.empty()) return false;
 
     // find middle element
-    size_t middleIndex = data.size() / 2;
+    std::size_t middleIndex = data.size() / 2;
     std::vector<int>::iterator target = data.begin() + middleIndex;
     nth_element(data.begin(), target, data.end());
 

@@ -17,6 +17,7 @@ using namespace BamTools::Internal;
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+#include <cstddef>
 #include <cstdlib>
 #include <sstream>
 
@@ -29,7 +30,7 @@ namespace Internal {
 
 static const std::string HTTP_PORT = "80";
 static const std::string HTTP_PREFIX = "http://";
-static const size_t HTTP_PREFIX_LENGTH = 7;
+static const std::size_t HTTP_PREFIX_LENGTH = 7;
 
 static const std::string DOUBLE_NEWLINE = "\n\n";
 
@@ -55,9 +56,9 @@ static inline bool endsWith(const std::string& source, const std::string& patter
 static inline std::string toLower(const std::string& s)
 {
     std::string out;
-    const size_t sSize = s.size();
+    const std::size_t sSize = s.size();
     out.reserve(sSize);
-    for (size_t i = 0; i < sSize; ++i)
+    for (std::size_t i = 0; i < sSize; ++i)
         out[i] = tolower(s[i]);
     return out;
 }
@@ -199,11 +200,11 @@ void BamHttp::ParseUrl(const std::string& url)
     // make sure url starts with "http://", case-insensitive
     std::string tempUrl(url);
     toLower(tempUrl);
-    const size_t prefixFound = tempUrl.find(HTTP_PREFIX);
+    const std::size_t prefixFound = tempUrl.find(HTTP_PREFIX);
     if (prefixFound == std::string::npos) return;
 
     // find end of host name portion (first '/' hit after the prefix)
-    const size_t firstSlashFound = tempUrl.find(HOST_SEPARATOR, HTTP_PREFIX_LENGTH);
+    const std::size_t firstSlashFound = tempUrl.find(HOST_SEPARATOR, HTTP_PREFIX_LENGTH);
     if (firstSlashFound == std::string::npos) {
         ;  // no slash found... no filename given along with host?
     }
@@ -211,7 +212,7 @@ void BamHttp::ParseUrl(const std::string& url)
     // fetch hostname (check for proxy port)
     std::string hostname =
         tempUrl.substr(HTTP_PREFIX_LENGTH, (firstSlashFound - HTTP_PREFIX_LENGTH));
-    const size_t colonFound = hostname.find(PROXY_SEPARATOR);
+    const std::size_t colonFound = hostname.find(PROXY_SEPARATOR);
     if (colonFound != std::string::npos) {
         ;  // TODO: handle proxy port (later, just skip for now)
     } else {
@@ -237,7 +238,7 @@ int64_t BamHttp::Read(char* data, const unsigned int numBytes)
     int64_t numBytesReadSoFar = 0;
     while (numBytesReadSoFar < numBytes) {
 
-        const size_t remaining = static_cast<size_t>(numBytes - numBytesReadSoFar);
+        const std::size_t remaining = static_cast<std::size_t>(numBytes - numBytesReadSoFar);
 
         // if we're not holding a valid GET reponse, get one
         if (m_response == 0) {
@@ -389,7 +390,7 @@ bool BamHttp::Seek(const int64_t& position, const int origin)
     return true;
 }
 
-bool BamHttp::SendGetRequest(const size_t numBytes)
+bool BamHttp::SendGetRequest(const std::size_t numBytes)
 {
 
     // clear previous data
@@ -401,7 +402,8 @@ bool BamHttp::SendGetRequest(const size_t numBytes)
     if (!EnsureSocketConnection()) return false;
 
     // create range string
-    const int64_t endPosition = m_filePosition + std::max(static_cast<size_t>(0x10000), numBytes);
+    const int64_t endPosition =
+        m_filePosition + std::max(static_cast<std::size_t>(0x10000), numBytes);
     std::stringstream range;
     range << BYTES_PREFIX << m_filePosition << '-' << endPosition;
 
@@ -452,8 +454,8 @@ bool BamHttp::SendGetRequest(const size_t numBytes)
 
                 // read data from response
                 const int64_t remaining = m_filePosition - numBytesRead;
-                const size_t bytesToRead =
-                    static_cast<size_t>((remaining > 0x8000) ? 0x8000 : remaining);
+                const std::size_t bytesToRead =
+                    static_cast<std::size_t>((remaining > 0x8000) ? 0x8000 : remaining);
                 const int64_t socketBytesRead = ReadFromSocket(tmp.Buffer, bytesToRead);
 
                 // if error

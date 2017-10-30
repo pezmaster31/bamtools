@@ -15,6 +15,7 @@
 using namespace BamTools;
 using namespace BamTools::Internal;
 
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 
@@ -62,7 +63,7 @@ void BamWriterPrivate::CreatePackedCigar(const std::vector<CigarOp>& cigarOperat
 {
 
     // initialize
-    const size_t numCigarOperations = cigarOperations.size();
+    const std::size_t numCigarOperations = cigarOperations.size();
     packedCigar.resize(numCigarOperations * Constants::BAM_SIZEOF_INT);
 
     // pack the cigar data into the string
@@ -119,8 +120,8 @@ void BamWriterPrivate::EncodeQuerySequence(const std::string& query, std::string
 {
 
     // prepare the encoded query string
-    const size_t queryLength = query.size();
-    const size_t encodedQueryLength = static_cast<size_t>((queryLength + 1) / 2);
+    const std::size_t queryLength = query.size();
+    const std::size_t encodedQueryLength = static_cast<std::size_t>((queryLength + 1) / 2);
     encodedQuery.resize(encodedQueryLength);
     char* pEncodedQuery = (char*)encodedQuery.data();
     const char* pQuery = (const char*)query.data();
@@ -325,7 +326,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
         char* cigarData = new char[packedCigarLength]();
         memcpy(cigarData, packedCigar.data(), packedCigarLength);
         if (m_isBigEndian) {
-            for (size_t i = 0; i < packedCigarLength; ++i)
+            for (std::size_t i = 0; i < packedCigarLength; ++i)
                 BamTools::SwapEndian_32p(&cigarData[i]);
         }
         m_stream.Write(cigarData, packedCigarLength);
@@ -344,7 +345,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
             al.Qualities[0] == (char)0xFF)
             memset(pBaseQualities, 0xFF, queryLength);  // if missing or '*', fill with invalid qual
         else {
-            for (size_t i = 0; i < queryLength; ++i)
+            for (std::size_t i = 0; i < queryLength; ++i)
                 pBaseQualities[i] =
                     al.Qualities.at(i) - 33;  // FASTQ ASCII -> phred score conversion
         }
@@ -358,7 +359,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
         char* tagData = new char[tagDataLength]();
         memcpy(tagData, al.TagData.data(), tagDataLength);
 
-        size_t i = 0;
+        std::size_t i = 0;
         while (i < tagDataLength) {
 
             i += Constants::BAM_TAG_TAGSIZE;  // skip tag chars (e.g. "RG", "NM", etc.)

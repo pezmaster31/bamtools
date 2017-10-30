@@ -17,6 +17,7 @@ using namespace BamTools::Internal;
 
 #include <algorithm>
 #include <climits>
+#include <cstddef>
 #include <cstring>
 #include <string>
 
@@ -24,7 +25,7 @@ using namespace BamTools::Internal;
 // RollingBuffer implementation
 // ------------------------------
 
-RollingBuffer::RollingBuffer(size_t growth)
+RollingBuffer::RollingBuffer(std::size_t growth)
     : m_bufferGrowth(growth)
 {
     // buffer always contains at least 1 (maybe empty) byte array
@@ -36,7 +37,7 @@ RollingBuffer::RollingBuffer(size_t growth)
 
 RollingBuffer::~RollingBuffer() {}
 
-size_t RollingBuffer::BlockSize() const
+std::size_t RollingBuffer::BlockSize() const
 {
 
     // if only one byte array in buffer <- needed?
@@ -52,7 +53,7 @@ bool RollingBuffer::CanReadLine() const
     return IndexOf('\n') != std::string::npos;
 }
 
-void RollingBuffer::Chop(size_t n)
+void RollingBuffer::Chop(std::size_t n)
 {
 
     // update buffer size
@@ -113,7 +114,7 @@ void RollingBuffer::Clear()
     m_totalBufferSize = 0;
 }
 
-void RollingBuffer::Free(size_t n)
+void RollingBuffer::Free(std::size_t n)
 {
 
     // update buffer size
@@ -125,7 +126,7 @@ void RollingBuffer::Free(size_t n)
     // loop until target case hit
     for (;;) {
 
-        const size_t blockSize = BlockSize();
+        const std::size_t blockSize = BlockSize();
 
         // if there's room in current array
         if (n < blockSize) {
@@ -165,28 +166,28 @@ void RollingBuffer::Free(size_t n)
     if (IsEmpty()) Clear();
 }
 
-size_t RollingBuffer::IndexOf(char c) const
+std::size_t RollingBuffer::IndexOf(char c) const
 {
 
     // skip processing if empty buffer
     if (IsEmpty()) return std::string::npos;
 
-    size_t index(0);
+    std::size_t index(0);
 
     // iterate over byte arrays
-    const size_t numBuffers = m_data.size();
-    for (size_t i = 0; i < numBuffers; ++i) {
+    const std::size_t numBuffers = m_data.size();
+    for (std::size_t i = 0; i < numBuffers; ++i) {
         const ByteArray& current = m_data.at(i);
 
         // if on first array, use head; else 0
-        const size_t start = ((i == 0) ? m_head : 0);
+        const std::size_t start = ((i == 0) ? m_head : 0);
 
         // if on last array, set end; else use current byte array size
-        const size_t end = ((i == m_tailBufferIndex) ? m_tail : current.Size());
+        const std::size_t end = ((i == m_tailBufferIndex) ? m_tail : current.Size());
 
         // look through this iteration's byte array for @c
         const char* p = current.ConstData() + start;
-        for (size_t j = start; j < end; ++j) {
+        for (std::size_t j = start; j < end; ++j) {
             if (*p++ == c) return index;
             ++index;
         }
@@ -201,15 +202,15 @@ bool RollingBuffer::IsEmpty() const
     return (m_tailBufferIndex == 0) && (m_tail == 0);
 }
 
-size_t RollingBuffer::Read(char* dest, size_t max)
+std::size_t RollingBuffer::Read(char* dest, std::size_t max)
 {
 
-    size_t bytesToRead = std::min(Size(), max);
-    size_t bytesReadSoFar = 0;
+    std::size_t bytesToRead = std::min(Size(), max);
+    std::size_t bytesReadSoFar = 0;
 
     while (bytesReadSoFar < bytesToRead) {
         const char* readPtr = ReadPointer();
-        size_t blockBytes = std::min((bytesToRead - bytesReadSoFar), BlockSize());
+        std::size_t blockBytes = std::min((bytesToRead - bytesReadSoFar), BlockSize());
         if (dest) memcpy(dest + bytesReadSoFar, readPtr, blockBytes);
         bytesReadSoFar += blockBytes;
         Free(blockBytes);
@@ -218,20 +219,20 @@ size_t RollingBuffer::Read(char* dest, size_t max)
     return bytesReadSoFar;
 }
 
-size_t RollingBuffer::ReadLine(char* dest, size_t max)
+std::size_t RollingBuffer::ReadLine(char* dest, std::size_t max)
 {
 
     // if we can't read line or if max is 0
     if (!CanReadLine() || max == 0) return 0;
 
     // otherwise, read until we hit newline
-    size_t bytesReadSoFar = 0;
+    std::size_t bytesReadSoFar = 0;
     bool finished = false;
     while (!finished) {
 
-        const size_t index = IndexOf('\n');
+        const std::size_t index = IndexOf('\n');
         const char* readPtr = ReadPointer();
-        size_t bytesToRead = std::min((index + 1) - bytesReadSoFar, BlockSize());
+        std::size_t bytesToRead = std::min((index + 1) - bytesReadSoFar, BlockSize());
         bytesToRead = std::min(bytesToRead, (max - 1) - bytesReadSoFar);
         memcpy(dest + bytesReadSoFar, readPtr, bytesToRead);
         bytesReadSoFar += bytesToRead;
@@ -256,7 +257,7 @@ const char* RollingBuffer::ReadPointer() const
     return first.ConstData() + m_head;
 }
 
-char* RollingBuffer::Reserve(size_t n)
+char* RollingBuffer::Reserve(std::size_t n)
 {
 
     // if empty buffer
@@ -304,12 +305,12 @@ char* RollingBuffer::Reserve(size_t n)
     return m_data[m_tailBufferIndex].Data();
 }
 
-size_t RollingBuffer::Size() const
+std::size_t RollingBuffer::Size() const
 {
     return m_totalBufferSize;
 }
 
-void RollingBuffer::Write(const char* src, size_t n)
+void RollingBuffer::Write(const char* src, std::size_t n)
 {
     char* writePtr = Reserve(n);
     memcpy(writePtr, src, n);

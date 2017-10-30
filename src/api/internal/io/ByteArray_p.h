@@ -20,6 +20,7 @@
 //
 // We mean it.
 
+#include <cstddef>
 #include <string>
 #include <vector>
 #include "api/api_global.h"
@@ -36,7 +37,7 @@ public:
     ByteArray();
     ByteArray(const std::string& value);
     ByteArray(const std::vector<char>& value);
-    ByteArray(const char* value, size_t n);
+    ByteArray(const char* value, std::size_t n);
     ByteArray(const ByteArray& other);
     ~ByteArray();
 
@@ -47,15 +48,15 @@ public:
     // data access
     const char* ConstData() const;
     char* Data();
-    const char& operator[](size_t i) const;
-    char& operator[](size_t i);
+    const char& operator[](std::size_t i) const;
+    char& operator[](std::size_t i);
 
     // byte array manipulation
     void Clear();
-    size_t IndexOf(const char c, const size_t from = 0, const size_t to = 0) const;
-    ByteArray& Remove(size_t from, size_t n);
-    void Resize(size_t n);
-    size_t Size() const;
+    std::size_t IndexOf(const char c, const std::size_t from = 0, const std::size_t to = 0) const;
+    ByteArray& Remove(std::size_t from, std::size_t n);
+    void Resize(std::size_t n);
+    std::size_t Size() const;
     void Squeeze();
 
     // data members

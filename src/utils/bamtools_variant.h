@@ -17,6 +17,7 @@
 #ifndef BAMTOOLS_VARIANT_H
 #define BAMTOOLS_VARIANT_H
 
+#include <cstddef>
 #include <stdexcept>
 #include <string>
 #include <typeinfo>
@@ -111,7 +112,7 @@ private:
             if (refs == 0) delete this;
         }
 
-        size_t refs;
+        std::size_t refs;
     };
 
     template <typename T>

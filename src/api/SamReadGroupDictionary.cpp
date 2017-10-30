@@ -10,6 +10,7 @@
 #include "api/SamReadGroupDictionary.h"
 using namespace BamTools;
 
+#include <cstddef>
 #include <iostream>
 
 /*! \class BamTools::SamReadGroupDictionary
@@ -239,9 +240,9 @@ void SamReadGroupDictionary::Remove(const std::string& readGroupId)
     if (IsEmpty() || !Contains(readGroupId)) return;
 
     // update 'lookup index' for every entry after @readGroupId
-    const size_t indexToRemove = m_lookupData[readGroupId];
-    const size_t numEntries = m_data.size();
-    for (size_t i = indexToRemove + 1; i < numEntries; ++i) {
+    const std::size_t indexToRemove = m_lookupData[readGroupId];
+    const std::size_t numEntries = m_data.size();
+    for (std::size_t i = indexToRemove + 1; i < numEntries; ++i) {
         const SamReadGroup& rg = m_data.at(i);
         --m_lookupData[rg.ID];
     }
@@ -311,6 +312,6 @@ SamReadGroup& SamReadGroupDictionary::operator[](const std::string& readGroupId)
         m_lookupData[readGroupId] = m_data.size() - 1;
     }
 
-    const size_t index = m_lookupData[readGroupId];
+    const std::size_t index = m_lookupData[readGroupId];
     return m_data.at(index);
 }

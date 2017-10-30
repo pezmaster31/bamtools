@@ -12,6 +12,7 @@
 using namespace BamTools;
 using namespace BamTools::Internal;
 
+#include <cstddef>
 #include <cstring>
 #include <iostream>
 #include <sstream>
@@ -182,7 +183,7 @@ int64_t TcpSocketEngine::nativeNumBytesAvailable() const
     return (ioctlResult == SOCKET_ERROR ? -1 : numBytes);
 }
 
-int64_t TcpSocketEngine::nativeRead(char* dest, size_t max)
+int64_t TcpSocketEngine::nativeRead(char* dest, std::size_t max)
 {
 
     // skip if invalid socket
@@ -222,7 +223,7 @@ int TcpSocketEngine::nativeSelect(int msecs, bool isRead) const
         return select(0, 0, &fds, 0, (msecs < 0 ? 0 : &tv));
 }
 
-int64_t TcpSocketEngine::nativeWrite(const char* data, size_t length)
+int64_t TcpSocketEngine::nativeWrite(const char* data, std::size_t length)
 {
 
     // setup our WSA write buffer

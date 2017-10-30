@@ -11,6 +11,8 @@
 #include "api/BamConstants.h"
 using namespace BamTools;
 
+#include <cstddef>
+
 /*! \class BamTools::BamAlignment
     \brief The main BAM alignment data structure.
 
@@ -160,7 +162,7 @@ bool BamAlignment::BuildCharData()
     if (hasSeqData) {
         const char* seqData = SupportData.AllCharData.data() + seqDataOffset;
         QueryBases.reserve(SupportData.QuerySequenceLength);
-        for (size_t i = 0; i < SupportData.QuerySequenceLength; ++i) {
+        for (std::size_t i = 0; i < SupportData.QuerySequenceLength; ++i) {
             const char singleBase =
                 Constants::BAM_DNA_LOOKUP[((seqData[(i / 2)] >> (4 * (1 - (i % 2)))) & 0xf)];
             QueryBases.append(1, singleBase);
@@ -180,7 +182,7 @@ bool BamAlignment::BuildCharData()
         // otherwise convert from numeric QV to 'FASTQ-style' ASCII character
         else {
             Qualities.reserve(SupportData.QuerySequenceLength);
-            for (size_t i = 0; i < SupportData.QuerySequenceLength; ++i)
+            for (std::size_t i = 0; i < SupportData.QuerySequenceLength; ++i)
                 Qualities.append(1, qualData[i] + 33);
         }
     }
@@ -254,7 +256,7 @@ bool BamAlignment::BuildCharData()
         char* tagData = (((char*)SupportData.AllCharData.data()) + tagDataOffset);
 
         if (IsBigEndian) {
-            size_t i = 0;
+            std::size_t i = 0;
             while (i < tagDataLength) {
 
                 i += Constants::BAM_TAG_TAGSIZE;  // skip tag chars (e.g. "RG", "NM", etc.)
@@ -306,7 +308,7 @@ bool BamAlignment::BuildCharData()
                         i += sizeof(uint32_t);
 
                         // swap endian-ness of array elements
-                        for (size_t j = 0; j < numElements; ++j) {
+                        for (std::size_t j = 0; j < numElements; ++j) {
                             switch (arrayType) {
                                 case (Constants::BAM_TAG_TYPE_INT8):
                                 case (Constants::BAM_TAG_TYPE_UINT8):

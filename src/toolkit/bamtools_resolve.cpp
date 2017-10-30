@@ -18,6 +18,7 @@ using namespace BamTools;
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
@@ -52,8 +53,8 @@ static const std::string TRUE_KEYWORD = "true";
 static const std::string FALSE_KEYWORD = "false";
 
 // field counts
-static const size_t NUM_OPTIONS_FIELDS = 2;
-static const size_t NUM_READGROUPS_FIELDS = 7;
+static const std::size_t NUM_OPTIONS_FIELDS = 2;
+static const std::size_t NUM_READGROUPS_FIELDS = 7;
 
 // header strings
 static const std::string INPUT_TOKEN = "[Input]";
@@ -134,7 +135,7 @@ struct ModelType
     {
         FragmentLengths.push_back(x);
     }
-    size_t size() const
+    std::size_t size() const
     {
         return FragmentLengths.size();
     }

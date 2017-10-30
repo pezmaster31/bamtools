@@ -20,6 +20,7 @@
 //
 // We mean it.
 
+#include <cstddef>
 #include <sstream>
 #include <string>
 #include "api/SamConstants.h"
@@ -84,14 +85,15 @@ inline void SamHeaderVersion::SetVersion(const std::string& version)
         std::stringstream versionStream;
 
         // do nothing if period not found
-        const size_t periodFound = version.find(Constants::SAM_PERIOD);
+        const std::size_t periodFound = version.find(Constants::SAM_PERIOD);
         if (periodFound != std::string::npos) {
 
             // store major version if non-empty and contains only digits
             const std::string& majorVersion = version.substr(0, periodFound);
             versionStream.str(majorVersion);
             if (!majorVersion.empty()) {
-                const size_t nonDigitFound = majorVersion.find_first_not_of(Constants::SAM_DIGITS);
+                const std::size_t nonDigitFound =
+                    majorVersion.find_first_not_of(Constants::SAM_DIGITS);
                 if (nonDigitFound == std::string::npos) versionStream >> m_majorVersion;
             }
 
@@ -99,7 +101,8 @@ inline void SamHeaderVersion::SetVersion(const std::string& version)
             const std::string& minorVersion = version.substr(periodFound + 1);
             versionStream.str(minorVersion);
             if (!minorVersion.empty()) {
-                const size_t nonDigitFound = minorVersion.find_first_not_of(Constants::SAM_DIGITS);
+                const std::size_t nonDigitFound =
+                    minorVersion.find_first_not_of(Constants::SAM_DIGITS);
                 if (nonDigitFound == std::string::npos) versionStream >> m_minorVersion;
             }
         }

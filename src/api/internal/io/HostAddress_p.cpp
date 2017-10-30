@@ -12,6 +12,7 @@ using namespace BamTools;
 using namespace BamTools::Internal;
 
 #include <cctype>
+#include <cstddef>
 #include <cstdlib>
 #include <sstream>
 #include <vector>
@@ -39,7 +40,7 @@ static inline uint8_t CountHits(const std::string& source, const std::string& pa
 {
 
     uint8_t count(0);
-    size_t found = source.find(pattern);
+    std::size_t found = source.find(pattern);
     while (found != std::string::npos) {
         ++count;
         found = source.find(pattern, found + 1);
@@ -59,8 +60,8 @@ static bool ParseIp4(const std::string& address, uint32_t& maybeIp4)
     for (uint8_t i = 0; i < 4; ++i) {
 
         const std::string& field = addressFields.at(i);
-        const size_t fieldSize = field.size();
-        for (size_t j = 0; j < fieldSize; ++j) {
+        const std::size_t fieldSize = field.size();
+        for (std::size_t j = 0; j < fieldSize; ++j) {
             if (!isdigit(field[j])) return false;
         }
 
@@ -84,7 +85,7 @@ static bool ParseIp6(const std::string& address, uint8_t* maybeIp6)
 
     // look for '%' char (if found, lop off that part of address)
     // we're going to ignore any link-local zone index, for now at least
-    const size_t percentFound = tmp.rfind('%');
+    const std::size_t percentFound = tmp.rfind('%');
     if (percentFound != std::string::npos) tmp = tmp.substr(0, percentFound);
 
     // split IP address into string fields
@@ -98,13 +99,13 @@ static bool ParseIp6(const std::string& address, uint8_t* maybeIp6)
 
     // check valid IPv6 'compression'
     // must be valid 'pure' IPv6 or mixed IPv4/6 notation
-    const size_t dotFound = tmp.find('.');
+    const std::size_t dotFound = tmp.find('.');
     const bool isMixed = (dotFound != std::string::npos);
     if (numColonColons != 1 && (numFields < (isMixed ? 7 : 8))) return false;
 
     // iterate over provided fields
-    size_t index = 16;
-    size_t fillCount = 9 - numFields;
+    std::size_t index = 16;
+    std::size_t fillCount = 9 - numFields;
     for (int8_t i = numFields - 1; i >= 0; --i) {
         if (index == 0) return false;
         const std::string& field = fields.at(i);
@@ -334,7 +335,7 @@ bool HostAddress::ParseAddress()
 
     // all IPv6 addresses should have a ':'
     std::string s = m_ipString;
-    size_t found = s.find(':');
+    std::size_t found = s.find(':');
     if (found != std::string::npos) {
         // try parse IP6 address
         uint8_t maybeIp6[16];

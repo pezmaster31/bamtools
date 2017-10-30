@@ -12,6 +12,7 @@
 using namespace BamTools;
 using namespace BamTools::Internal;
 
+#include <cstddef>
 #include <cstdlib>
 #include <sstream>
 #include <vector>
@@ -67,9 +68,9 @@ static std::string Trim(const std::string& source)
 
     // fetch string data
     const char* s = source.data();  // ignoring null-term on purpose
-    const size_t size = source.size();
-    size_t start = 0;
-    size_t end = size - 1;
+    const std::size_t size = source.size();
+    std::size_t start = 0;
+    std::size_t end = size - 1;
 
     // skip if no spaces at start or end
     if (!IsSpace(s[start]) && !IsSpace(s[end])) return source;
@@ -162,7 +163,7 @@ void HttpHeader::Parse(const std::string& s)
         if (field.empty()) continue;
 
         // remove carriage returns
-        const size_t fieldSize = field.size();
+        const std::size_t fieldSize = field.size();
         if (field[fieldSize - 1] == Constants::CAR_RET_CHAR) field.resize(fieldSize - 1);
 
         // store cleaned field
@@ -188,7 +189,7 @@ bool HttpHeader::ParseLine(const std::string& line, int)
 {
 
     // find colon position, return failure if not found
-    const size_t colonFound = line.find(Constants::COLON_CHAR);
+    const std::size_t colonFound = line.find(Constants::COLON_CHAR);
     if (colonFound == std::string::npos) return false;
 
     // store key/value (without leading/trailing whitespace) & return success
@@ -273,16 +274,18 @@ bool HttpRequestHeader::ParseLine(const std::string& line, int lineNumber)
     // walk through request line, storing positions
     //    GET /path/to/resource HTTP/1.1
     //    ^  ^^                ^^
-    const size_t foundMethod =
+    const std::size_t foundMethod =
         line.find_first_not_of(Constants::SPACE_CHAR);  // skip any leading whitespace
     if (foundMethod == std::string::npos) return false;
-    const size_t foundFirstSpace = line.find(Constants::SPACE_CHAR, foundMethod + 1);
+    const std::size_t foundFirstSpace = line.find(Constants::SPACE_CHAR, foundMethod + 1);
     if (foundFirstSpace == std::string::npos) return false;
-    const size_t foundResource = line.find_first_not_of(Constants::SPACE_CHAR, foundFirstSpace + 1);
+    const std::size_t foundResource =
+        line.find_first_not_of(Constants::SPACE_CHAR, foundFirstSpace + 1);
     if (foundResource == std::string::npos) return false;
-    const size_t foundSecondSpace = line.find(Constants::SPACE_CHAR, foundResource + 1);
+    const std::size_t foundSecondSpace = line.find(Constants::SPACE_CHAR, foundResource + 1);
     if (foundSecondSpace == std::string::npos) return false;
-    const size_t foundVersion = line.find_first_not_of(Constants::SPACE_CHAR, foundSecondSpace + 1);
+    const std::size_t foundVersion =
+        line.find_first_not_of(Constants::SPACE_CHAR, foundSecondSpace + 1);
     if (foundVersion == std::string::npos) return false;
 
     // parse out method & resource
@@ -356,17 +359,18 @@ bool HttpResponseHeader::ParseLine(const std::string& line, int lineNumber)
     //    HTTP/1.1 200 OK
     //    ^       ^^  ^^
 
-    const size_t foundVersion =
+    const std::size_t foundVersion =
         line.find_first_not_of(Constants::SPACE_CHAR);  // skip any leading whitespace
     if (foundVersion == std::string::npos) return false;
-    const size_t foundFirstSpace = line.find(Constants::SPACE_CHAR, foundVersion + 1);
+    const std::size_t foundFirstSpace = line.find(Constants::SPACE_CHAR, foundVersion + 1);
     if (foundFirstSpace == std::string::npos) return false;
-    const size_t foundStatusCode =
+    const std::size_t foundStatusCode =
         line.find_first_not_of(Constants::SPACE_CHAR, foundFirstSpace + 1);
     if (foundStatusCode == std::string::npos) return false;
-    const size_t foundSecondSpace = line.find(Constants::SPACE_CHAR, foundStatusCode + 1);
+    const std::size_t foundSecondSpace = line.find(Constants::SPACE_CHAR, foundStatusCode + 1);
     if (foundSecondSpace == std::string::npos) return false;
-    const size_t foundReason = line.find_first_not_of(Constants::SPACE_CHAR, foundSecondSpace + 1);
+    const std::size_t foundReason =
+        line.find_first_not_of(Constants::SPACE_CHAR, foundSecondSpace + 1);
     if (foundReason == std::string::npos) return false;
 
     // parse version numbers

@@ -14,6 +14,8 @@
 #include "api/internal/io/TcpSocketEngine_p.h"
 #include "api/internal/io/HostInfo_p.h"
 
+#include <cstddef>
+
 using namespace BamTools;
 using namespace BamTools::Internal;
 
@@ -146,7 +148,7 @@ int64_t TcpSocketEngine::NumBytesAvailable() const
     return nativeNumBytesAvailable();
 }
 
-int64_t TcpSocketEngine::Read(char* dest, size_t max)
+int64_t TcpSocketEngine::Read(char* dest, std::size_t max)
 {
 
     // return failure if can't read
@@ -196,7 +198,7 @@ bool TcpSocketEngine::WaitForWrite(int msec, bool* timedOut)
     return (ret > 0);
 }
 
-int64_t TcpSocketEngine::Write(const char* data, size_t length)
+int64_t TcpSocketEngine::Write(const char* data, std::size_t length)
 {
 
     // return failure if can't write

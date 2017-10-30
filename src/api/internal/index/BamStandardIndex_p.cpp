@@ -16,6 +16,7 @@ using namespace BamTools;
 using namespace BamTools::Internal;
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -150,7 +151,7 @@ void BamStandardIndex::CalculateCandidateOffsets(const BaiReferenceSummary& refS
         // otherwise, check bin's contents against for overlap
         else {
 
-            size_t offset = 0;
+            std::size_t offset = 0;
             uint64_t chunkStart;
             uint64_t chunkStop;
 

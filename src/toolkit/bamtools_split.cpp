@@ -17,6 +17,7 @@
 #include <utils/bamtools_variant.h>
 using namespace BamTools;
 
+#include <cstddef>
 #include <ctime>
 #include <iostream>
 #include <map>
@@ -45,7 +46,7 @@ std::string GetTimestampString()
 
     // convert whitespace to '_'
     std::string timeString = timeStream.str();
-    size_t found = timeString.find(' ');
+    std::size_t found = timeString.find(' ');
     while (found != std::string::npos) {
         timeString.replace(found, 1, 1, '_');
         found = timeString.find(' ', found + 1);
@@ -57,7 +58,7 @@ std::string GetTimestampString()
 // (so /path/to/file.txt becomes /path/to/file )
 std::string RemoveFilenameExtension(const std::string& filename)
 {
-    size_t found = filename.rfind('.');
+    std::size_t found = filename.rfind('.');
     return filename.substr(0, found);
 }
 
@@ -329,7 +330,7 @@ bool SplitTool::SplitToolPrivate::SplitReference()
     if (m_settings->HasCustomRefPrefix) refPrefix = m_settings->CustomRefPrefix;
 
     // make sure prefix starts with '.'
-    const size_t dotFound = refPrefix.find('.');
+    const std::size_t dotFound = refPrefix.find('.');
     if (dotFound != 0) refPrefix = std::string(1, '.') + refPrefix;
 
     // iterate through alignments
@@ -507,7 +508,7 @@ bool SplitTool::SplitToolPrivate::SplitListTagImpl(BamAlignment& al)
     if (m_settings->HasCustomTagPrefix) tagPrefix = m_settings->CustomTagPrefix;
 
     // make sure prefix starts with '.'
-    const size_t dotFound = tagPrefix.find('.');
+    const std::size_t dotFound = tagPrefix.find('.');
     if (dotFound != 0) tagPrefix = std::string(1, '.') + tagPrefix;
 
     const std::string tag = m_settings->TagToSplit;
@@ -584,7 +585,7 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al)
     if (m_settings->HasCustomTagPrefix) tagPrefix = m_settings->CustomTagPrefix;
 
     // make sure prefix starts with '.'
-    const size_t dotFound = tagPrefix.find('.');
+    const std::size_t dotFound = tagPrefix.find('.');
     if (dotFound != 0) tagPrefix = std::string(1, '.') + tagPrefix;
 
     // local variables

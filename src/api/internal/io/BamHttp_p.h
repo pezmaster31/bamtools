@@ -20,6 +20,7 @@
 //
 // We mean it.
 
+#include <cstddef>
 #include <string>
 #include "api/IBamIODevice.h"
 
@@ -58,7 +59,7 @@ private:
     void ParseUrl(const std::string& url);
     int64_t ReadFromSocket(char* data, const unsigned int numBytes);
     bool ReceiveResponse();
-    bool SendGetRequest(const size_t numBytes = 0x10000);
+    bool SendGetRequest(const std::size_t numBytes = 0x10000);
     bool SendHeadRequest();
     int64_t WriteToSocket(const char* data, const unsigned int numBytes);
 

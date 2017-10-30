@@ -15,6 +15,7 @@ using namespace BamTools;
 using namespace BamTools::Internal;
 
 #include <cctype>
+#include <cstddef>
 #include <set>
 #include <sstream>
 
@@ -153,7 +154,7 @@ bool SamHeaderValidator::ValidateVersion()
     }
 
     // invalid if version does not contain a period
-    const size_t periodFound = version.find(Constants::SAM_PERIOD);
+    const std::size_t periodFound = version.find(Constants::SAM_PERIOD);
     if (periodFound == std::string::npos) {
         AddError("Invalid version (VN) format: " + version);
         return false;
@@ -183,7 +184,7 @@ bool SamHeaderValidator::ValidateVersion()
 // assumes non-empty input string
 bool SamHeaderValidator::ContainsOnlyDigits(const std::string& s)
 {
-    const size_t nonDigitPosition = s.find_first_not_of(Constants::SAM_DIGITS);
+    const std::size_t nonDigitPosition = s.find_first_not_of(Constants::SAM_DIGITS);
     return (nonDigitPosition == std::string::npos);
 }
 

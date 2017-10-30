@@ -10,6 +10,9 @@
 #include "api/internal/index/BamIndexFactory_p.h"
 #include "api/internal/index/BamStandardIndex_p.h"
 #include "api/internal/index/BamToolsIndex_p.h"
+
+#include <cstddef>
+
 using namespace BamTools;
 using namespace BamTools::Internal;
 
@@ -69,7 +72,7 @@ const std::string BamIndexFactory::FileExtension(const std::string& filename)
     if (filename.empty() || filename.length() <= 4) return std::string();
 
     // look for last dot in filename
-    const size_t lastDotPosition = filename.find_last_of('.');
+    const std::size_t lastDotPosition = filename.find_last_of('.');
 
     // if none found, return empty string
     if (lastDotPosition == std::string::npos) return std::string();

@@ -15,6 +15,7 @@
 using namespace BamTools;
 using namespace BamTools::Internal;
 
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 
@@ -43,7 +44,7 @@ void BamHeader::CheckMagicNumber(BgzfStream* stream)
 
     // try to read magic number
     char buffer[Constants::BAM_HEADER_MAGIC_LENGTH];
-    const size_t numBytesRead = stream->Read(buffer, Constants::BAM_HEADER_MAGIC_LENGTH);
+    const std::size_t numBytesRead = stream->Read(buffer, Constants::BAM_HEADER_MAGIC_LENGTH);
     if (numBytesRead != (int)Constants::BAM_HEADER_MAGIC_LENGTH)
         throw BamException("BamHeader::CheckMagicNumber", "could not read magic number");
 
@@ -83,7 +84,7 @@ void BamHeader::ReadHeaderLength(BgzfStream* stream, uint32_t& length)
 
     // read BAM header text length
     char buffer[sizeof(uint32_t)];
-    const size_t numBytesRead = stream->Read(buffer, sizeof(uint32_t));
+    const std::size_t numBytesRead = stream->Read(buffer, sizeof(uint32_t));
     if (numBytesRead != sizeof(uint32_t))
         throw BamException("BamHeader::ReadHeaderLength", "could not read header length");
 
@@ -98,7 +99,7 @@ void BamHeader::ReadHeaderText(BgzfStream* stream, const uint32_t& length)
 
     // read header text
     char* headerText = (char*)calloc(length + 1, 1);
-    const size_t bytesRead = stream->Read(headerText, length);
+    const std::size_t bytesRead = stream->Read(headerText, length);
 
     // if error reading, clean up buffer & throw
     if (bytesRead != length) {

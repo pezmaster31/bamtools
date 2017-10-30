@@ -20,6 +20,7 @@
 //
 // We mean it.
 
+#include <cstddef>
 #include <string>
 #include "api/IBamIODevice.h"
 #include "api/internal/io/HostInfo_p.h"
@@ -74,12 +75,12 @@ public:
     bool IsConnected() const;
 
     // I/O methods
-    size_t BufferBytesAvailable() const;
+    std::size_t BufferBytesAvailable() const;
     bool CanReadLine() const;
     void ClearBuffer();  // force buffer to clear (not a 'flush', just a 'discard')
     int64_t Read(char* data, const unsigned int numBytes);
     std::string ReadLine(int64_t max = 0);
-    int64_t ReadLine(char* dest, size_t max);
+    int64_t ReadLine(char* dest, std::size_t max);
     bool WaitForReadLine();
     int64_t Write(const char* data, const unsigned int numBytes);
 

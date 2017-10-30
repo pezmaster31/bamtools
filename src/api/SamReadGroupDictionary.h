@@ -10,6 +10,7 @@
 #ifndef SAM_READGROUP_DICTIONARY_H
 #define SAM_READGROUP_DICTIONARY_H
 
+#include <cstddef>
 #include <map>
 #include <string>
 #include <vector>
@@ -78,7 +79,7 @@ public:
     // data members
 private:
     SamReadGroupContainer m_data;
-    std::map<std::string, size_t> m_lookupData;
+    std::map<std::string, std::size_t> m_lookupData;
 };
 
 }  // namespace BamTools

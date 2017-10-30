@@ -10,6 +10,7 @@
 #include "utils/bamtools_fasta.h"
 using namespace BamTools;
 
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -292,7 +293,7 @@ bool Fasta::FastaPrivate::GetBase(const int& refId, const int& position, char& b
 
         // get desired base from sequence
         // TODO: error reporting on invalid position
-        if (currentId == refId && (sequence.length() >= (size_t)position)) {
+        if (currentId == refId && (sequence.length() >= static_cast<std::size_t>(position))) {
             base = sequence.at(position);
             return true;
         }
@@ -473,7 +474,7 @@ bool Fasta::FastaPrivate::GetSequence(const int& refId, const int& start, const 
 
         // get desired substring from sequence
         // TODO: error reporting on invalid start/stop positions
-        if (currentId == refId && (fullSequence.length() >= (size_t)stop)) {
+        if (currentId == refId && (fullSequence.length() >= static_cast<std::size_t>(stop))) {
             const int seqLength = (stop - start) + 1;
             sequence = fullSequence.substr(start, seqLength);
             return true;

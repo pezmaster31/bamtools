@@ -10,6 +10,7 @@
 #include "utils/bamtools_pileup_engine.h"
 using namespace BamTools;
 
+#include <cstddef>
 #include <iostream>
 
 // ---------------------------------------------
@@ -134,9 +135,9 @@ void PileupEngine::PileupEnginePrivate::ClearOldData()
     //        while our CurrentPosition is 0-based. For example, an alignment with 'endPosition' of
     //        100 does not overlap a 'CurrentPosition' of 100, and should be discarded.
 
-    size_t i = 0;
-    size_t j = 0;
-    const size_t numAlignments = CurrentAlignments.size();
+    std::size_t i = 0;
+    std::size_t j = 0;
+    const std::size_t numAlignments = CurrentAlignments.size();
     while (i < numAlignments) {
 
         // skip over alignment if its (1-based) endPosition is <= to (0-based) CurrentPosition

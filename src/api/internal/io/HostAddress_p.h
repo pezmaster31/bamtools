@@ -20,6 +20,7 @@
 //
 // We mean it.
 
+#include <cstddef>
 #include <cstring>
 #include <string>
 #include "api/api_global.h"
@@ -37,11 +38,11 @@ struct IPv6Address
     }
 
     // data access (no bounds checking)
-    inline uint8_t& operator[](size_t index)
+    inline uint8_t& operator[](std::size_t index)
     {
         return data[index];
     }
-    inline uint8_t operator[](size_t index) const
+    inline uint8_t operator[](std::size_t index) const
     {
         return data[index];
     }

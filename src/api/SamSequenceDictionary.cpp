@@ -10,6 +10,7 @@
 #include "api/SamSequenceDictionary.h"
 using namespace BamTools;
 
+#include <cstddef>
 #include <iostream>
 
 /*! \class BamTools::SamSequenceDictionary
@@ -243,9 +244,9 @@ void SamSequenceDictionary::Remove(const std::string& sequenceName)
     if (IsEmpty() || !Contains(sequenceName)) return;
 
     // update 'lookup index' for every entry after @sequenceName
-    const size_t indexToRemove = m_lookupData[sequenceName];
-    const size_t numEntries = m_data.size();
-    for (size_t i = indexToRemove + 1; i < numEntries; ++i) {
+    const std::size_t indexToRemove = m_lookupData[sequenceName];
+    const std::size_t numEntries = m_data.size();
+    for (std::size_t i = indexToRemove + 1; i < numEntries; ++i) {
         const SamSequence& sq = m_data.at(i);
         --m_lookupData[sq.Name];
     }
@@ -315,6 +316,6 @@ SamSequence& SamSequenceDictionary::operator[](const std::string& sequenceName)
         m_lookupData[sequenceName] = m_data.size() - 1;
     }
 
-    const size_t index = m_lookupData[sequenceName];
+    const std::size_t index = m_lookupData[sequenceName];
     return m_data.at(index);
 }

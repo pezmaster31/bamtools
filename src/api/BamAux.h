@@ -10,6 +10,7 @@
 #ifndef BAMAUX_H
 #define BAMAUX_H
 
+#include <cstddef>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -493,10 +494,10 @@ struct RaiiBuffer
 
     // data members
     char* Buffer;
-    const size_t NumBytes;
+    const std::size_t NumBytes;
 
     // ctor & dtor
-    RaiiBuffer(const size_t n)
+    RaiiBuffer(const std::size_t n)
         : Buffer(new char[n]())
         , NumBytes(n)
     {}

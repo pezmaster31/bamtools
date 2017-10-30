@@ -22,6 +22,7 @@
 //
 // We mean it.
 
+#include <cstddef>
 #include <string>
 #include "api/BamAux.h"
 #include "api/IBamIODevice.h"
@@ -47,7 +48,7 @@ public:
     // opens the BGZF file
     void Open(const std::string& filename, const IBamIODevice::OpenMode mode);
     // reads BGZF data into a byte buffer
-    size_t Read(char* data, const size_t dataLength);
+    std::size_t Read(char* data, const std::size_t dataLength);
     // seek to position in BGZF file
     void Seek(const int64_t& position);
     // sets IO device (closes previous, if any, but does not attempt to open)
@@ -57,16 +58,16 @@ public:
     // get file position in BGZF file
     int64_t Tell() const;
     // writes the supplied data into the BGZF buffer
-    size_t Write(const char* data, const size_t dataLength);
+    std::size_t Write(const char* data, const std::size_t dataLength);
 
     // internal methods
 private:
     // compresses the current block
-    size_t DeflateBlock(int32_t blockLength);
+    std::size_t DeflateBlock(int32_t blockLength);
     // flushes the data in the BGZF block
     void FlushBlock();
     // de-compresses the current block
-    size_t InflateBlock(const size_t& blockLength);
+    std::size_t InflateBlock(const std::size_t& blockLength);
     // reads a BGZF block
     void ReadBlock();
 

@@ -27,6 +27,8 @@
 #include "api/internal/io/NetWin_p.h"
 #endif
 
+#include <cstddef>
+
 namespace BamTools {
 namespace Internal {
 
@@ -49,8 +51,8 @@ public:
 
     // IO-related methods
     int64_t NumBytesAvailable() const;
-    int64_t Read(char* dest, size_t max);
-    int64_t Write(const char* data, size_t length);
+    int64_t Read(char* dest, std::size_t max);
+    int64_t Write(const char* data, std::size_t length);
 
     bool WaitForRead(int msec, bool* timedOut);
     bool WaitForWrite(int msec, bool* timedOut);
@@ -75,9 +77,9 @@ private:
     bool nativeCreateSocket(HostAddress::NetworkProtocol protocol);
     void nativeDisconnect();
     int64_t nativeNumBytesAvailable() const;
-    int64_t nativeRead(char* dest, size_t max);
+    int64_t nativeRead(char* dest, std::size_t max);
     int nativeSelect(int msecs, bool isRead) const;
-    int64_t nativeWrite(const char* data, size_t length);
+    int64_t nativeWrite(const char* data, std::size_t length);
 
     // data members
 private:

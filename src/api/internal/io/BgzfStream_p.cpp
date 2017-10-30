@@ -20,6 +20,7 @@ using namespace BamTools::Internal;
 #include "zlib.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstring>
 #include <iostream>
 #include <sstream>
@@ -66,7 +67,7 @@ void BgzfStream::Close()
     // then write an empty block (as EOF marker)
     if (m_device->IsOpen() && (m_device->Mode() == IBamIODevice::WriteOnly)) {
         FlushBlock();
-        const size_t blockLength = DeflateBlock(0);
+        const std::size_t blockLength = DeflateBlock(0);
         m_device->Write(m_compressedBlock.Buffer, blockLength);
     }
 
@@ -87,7 +88,7 @@ void BgzfStream::Close()
 }
 
 // compresses the current block
-size_t BgzfStream::DeflateBlock(int32_t blockLength)
+std::size_t BgzfStream::DeflateBlock(int32_t blockLength)
 {
 
     // initialize the gzip header
@@ -108,7 +109,7 @@ size_t BgzfStream::DeflateBlock(int32_t blockLength)
 
     // loop to retry for blocks that do not compress enough
     int inputLength = blockLength;
-    size_t compressedLength = 0;
+    std::size_t compressedLength = 0;
     const unsigned int bufferSize = Constants::BGZF_MAX_BLOCK_SIZE;
 
     while (true) {
@@ -198,7 +199,7 @@ void BgzfStream::FlushBlock()
     while (m_blockOffset > 0) {
 
         // compress the data block
-        const size_t blockLength = DeflateBlock(m_blockOffset);
+        const std::size_t blockLength = DeflateBlock(m_blockOffset);
 
         // flush the data to our output device
         const int64_t numBytesWritten = m_device->Write(m_compressedBlock.Buffer, blockLength);
@@ -223,7 +224,7 @@ void BgzfStream::FlushBlock()
 }
 
 // decompresses the current block
-size_t BgzfStream::InflateBlock(const size_t& blockLength)
+std::size_t BgzfStream::InflateBlock(const std::size_t& blockLength)
 {
 
     // setup zlib stream object
@@ -284,7 +285,7 @@ void BgzfStream::Open(const std::string& filename, const IBamIODevice::OpenMode 
 }
 
 // reads BGZF data into a byte buffer
-size_t BgzfStream::Read(char* data, const size_t dataLength)
+std::size_t BgzfStream::Read(char* data, const std::size_t dataLength)
 {
 
     if (dataLength == 0) return 0;
@@ -295,7 +296,7 @@ size_t BgzfStream::Read(char* data, const size_t dataLength)
 
     // read blocks as needed until desired data length is retrieved
     char* output = data;
-    size_t numBytesRead = 0;
+    std::size_t numBytesRead = 0;
     while (numBytesRead < dataLength) {
 
         // determine bytes available in current block
@@ -309,7 +310,8 @@ size_t BgzfStream::Read(char* data, const size_t dataLength)
         }
 
         // copy data from uncompressed source buffer into data destination buffer
-        const size_t copyLength = std::min((dataLength - numBytesRead), (size_t)bytesAvailable);
+        const std::size_t copyLength =
+            std::min((dataLength - numBytesRead), static_cast<std::size_t>(bytesAvailable));
         memcpy(output, m_uncompressedBlock.Buffer + m_blockOffset, copyLength);
 
         // update counters
@@ -363,11 +365,11 @@ void BgzfStream::ReadBlock()
         throw BamException("BgzfStream::ReadBlock", "invalid block header contents");
 
     // copy header contents to compressed buffer
-    const size_t blockLength = BamTools::UnpackUnsignedShort(&header[16]) + 1;
+    const std::size_t blockLength = BamTools::UnpackUnsignedShort(&header[16]) + 1;
     memcpy(m_compressedBlock.Buffer, header, Constants::BGZF_BLOCK_HEADER_LENGTH);
 
     // read remainder of block
-    const size_t remaining = blockLength - Constants::BGZF_BLOCK_HEADER_LENGTH;
+    const std::size_t remaining = blockLength - Constants::BGZF_BLOCK_HEADER_LENGTH;
     numBytesRead =
         m_device->Read(&m_compressedBlock.Buffer[Constants::BGZF_BLOCK_HEADER_LENGTH], remaining);
 
@@ -382,7 +384,7 @@ void BgzfStream::ReadBlock()
         throw BamException("BgzfStream::ReadBlock", "could not read data from block");
 
     // decompress block data
-    const size_t newBlockLength = InflateBlock(blockLength);
+    const std::size_t newBlockLength = InflateBlock(blockLength);
 
     // update block data
     if (m_blockLength != 0) m_blockOffset = 0;
@@ -430,7 +432,7 @@ int64_t BgzfStream::Tell() const
 }
 
 // writes the supplied data into the BGZF buffer
-size_t BgzfStream::Write(const char* data, const size_t dataLength)
+std::size_t BgzfStream::Write(const char* data, const std::size_t dataLength)
 {
 
     BT_ASSERT_X(m_device, "BgzfStream::Write() - trying to write to null IO device");
@@ -441,9 +443,9 @@ size_t BgzfStream::Write(const char* data, const size_t dataLength)
     if (!IsOpen()) return 0;
 
     // write blocks as needed til all data is written
-    size_t numBytesWritten = 0;
+    std::size_t numBytesWritten = 0;
     const char* input = data;
-    const size_t blockLength = Constants::BGZF_DEFAULT_BLOCK_SIZE;
+    const std::size_t blockLength = Constants::BGZF_DEFAULT_BLOCK_SIZE;
     while (numBytesWritten < dataLength) {
 
         // copy data contents to uncompressed output buffer

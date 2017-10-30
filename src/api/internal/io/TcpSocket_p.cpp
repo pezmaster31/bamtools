@@ -15,6 +15,7 @@ using namespace BamTools::Internal;
 
 #include <algorithm>
 #include <climits>
+#include <cstddef>
 #include <sstream>
 #include <vector>
 
@@ -26,7 +27,7 @@ namespace BamTools {
 namespace Internal {
 
 // constants
-static const size_t DEFAULT_BUFFER_SIZE = 0x10000;
+static const std::size_t DEFAULT_BUFFER_SIZE = 0x10000;
 static const int64_t DEFAULT_BUFFER_SIZE64 = DEFAULT_BUFFER_SIZE;
 
 }  // namespace Internal
@@ -52,7 +53,7 @@ TcpSocket::~TcpSocket()
     if (m_state == TcpSocket::ConnectedState) DisconnectFromHost();
 }
 
-size_t TcpSocket::BufferBytesAvailable() const
+std::size_t TcpSocket::BufferBytesAvailable() const
 {
     return m_readBuffer.Size();
 }
@@ -239,7 +240,7 @@ int64_t TcpSocket::Read(char* data, const unsigned int numBytes)
 
     // if we have data in buffer, just return it
     if (!m_readBuffer.IsEmpty()) {
-        const size_t bytesRead = m_readBuffer.Read(data, numBytes);
+        const std::size_t bytesRead = m_readBuffer.Read(data, numBytes);
         return static_cast<int64_t>(bytesRead);
     }
 
@@ -261,7 +262,7 @@ int64_t TcpSocket::Read(char* data, const unsigned int numBytes)
 
     // we should have data now in buffer, try to fetch requested amount
     // if nothing in buffer, we will return 0 bytes read (signals EOF reached)
-    const size_t numBytesRead = m_readBuffer.Read(data, numBytes);
+    const std::size_t numBytesRead = m_readBuffer.Read(data, numBytes);
     return static_cast<int64_t>(numBytesRead);
 }
 
@@ -325,8 +326,8 @@ std::string TcpSocket::ReadLine(int64_t max)
 
     // prep result byte buffer
     ByteArray result;
-    size_t bufferMax =
-        ((max > static_cast<int64_t>(UINT_MAX)) ? UINT_MAX : static_cast<size_t>(max));
+    std::size_t bufferMax =
+        ((max > static_cast<int64_t>(UINT_MAX)) ? UINT_MAX : static_cast<std::size_t>(max));
     result.Resize(bufferMax);
 
     // read data
@@ -340,11 +341,11 @@ std::string TcpSocket::ReadLine(int64_t max)
         int64_t readResult;
         do {
             result.Resize(
-                static_cast<size_t>(std::min(bufferMax, result.Size() + DEFAULT_BUFFER_SIZE)));
+                static_cast<std::size_t>(std::min(bufferMax, result.Size() + DEFAULT_BUFFER_SIZE)));
             readResult = ReadLine(result.Data() + readBytes, result.Size() - readBytes);
             if (readResult > 0 || readBytes == 0) readBytes += readResult;
         } while (readResult == DEFAULT_BUFFER_SIZE64 &&
-                 result[static_cast<size_t>(readBytes - 1)] != '\n');
+                 result[static_cast<std::size_t>(readBytes - 1)] != '\n');
 
     } else
         readBytes = ReadLine(result.Data(), result.Size());
@@ -353,13 +354,13 @@ std::string TcpSocket::ReadLine(int64_t max)
     if (readBytes <= 0)
         result.Clear();
     else
-        result.Resize(static_cast<size_t>(readBytes));
+        result.Resize(static_cast<std::size_t>(readBytes));
 
     // return byte buffer as string
     return std::string(result.ConstData(), result.Size());
 }
 
-int64_t TcpSocket::ReadLine(char* dest, size_t max)
+int64_t TcpSocket::ReadLine(char* dest, std::size_t max)
 {
 
     // wait for buffer to contain line contents

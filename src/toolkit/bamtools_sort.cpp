@@ -18,6 +18,7 @@ using namespace BamTools;
 using namespace BamTools::Algorithms;
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdio>
 #include <iostream>
 #include <sstream>
@@ -114,7 +115,7 @@ SortTool::SortToolPrivate::SortToolPrivate(SortTool::SortSettings* settings)
     // set filename stub depending on inputfile path
     // that way multiple sort runs don't trip on each other's temp files
     if (m_settings) {
-        size_t extensionFound = m_settings->InputBamFilename.find(".bam");
+        std::size_t extensionFound = m_settings->InputBamFilename.find(".bam");
         if (extensionFound != std::string::npos)
             m_tempFilenameStub = m_settings->InputBamFilename.substr(0, extensionFound);
         m_tempFilenameStub.append(".sort.temp.");
@@ -144,7 +145,7 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns()
     // set up alignments buffer
     BamAlignment al;
     std::vector<BamAlignment> buffer;
-    buffer.reserve((size_t)(m_settings->MaxBufferCount * 1.1));
+    buffer.reserve(static_cast<std::size_t>(m_settings->MaxBufferCount * 1.1));
     bool bufferFull = false;
 
     // if sorting by name, we need to generate full char data

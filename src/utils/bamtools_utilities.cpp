@@ -13,6 +13,7 @@
 using namespace BamTools;
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
@@ -69,7 +70,7 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamRead
     if (regionString.empty()) return false;
 
     // non-empty string, look for a colom
-    size_t foundFirstColon = regionString.find(':');
+    std::size_t foundFirstColon = regionString.find(':');
 
     // store chrom strings, and numeric positions
     std::string startChrom;
@@ -95,7 +96,7 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamRead
         startChrom = regionString.substr(0, foundFirstColon);
 
         // look for ".." after the colon
-        size_t foundRangeDots = regionString.find("..", foundFirstColon + 1);
+        std::size_t foundRangeDots = regionString.find("..", foundFirstColon + 1);
 
         // no dots found
         // so we have a startPos but no range
@@ -115,7 +116,7 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamRead
                     .c_str());
 
             // look for second colon
-            size_t foundSecondColon = regionString.find(':', foundRangeDots + 1);
+            std::size_t foundSecondColon = regionString.find(':', foundRangeDots + 1);
 
             // no second colon found
             // so we have a "standard" chrom:start..stop input format (on single chrom)
@@ -180,7 +181,7 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamMult
     if (regionString.empty()) return false;
 
     // non-empty string, look for a colom
-    size_t foundFirstColon = regionString.find(':');
+    std::size_t foundFirstColon = regionString.find(':');
 
     // store chrom strings, and numeric positions
     std::string startChrom;
@@ -206,7 +207,7 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamMult
         startChrom = regionString.substr(0, foundFirstColon);
 
         // look for ".." after the colon
-        size_t foundRangeDots = regionString.find("..", foundFirstColon + 1);
+        std::size_t foundRangeDots = regionString.find("..", foundFirstColon + 1);
 
         // no dots found
         // so we have a startPos but no range
@@ -226,7 +227,7 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamMult
                     .c_str());
 
             // look for second colon
-            size_t foundSecondColon = regionString.find(':', foundRangeDots + 1);
+            std::size_t foundSecondColon = regionString.find(':', foundRangeDots + 1);
 
             // no second colon found
             // so we have a "standard" chrom:start..stop input format (on single chrom)
@@ -289,8 +290,8 @@ void Utilities::ReverseComplement(std::string& sequence)
 {
 
     // do complement, in-place
-    size_t seqLength = sequence.length();
-    for (size_t i = 0; i < seqLength; ++i)
+    std::size_t seqLength = sequence.length();
+    for (std::size_t i = 0; i < seqLength; ++i)
         sequence.replace(i, 1, 1, REVCOMP_LOOKUP[(int)sequence.at(i) - 65]);
 
     // reverse it

@@ -17,6 +17,7 @@ using namespace BamTools::Internal;
 #endif
 
 #include <cerrno>
+#include <cstddef>
 #include <ctime>
 #include <iostream>
 
@@ -185,9 +186,9 @@ int64_t TcpSocketEngine::nativeNumBytesAvailable() const
     return static_cast<int64_t>(numBytes);
 }
 
-int64_t TcpSocketEngine::nativeRead(char* dest, size_t max)
+int64_t TcpSocketEngine::nativeRead(char* dest, std::size_t max)
 {
-    const ssize_t ret = read(m_socketDescriptor, dest, max);
+    const std::size_t ret = read(m_socketDescriptor, dest, max);
     return static_cast<int64_t>(ret);
 }
 
@@ -212,8 +213,8 @@ int TcpSocketEngine::nativeSelect(int msecs, bool isRead) const
         return select(m_socketDescriptor + 1, 0, &fds, 0, (msecs < 0 ? 0 : &tv));
 }
 
-int64_t TcpSocketEngine::nativeWrite(const char* data, size_t length)
+int64_t TcpSocketEngine::nativeWrite(const char* data, std::size_t length)
 {
-    const ssize_t writtenBytes = write(m_socketDescriptor, data, length);
+    const std::size_t writtenBytes = write(m_socketDescriptor, data, length);
     return static_cast<int64_t>(writtenBytes);
 }

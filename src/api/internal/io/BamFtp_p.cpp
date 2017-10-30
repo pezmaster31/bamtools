@@ -14,6 +14,7 @@ using namespace BamTools;
 using namespace BamTools::Internal;
 
 #include <cctype>
+#include <cstddef>
 #include <cstdlib>
 #include <sstream>
 #include <vector>
@@ -27,7 +28,7 @@ namespace Internal {
 
 static const uint16_t FTP_PORT = 21;
 static const std::string FTP_PREFIX = "ftp://";
-static const size_t FTP_PREFIX_LENGTH = 6;
+static const std::size_t FTP_PREFIX_LENGTH = 6;
 static const std::string FTP_NEWLINE = "\r\n";
 
 static const std::string DEFAULT_USER = "anonymous";
@@ -76,9 +77,9 @@ static inline bool startsWith(const std::string& source, const std::string& patt
 static inline std::string toLower(const std::string& s)
 {
     std::string out;
-    const size_t sSize = s.size();
+    const std::size_t sSize = s.size();
     out.resize(sSize);
-    for (size_t i = 0; i < sSize; ++i)
+    for (std::size_t i = 0; i < sSize; ++i)
         out[i] = tolower(s[i]);
     return out;
 }
@@ -272,8 +273,8 @@ bool BamFtp::ParsePassiveResponse()
     if (m_response.empty()) return false;
 
     // find parentheses
-    const size_t leftParenFound = m_response.find(PASV_REPLY_PREFIX);
-    const size_t rightParenFound = m_response.find(PASV_REPLY_SUFFIX);
+    const std::size_t leftParenFound = m_response.find(PASV_REPLY_PREFIX);
+    const std::size_t rightParenFound = m_response.find(PASV_REPLY_SUFFIX);
     if (leftParenFound == std::string::npos || rightParenFound == std::string::npos) return false;
 
     // grab everything between ( should be "h1,h2,h3,h4,p1,p2" )
@@ -307,11 +308,11 @@ void BamFtp::ParseUrl(const std::string& url)
     // make sure url starts with "ftp://", case-insensitive
     std::string tempUrl(url);
     toLower(tempUrl);
-    const size_t prefixFound = tempUrl.find(FTP_PREFIX);
+    const std::size_t prefixFound = tempUrl.find(FTP_PREFIX);
     if (prefixFound == std::string::npos) return;
 
     // find end of host name portion (first '/' hit after the prefix)
-    const size_t firstSlashFound = tempUrl.find(HOST_SEPARATOR, FTP_PREFIX_LENGTH);
+    const std::size_t firstSlashFound = tempUrl.find(HOST_SEPARATOR, FTP_PREFIX_LENGTH);
     if (firstSlashFound == std::string::npos) {
         ;  // no slash found... no filename given along with host?
     }
@@ -341,7 +342,7 @@ int64_t BamFtp::Read(char* data, const unsigned int numBytes)
     while (bytesReadSoFar < numBytes) {
 
         // calculate number of bytes we're going to try to read this iteration
-        const size_t remainingBytes = (numBytes - bytesReadSoFar);
+        const std::size_t remainingBytes = (numBytes - bytesReadSoFar);
 
         // if either disconnected somehow, or (more likely) we have seeked since last read
         if (!m_dataSocket->IsConnected()) {

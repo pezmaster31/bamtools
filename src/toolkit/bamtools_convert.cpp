@@ -17,6 +17,7 @@
 #include <utils/bamtools_utilities.h>
 using namespace BamTools;
 
+#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -334,8 +335,8 @@ void ConvertTool::ConvertToolPrivate::PrintFasta(const BamAlignment& a)
     // else split over multiple lines
     else {
 
-        size_t position = 0;
-        size_t seqLength =
+        std::size_t position = 0;
+        std::size_t seqLength =
             sequence.length();  // handle reverse strand alignment - bases & qualitiesth();
 
         // write subsequences to each line
@@ -436,8 +437,8 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
 
     // write tag data
     const char* tagData = a.TagData.c_str();
-    const size_t tagDataLength = a.TagData.length();
-    size_t index = 0;
+    const std::size_t tagDataLength = a.TagData.length();
+    std::size_t index = 0;
     if (index < tagDataLength) {
 
         m_out << "\"tags\":{";
@@ -577,9 +578,9 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a)
 
     // write tag data
     const char* tagData = a.TagData.c_str();
-    const size_t tagDataLength = a.TagData.length();
+    const std::size_t tagDataLength = a.TagData.length();
 
-    size_t index = 0;
+    std::size_t index = 0;
     while (index < tagDataLength) {
 
         // write tag name

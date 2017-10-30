@@ -16,6 +16,7 @@ using namespace BamTools;
 using namespace BamTools::Internal;
 
 #include <algorithm>
+#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -265,7 +266,7 @@ std::string BamMultiReaderPrivate::GetHeaderText() const
     // TODO: make this more intelligent wrt other header lines/fields
 
     // if no readers open
-    const size_t numReaders = m_readers.size();
+    const std::size_t numReaders = m_readers.size();
     if (numReaders == 0) return std::string();
 
     // retrieve first reader's header
@@ -275,7 +276,7 @@ std::string BamMultiReaderPrivate::GetHeaderText() const
     SamHeader mergedHeader = reader->GetHeader();
 
     // iterate over any remaining readers (skipping the first)
-    for (size_t i = 1; i < numReaders; ++i) {
+    for (std::size_t i = 1; i < numReaders; ++i) {
         const MergeItem& item = m_readers.at(i);
         const BamReader* reader = item.Reader;
         if (reader == 0) continue;

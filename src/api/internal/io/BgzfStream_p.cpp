@@ -17,7 +17,7 @@
 using namespace BamTools;
 using namespace BamTools::Internal;
 
-#include "zlib.h"
+#include <zlib.h>
 
 #include <algorithm>
 #include <cstddef>

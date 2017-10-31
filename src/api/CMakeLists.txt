@@ -31,10 +31,10 @@ set( BamToolsAPISources
 )
 
 # link libraries automatically with zlib (and Winsock2, if applicable)
+find_package( ZLIB REQUIRED )
+
 if( WIN32 )
-    set( APILibs z ws2_32 )
-else()
-    set( APILibs z )
+    set( WIN32_LIBRARIES wsock32 ws2_32 )
 endif()
 
 # create main BamTools API library
@@ -44,7 +44,8 @@ add_library( BamTools ${BamToolsAPISources} )
 set_target_properties( BamTools PROPERTIES
                        SOVERSION "${BamTools_VERSION}"
                        OUTPUT_NAME "bamtools" )
-target_link_libraries( BamTools ${APILibs} )
+target_include_directories( BamTools PRIVATE "${ZLIB_INCLUDE_DIRS}" )
+target_link_libraries( BamTools PRIVATE "${ZLIB_LIBRARIES}" "${WIN32_LIBRARIES}" )
 install( TARGETS BamTools
          ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
          LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"

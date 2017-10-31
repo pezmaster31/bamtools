@@ -175,7 +175,7 @@ bool Fasta::FastaPrivate::CreateIndex(const std::string& indexFilename)
         FastaIndexData data;
 
         // store file offset of beginning of DNA sequence (after header)
-        data.Offset = ftello(Stream);
+        data.Offset = ftell64(Stream);
 
         // parse header, store sequence name in data.Name
         if (!GetNameFromHeader(header, data.Name)) {
@@ -430,7 +430,7 @@ bool Fasta::FastaPrivate::GetSequence(const int& refId, const int& start, const 
         }
 
         // seek to beginning of sequence data
-        if (fseeko(Stream, referenceData.Offset, SEEK_SET) != 0) {
+        if (fseek64(Stream, referenceData.Offset, SEEK_SET) != 0) {
             std::cerr << "FASTA error : could not sek in file" << std::endl;
             return false;
         }
@@ -571,7 +571,7 @@ bool Fasta::FastaPrivate::Open(const std::string& filename, const std::string& i
 bool Fasta::FastaPrivate::Rewind()
 {
     if (!IsOpen) return false;
-    return (fseeko(Stream, 0, SEEK_SET) == 0);
+    return (fseek64(Stream, 0, SEEK_SET) == 0);
 }
 
 bool Fasta::FastaPrivate::WriteIndexData()

@@ -22,6 +22,7 @@ using namespace BamTools;
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -248,7 +249,7 @@ void ReadGroupResolver::DetermineTopModels(const std::string& readGroupName)
 {
 
     // sort models (from most common to least common)
-    sort(Models.begin(), Models.end(), std::greater<ModelType>());
+    std::sort(Models.begin(), Models.end(), std::greater<ModelType>());
 
     // store top 2 models for later
     TopModelId = Models[0].ID;

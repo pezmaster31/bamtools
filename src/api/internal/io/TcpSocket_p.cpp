@@ -19,6 +19,10 @@ using namespace BamTools::Internal;
 #include <sstream>
 #include <vector>
 
+// Windows is brain-damaged and pollutes the entire global namespace with
+// its min() macro, which in turn causes MSVC to go haywire on std::min.
+#undef min
+
 // ------------------------------------
 // static utility methods & constants
 // ------------------------------------

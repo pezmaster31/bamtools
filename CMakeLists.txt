@@ -50,8 +50,10 @@ ensure_out_of_source_build( "
 (or the Windows equivalent)\n" )
 
 # define compiler flags for all code, copied from Autoconf's AC_SYS_LARGEFILE
-add_definitions( -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE )
-add_compile_options( -Wall )
+if( NOT WIN32 )
+    add_definitions( -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE )
+    add_compile_options( -Wall )
+endif()
 
 # -----------------------------------------------
 # handle platform-/environment-specific defines

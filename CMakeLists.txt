@@ -13,7 +13,7 @@ cmake_minimum_required( VERSION 3.0 )
 cmake_policy( SET CMP0048 NEW )
 
 # set project name and version
-project( BamTools LANGUAGES CXX VERSION 2.4.1 )
+project( BamTools LANGUAGES CXX VERSION 2.4.2 )
 
 # on macOS, MACOSX_RPATH is enabled by default on more recent versions
 # of CMake. Disable this behaviour, and let user enable it if need be.

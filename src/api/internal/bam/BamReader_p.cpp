@@ -382,7 +382,7 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment)
     if (m_stream.Read(allCharData.Buffer, dataLength) == dataLength) {
 
         if (Tag2Cigar(alignment, allCharData))
-            dataLength -= 12;
+            dataLength -= 8 + alignment.SupportData.NumCigarOperations * 4;
 
         // store 'allCharData' in supportData structure
         alignment.SupportData.AllCharData.assign((const char*)allCharData.Buffer, dataLength);

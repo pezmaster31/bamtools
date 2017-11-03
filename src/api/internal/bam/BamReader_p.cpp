@@ -248,28 +248,34 @@ void BamReaderPrivate::LoadHeaderData()
 
 static inline int bam_aux_type2size(int x)
 {
-    if (x == 'C' || x == 'c' || x == 'A') return 1;
-    else if (x == 'S' || x == 's') return 2;
-    else if (x == 'I' || x == 'i' || x == 'f') return 4;
-    else return 0;
+    if (x == 'C' || x == 'c' || x == 'A')
+        return 1;
+    else if (x == 'S' || x == 's')
+        return 2;
+    else if (x == 'I' || x == 'i' || x == 'f')
+        return 4;
+    else
+        return 0;
 }
 
-static unsigned char *bam_aux_get(int aux_data_len, const unsigned char *aux_start, const char *tag)
+static unsigned char* bam_aux_get(int aux_data_len, const unsigned char* aux_start, const char* tag)
 {
-    const unsigned char *p = aux_start;
+    const unsigned char* p = aux_start;
     while (p < aux_start + aux_data_len) {
         if (p[0] == tag[0] && p[1] == tag[1]) return (unsigned char*)(p + 2);
-        p += 2; // skip tag
-        int type = *p++; // read type
+        p += 2;           // skip tag
+        int type = *p++;  // read type
         if (type == 'B') {
-            int size = bam_aux_type2size(*p++); // read array type
-            unsigned len = (unsigned)p[0] | (unsigned)p[1]<<8 | (unsigned)p[2]<<16 | (unsigned)p[3]<<24;
-            p += 4; // skip the size field
-            p += len * size; // skip array
+            int size = bam_aux_type2size(*p++);  // read array type
+            unsigned len =
+                (unsigned)p[0] | (unsigned)p[1] << 8 | (unsigned)p[2] << 16 | (unsigned)p[3] << 24;
+            p += 4;           // skip the size field
+            p += len * size;  // skip array
         } else if (type == 'Z' || type == 'H') {
-            while (*p++ != 0) {} // skip NULL terminated string
+            while (*p++ != 0) {
+            }  // skip NULL terminated string
         } else {
-            p += bam_aux_type2size(type); // skip value
+            p += bam_aux_type2size(type);  // skip value
         }
     }
     return NULL;
@@ -277,28 +283,31 @@ static unsigned char *bam_aux_get(int aux_data_len, const unsigned char *aux_sta
 
 static inline int hts_reg2bin(int64_t beg, int64_t end, int min_shift, int n_lvls)
 {
-    int l, s = min_shift, t = ((1<<((n_lvls<<1) + n_lvls)) - 1) / 7;
-    for (--end, l = n_lvls; l > 0; --l, s += 3, t -= 1<<((l<<1)+l))
-        if (beg>>s == end>>s) return t + (beg>>s);
+    int l, s = min_shift, t = ((1 << ((n_lvls << 1) + n_lvls)) - 1) / 7;
+    for (--end, l = n_lvls; l > 0; --l, s += 3, t -= 1 << ((l << 1) + l))
+        if (beg >> s == end >> s) return t + (beg >> s);
     return 0;
 }
 
-bool BamReaderPrivate::Tag2Cigar(BamAlignment &a, RaiiBuffer &buf)
+bool BamReaderPrivate::Tag2Cigar(BamAlignment& a, RaiiBuffer& buf)
 {
     if (a.RefID < 0 || a.Position < 0 || a.SupportData.NumCigarOperations == 0) return false;
 
-    const unsigned char *data = (const unsigned char*)buf.Buffer;
+    const unsigned char* data = (const unsigned char*)buf.Buffer;
     const unsigned data_len = a.SupportData.BlockLength - Constants::BAM_CORE_SIZE;
-    const unsigned char *p = data + a.SupportData.QueryNameLength; // the original CIGAR
-    unsigned cigar1 = (unsigned)p[0] | (unsigned)p[1]<<8 | (unsigned)p[2]<<16 | (unsigned)p[3]<<24;
-    if ((cigar1&0xf) != 4 || cigar1>>4 != a.SupportData.QuerySequenceLength) return false;
+    const unsigned char* p = data + a.SupportData.QueryNameLength;  // the original CIGAR
+    unsigned cigar1 =
+        (unsigned)p[0] | (unsigned)p[1] << 8 | (unsigned)p[2] << 16 | (unsigned)p[3] << 24;
+    if ((cigar1 & 0xf) != 4 || cigar1 >> 4 != a.SupportData.QuerySequenceLength) return false;
 
     const int seq_offset = a.SupportData.QueryNameLength + a.SupportData.NumCigarOperations * 4;
-    const int aux_offset = seq_offset + (a.SupportData.QuerySequenceLength + 1) / 2 + a.SupportData.QuerySequenceLength;
-    unsigned char *CG = bam_aux_get(data_len - aux_offset, data + aux_offset, "CG");
+    const int aux_offset = seq_offset + (a.SupportData.QuerySequenceLength + 1) / 2 +
+                           a.SupportData.QuerySequenceLength;
+    unsigned char* CG = bam_aux_get(data_len - aux_offset, data + aux_offset, "CG");
     if (CG == NULL || CG[0] != 'B' || CG[1] != 'I') return false;
 
-    const unsigned tag_cigar_len = (unsigned)CG[2] | (unsigned)CG[3]<<8 | (unsigned)CG[4]<<16 | (unsigned)CG[5]<<24;
+    const unsigned tag_cigar_len =
+        (unsigned)CG[2] | (unsigned)CG[3] << 8 | (unsigned)CG[4] << 16 | (unsigned)CG[5] << 24;
     if (tag_cigar_len == 0) return false;
 
     // recalculate bin, as it may be incorrect if it was calculated by a tool unaware of the real CIGAR in tag
@@ -306,10 +315,10 @@ bool BamReaderPrivate::Tag2Cigar(BamAlignment &a, RaiiBuffer &buf)
     unsigned alignment_end = a.Position;
     p = data + tag_cigar_offset;
     for (unsigned i = 0; i < tag_cigar_len * 4; i += 4, p += 4) {
-        unsigned cigar1 = (unsigned)p[0] | (unsigned)p[1]<<8 | (unsigned)p[2]<<16 | (unsigned)p[3]<<24;
+        unsigned cigar1 =
+            (unsigned)p[0] | (unsigned)p[1] << 8 | (unsigned)p[2] << 16 | (unsigned)p[3] << 24;
         int op = cigar1 & 0xf;
-        if (op == 0 || op == 2 || op == 3 || op == 7 || op == 8)
-            alignment_end += cigar1 >> 4;
+        if (op == 0 || op == 2 || op == 3 || op == 7 || op == 8) alignment_end += cigar1 >> 4;
     }
     a.Bin = hts_reg2bin(a.Position, alignment_end, 14, 5);
 
@@ -317,11 +326,12 @@ bool BamReaderPrivate::Tag2Cigar(BamAlignment &a, RaiiBuffer &buf)
     int fake_bytes = a.SupportData.NumCigarOperations * 4;
     std::string new_data;
     new_data.reserve(data_len - 8 - fake_bytes + 1);
-    new_data.append((char*)data, a.SupportData.QueryNameLength); // query name
-    new_data.append((char*)data + tag_cigar_offset, tag_cigar_len * 4); // real CIGAR
-    new_data.append((char*)data + seq_offset, tag_cigar_offset - 8 - seq_offset); // seq, qual and tags before CG
+    new_data.append((char*)data, a.SupportData.QueryNameLength);         // query name
+    new_data.append((char*)data + tag_cigar_offset, tag_cigar_len * 4);  // real CIGAR
+    new_data.append((char*)data + seq_offset,
+                    tag_cigar_offset - 8 - seq_offset);  // seq, qual and tags before CG
     const unsigned tag_cigar_end_offset = tag_cigar_offset + tag_cigar_len * 4;
-    if (tag_cigar_end_offset < data_len) // tags after CG, if there is any
+    if (tag_cigar_end_offset < data_len)  // tags after CG, if there is any
         new_data.append((char*)data + tag_cigar_end_offset, data_len - tag_cigar_end_offset);
 
     // update member variables
@@ -382,8 +392,7 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment)
     if (m_stream.Read(allCharData.Buffer, dataLength) == dataLength) {
 
         int OldNumCigarOperations = alignment.SupportData.NumCigarOperations;
-        if (Tag2Cigar(alignment, allCharData))
-            dataLength -= 8 + OldNumCigarOperations * 4;
+        if (Tag2Cigar(alignment, allCharData)) dataLength -= 8 + OldNumCigarOperations * 4;
 
         // store 'allCharData' in supportData structure
         alignment.SupportData.AllCharData.assign((const char*)allCharData.Buffer, dataLength);

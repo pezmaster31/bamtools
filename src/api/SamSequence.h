@@ -10,54 +10,57 @@
 #ifndef SAM_SEQUENCE_H
 #define SAM_SEQUENCE_H
 
-#include "api/api_global.h"
-#include "api/BamAux.h"
 #include <string>
 #include <vector>
+#include "api/BamAux.h"
+#include "api/api_global.h"
 
 namespace BamTools {
 
-struct API_EXPORT SamSequence {
+struct API_EXPORT SamSequence
+{
 
     // ctor & dtor
-    SamSequence(void);
+    SamSequence();
     SamSequence(const std::string& name, const int& length);
     SamSequence(const std::string& name, const std::string& length);
     SamSequence(const SamSequence& other);
-    ~SamSequence(void);
+    ~SamSequence();
 
     // query/modify entire sequence
-    void Clear(void);                // clears all contents
+    void Clear();  // clears all contents
 
     // convenience query methods
-    bool HasAssemblyID(void) const;  // returns true if sequence has an assembly ID
-    bool HasChecksum(void) const;    // returns true if sequence has an MD5 checksum
-    bool HasLength(void) const;      // returns true if sequence has a length
-    bool HasName(void) const;        // returns true if sequence has a name
-    bool HasSpecies(void) const;     // returns true if sequence has a species ID
-    bool HasURI(void) const;         // returns true if sequence has a URI
+    bool HasAssemblyID() const;  // returns true if sequence has an assembly ID
+    bool HasChecksum() const;    // returns true if sequence has an MD5 checksum
+    bool HasLength() const;      // returns true if sequence has a length
+    bool HasName() const;        // returns true if sequence has a name
+    bool HasSpecies() const;     // returns true if sequence has a species ID
+    bool HasURI() const;         // returns true if sequence has a URI
 
     // data members
-    std::string AssemblyID;          // AS:<AssemblyID>
-    std::string Checksum;            // M5:<Checksum>
-    std::string Length;              // LN:<Length>      *Required for valid SAM header*
-    std::string Name;                // SN:<Name>        *Required for valid SAM header*
-    std::string Species;             // SP:<Species>
-    std::string URI;                 // UR:<URI>
-    std::vector<CustomHeaderTag> CustomTags;   // optional custom tags
+    std::string AssemblyID;                   // AS:<AssemblyID>
+    std::string Checksum;                     // M5:<Checksum>
+    std::string Length;                       // LN:<Length>      *Required for valid SAM header*
+    std::string Name;                         // SN:<Name>        *Required for valid SAM header*
+    std::string Species;                      // SP:<Species>
+    std::string URI;                          // UR:<URI>
+    std::vector<CustomHeaderTag> CustomTags;  // optional custom tags
 };
 
 /*! \fn bool operator==(const SamSequence& lhs, const SamSequence& rhs)
     \brief tests equality by comparing sequence names, lengths, & checksums (if available)
 */
-API_EXPORT inline bool operator==(const SamSequence& lhs, const SamSequence& rhs) {
-    if ( lhs.Name   != rhs.Name   ) return false;
-    if ( lhs.Length != rhs.Length ) return false;
-    if ( lhs.HasChecksum() && rhs.HasChecksum() )
+API_EXPORT inline bool operator==(const SamSequence& lhs, const SamSequence& rhs)
+{
+    if (lhs.Name != rhs.Name) return false;
+    if (lhs.Length != rhs.Length) return false;
+    if (lhs.HasChecksum() && rhs.HasChecksum())
         return (lhs.Checksum == rhs.Checksum);
-    else return true;
+    else
+        return true;
 }
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // SAM_SEQUENCE_H
+#endif  // SAM_SEQUENCE_H

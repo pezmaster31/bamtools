@@ -13,25 +13,26 @@
 #include "bamtools_tool.h"
 
 namespace BamTools {
-  
-class FilterTool : public AbstractTool {
-  
-    public:
-        FilterTool(void);
-        ~FilterTool(void);
-  
-    public:
-        int Help(void);
-        int Run(int argc, char* argv[]); 
-        
-    private:
-        struct FilterSettings;
-        FilterSettings* m_settings;
-        
-        class FilterToolPrivate;
-        FilterToolPrivate* m_impl;
-};
-  
-} // namespace BamTools
 
-#endif // BAMTOOLS_FILTER_H
+class FilterTool : public AbstractTool
+{
+
+public:
+    FilterTool();
+    ~FilterTool();
+
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
+
+private:
+    struct FilterSettings;
+    FilterSettings* m_settings;
+
+    class FilterToolPrivate;
+    FilterToolPrivate* m_impl;
+};
+
+}  // namespace BamTools
+
+#endif  // BAMTOOLS_FILTER_H

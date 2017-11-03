@@ -20,50 +20,51 @@
 //
 // We mean it.
 
-#include "api/api_global.h"
+#include <cstddef>
 #include <string>
 #include <vector>
+#include "api/api_global.h"
 
 namespace BamTools {
 namespace Internal {
 
 // provides a wrapper around a byte vector
-class ByteArray {
+class ByteArray
+{
 
     // ctors & dtor
-    public:
-        ByteArray(void);
-        ByteArray(const std::string& value);
-        ByteArray(const std::vector<char>& value);
-        ByteArray(const char* value, size_t n);
-        ByteArray(const ByteArray& other);
-        ~ByteArray(void);
+public:
+    ByteArray();
+    ByteArray(const std::string& value);
+    ByteArray(const std::vector<char>& value);
+    ByteArray(const char* value, std::size_t n);
+    ByteArray(const ByteArray& other);
+    ~ByteArray();
 
-        ByteArray& operator=(const ByteArray& other);
+    ByteArray& operator=(const ByteArray& other);
 
     // ByteArray interface
-    public:
+public:
+    // data access
+    const char* ConstData() const;
+    char* Data();
+    const char& operator[](std::size_t i) const;
+    char& operator[](std::size_t i);
 
-        // data access
-        const char* ConstData(void) const;
-        char* Data(void);
-        const char& operator[](size_t i) const;
-        char& operator[](size_t i);
-
-        // byte array manipulation
-        void Clear(void);
-        size_t IndexOf(const char c, const size_t from = 0, const size_t to = 0) const;
-        ByteArray& Remove(size_t from, size_t n);
-        void Resize(size_t n);
-        size_t Size(void) const;
-        void Squeeze(void);
+    // byte array manipulation
+    void Clear();
+    std::size_t IndexOf(const char c, const std::size_t from = 0, const std::size_t to = 0) const;
+    ByteArray& Remove(std::size_t from, std::size_t n);
+    void Resize(std::size_t n);
+    std::size_t Size() const;
+    void Squeeze();
 
     // data members
-    private:
-        std::vector<char> m_data;
+private:
+    std::vector<char> m_data;
 };
 
-} // namespace Internal
-} // namespace BamTools
+}  // namespace Internal
+}  // namespace BamTools
 
-#endif // BYTEARRAY_P_H
+#endif  // BYTEARRAY_P_H

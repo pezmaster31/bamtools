@@ -29,33 +29,34 @@ struct SamHeader;
 
 namespace Internal {
 
-class SamFormatParser {
+class SamFormatParser
+{
 
     // ctor & dtor
-    public:
-        SamFormatParser(BamTools::SamHeader& header);
-        ~SamFormatParser(void);
+public:
+    SamFormatParser(BamTools::SamHeader& header);
+    ~SamFormatParser();
 
     // parse text & populate header data
-    public:
-        void Parse(const std::string& headerText);
+public:
+    void Parse(const std::string& headerText);
 
     // internal methods
-    private:
-        void ParseSamLine(const std::string& line);
-        void ParseHDLine(const std::string& line);
-        void ParseSQLine(const std::string& line);
-        void ParseRGLine(const std::string& line);
-        void ParsePGLine(const std::string& line);
-        void ParseCOLine(const std::string& line);
-        const std::vector<std::string> Split(const std::string& line, const char delim);
+private:
+    void ParseSamLine(const std::string& line);
+    void ParseHDLine(const std::string& line);
+    void ParseSQLine(const std::string& line);
+    void ParseRGLine(const std::string& line);
+    void ParsePGLine(const std::string& line);
+    void ParseCOLine(const std::string& line);
+    const std::vector<std::string> Split(const std::string& line, const char delim);
 
     // data members
-    private:
-        SamHeader& m_header;
+private:
+    SamHeader& m_header;
 };
 
-} // namespace Internal
-} // namespace BamTools
+}  // namespace Internal
+}  // namespace BamTools
 
-#endif // SAM_FORMAT_PARSER_H
+#endif  // SAM_FORMAT_PARSER_H

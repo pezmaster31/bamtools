@@ -14,7 +14,7 @@
 // These constants are defined to match the variables set in the build system. 
 #define BAMTOOLS_VERSION_MAJOR @BamTools_VERSION_MAJOR@
 #define BAMTOOLS_VERSION_MINOR @BamTools_VERSION_MINOR@
-#define BAMTOOLS_VERSION_BUILD @BamTools_VERSION_BUILD@
+#define BAMTOOLS_VERSION_PATCH @BamTools_VERSION_PATCH@
 
 #endif // BAMTOOLS_VERSION_H
 

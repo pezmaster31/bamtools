@@ -14,29 +14,30 @@
 
 namespace BamTools {
 
-class ResolveTool : public AbstractTool {
+class ResolveTool : public AbstractTool
+{
 
-    public:
-        ResolveTool(void);
-        ~ResolveTool(void);
+public:
+    ResolveTool();
+    ~ResolveTool();
 
-    public:
-        int Help(void);
-        int Run(int argc, char* argv[]);
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
 
-    private:
-        struct ResolveSettings;
-        ResolveSettings* m_settings;
+private:
+    struct ResolveSettings;
+    ResolveSettings* m_settings;
 
-        struct ResolveToolPrivate;
-        ResolveToolPrivate* m_impl;
+    struct ResolveToolPrivate;
+    ResolveToolPrivate* m_impl;
 
-        struct ReadNamesFileReader;
-        struct ReadNamesFileWriter;
-        struct StatsFileReader;
-        struct StatsFileWriter;
+    struct ReadNamesFileReader;
+    struct ReadNamesFileWriter;
+    struct StatsFileReader;
+    struct StatsFileWriter;
 };
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // BAMTOOLS_RESOLVE_H
+#endif  // BAMTOOLS_RESOLVE_H

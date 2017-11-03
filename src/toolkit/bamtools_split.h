@@ -14,25 +14,26 @@
 #include "bamtools_tool.h"
 
 namespace BamTools {
-  
-class SplitTool : public AbstractTool {
-  
-    public:
-        SplitTool(void);
-        ~SplitTool(void);
-  
-    public:
-        int Help(void);
-        int Run(int argc, char* argv[]); 
-        
-    private:
-        struct SplitSettings;
-        SplitSettings* m_settings;
-        
-        class SplitToolPrivate;
-        SplitToolPrivate* m_impl;
-};
-  
-} // namespace BamTools
 
-#endif // BAMTOOLS_SPLIT_H
+class SplitTool : public AbstractTool
+{
+
+public:
+    SplitTool();
+    ~SplitTool();
+
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
+
+private:
+    struct SplitSettings;
+    SplitSettings* m_settings;
+
+    class SplitToolPrivate;
+    SplitToolPrivate* m_impl;
+};
+
+}  // namespace BamTools
+
+#endif  // BAMTOOLS_SPLIT_H

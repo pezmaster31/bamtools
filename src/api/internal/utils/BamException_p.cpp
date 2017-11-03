@@ -10,6 +10,5 @@
 #include "api/internal/utils/BamException_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
-using namespace std;
 
-const string BamException::SEPARATOR = ": ";
+const std::string BamException::SEPARATOR(": ");

@@ -10,50 +10,51 @@
 #ifndef SAM_HEADER_H
 #define SAM_HEADER_H
 
-#include "api/api_global.h"
+#include <string>
+#include <vector>
 #include "api/BamAux.h"
 #include "api/SamProgramChain.h"
 #include "api/SamReadGroupDictionary.h"
 #include "api/SamSequenceDictionary.h"
-#include <string>
-#include <vector>
+#include "api/api_global.h"
 
 namespace BamTools {
 
-
-struct API_EXPORT SamHeader {
+struct API_EXPORT SamHeader
+{
 
     // ctor & dtor
-    SamHeader(const std::string& headerText = "");
+    SamHeader(const std::string& headerText = std::string());
     SamHeader(const SamHeader& other);
-    ~SamHeader(void);
+    ~SamHeader();
 
     // query/modify entire SamHeader
-    void Clear(void);                                   // clears all header contents
-    std::string GetErrorString(void) const;
-    bool HasError(void) const;
-    bool IsValid(bool verbose = false) const;           // returns true if SAM header is well-formed
-    void SetHeaderText(const std::string& headerText);  // replaces data fields with contents of SAM-formatted text
-    std::string ToString(void) const;                   // returns the printable, SAM-formatted header text
+    void Clear();  // clears all header contents
+    std::string GetErrorString() const;
+    bool HasError() const;
+    bool IsValid(bool verbose = false) const;  // returns true if SAM header is well-formed
+    void SetHeaderText(
+        const std::string& headerText);  // replaces data fields with contents of SAM-formatted text
+    std::string ToString() const;        // returns the printable, SAM-formatted header text
 
     // convenience query methods
-    bool HasVersion(void) const;     // returns true if header contains format version entry
-    bool HasSortOrder(void) const;   // returns true if header contains sort order entry
-    bool HasGroupOrder(void) const;  // returns true if header contains group order entry
-    bool HasSequences(void) const;   // returns true if header contains any sequence entries
-    bool HasReadGroups(void) const;  // returns true if header contains any read group entries
-    bool HasPrograms(void) const;    // returns true if header contains any program record entries
-    bool HasComments(void) const;    // returns true if header contains comments
+    bool HasVersion() const;     // returns true if header contains format version entry
+    bool HasSortOrder() const;   // returns true if header contains sort order entry
+    bool HasGroupOrder() const;  // returns true if header contains group order entry
+    bool HasSequences() const;   // returns true if header contains any sequence entries
+    bool HasReadGroups() const;  // returns true if header contains any read group entries
+    bool HasPrograms() const;    // returns true if header contains any program record entries
+    bool HasComments() const;    // returns true if header contains comments
 
     // --------------
     // data members
     // --------------
 
     // header metadata (@HD line)
-    std::string Version;             // VN:<Version>  *Required, if @HD record is present*
-    std::string SortOrder;           // SO:<SortOrder>
-    std::string GroupOrder;          // GO:<GroupOrder>
-    std::vector<CustomHeaderTag> CustomTags; // optional custom tags on @HD line
+    std::string Version;                      // VN:<Version>  *Required, if @HD record is present*
+    std::string SortOrder;                    // SO:<SortOrder>
+    std::string GroupOrder;                   // GO:<GroupOrder>
+    std::vector<CustomHeaderTag> CustomTags;  // optional custom tags on @HD line
 
     // header sequences (@SQ entries)
     SamSequenceDictionary Sequences;
@@ -68,10 +69,10 @@ struct API_EXPORT SamHeader {
     std::vector<std::string> Comments;
 
     // internal data
-    private:
-        mutable std::string m_errorString;
+private:
+    mutable std::string m_errorString;
 };
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // SAM_HEADER_H
+#endif  // SAM_HEADER_H

@@ -15,31 +15,32 @@
 #include <utils/bamtools_utilities.h>
 using namespace BamTools;
 
-#include <ctime>
 #include <cstdlib>
+#include <ctime>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
-using namespace std;
-  
+
 namespace BamTools {
-  
+
 // define constants
 const unsigned int RANDOM_MAX_ALIGNMENT_COUNT = 10000;
 
 // utility methods for RandomTool
-int getRandomInt(const int& lowerBound, const int& upperBound) {
+int getRandomInt(const int& lowerBound, const int& upperBound)
+{
     const int range = (upperBound - lowerBound) + 1;
-    return ( lowerBound + (int)(range * (double)rand()/((double)RAND_MAX + 1)) );
+    return (lowerBound + (int)(range * (double)rand() / ((double)RAND_MAX + 1)));
 }
-    
-} // namespace BamTools
-  
-// ---------------------------------------------  
+
+}  // namespace BamTools
+
+// ---------------------------------------------
 // RandomSettings implementation
 
-struct RandomTool::RandomSettings {
+struct RandomTool::RandomSettings
+{
 
     // flags
     bool HasAlignmentCount;
@@ -52,14 +53,14 @@ struct RandomTool::RandomSettings {
 
     // parameters
     unsigned int AlignmentCount;
-    vector<string> InputFiles;
-    string InputFilelist;
-    string OutputFilename;
+    std::vector<std::string> InputFiles;
+    std::string InputFilelist;
+    std::string OutputFilename;
     unsigned int RandomNumberSeed;
-    string Region;
-    
+    std::string Region;
+
     // constructor
-    RandomSettings(void)
+    RandomSettings()
         : HasAlignmentCount(false)
         , HasInput(false)
         , HasInputFilelist(false)
@@ -70,55 +71,59 @@ struct RandomTool::RandomSettings {
         , AlignmentCount(RANDOM_MAX_ALIGNMENT_COUNT)
         , OutputFilename(Options::StandardOut())
         , RandomNumberSeed(0)
-    { }  
-};  
+    {}
+};
 
 // ---------------------------------------------
 // RandomToolPrivate implementation
 
-struct RandomTool::RandomToolPrivate {
+struct RandomTool::RandomToolPrivate
+{
 
     // ctor & dtor
-    public:
-        RandomToolPrivate(RandomTool::RandomSettings* settings)
-            : m_settings(settings)
-        { }
+public:
+    RandomToolPrivate(RandomTool::RandomSettings* settings)
+        : m_settings(settings)
+    {}
 
-        ~RandomToolPrivate(void) { }
+    ~RandomToolPrivate() {}
 
     // interface
-    public:
-        bool Run(void);
+public:
+    bool Run();
 
     // data members
-    private:
-        RandomTool::RandomSettings* m_settings;
+private:
+    RandomTool::RandomSettings* m_settings;
 };
 
-bool RandomTool::RandomToolPrivate::Run(void) {
+bool RandomTool::RandomToolPrivate::Run()
+{
 
     // set to default stdin if no input files provided
-    if ( !m_settings->HasInput && !m_settings->HasInputFilelist )
+    if (!m_settings->HasInput && !m_settings->HasInputFilelist)
         m_settings->InputFiles.push_back(Options::StandardIn());
 
     // add files in the filelist to the input file list
-    if ( m_settings->HasInputFilelist ) {
+    if (m_settings->HasInputFilelist) {
 
-        ifstream filelist(m_settings->InputFilelist.c_str(), ios::in);
-        if ( !filelist.is_open() ) {
-            cerr << "bamtools random ERROR: could not open input BAM file list... Aborting." << endl;
+        std::ifstream filelist(m_settings->InputFilelist.c_str(), std::ios::in);
+        if (!filelist.is_open()) {
+            std::cerr << "bamtools random ERROR: could not open input BAM file list... Aborting."
+                      << std::endl;
             return false;
         }
 
-        string line;
-        while ( getline(filelist, line) )
+        std::string line;
+        while (std::getline(filelist, line))
             m_settings->InputFiles.push_back(line);
     }
 
     // open our reader
     BamMultiReader reader;
-    if ( !reader.Open(m_settings->InputFiles) ) {
-        cerr << "bamtools random ERROR: could not open input BAM file(s)... Aborting." << endl;
+    if (!reader.Open(m_settings->InputFiles)) {
+        std::cerr << "bamtools random ERROR: could not open input BAM file(s)... Aborting."
+                  << std::endl;
         return false;
     }
 
@@ -126,75 +131,79 @@ bool RandomTool::RandomToolPrivate::Run(void) {
     reader.LocateIndexes();
 
     // make sure index data is available
-    if ( !reader.HasIndexes() ) {
-        cerr << "bamtools random ERROR: could not load index data for all input BAM file(s)... Aborting." << endl;
+    if (!reader.HasIndexes()) {
+        std::cerr << "bamtools random ERROR: could not load index data for all input BAM "
+                     "file(s)... Aborting."
+                  << std::endl;
         reader.Close();
         return false;
     }
 
     // get BamReader metadata
-    const string headerText = reader.GetHeaderText();
+    const std::string headerText = reader.GetHeaderText();
     const RefVector references = reader.GetReferenceData();
-    if ( references.empty() ) {
-        cerr << "bamtools random ERROR: no reference data available... Aborting." << endl;
+    if (references.empty()) {
+        std::cerr << "bamtools random ERROR: no reference data available... Aborting." << std::endl;
         reader.Close();
         return false;
     }
 
     // determine compression mode for BamWriter
-    bool writeUncompressed = ( m_settings->OutputFilename == Options::StandardOut() &&
-                              !m_settings->IsForceCompression );
+    bool writeUncompressed =
+        (m_settings->OutputFilename == Options::StandardOut() && !m_settings->IsForceCompression);
     BamWriter::CompressionMode compressionMode = BamWriter::Compressed;
-    if ( writeUncompressed ) compressionMode = BamWriter::Uncompressed;
+    if (writeUncompressed) compressionMode = BamWriter::Uncompressed;
 
     // open BamWriter
     BamWriter writer;
     writer.SetCompressionMode(compressionMode);
-    if ( !writer.Open(m_settings->OutputFilename, headerText, references) ) {
-        cerr << "bamtools random ERROR: could not open " << m_settings->OutputFilename
-             << " for writing... Aborting." << endl;
+    if (!writer.Open(m_settings->OutputFilename, headerText, references)) {
+        std::cerr << "bamtools random ERROR: could not open " << m_settings->OutputFilename
+                  << " for writing... Aborting." << std::endl;
         reader.Close();
         return false;
     }
 
     // if user specified a REGION constraint, attempt to parse REGION string
     BamRegion region;
-    if ( m_settings->HasRegion && !Utilities::ParseRegionString(m_settings->Region, reader, region) ) {
-        cerr << "bamtools random ERROR: could not parse REGION: " << m_settings->Region << endl;
-        cerr << "Check that REGION is in valid format (see documentation) and that the coordinates are valid"
-             << endl;
+    if (m_settings->HasRegion &&
+        !Utilities::ParseRegionString(m_settings->Region, reader, region)) {
+        std::cerr << "bamtools random ERROR: could not parse REGION: " << m_settings->Region
+                  << std::endl;
+        std::cerr << "Check that REGION is in valid format (see documentation) and that the "
+                     "coordinates are valid"
+                  << std::endl;
         reader.Close();
         writer.Close();
         return false;
     }
 
     // seed our random number generator
-    if ( m_settings->HasRandomNumberSeed )
-        srand( m_settings->RandomNumberSeed );
+    if (m_settings->HasRandomNumberSeed)
+        srand(m_settings->RandomNumberSeed);
     else
-        srand( time(NULL) );
+        srand(time(NULL));
 
     // grab random alignments
     BamAlignment al;
     unsigned int i = 0;
-    while ( i < m_settings->AlignmentCount ) {
+    while (i < m_settings->AlignmentCount) {
 
-        int randomRefId    = 0;
+        int randomRefId = 0;
         int randomPosition = 0;
 
         // use REGION constraints to select random refId & position
-        if ( m_settings->HasRegion ) {
+        if (m_settings->HasRegion) {
 
             // select a random refId
             randomRefId = getRandomInt(region.LeftRefID, region.RightRefID);
 
             // select a random position based on randomRefId
-            const int lowerBoundPosition = ( (randomRefId == region.LeftRefID)
-                                             ? region.LeftPosition
-                                             : 0 );
-            const int upperBoundPosition = ( (randomRefId == region.RightRefID)
-                                             ? region.RightPosition
-                                             : (references.at(randomRefId).RefLength - 1) );
+            const int lowerBoundPosition =
+                ((randomRefId == region.LeftRefID) ? region.LeftPosition : 0);
+            const int upperBoundPosition =
+                ((randomRefId == region.RightRefID) ? region.RightPosition
+                                                    : (references.at(randomRefId).RefLength - 1));
             randomPosition = getRandomInt(lowerBoundPosition, upperBoundPosition);
         }
 
@@ -211,9 +220,9 @@ bool RandomTool::RandomToolPrivate::Run(void) {
         }
 
         // if jump & read successful, save first alignment that overlaps random refId & position
-        if ( reader.Jump(randomRefId, randomPosition) ) {
-            while ( reader.GetNextAlignmentCore(al) ) {
-                if ( al.RefID == randomRefId && al.Position >= randomPosition ) {
+        if (reader.Jump(randomRefId, randomPosition)) {
+            while (reader.GetNextAlignmentCore(al)) {
+                if (al.RefID == randomRefId && al.Position >= randomPosition) {
                     writer.SaveAlignment(al);
                     ++i;
                     break;
@@ -231,31 +240,51 @@ bool RandomTool::RandomToolPrivate::Run(void) {
 // ---------------------------------------------
 // RandomTool implementation
 
-RandomTool::RandomTool(void) 
+RandomTool::RandomTool()
     : AbstractTool()
     , m_settings(new RandomSettings)
     , m_impl(0)
-{ 
+{
     // set program details
     Options::SetProgramInfo("bamtools random", "grab a random subset of alignments",
-                            "[-in <filename> -in <filename> ... | -list <filelist>] [-out <filename>] [-forceCompression] [-n] [-region <REGION>]");
-    
-    // set up options 
+                            "[-in <filename> -in <filename> ... | -list <filelist>] [-out "
+                            "<filename>] [-forceCompression] [-n] [-region <REGION>]");
+
+    // set up options
     OptionGroup* IO_Opts = Options::CreateOptionGroup("Input & Output");
-    Options::AddValueOption("-in",     "BAM filename", "the input BAM file",                         "", m_settings->HasInput,          m_settings->InputFiles,     IO_Opts, Options::StandardIn());
-    Options::AddValueOption("-list",   "filename",     "the input BAM file list, one line per file", "", m_settings->HasInputFilelist,  m_settings->InputFilelist,  IO_Opts);
-    Options::AddValueOption("-out",    "BAM filename", "the output BAM file",                        "", m_settings->HasOutput,         m_settings->OutputFilename, IO_Opts, Options::StandardOut());
-    Options::AddValueOption("-region", "REGION",       "only pull random alignments from within this genomic region. Index file is recommended for better performance, and is used automatically if it exists. See \'bamtools help index\' for more details on creating one", "", m_settings->HasRegion, m_settings->Region, IO_Opts);
-    Options::AddOption("-forceCompression", "if results are sent to stdout (like when piping to another tool), default behavior is to leave output uncompressed. Use this flag to override and force compression", m_settings->IsForceCompression, IO_Opts);
-    
+    Options::AddValueOption("-in", "BAM filename", "the input BAM file", "", m_settings->HasInput,
+                            m_settings->InputFiles, IO_Opts, Options::StandardIn());
+    Options::AddValueOption("-list", "filename", "the input BAM file list, one line per file", "",
+                            m_settings->HasInputFilelist, m_settings->InputFilelist, IO_Opts);
+    Options::AddValueOption("-out", "BAM filename", "the output BAM file", "",
+                            m_settings->HasOutput, m_settings->OutputFilename, IO_Opts,
+                            Options::StandardOut());
+    Options::AddValueOption("-region", "REGION",
+                            "only pull random alignments from within this genomic region. Index "
+                            "file is recommended for better performance, and is used automatically "
+                            "if it exists. See \'bamtools help index\' for more details on "
+                            "creating one",
+                            "", m_settings->HasRegion, m_settings->Region, IO_Opts);
+    Options::AddOption("-forceCompression",
+                       "if results are sent to stdout (like when piping to another tool), default "
+                       "behavior is to leave output uncompressed. Use this flag to override and "
+                       "force compression",
+                       m_settings->IsForceCompression, IO_Opts);
+
     OptionGroup* SettingsOpts = Options::CreateOptionGroup("Settings");
-    Options::AddValueOption("-n", "count", "number of alignments to grab. Note - no duplicate checking is performed", "",
-                            m_settings->HasAlignmentCount, m_settings->AlignmentCount, SettingsOpts, RANDOM_MAX_ALIGNMENT_COUNT);
-    Options::AddValueOption("-seed", "unsigned integer", "random number generator seed (for repeatable results). Current time is used if no seed value is provided.", "",
-                            m_settings->HasRandomNumberSeed, m_settings->RandomNumberSeed, SettingsOpts);
+    Options::AddValueOption(
+        "-n", "count", "number of alignments to grab. Note - no duplicate checking is performed",
+        "", m_settings->HasAlignmentCount, m_settings->AlignmentCount, SettingsOpts,
+        RANDOM_MAX_ALIGNMENT_COUNT);
+    Options::AddValueOption("-seed", "unsigned integer",
+                            "random number generator seed (for repeatable results). Current time "
+                            "is used if no seed value is provided.",
+                            "", m_settings->HasRandomNumberSeed, m_settings->RandomNumberSeed,
+                            SettingsOpts);
 }
 
-RandomTool::~RandomTool(void) { 
+RandomTool::~RandomTool()
+{
 
     delete m_settings;
     m_settings = 0;
@@ -264,12 +293,14 @@ RandomTool::~RandomTool(void) {
     m_impl = 0;
 }
 
-int RandomTool::Help(void) { 
+int RandomTool::Help()
+{
     Options::DisplayHelp();
     return 0;
-} 
+}
 
-int RandomTool::Run(int argc, char* argv[]) { 
+int RandomTool::Run(int argc, char* argv[])
+{
 
     // parse command line arguments
     Options::Parse(argc, argv, 1);
@@ -278,7 +309,7 @@ int RandomTool::Run(int argc, char* argv[]) {
     m_impl = new RandomToolPrivate(m_settings);
 
     // run RandomTool, return success/fail
-    if ( m_impl->Run() )
+    if (m_impl->Run())
         return 0;
     else
         return 1;

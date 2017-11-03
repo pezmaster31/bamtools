@@ -20,10 +20,11 @@
 //
 // We mean it.
 
+#include <cstddef>
+#include <string>
 #include "api/IBamIODevice.h"
 #include "api/internal/io/HostInfo_p.h"
 #include "api/internal/io/RollingBuffer_p.h"
-#include <string>
 
 namespace BamTools {
 namespace Internal {
@@ -31,98 +32,101 @@ namespace Internal {
 class BamHttp;
 class TcpSocketEngine;
 
-class TcpSocket {
+class TcpSocket
+{
 
     // enums
-    public:
-        enum SocketError { NoError                = -2
-                         , UnknownSocketError     = -1
-                         , ConnectionRefusedError = 0
-                         , RemoteHostClosedError
-                         , HostNotFoundError
-                         , SocketAccessError
-                         , SocketResourceError
-                         , SocketTimeoutError
-                         , NetworkError
-                         , UnsupportedSocketOperationError
-                         };
+public:
+    enum SocketError
+    {
+        NoError = -2,
+        UnknownSocketError = -1,
+        ConnectionRefusedError = 0,
+        RemoteHostClosedError,
+        HostNotFoundError,
+        SocketAccessError,
+        SocketResourceError,
+        SocketTimeoutError,
+        NetworkError,
+        UnsupportedSocketOperationError
+    };
 
-        enum SocketState { UnconnectedState = 0
-                         , ConnectedState
-                         };
+    enum SocketState
+    {
+        UnconnectedState = 0,
+        ConnectedState
+    };
 
     // ctor & dtor
-    public:
-        TcpSocket(void);
-        ~TcpSocket(void);
+public:
+    TcpSocket();
+    ~TcpSocket();
 
     // TcpSocket interface
-    public:
+public:
+    // connection methods
+    bool ConnectToHost(const std::string& hostName,
+                       const uint16_t port,  // Connect("host", 80)
+                       IBamIODevice::OpenMode mode = IBamIODevice::ReadOnly);
+    bool ConnectToHost(const std::string& hostName,
+                       const std::string& port,  // Connect("host", "80")
+                       IBamIODevice::OpenMode mode = IBamIODevice::ReadOnly);
+    void DisconnectFromHost();
+    bool IsConnected() const;
 
-        // connection methods
-        bool ConnectToHost(const std::string& hostName,
-                           const uint16_t port,        // Connect("host", 80)
-                           IBamIODevice::OpenMode mode = IBamIODevice::ReadOnly);
-        bool ConnectToHost(const std::string& hostName,
-                           const std::string& port,    // Connect("host", "80")
-                           IBamIODevice::OpenMode mode = IBamIODevice::ReadOnly);
-        void DisconnectFromHost(void);
-        bool IsConnected(void) const;
+    // I/O methods
+    std::size_t BufferBytesAvailable() const;
+    bool CanReadLine() const;
+    void ClearBuffer();  // force buffer to clear (not a 'flush', just a 'discard')
+    int64_t Read(char* data, const unsigned int numBytes);
+    std::string ReadLine(int64_t max = 0);
+    int64_t ReadLine(char* dest, std::size_t max);
+    bool WaitForReadLine();
+    int64_t Write(const char* data, const unsigned int numBytes);
 
-        // I/O methods
-        size_t BufferBytesAvailable(void) const;
-        bool CanReadLine(void) const;
-        void ClearBuffer(void); // force buffer to clear (not a 'flush', just a 'discard')
-        int64_t Read(char* data, const unsigned int numBytes);
-        std::string ReadLine(int64_t max = 0);
-        int64_t ReadLine(char* dest, size_t max);
-        bool WaitForReadLine(void);
-        int64_t Write(const char* data, const unsigned int numBytes);
+    // connection values
+    std::string GetHostName() const;
+    //        HostAddress GetLocalAddress() const;
+    //        uint16_t    GetLocalPort() const;
+    HostAddress GetRemoteAddress() const;
+    uint16_t GetRemotePort() const;
 
-        // connection values
-        std::string GetHostName(void) const;
-//        HostAddress GetLocalAddress(void) const;
-//        uint16_t    GetLocalPort(void) const;
-        HostAddress GetRemoteAddress(void) const;
-        uint16_t    GetRemotePort(void) const;
-
-        // connection status
-        TcpSocket::SocketError GetError(void) const;
-        TcpSocket::SocketState GetState(void) const;
-        std::string GetErrorString(void) const;
+    // connection status
+    TcpSocket::SocketError GetError() const;
+    TcpSocket::SocketState GetState() const;
+    std::string GetErrorString() const;
 
     // internal methods
-    private:
-        bool ConnectImpl(const HostInfo& hostInfo,
-                         const std::string& port,
-                         IBamIODevice::OpenMode mode);
-        bool InitializeSocketEngine(HostAddress::NetworkProtocol protocol);
-        int64_t ReadFromSocket(void);
-        void ResetSocketEngine(void);
+private:
+    bool ConnectImpl(const HostInfo& hostInfo, const std::string& port,
+                     IBamIODevice::OpenMode mode);
+    bool InitializeSocketEngine(HostAddress::NetworkProtocol protocol);
+    int64_t ReadFromSocket();
+    void ResetSocketEngine();
 
     // data members
-    private:
-        IBamIODevice::OpenMode m_mode;
+private:
+    IBamIODevice::OpenMode m_mode;
 
-        std::string m_hostName;
-//        uint16_t    m_localPort;
-        uint16_t    m_remotePort;
-//        HostAddress m_localAddress;
-        HostAddress m_remoteAddress;
+    std::string m_hostName;
+    //        uint16_t    m_localPort;
+    uint16_t m_remotePort;
+    //        HostAddress m_localAddress;
+    HostAddress m_remoteAddress;
 
-        TcpSocketEngine* m_engine;
-        int m_cachedSocketDescriptor;
+    TcpSocketEngine* m_engine;
+    int m_cachedSocketDescriptor;
 
-        RollingBuffer m_readBuffer;
+    RollingBuffer m_readBuffer;
 
-        TcpSocket::SocketError m_error;
-        TcpSocket::SocketState m_state;
-        std::string m_errorString;
+    TcpSocket::SocketError m_error;
+    TcpSocket::SocketState m_state;
+    std::string m_errorString;
 
-        friend class BamHttp;
+    friend class BamHttp;
 };
 
-} // namespace Internal
-} // namespace BamTools
+}  // namespace Internal
+}  // namespace BamTools
 
-#endif // TCPSOCKET_P_H
+#endif  // TCPSOCKET_P_H

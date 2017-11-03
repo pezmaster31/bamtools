@@ -12,7 +12,7 @@
 // Marth Lab, Department of Biology, Boston College
 // Re-licensed under MIT License with author's permission.
 //
-// * Modified slightly to fit BamTools, otherwise code is same. 
+// * Modified slightly to fit BamTools, otherwise code is same.
 // *  (BamTools namespace, added stdin/stdout) (DB)
 // ***************************************************************************
 
@@ -24,37 +24,35 @@ using namespace BamTools;
 #include <cstring>
 #include <iomanip>
 #include <sstream>
-using namespace std;
 
-string Options::m_programName;                   // the program name
-string Options::m_description;                   // the main description
-string Options::m_exampleArguments;              // the example arguments
-vector<OptionGroup> Options::m_optionGroups;     // stores the option groups
-map<string, OptionValue> Options::m_optionsMap;  // stores the options in a map
-const string Options::m_stdin  = "stdin";        // string representation of stdin
-const string Options::m_stdout = "stdout";       // string representation of stdout
+std::string Options::m_programName;                        // the program name
+std::string Options::m_description;                        // the main description
+std::string Options::m_exampleArguments;                   // the example arguments
+std::vector<OptionGroup> Options::m_optionGroups;          // stores the option groups
+std::map<std::string, OptionValue> Options::m_optionsMap;  // stores the options in a map
+const std::string Options::m_stdin = "stdin";              // string representation of stdin
+const std::string Options::m_stdout = "stdout";            // string representation of stdout
 
 // adds a simple option to the parser
-void Options::AddOption(const string& argument,
-                        const string& optionDescription,
-                        bool& foundArgument,
-                        OptionGroup* group)
+void Options::AddOption(const std::string& argument, const std::string& optionDescription,
+                        bool& foundArgument, OptionGroup* group)
 {
     Option o;
-    o.Argument    = argument;
+    o.Argument = argument;
     o.Description = optionDescription;
-    o.StoreValue  = false;
+    o.StoreValue = false;
     group->Options.push_back(o);
 
     OptionValue ov;
     ov.pFoundArgument = &foundArgument;
-    ov.StoreValue     = false;
+    ov.StoreValue = false;
 
     m_optionsMap[argument] = ov;
 }
 
 // creates an option group
-OptionGroup* Options::CreateOptionGroup(const string& groupName) {
+OptionGroup* Options::CreateOptionGroup(const std::string& groupName)
+{
     OptionGroup og;
     og.Name = groupName;
     m_optionGroups.push_back(og);
@@ -62,11 +60,12 @@ OptionGroup* Options::CreateOptionGroup(const string& groupName) {
 }
 
 // displays the help menu
-void Options::DisplayHelp(void) {
+void Options::DisplayHelp()
+{
 
     // initialize
     char argumentBuffer[ARGUMENT_LENGTH + 1];
-    ostringstream sb;
+    std::ostringstream sb;
 
     char indentBuffer[MAX_LINE_LENGTH - DESC_LENGTH + 1];
     memset(indentBuffer, ' ', MAX_LINE_LENGTH - DESC_LENGTH);
@@ -78,26 +77,28 @@ void Options::DisplayHelp(void) {
     printf("%s", m_programName.c_str());
     printf(" %s\n\n", m_exampleArguments.c_str());
 
-    vector<Option>::const_iterator      optionIter;
-    vector<OptionGroup>::const_iterator groupIter;
+    std::vector<Option>::const_iterator optionIter;
+    std::vector<OptionGroup>::const_iterator groupIter;
     for (groupIter = m_optionGroups.begin(); groupIter != m_optionGroups.end(); ++groupIter) {
-        
+
         printf("%s:\n", groupIter->Name.c_str());
 
-        for (optionIter = groupIter->Options.begin(); optionIter != groupIter->Options.end(); ++optionIter) {
+        for (optionIter = groupIter->Options.begin(); optionIter != groupIter->Options.end();
+             ++optionIter) {
 
-            if (optionIter->StoreValue) 
-                snprintf(argumentBuffer, ARGUMENT_LENGTH + 1, "  %s <%s>", optionIter->Argument.c_str(), optionIter->ValueDescription.c_str());
-            else 
+            if (optionIter->StoreValue)
+                snprintf(argumentBuffer, ARGUMENT_LENGTH + 1, "  %s <%s>",
+                         optionIter->Argument.c_str(), optionIter->ValueDescription.c_str());
+            else
                 snprintf(argumentBuffer, ARGUMENT_LENGTH + 1, "  %s", optionIter->Argument.c_str());
             printf("%-35s ", argumentBuffer);
 
-            string description = optionIter->Description;
+            std::string description = optionIter->Description;
 
             // handle default values
             if (optionIter->HasDefaultValue) {
-                
-                sb.str("");
+
+                sb.str(std::string());
                 sb << description << " [";
 
                 if (optionIter->DefaultValue.is_type<unsigned int>()) {
@@ -112,32 +113,34 @@ void Options::DisplayHelp(void) {
                     const std::string stringValue = optionIter->DefaultValue;
                     sb << stringValue;
                 } else {
-                    printf("ERROR: Found an unsupported data type for argument %s when casting the default value.\n",
-                           optionIter->Argument.c_str());
-                    exit(1);
+                    printf(
+                        "ERROR: Found an unsupported data type for argument %s when casting the "
+                        "default value.\n",
+                        optionIter->Argument.c_str());
+                    std::exit(EXIT_FAILURE);
                 }
 
-                sb << "]";
-                description = sb.str(); 
+                sb << ']';
+                description = sb.str();
             }
 
-            if ( description.size() <= DESC_LENGTH_FIRST_ROW ) {
+            if (description.size() <= DESC_LENGTH_FIRST_ROW) {
                 printf("%s\n", description.c_str());
             } else {
 
                 // handle the first row
                 const char* pDescription = description.data();
                 unsigned int cutIndex = DESC_LENGTH_FIRST_ROW;
-                while(pDescription[cutIndex] != ' ') 
+                while (pDescription[cutIndex] != ' ')
                     cutIndex--;
                 printf("%s\n", description.substr(0, cutIndex).c_str());
                 description = description.substr(cutIndex + 1);
 
                 // handle subsequent rows
-                while(description.size() > DESC_LENGTH) {
+                while (description.size() > DESC_LENGTH) {
                     pDescription = description.data();
                     cutIndex = DESC_LENGTH;
-                    while(pDescription[cutIndex] != ' ') 
+                    while (pDescription[cutIndex] != ' ')
                         cutIndex--;
                     printf("%s%s\n", indentBuffer, description.substr(0, cutIndex).c_str());
                     description = description.substr(cutIndex + 1);
@@ -145,50 +148,52 @@ void Options::DisplayHelp(void) {
 
                 // handle last row
                 printf("%s%s\n", indentBuffer, description.c_str());
-            }                       
+            }
         }
 
         printf("\n");
     }
 
-    printf("Help:\n"); 
+    printf("Help:\n");
     printf("  --help, -h                        shows this help text\n");
-    exit(1);
+    std::exit(EXIT_FAILURE);
 }
 
 // parses the command line
-void Options::Parse(int argc, char* argv[], int offset) {
+void Options::Parse(int argc, char* argv[], int offset)
+{
 
     // initialize
-    map<string, OptionValue>::const_iterator ovMapIter;
-    map<string, OptionValue>::const_iterator checkMapIter;
+    std::map<std::string, OptionValue>::const_iterator ovMapIter;
+    std::map<std::string, OptionValue>::const_iterator checkMapIter;
     const int LAST_INDEX = argc - 1;
-    ostringstream errorBuilder;
+    std::ostringstream errorBuilder;
     bool foundError = false;
     char* end_ptr = NULL;
-    const string ERROR_SPACER(7, ' ');
+    const std::string ERROR_SPACER(7, ' ');
 
     // check if we should show the help menu
     bool showHelpMenu = false;
     if (argc > 1) {
         for (int i = 1; i < argc; i++) {
             const std::string argument = argv[i];
-            if ( (argument == "-h") || (argument == "--help") || (argument == "help") ) 
+            if ((argument == "-h") || (argument == "--help") || (argument == "help"))
                 showHelpMenu = true;
         }
-    } else showHelpMenu = true;
+    } else
+        showHelpMenu = true;
 
-    if (showHelpMenu) 
-        DisplayHelp();
+    if (showHelpMenu) DisplayHelp();
 
     // check each argument
-    for (int i = offset+1; i < argc; i++) {
-      
-        const string argument = argv[i];
+    for (int i = offset + 1; i < argc; i++) {
+
+        const std::string argument = argv[i];
         ovMapIter = m_optionsMap.find(argument);
 
         if (ovMapIter == m_optionsMap.end()) {
-            errorBuilder << ERROR_SPACER << "An unrecognized argument was found: " << argument << std::endl;
+            errorBuilder << ERROR_SPACER << "An unrecognized argument was found: " << argument
+                         << std::endl;
             foundError = true;
         } else {
 
@@ -200,19 +205,21 @@ void Options::Parse(int argc, char* argv[], int offset) {
                 if (i < LAST_INDEX) {
 
                     // check if the next argument is really a command line option
-                    const string val = argv[i + 1]; 
+                    const std::string val = argv[i + 1];
                     checkMapIter = m_optionsMap.find(val);
 
                     if (checkMapIter == m_optionsMap.end()) {
-                        
+
                         ++i;
-                        
+
                         if (ovMapIter->second.VariantValue.is_type<unsigned int>()) {
-                            const unsigned int uint32 = (unsigned int)strtoul(val.c_str(), &end_ptr, 10);
+                            const unsigned int uint32 =
+                                (unsigned int)strtoul(val.c_str(), &end_ptr, 10);
                             unsigned int* varValue = (unsigned int*)ovMapIter->second.pValue;
                             *varValue = uint32;
                         } else if (ovMapIter->second.VariantValue.is_type<unsigned char>()) {
-                            const unsigned char uint8 = (unsigned char)strtoul(val.c_str(), &end_ptr, 10);
+                            const unsigned char uint8 =
+                                (unsigned char)strtoul(val.c_str(), &end_ptr, 10);
                             unsigned char* varValue = (unsigned char*)ovMapIter->second.pValue;
                             *varValue = uint8;
                         } else if (ovMapIter->second.VariantValue.is_type<uint64_t>()) {
@@ -227,25 +234,29 @@ void Options::Parse(int argc, char* argv[], int offset) {
                             const float f = (float)strtod(val.c_str(), &end_ptr);
                             float* varValue = (float*)ovMapIter->second.pValue;
                             *varValue = f;
-                        } else if (ovMapIter->second.VariantValue.is_type<string>()) {
-                            string* pStringValue = (string*)ovMapIter->second.pValue;
+                        } else if (ovMapIter->second.VariantValue.is_type<std::string>()) {
+                            std::string* pStringValue = (std::string*)ovMapIter->second.pValue;
                             *pStringValue = val;
-                        } else if (ovMapIter->second.VariantValue.is_type<vector<string> >()) {
-                            vector<string>* pVectorValue = (vector<string>*)ovMapIter->second.pValue;
+                        } else if (ovMapIter->second.VariantValue
+                                       .is_type<std::vector<std::string> >()) {
+                            std::vector<std::string>* pVectorValue =
+                                (std::vector<std::string>*)ovMapIter->second.pValue;
                             pVectorValue->push_back(val);
                         } else {
-                            printf("ERROR: Found an unsupported data type for argument %s when parsing the arguments.\n",
-                                   argument.c_str());
-                            exit(1);
+                            printf(
+                                "ERROR: Found an unsupported data type for argument %s when "
+                                "parsing the arguments.\n",
+                                argument.c_str());
+                            std::exit(EXIT_FAILURE);
                         }
                     } else {
                         errorBuilder << ERROR_SPACER << "The argument (" << argument
-                                     << ") expects a value, but none was found." << endl;
+                                     << ") expects a value, but none was found." << std::endl;
                         foundError = true;
                     }
                 } else {
                     errorBuilder << ERROR_SPACER << "The argument (" << argument
-                                 << ") expects a value, but none was found." << endl;
+                                 << ") expects a value, but none was found." << std::endl;
                     foundError = true;
                 }
             }
@@ -256,7 +267,8 @@ void Options::Parse(int argc, char* argv[], int offset) {
     for (ovMapIter = m_optionsMap.begin(); ovMapIter != m_optionsMap.end(); ++ovMapIter) {
         if (ovMapIter->second.IsRequired && !*ovMapIter->second.pFoundArgument) {
             errorBuilder << ERROR_SPACER << ovMapIter->second.ValueTypeDescription
-                         << " was not specified. Please use the " << ovMapIter->first << " parameter." << endl;
+                         << " was not specified. Please use the " << ovMapIter->first
+                         << " parameter." << std::endl;
             foundError = true;
         }
     }
@@ -265,23 +277,29 @@ void Options::Parse(int argc, char* argv[], int offset) {
     if (foundError) {
         printf("ERROR: Some problems were encountered when parsing the command line options:\n");
         printf("%s\n", errorBuilder.str().c_str());
-        printf("For a complete list of command line options, type \"%s help %s\"\n", argv[0], argv[1]);
-        exit(1);
+        printf("For a complete list of command line options, type \"%s help %s\"\n", argv[0],
+               argv[1]);
+        std::exit(EXIT_FAILURE);
     }
 }
 
 // sets the program info
-void Options::SetProgramInfo(const string& programName,
-                             const string& description,
-                             const string& arguments)
+void Options::SetProgramInfo(const std::string& programName, const std::string& description,
+                             const std::string& arguments)
 {
-    m_programName      = programName;
-    m_description      = description;
+    m_programName = programName;
+    m_description = description;
     m_exampleArguments = arguments;
 }
 
 // return string representations of stdin
-const string& Options::StandardIn(void) { return m_stdin; }
+const std::string& Options::StandardIn()
+{
+    return m_stdin;
+}
 
 // return string representations of stdout
-const string& Options::StandardOut(void) { return m_stdout; }
+const std::string& Options::StandardOut()
+{
+    return m_stdout;
+}

@@ -13,25 +13,26 @@
 #include "bamtools_tool.h"
 
 namespace BamTools {
-  
-class MergeTool : public AbstractTool {
-  
-    public:
-        MergeTool(void);
-        ~MergeTool(void);
-  
-    public:
-        int Help(void);
-        int Run(int argc, char* argv[]); 
-        
-    private:
-        struct MergeSettings;
-        MergeSettings* m_settings;
 
-        struct MergeToolPrivate;
-        MergeToolPrivate* m_impl;
+class MergeTool : public AbstractTool
+{
+
+public:
+    MergeTool();
+    ~MergeTool();
+
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
+
+private:
+    struct MergeSettings;
+    MergeSettings* m_settings;
+
+    struct MergeToolPrivate;
+    MergeToolPrivate* m_impl;
 };
-  
-} // namespace BamTools
 
-#endif // BAMTOOLS_MERGE_H
+}  // namespace BamTools
+
+#endif  // BAMTOOLS_MERGE_H

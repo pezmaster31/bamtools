@@ -13,23 +13,24 @@
 
 #include <string>
 
-namespace BamTools { 
-  
-class AbstractTool {
-  
-    public:
-        AbstractTool(void) { }
-        virtual ~AbstractTool(void) { }
+namespace BamTools {
 
-    public:
-        virtual int Help(void) =0;
-        virtual int Run(int argc, char* argv[]) =0; 
+class AbstractTool
+{
+
+public:
+    AbstractTool() {}
+    virtual ~AbstractTool() {}
+
+public:
+    virtual int Help() = 0;
+    virtual int Run(int argc, char* argv[]) = 0;
 
     // derived classes should also provide:
-    // static std::string Description(void);
-    // static std::String Name(void);
+    // static std::string Description();
+    // static std::String Name();
 };
-  
-} // namespace BamTools
 
-#endif // BAMTOOLS_ABSTRACTTOOL_H
+}  // namespace BamTools
+
+#endif  // BAMTOOLS_ABSTRACTTOOL_H

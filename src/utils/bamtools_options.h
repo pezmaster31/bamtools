@@ -12,7 +12,7 @@
 // Marth Lab, Department of Biology, Boston College
 // Re-licensed under MIT License with author's permission.
 //
-// * Modified slightly to fit BamTools, otherwise code is same. 
+// * Modified slightly to fit BamTools, otherwise code is same.
 // *  (BamTools namespace, added stdin/stdout) (DB)
 // ***************************************************************************
 
@@ -27,27 +27,28 @@
 #include <vector>
 
 #ifndef WIN32
-    #include <stdint.h>
+#include <stdint.h>
 #endif
 
 namespace BamTools {
 
-#define ARGUMENT_LENGTH       35
+#define ARGUMENT_LENGTH 35
 #define DESC_LENGTH_FIRST_ROW 30
-#define DESC_LENGTH           42
-#define MAX_LINE_LENGTH       78
+#define DESC_LENGTH 42
+#define MAX_LINE_LENGTH 78
 
 #ifdef WIN32
-  #define snprintf _snprintf
-  typedef __int64          int64_t;
-  typedef unsigned __int64 uint64_t;
-  #define strtoui64 _strtoui64
+#define snprintf _snprintf
+typedef __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+#define strtoui64 _strtoui64
 #else
-  #define strtoui64 strtoull
+#define strtoui64 strtoull
 #endif
 
-struct UTILS_EXPORT Option {
-  
+struct UTILS_EXPORT Option
+{
+
     // data members
     std::string Argument;
     std::string ValueDescription;
@@ -57,14 +58,15 @@ struct UTILS_EXPORT Option {
     Variant DefaultValue;
 
     // constructor
-    Option(void)
+    Option()
         : StoreValue(true)
         , HasDefaultValue(false)
-    { }
+    {}
 };
 
-struct UTILS_EXPORT OptionValue {
-  
+struct UTILS_EXPORT OptionValue
+{
+
     // data members
     bool* pFoundArgument;
     void* pValue;
@@ -75,139 +77,124 @@ struct UTILS_EXPORT OptionValue {
     Variant VariantValue;
 
     // constructor
-    OptionValue(void)
+    OptionValue()
         : pFoundArgument(NULL)
         , pValue(NULL)
         , UseVector(false)
         , StoreValue(true)
         , IsRequired(false)
-    { } 
+    {}
 };
 
-struct UTILS_EXPORT OptionGroup {
+struct UTILS_EXPORT OptionGroup
+{
     std::string Name;
     std::vector<Option> Options;
 };
 
-class UTILS_EXPORT Options {
-  
+class UTILS_EXPORT Options
+{
+
     // add option/argument rules
-    public:
-        // adds a simple option to the parser
-        static void AddOption(const std::string& argument, 
-                       const std::string& optionDescription, 
-                       bool& foundArgument, 
-                       OptionGroup* group);
-                       
-        // adds a value option to the parser
-        template<typename T>
-        static void AddValueOption(const std::string& argument, 
-                            const std::string& valueDescription, 
-                            const std::string& optionDescription, 
-                            const std::string& valueTypeDescription, 
-                            bool& foundArgument, 
-                            T& val, 
-                            OptionGroup* group);
-                            
-        // adds a value option to the parser (with a default value)
-        template<typename T, typename D>
-        static void AddValueOption(const std::string& argument, 
-                            const std::string& valueDescription, 
-                            const std::string& optionDescription, 
-                            const std::string& valueTypeDescription, 
-                            bool& foundArgument, 
-                            T& val, 
-                            OptionGroup* group, 
-                            D& defaultValue);
-       
+public:
+    // adds a simple option to the parser
+    static void AddOption(const std::string& argument, const std::string& optionDescription,
+                          bool& foundArgument, OptionGroup* group);
+
+    // adds a value option to the parser
+    template <typename T>
+    static void AddValueOption(const std::string& argument, const std::string& valueDescription,
+                               const std::string& optionDescription,
+                               const std::string& valueTypeDescription, bool& foundArgument, T& val,
+                               OptionGroup* group);
+
+    // adds a value option to the parser (with a default value)
+    template <typename T, typename D>
+    static void AddValueOption(const std::string& argument, const std::string& valueDescription,
+                               const std::string& optionDescription,
+                               const std::string& valueTypeDescription, bool& foundArgument, T& val,
+                               OptionGroup* group, D& defaultValue);
+
     // other API methods
-    public:
-        // creates an option group
-        static OptionGroup* CreateOptionGroup(const std::string& groupName);    
-        // displays the help menu
-        static void DisplayHelp(void);
-        // parses the command line
-        static void Parse(int argc, char* argv[], int offset = 0);
-        // sets the program info
-        static void SetProgramInfo(const std::string& programName,
-                                   const std::string& description,
-                                   const std::string& arguments);
-        // returns string representation of stdin
-        static const std::string& StandardIn(void);
-        // returns string representation of stdout
-        static const std::string& StandardOut(void);
-        
+public:
+    // creates an option group
+    static OptionGroup* CreateOptionGroup(const std::string& groupName);
+    // displays the help menu
+    static void DisplayHelp();
+    // parses the command line
+    static void Parse(int argc, char* argv[], int offset = 0);
+    // sets the program info
+    static void SetProgramInfo(const std::string& programName, const std::string& description,
+                               const std::string& arguments);
+    // returns string representation of stdin
+    static const std::string& StandardIn();
+    // returns string representation of stdout
+    static const std::string& StandardOut();
+
     // static data members
-    private:
-        // the program name
-        static std::string m_programName;
-        // the main description
-        static std::string m_description;
-        // the example arguments
-        static std::string m_exampleArguments;
-        // stores the option groups
-        static std::vector<OptionGroup> m_optionGroups;
-        // stores the options in a map
-        static std::map<std::string, OptionValue> m_optionsMap;
-        // string representation of stdin
-        static const std::string m_stdin;
-        // string representation of stdout
-        static const std::string m_stdout;
+private:
+    // the program name
+    static std::string m_programName;
+    // the main description
+    static std::string m_description;
+    // the example arguments
+    static std::string m_exampleArguments;
+    // stores the option groups
+    static std::vector<OptionGroup> m_optionGroups;
+    // stores the options in a map
+    static std::map<std::string, OptionValue> m_optionsMap;
+    // string representation of stdin
+    static const std::string m_stdin;
+    // string representation of stdout
+    static const std::string m_stdout;
 };
 
 // adds a value option to the parser
-template<typename T>
-void Options::AddValueOption(const std::string& argument, 
-                             const std::string& valueDescription, 
-                             const std::string& optionDescription, 
-                             const std::string& valueTypeDescription, 
-                             bool& foundArgument, 
-                             T& val, 
-                             OptionGroup* group) 
+template <typename T>
+void Options::AddValueOption(const std::string& argument, const std::string& valueDescription,
+                             const std::string& optionDescription,
+                             const std::string& valueTypeDescription, bool& foundArgument, T& val,
+                             OptionGroup* group)
 {
-        Option o;
-        o.Argument         = argument;
-        o.ValueDescription = valueDescription;
-        o.Description      = optionDescription;
-        group->Options.push_back(o);
+    Option o;
+    o.Argument = argument;
+    o.ValueDescription = valueDescription;
+    o.Description = optionDescription;
+    group->Options.push_back(o);
 
-        OptionValue ov;
-        ov.pFoundArgument       = &foundArgument;
-        ov.pValue               = (void*)&val;
-        ov.VariantValue         = val;
-        ov.IsRequired           = (valueTypeDescription.empty() ? false : true);
-        ov.ValueTypeDescription = valueTypeDescription;
-        m_optionsMap[argument] = ov;
+    OptionValue ov;
+    ov.pFoundArgument = &foundArgument;
+    ov.pValue = (void*)&val;
+    ov.VariantValue = val;
+    ov.IsRequired = (valueTypeDescription.empty() ? false : true);
+    ov.ValueTypeDescription = valueTypeDescription;
+    m_optionsMap[argument] = ov;
 }
 
 // adds a value option to the parser (with a default value)
-template<typename T, typename D>
-void Options::AddValueOption(const std::string& argument, 
-                             const std::string& valueDescription, 
-                             const std::string& optionDescription, 
-                             const std::string& valueTypeDescription, 
-                             bool& foundArgument, 
-                             T& val, 
-                             OptionGroup* group, 
-                             D& defaultValue) 
+template <typename T, typename D>
+void Options::AddValueOption(const std::string& argument, const std::string& valueDescription,
+                             const std::string& optionDescription,
+                             const std::string& valueTypeDescription, bool& foundArgument, T& val,
+                             OptionGroup* group, D& defaultValue)
 {
-        Option o;
-        o.Argument         = argument;
-        o.ValueDescription = valueDescription;
-        o.Description      = optionDescription;
-        o.DefaultValue     = defaultValue;
-        o.HasDefaultValue  = true;
-        group->Options.push_back(o);
+    Option o;
+    o.Argument = argument;
+    o.ValueDescription = valueDescription;
+    o.Description = optionDescription;
+    o.DefaultValue = defaultValue;
+    o.HasDefaultValue = true;
+    group->Options.push_back(o);
 
-        OptionValue ov;
-        ov.pFoundArgument       = &foundArgument;
-        ov.pValue               = (void*)&val;
-        ov.VariantValue         = val;
-        ov.IsRequired           = (valueTypeDescription.empty() ? false : true);
-        ov.ValueTypeDescription = valueTypeDescription;
-        m_optionsMap[argument] = ov;
+    OptionValue ov;
+    ov.pFoundArgument = &foundArgument;
+    ov.pValue = (void*)&val;
+    ov.VariantValue = val;
+    ov.IsRequired = (valueTypeDescription.empty() ? false : true);
+    ov.ValueTypeDescription = valueTypeDescription;
+    m_optionsMap[argument] = ov;
 }
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // BAMTOOLS_OPTIONS_H
+#endif  // BAMTOOLS_OPTIONS_H

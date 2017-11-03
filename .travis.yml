@@ -1,0 +1,56 @@
+dist: trusty
+sudo: required
+language: cpp
+
+matrix:
+  include:
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-5.0
+          packages:
+            - clang-5.0
+            - cmake
+      env:
+        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.9
+            - cmake
+      env:
+         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
+
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+            - cmake
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+
+    - os: osx
+      compiler: clang
+
+before_install:
+  - eval "${MATRIX_EVAL}"
+
+script:
+  # 1. check formatting
+  - ./tools/check-formatting --all
+  # 2. check compilation
+  - mkdir build && cd build
+  - cmake ..
+  - make
+  - make DESTDIR="${PWD}"/staging-dir install

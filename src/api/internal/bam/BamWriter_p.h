@@ -20,10 +20,10 @@
 //
 // We mean it.
 
-#include "api/BamAux.h"
-#include "api/internal/io/BgzfStream_p.h"
 #include <string>
 #include <vector>
+#include "api/BamAux.h"
+#include "api/internal/io/BgzfStream_p.h"
 
 namespace BamTools {
 
@@ -31,43 +31,44 @@ class BamAlignment;
 
 namespace Internal {
 
-class BamWriterPrivate {
+class BamWriterPrivate
+{
 
     // ctor & dtor
-    public:
-        BamWriterPrivate(void);
-        ~BamWriterPrivate(void);
+public:
+    BamWriterPrivate();
+    ~BamWriterPrivate();
 
     // interface methods
-    public:
-        void Close(void);
-        std::string GetErrorString(void) const;
-        bool IsOpen(void) const;
-        bool Open(const std::string& filename,
-                  const std::string& samHeaderText,
-                  const BamTools::RefVector& referenceSequences);
-        bool SaveAlignment(const BamAlignment& al);
-        void SetWriteCompressed(bool ok);
+public:
+    void Close();
+    std::string GetErrorString() const;
+    bool IsOpen() const;
+    bool Open(const std::string& filename, const std::string& samHeaderText,
+              const BamTools::RefVector& referenceSequences);
+    bool SaveAlignment(const BamAlignment& al);
+    void SetWriteCompressed(bool ok);
 
     // 'internal' methods
-    public:
-        uint32_t CalculateMinimumBin(const int begin, int end) const;
-        void CreatePackedCigar(const std::vector<BamTools::CigarOp>& cigarOperations, std::string& packedCigar);
-        void EncodeQuerySequence(const std::string& query, std::string& encodedQuery);
-        void WriteAlignment(const BamAlignment& al);
-        void WriteCoreAlignment(const BamAlignment& al);
-        void WriteMagicNumber(void);
-        void WriteReferences(const BamTools::RefVector& referenceSequences);
-        void WriteSamHeaderText(const std::string& samHeaderText);
+public:
+    uint32_t CalculateMinimumBin(const int begin, int end) const;
+    void CreatePackedCigar(const std::vector<BamTools::CigarOp>& cigarOperations,
+                           std::string& packedCigar);
+    void EncodeQuerySequence(const std::string& query, std::string& encodedQuery);
+    void WriteAlignment(const BamAlignment& al);
+    void WriteCoreAlignment(const BamAlignment& al);
+    void WriteMagicNumber();
+    void WriteReferences(const BamTools::RefVector& referenceSequences);
+    void WriteSamHeaderText(const std::string& samHeaderText);
 
     // data members
-    private:
-        BgzfStream m_stream;
-        bool m_isBigEndian;
-        std::string m_errorString;
+private:
+    BgzfStream m_stream;
+    bool m_isBigEndian;
+    std::string m_errorString;
 };
 
-} // namespace Internal
-} // namespace BamTools
+}  // namespace Internal
+}  // namespace BamTools
 
-#endif // BAMWRITER_P_H
+#endif  // BAMWRITER_P_H

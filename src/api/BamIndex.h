@@ -10,15 +10,15 @@
 #ifndef BAM_INDEX_H
 #define BAM_INDEX_H
 
-#include "api/api_global.h"
-#include "api/BamAux.h"
 #include <string>
+#include "api/BamAux.h"
+#include "api/api_global.h"
 
 namespace BamTools {
 
 namespace Internal {
-    class BamReaderPrivate;
-} // namespace Internal
+class BamReaderPrivate;
+}  // namespace Internal
 
 /*! \class BamTools::BamIndex
     \brief Provides methods for generating & loading BAM index files.
@@ -31,60 +31,68 @@ namespace Internal {
     their own custom indexing schemes.
 */
 
-class API_EXPORT BamIndex {
+class API_EXPORT BamIndex
+{
 
     // enums
-    public:
+public:
+    // list of supported BamIndex types
+    enum IndexType
+    {
+        BAMTOOLS = 0,
+        STANDARD
+    };
 
-        // list of supported BamIndex types
-        enum IndexType { BAMTOOLS = 0
-                       , STANDARD
-                       };
-  
     // ctor & dtor
-    public:
-        BamIndex(Internal::BamReaderPrivate* reader) : m_reader(reader) { }
-        virtual ~BamIndex(void) { }
-        
+public:
+    BamIndex(Internal::BamReaderPrivate* reader)
+        : m_reader(reader)
+    {}
+    virtual ~BamIndex() {}
+
     // index interface
-    public:
-        // builds index from associated BAM file & writes out to index file
-        virtual bool Create(void) =0;
+public:
+    // builds index from associated BAM file & writes out to index file
+    virtual bool Create() = 0;
 
-        // returns a human-readable description of the last error encountered
-        std::string GetErrorString(void) { return m_errorString; }
+    // returns a human-readable description of the last error encountered
+    std::string GetErrorString()
+    {
+        return m_errorString;
+    }
 
-        // returns whether reference has alignments or no
-        virtual bool HasAlignments(const int& referenceID) const =0;
+    // returns whether reference has alignments or no
+    virtual bool HasAlignments(const int& referenceID) const = 0;
 
-        // attempts to use index data to jump to @region, returns success/fail
-        // a "successful" jump indicates no error, but not whether this region has data
-        //   * thus, the method sets a flag to indicate whether there are alignments
-        //     available after the jump position
-        virtual bool Jump(const BamTools::BamRegion& region, bool* hasAlignmentsInRegion) =0;
+    // attempts to use index data to jump to @region, returns success/fail
+    // a "successful" jump indicates no error, but not whether this region has data
+    //   * thus, the method sets a flag to indicate whether there are alignments
+    //     available after the jump position
+    virtual bool Jump(const BamTools::BamRegion& region, bool* hasAlignmentsInRegion) = 0;
 
-        // loads existing data from file into memory
-        virtual bool Load(const std::string& filename) =0;
+    // loads existing data from file into memory
+    virtual bool Load(const std::string& filename) = 0;
 
-        // returns the 'type' enum for derived index format
-        virtual BamIndex::IndexType Type(void) const =0;
+    // returns the 'type' enum for derived index format
+    virtual BamIndex::IndexType Type() const = 0;
 
     //! \cond
 
     // internal methods
-    protected:
-        void SetErrorString(const std::string& where, const std::string& what) const {
-            m_errorString = where + ": " + what;
-        }
+protected:
+    void SetErrorString(const std::string& where, const std::string& what) const
+    {
+        m_errorString = where + ": " + what;
+    }
 
     // data members
-    protected:
-        Internal::BamReaderPrivate* m_reader; // copy, not owned
-        mutable std::string m_errorString;
+protected:
+    Internal::BamReaderPrivate* m_reader;  // copy, not owned
+    mutable std::string m_errorString;
 
     //! \endcond
 };
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // BAM_INDEX_H
+#endif  // BAM_INDEX_H

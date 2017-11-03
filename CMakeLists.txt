@@ -5,11 +5,31 @@
 # top-level
 # ==========================
 
-# set project name
-project( BamTools )
+# CMake requirements
+cmake_minimum_required( VERSION 3.0 )
 
-# Cmake requirements
-cmake_minimum_required( VERSION 2.6.4 )
+# allow setting project version in project()
+# https://cmake.org/cmake/help/v3.0/policy/CMP0048.html#policy:CMP0048
+cmake_policy( SET CMP0048 NEW )
+
+# set project name and version
+project( BamTools LANGUAGES CXX VERSION 2.4.2 )
+
+# on macOS, MACOSX_RPATH is enabled by default on more recent versions
+# of CMake. Disable this behaviour, and let user enable it if need be.
+cmake_policy( SET CMP0042 OLD )
+
+# Set Release type for builds where CMAKE_BUILD_TYPE is unset
+# This is usually a good default as this implictly enables
+#
+#   CXXFLAGS = -O3 -DNDEBUG
+#
+if( NOT CMAKE_BUILD_TYPE )
+    set( CMAKE_BUILD_TYPE "Release" )
+endif()
+
+# Adhere to GNU filesystem layout conventions
+include( GNUInstallDirs )
 
 # Force the build directory to be different from source directory
 macro( ENSURE_OUT_OF_SOURCE_BUILD MSG )
@@ -23,28 +43,25 @@ endmacro( ENSURE_OUT_OF_SOURCE_BUILD )
 
 ensure_out_of_source_build( "
   ${PROJECT_NAME} requires an out of source build.
-  $ mkdir build 
+  $ mkdir build
   $ cd build
   $ cmake ..
-  $ make 
+  $ make
 (or the Windows equivalent)\n" )
 
-# set BamTools version information
-set( BamTools_VERSION_MAJOR 2 )
-set( BamTools_VERSION_MINOR 4 )
-set( BamTools_VERSION_BUILD 1 )
-
-# set our library and executable destination dirs
-set( EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/bin" )
-set( LIBRARY_OUTPUT_PATH    "${CMAKE_SOURCE_DIR}/lib" )
-
-# define compiler flags for all code
-set( CMAKE_BUILD_TYPE Release )
-set( CMAKE_CXX_FLAGS_RELEASE "-std=c++98 ${CMAKE_CXX_FLAGS_RELEASE}" )
-add_definitions( -Wall -D_FILE_OFFSET_BITS=64 )
+# define compiler flags for all code, copied from Autoconf's AC_SYS_LARGEFILE
+if( NOT WIN32 )
+    add_definitions( -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE )
+    add_compile_options( -Wall )
+endif()
 
 # -----------------------------------------------
 # handle platform-/environment-specific defines
+
+# By default build bamtools as a static library
+# Most users will prefer static libraries, distributions
+# can always switch the standard CMake variable over to ON.
+set( BUILD_SHARED_LIBS OFF CACHE BOOL "Build all libraries as shared" )
 
 # If planning to run in Node.js environment, run:
 # cmake -DEnableNodeJS=true
@@ -56,6 +73,19 @@ endif()
 if( "${CMAKE_SYSTEM_NAME}" MATCHES "SunOS" )
     add_definitions( -DSUN_OS )
 endif()
+
+# find system JsonCpp
+find_package( PkgConfig )
+pkg_search_module( JSONCPP jsoncpp>=1 )
+
+if( JSONCPP_FOUND )
+    message( "Found system JsonCpp, not using bundled version" )
+else()
+    message( "Did NOT find system JsonCpp, instead using bundled version" )
+    set( JSONCPP_LDFLAGS jsoncpp )
+    set( JSONCPP_INCLUDE_DIRS ${BamTools_SOURCE_DIR}/src/third_party/jsoncpp )
+endif()
+
 
 # -------------------------------------------
 

@@ -24,80 +24,82 @@
 #include "api/internal/io/TcpSocket_p.h"
 
 #ifdef _WIN32
-#  include "api/internal/io/NetWin_p.h"
+#include "api/internal/io/NetWin_p.h"
 #endif
+
+#include <cstddef>
 
 namespace BamTools {
 namespace Internal {
 
-class TcpSocketEngine {
+class TcpSocketEngine
+{
 
     // ctors & dtor
-    public:
-        TcpSocketEngine(void);
-        TcpSocketEngine(const TcpSocketEngine& other);
-        ~TcpSocketEngine(void);
+public:
+    TcpSocketEngine();
+    TcpSocketEngine(const TcpSocketEngine& other);
+    ~TcpSocketEngine();
 
     // TcpSocketEngine interface
-    public:
+public:
+    // connection-related methods
+    void Close();
+    bool Connect(const HostAddress& address, const uint16_t port);
+    bool Initialize(HostAddress::NetworkProtocol protocol);
+    bool IsValid() const;
 
-        // connection-related methods
-        void Close(void);
-        bool Connect(const HostAddress& address, const uint16_t port);
-        bool Initialize(HostAddress::NetworkProtocol protocol);
-        bool IsValid(void) const;
+    // IO-related methods
+    int64_t NumBytesAvailable() const;
+    int64_t Read(char* dest, std::size_t max);
+    int64_t Write(const char* data, std::size_t length);
 
-        // IO-related methods
-        int64_t NumBytesAvailable(void) const;
-        int64_t Read(char* dest, size_t max);
-        int64_t Write(const char* data, size_t length);
+    bool WaitForRead(int msec, bool* timedOut);
+    bool WaitForWrite(int msec, bool* timedOut);
 
-        bool WaitForRead(int msec, bool* timedOut);
-        bool WaitForWrite(int msec, bool* timedOut);
+    // query connection state
+    //        HostAddress GetLocalAddress() const;
+    //        uint16_t GetLocalPort() const;
+    HostAddress GetRemoteAddress() const;
+    uint16_t GetRemotePort() const;
 
-        // query connection state
-//        HostAddress GetLocalAddress(void) const;
-//        uint16_t GetLocalPort(void) const;
-        HostAddress GetRemoteAddress(void) const;
-        uint16_t    GetRemotePort(void) const;
+    int GetSocketDescriptor() const;
+    TcpSocket::SocketError GetSocketError();
+    TcpSocket::SocketState GetSocketState();
 
-        int GetSocketDescriptor(void) const;
-        TcpSocket::SocketError GetSocketError(void);
-        TcpSocket::SocketState GetSocketState(void);
-
-        std::string GetErrorString(void) const;
+    std::string GetErrorString() const;
 
     // platform-dependent internal methods
     // provided in the corresponding TcpSocketEngine_<OS>_p.cpp
-    private:
-        void    nativeClose(void);
-        bool    nativeConnect(const HostAddress& address, const uint16_t port);
-        bool    nativeCreateSocket(HostAddress::NetworkProtocol protocol);
-        void    nativeDisconnect(void);
-        int64_t nativeNumBytesAvailable(void) const;
-        int64_t nativeRead(char* dest, size_t max);
-        int     nativeSelect(int msecs, bool isRead) const;
-        int64_t nativeWrite(const char* data, size_t length);
+private:
+    void nativeClose();
+    bool nativeConnect(const HostAddress& address, const uint16_t port);
+    bool nativeCreateSocket(HostAddress::NetworkProtocol protocol);
+    void nativeDisconnect();
+    int64_t nativeNumBytesAvailable() const;
+    int64_t nativeRead(char* dest, std::size_t max);
+    int nativeSelect(int msecs, bool isRead) const;
+    int64_t nativeWrite(const char* data, std::size_t length);
 
     // data members
-    private:
-        int m_socketDescriptor;
+private:
+    int m_socketDescriptor;
 
-//        HostAddress m_localAddress;
-        HostAddress m_remoteAddress;
-//        uint16_t m_localPort;
-        uint16_t m_remotePort;
+    //        HostAddress m_localAddress;
+    HostAddress m_remoteAddress;
+    //        uint16_t m_localPort;
+    uint16_t m_remotePort;
 
-        TcpSocket::SocketError m_socketError;
-        TcpSocket::SocketState m_socketState;
-        std::string m_errorString;
+    TcpSocket::SocketError m_socketError;
+    TcpSocket::SocketState m_socketState;
+    std::string m_errorString;
 
 #ifdef _WIN32
-        WindowsSockInit m_win;
+    WindowsSockInit m_win;
 #endif
 };
 
-} // namespace Internal
-} // namespace BamTools
+}  // namespace Internal
+}  // namespace BamTools
 
-#endif // TCPSOCKETENGINE_P_H
+#endif  // TCPSOCKETENGINE_P_H

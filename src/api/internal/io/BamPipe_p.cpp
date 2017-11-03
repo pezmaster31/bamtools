@@ -13,47 +13,50 @@ using namespace BamTools::Internal;
 
 #include <cstdio>
 #include <iostream>
-using namespace std;
 
-BamPipe::BamPipe(void) : ILocalIODevice() { }
+BamPipe::BamPipe()
+    : ILocalIODevice()
+{}
 
-BamPipe::~BamPipe(void) { }
+BamPipe::~BamPipe() {}
 
-bool BamPipe::IsRandomAccess(void) const {
+bool BamPipe::IsRandomAccess() const
+{
     return false;
 }
 
-bool BamPipe::Open(const IBamIODevice::OpenMode mode) {
+bool BamPipe::Open(const IBamIODevice::OpenMode mode)
+{
 
     // make sure we're starting with a fresh pipe
     Close();
 
     // open stdin/stdout depending on requested openmode
-#if defined( SYSTEM_NODEJS ) && SYSTEM_NODEJS == 1
-    if ( mode == IBamIODevice::ReadOnly )
+#if defined(SYSTEM_NODEJS) && SYSTEM_NODEJS == 1
+    if (mode == IBamIODevice::ReadOnly)
         m_stream = stdin;
-    else if ( mode == IBamIODevice::WriteOnly )
+    else if (mode == IBamIODevice::WriteOnly)
         m_stream = stdout;
 #else
-    if ( mode == IBamIODevice::ReadOnly )
+    if (mode == IBamIODevice::ReadOnly)
         m_stream = freopen(0, "rb", stdin);
-    else if ( mode == IBamIODevice::WriteOnly )
+    else if (mode == IBamIODevice::WriteOnly)
         m_stream = freopen(0, "wb", stdout);
-#endif // SYSTEM_NODEJS
+#endif  // SYSTEM_NODEJS
 
     else {
-        const string errorType = string( (mode == IBamIODevice::ReadWrite) ? "unsupported"
-                                                                           : "unknown" );
-        const string message = errorType + " open mode requested";
+        const std::string errorType =
+            std::string((mode == IBamIODevice::ReadWrite) ? "unsupported" : "unknown");
+        const std::string message = errorType + " open mode requested";
         SetErrorString("BamPipe::Open", message);
         return false;
     }
 
     // check that we obtained a valid FILE*
-    if ( m_stream == 0 ) {
-        const string message_base = string("could not open handle on ");
-        const string message = message_base + ( (mode == IBamIODevice::ReadOnly) ? "stdin"
-                                                                                 : "stdout" );
+    if (m_stream == 0) {
+        const std::string message_base = std::string("could not open handle on ");
+        const std::string message =
+            message_base + ((mode == IBamIODevice::ReadOnly) ? "stdin" : "stdout");
         SetErrorString("BamPipe::Open", message);
         return false;
     }
@@ -63,7 +66,8 @@ bool BamPipe::Open(const IBamIODevice::OpenMode mode) {
     return true;
 }
 
-bool BamPipe::Seek(const int64_t&, const int) {
+bool BamPipe::Seek(const int64_t&, const int)
+{
     SetErrorString("BamPipe::Seek", "random access not allowed in FIFO pipe");
     return false;
 }

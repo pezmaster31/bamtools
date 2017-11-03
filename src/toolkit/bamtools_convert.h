@@ -12,26 +12,27 @@
 
 #include "bamtools_tool.h"
 
-namespace BamTools { 
-  
-class ConvertTool : public AbstractTool {
-  
-    public:
-        ConvertTool(void);
-        ~ConvertTool(void);
+namespace BamTools {
 
-    public:
-        int Help(void);
-        int Run(int argc, char* argv[]); 
-        
-    private: 
-        struct ConvertSettings;
-        ConvertSettings* m_settings;
-        
-        struct ConvertToolPrivate;
-        ConvertToolPrivate* m_impl;
+class ConvertTool : public AbstractTool
+{
+
+public:
+    ConvertTool();
+    ~ConvertTool();
+
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
+
+private:
+    struct ConvertSettings;
+    ConvertSettings* m_settings;
+
+    struct ConvertToolPrivate;
+    ConvertToolPrivate* m_impl;
 };
-  
-} // namespace BamTools
 
-#endif // BAMTOOLS_CONVERT_H
+}  // namespace BamTools
+
+#endif  // BAMTOOLS_CONVERT_H

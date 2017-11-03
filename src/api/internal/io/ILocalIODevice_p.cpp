@@ -12,22 +12,22 @@ using namespace BamTools;
 using namespace BamTools::Internal;
 
 #include <cstdio>
-using namespace std;
 
-ILocalIODevice::ILocalIODevice(void)
+ILocalIODevice::ILocalIODevice()
     : IBamIODevice()
     , m_stream(0)
-{ }
+{}
 
-ILocalIODevice::~ILocalIODevice(void) {
+ILocalIODevice::~ILocalIODevice()
+{
     Close();
 }
 
-void ILocalIODevice::Close(void) {
+void ILocalIODevice::Close()
+{
 
     // skip if not open
-    if ( !IsOpen() )
-        return;
+    if (!IsOpen()) return;
 
     // flush & close FILE*
     fflush(m_stream);
@@ -38,19 +38,24 @@ void ILocalIODevice::Close(void) {
     m_mode = IBamIODevice::NotOpen;
 }
 
-int64_t ILocalIODevice::Read(char* data, const unsigned int numBytes) {
-    BT_ASSERT_X( m_stream, "ILocalIODevice::Read: trying to read from null stream" );
-    BT_ASSERT_X( (m_mode & IBamIODevice::ReadOnly), "ILocalIODevice::Read: device not in read-able mode");
-    return static_cast<int64_t>( fread(data, sizeof(char), numBytes, m_stream) );
+int64_t ILocalIODevice::Read(char* data, const unsigned int numBytes)
+{
+    BT_ASSERT_X(m_stream, "ILocalIODevice::Read: trying to read from null stream");
+    BT_ASSERT_X((m_mode & IBamIODevice::ReadOnly),
+                "ILocalIODevice::Read: device not in read-able mode");
+    return static_cast<int64_t>(fread(data, sizeof(char), numBytes, m_stream));
 }
 
-int64_t ILocalIODevice::Tell(void) const {
-    BT_ASSERT_X( m_stream, "ILocalIODevice::Tell: trying to get file position fromnull stream" );
+int64_t ILocalIODevice::Tell() const
+{
+    BT_ASSERT_X(m_stream, "ILocalIODevice::Tell: trying to get file position fromnull stream");
     return ftell64(m_stream);
 }
 
-int64_t ILocalIODevice::Write(const char* data, const unsigned int numBytes) {
-    BT_ASSERT_X( m_stream, "ILocalIODevice::Write: tryint to write to null stream" );
-    BT_ASSERT_X( (m_mode & IBamIODevice::WriteOnly), "ILocalIODevice::Write: device not in write-able mode" );
-    return static_cast<int64_t>( fwrite(data, sizeof(char), numBytes, m_stream) );
+int64_t ILocalIODevice::Write(const char* data, const unsigned int numBytes)
+{
+    BT_ASSERT_X(m_stream, "ILocalIODevice::Write: tryint to write to null stream");
+    BT_ASSERT_X((m_mode & IBamIODevice::WriteOnly),
+                "ILocalIODevice::Write: device not in write-able mode");
+    return static_cast<int64_t>(fwrite(data, sizeof(char), numBytes, m_stream));
 }

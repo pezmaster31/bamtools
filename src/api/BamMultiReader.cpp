@@ -18,7 +18,6 @@ using namespace BamTools;
 
 #include <string>
 #include <vector>
-using namespace std;
 
 /*! \class BamTools::BamMultiReader
     \brief Convenience class for reading multiple BAM files.
@@ -39,29 +38,31 @@ using namespace std;
     \brief Merge strategy when BAM files are sorted by read name ('queryname')
 */
 
-/*! \fn BamMultiReader::BamMultiReader(void)
+/*! \fn BamMultiReader::BamMultiReader()
     \brief constructor
 */
-BamMultiReader::BamMultiReader(void)
+BamMultiReader::BamMultiReader()
     : d(new Internal::BamMultiReaderPrivate)
-{ }
+{}
 
-/*! \fn BamMultiReader::~BamMultiReader(void)
+/*! \fn BamMultiReader::~BamMultiReader()
     \brief destructor
 */
-BamMultiReader::~BamMultiReader(void) {
+BamMultiReader::~BamMultiReader()
+{
     delete d;
     d = 0;
 }
 
-/*! \fn void BamMultiReader::Close(void)
+/*! \fn void BamMultiReader::Close()
     \brief Closes all open BAM files.
 
     Also clears out all header and reference data.
 
     \sa CloseFile(), IsOpen(), Open(), BamReader::Close()
 */
-bool BamMultiReader::Close(void) {
+bool BamMultiReader::Close()
+{
     return d->Close();
 }
 
@@ -74,7 +75,8 @@ bool BamMultiReader::Close(void) {
 
     \sa Close(), IsOpen(), Open(), BamReader::Close()
 */
-bool BamMultiReader::CloseFile(const std::string& filename) {
+bool BamMultiReader::CloseFile(const std::string& filename)
+{
     return d->CloseFile(filename);
 }
 
@@ -85,11 +87,12 @@ bool BamMultiReader::CloseFile(const std::string& filename) {
     \return \c true if index files created OK
     \sa LocateIndexes(), OpenIndexes(), BamReader::CreateIndex()
 */
-bool BamMultiReader::CreateIndexes(const BamIndex::IndexType& type) {
+bool BamMultiReader::CreateIndexes(const BamIndex::IndexType& type)
+{
     return d->CreateIndexes(type);
 }
 
-/*! \fn const std::vector<std::string> BamMultiReader::Filenames(void) const
+/*! \fn const std::vector<std::string> BamMultiReader::Filenames() const
     \brief Returns list of filenames for all open BAM files.
 
     Retrieved filenames will contain whatever was passed via Open().
@@ -99,11 +102,12 @@ bool BamMultiReader::CreateIndexes(const BamIndex::IndexType& type) {
     \returns names of open BAM files. If no files are open, returns an empty vector.
     \sa IsOpen(), BamReader::GetFilename()
 */
-const std::vector<std::string> BamMultiReader::Filenames(void) const {
+const std::vector<std::string> BamMultiReader::Filenames() const
+{
     return d->Filenames();
 }
 
-/*! \fn std::string BamMultiReader::GetErrorString(void) const
+/*! \fn std::string BamMultiReader::GetErrorString() const
     \brief Returns a human-readable description of the last error that occurred
 
     This method allows elimination of STDERR pollution. Developers of client code
@@ -111,11 +115,12 @@ const std::vector<std::string> BamMultiReader::Filenames(void) const {
 
     \return error description
 */
-std::string BamMultiReader::GetErrorString(void) const {
+std::string BamMultiReader::GetErrorString() const
+{
     return d->GetErrorString();
 }
 
-/*! \fn SamHeader BamMultiReader::GetHeader(void) const
+/*! \fn SamHeader BamMultiReader::GetHeader() const
     \brief Returns unified SAM-format header for all files
 
     \note Modifying the retrieved text does NOT affect the current
@@ -126,11 +131,12 @@ std::string BamMultiReader::GetErrorString(void) const {
     \returns header data wrapped in SamHeader object
     \sa GetHeaderText(), BamReader::GetHeader()
 */
-SamHeader BamMultiReader::GetHeader(void) const {
+SamHeader BamMultiReader::GetHeader() const
+{
     return d->GetHeader();
 }
 
-/*! \fn std::string BamMultiReader::GetHeaderText(void) const
+/*! \fn std::string BamMultiReader::GetHeaderText() const
     \brief Returns unified SAM-format header text for all files
 
     \note Modifying the retrieved text does NOT affect the current
@@ -141,17 +147,19 @@ SamHeader BamMultiReader::GetHeader(void) const {
     \returns SAM-formatted header text
     \sa GetHeader(), BamReader::GetHeaderText()
 */
-std::string BamMultiReader::GetHeaderText(void) const {
+std::string BamMultiReader::GetHeaderText() const
+{
     return d->GetHeaderText();
 }
 
-/*! \fn BamMultiReader::MergeOrder BamMultiReader::GetMergeOrder(void) const
+/*! \fn BamMultiReader::MergeOrder BamMultiReader::GetMergeOrder() const
     \brief Returns curent merge order strategy.
 
     \returns current merge order enum value
     \sa BamMultiReader::MergeOrder, SetExplicitMergeOrder()
 */
-BamMultiReader::MergeOrder BamMultiReader::GetMergeOrder(void) const {
+BamMultiReader::MergeOrder BamMultiReader::GetMergeOrder() const
+{
     return d->GetMergeOrder();
 }
 
@@ -168,7 +176,8 @@ BamMultiReader::MergeOrder BamMultiReader::GetMergeOrder(void) const {
     \returns \c true if a valid alignment was found
     \sa GetNextAlignmentCore(), SetExplicitMergeOrder(), SetRegion(), BamReader::GetNextAlignment()
 */
-bool BamMultiReader::GetNextAlignment(BamAlignment& nextAlignment) {
+bool BamMultiReader::GetNextAlignment(BamAlignment& nextAlignment)
+{
     return d->GetNextAlignment(nextAlignment);
 }
 
@@ -185,23 +194,26 @@ bool BamMultiReader::GetNextAlignment(BamAlignment& nextAlignment) {
     \returns \c true if a valid alignment was found
     \sa GetNextAlignment(), SetExplicitMergeOrder(), SetRegion(), BamReader::GetNextAlignmentCore()
 */
-bool BamMultiReader::GetNextAlignmentCore(BamAlignment& nextAlignment) {
+bool BamMultiReader::GetNextAlignmentCore(BamAlignment& nextAlignment)
+{
     return d->GetNextAlignmentCore(nextAlignment);
 }
 
-/*! \fn int BamMultiReader::GetReferenceCount(void) const
+/*! \fn int BamMultiReader::GetReferenceCount() const
     \brief Returns number of reference sequences.
     \sa BamReader::GetReferenceCount()
 */
-int BamMultiReader::GetReferenceCount(void) const {
+int BamMultiReader::GetReferenceCount() const
+{
     return d->GetReferenceCount();
 }
 
-/*! \fn const RefVector& BamMultiReader::GetReferenceData(void) const
+/*! \fn const RefVector& BamMultiReader::GetReferenceData() const
     \brief Returns all reference sequence entries.
     \sa RefData, BamReader::GetReferenceData()
 */
-const BamTools::RefVector BamMultiReader::GetReferenceData(void) const {
+const BamTools::RefVector BamMultiReader::GetReferenceData() const
+{
     return d->GetReferenceData();
 }
 
@@ -213,22 +225,25 @@ const BamTools::RefVector BamMultiReader::GetReferenceData(void) const {
     \param[in] refName name of reference to look up
     \sa BamReader::GetReferenceID()
 */
-int BamMultiReader::GetReferenceID(const std::string& refName) const {
+int BamMultiReader::GetReferenceID(const std::string& refName) const
+{
     return d->GetReferenceID(refName);
 }
 
-/*! \fn bool BamMultiReader::HasIndexes(void) const
+/*! \fn bool BamMultiReader::HasIndexes() const
     \brief Returns \c true if all BAM files have index data available.
     \sa BamReader::HasIndex()
 */
-bool BamMultiReader::HasIndexes(void) const {
+bool BamMultiReader::HasIndexes() const
+{
     return d->HasIndexes();
 }
 
-/*! \fn bool BamMultiReader::HasOpenReaders(void) const
+/*! \fn bool BamMultiReader::HasOpenReaders() const
     \brief Returns \c true if there are any open BAM files.
 */
-bool BamMultiReader::HasOpenReaders(void) const {
+bool BamMultiReader::HasOpenReaders() const
+{
     return d->HasOpenReaders();
 }
 
@@ -245,7 +260,8 @@ bool BamMultiReader::HasOpenReaders(void) const {
     \sa HasIndex(), BamReader::Jump()
 */
 
-bool BamMultiReader::Jump(int refID, int position) {
+bool BamMultiReader::Jump(int refID, int position)
+{
     return d->Jump(refID, position);
 }
 
@@ -283,7 +299,8 @@ bool BamMultiReader::Jump(int refID, int position) {
     \returns \c true if index files could be found for \b ALL open BAM files
     \sa BamReader::LocateIndex()
 */
-bool BamMultiReader::LocateIndexes(const BamIndex::IndexType& preferredType) {
+bool BamMultiReader::LocateIndexes(const BamIndex::IndexType& preferredType)
+{
     return d->LocateIndexes(preferredType);
 }
 
@@ -298,7 +315,8 @@ bool BamMultiReader::LocateIndexes(const BamIndex::IndexType& preferredType) {
     \returns \c true if BAM files were opened successfully
     \sa Close(), HasOpenReaders(), OpenFile(), OpenIndexes(), BamReader::Open()
 */
-bool BamMultiReader::Open(const std::vector<std::string>& filenames) {
+bool BamMultiReader::Open(const std::vector<std::string>& filenames)
+{
     return d->Open(filenames);
 }
 
@@ -315,7 +333,8 @@ bool BamMultiReader::Open(const std::vector<std::string>& filenames) {
     \returns \c true if BAM file was opened successfully
     \sa Close(), HasOpenReaders(), Open(), OpenIndexes(), BamReader::Open()
 */
-bool BamMultiReader::OpenFile(const std::string& filename) {
+bool BamMultiReader::OpenFile(const std::string& filename)
+{
     return d->OpenFile(filename);
 }
 
@@ -329,11 +348,12 @@ bool BamMultiReader::OpenFile(const std::string& filename) {
     \returns \c true if BAM index file was opened & data loaded successfully
     \sa LocateIndex(), Open(), SetIndex(), BamReader::OpenIndex()
 */
-bool BamMultiReader::OpenIndexes(const std::vector<std::string>& indexFilenames) {
+bool BamMultiReader::OpenIndexes(const std::vector<std::string>& indexFilenames)
+{
     return d->OpenIndexes(indexFilenames);
 }
 
-/*! \fn bool BamMultiReader::Rewind(void)
+/*! \fn bool BamMultiReader::Rewind()
     \brief Returns the internal file pointers to the beginning of alignment records.
 
     Useful for performing multiple sequential passes through BAM files.
@@ -342,7 +362,8 @@ bool BamMultiReader::OpenIndexes(const std::vector<std::string>& indexFilenames)
     \returns \c true if rewind operation was successful
     \sa Jump(), SetRegion(), BamReader::Rewind()
 */
-bool BamMultiReader::Rewind(void) {
+bool BamMultiReader::Rewind()
+{
     return d->Rewind();
 }
 
@@ -371,7 +392,8 @@ bool BamMultiReader::Rewind(void) {
     \returns \c true if merge order could be successfully applied
     \sa BamMultiReader::MergeOrder, GetMergeOrder(), GetNextAlignment(), GetNextAlignmentCore()
 */
-bool BamMultiReader::SetExplicitMergeOrder(BamMultiReader::MergeOrder order) {
+bool BamMultiReader::SetExplicitMergeOrder(BamMultiReader::MergeOrder order)
+{
     return d->SetExplicitMergeOrder(order);
 }
 
@@ -388,7 +410,8 @@ bool BamMultiReader::SetExplicitMergeOrder(BamMultiReader::MergeOrder order) {
     \returns \c true if ALL readers set the region successfully
     \sa HasIndexes(), Jump(), BamReader::SetRegion()
 */
-bool BamMultiReader::SetRegion(const BamRegion& region) {
+bool BamMultiReader::SetRegion(const BamRegion& region)
+{
     return d->SetRegion(region);
 }
 
@@ -412,10 +435,8 @@ bool BamMultiReader::SetRegion(const BamRegion& region) {
     \returns \c true if ALL readers set the region successfully
     \sa HasIndexes(), Jump(), BamReader::SetRegion()
 */
-bool BamMultiReader::SetRegion(const int& leftRefID,
-                               const int& leftPosition,
-                               const int& rightRefID,
+bool BamMultiReader::SetRegion(const int& leftRefID, const int& leftPosition, const int& rightRefID,
                                const int& rightPosition)
 {
-    return d->SetRegion( BamRegion(leftRefID, leftPosition, rightRefID, rightPosition) );
+    return d->SetRegion(BamRegion(leftRefID, leftPosition, rightRefID, rightPosition));
 }

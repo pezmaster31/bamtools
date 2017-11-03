@@ -13,25 +13,26 @@
 #include "bamtools_tool.h"
 
 namespace BamTools {
-  
-class RandomTool : public AbstractTool {
-  
-    public:
-        RandomTool(void);
-        ~RandomTool(void);
-  
-    public:
-        int Help(void);
-        int Run(int argc, char* argv[]); 
-        
-    private:
-        struct RandomSettings;
-        RandomSettings* m_settings;
 
-        struct RandomToolPrivate;
-        RandomToolPrivate* m_impl;
+class RandomTool : public AbstractTool
+{
+
+public:
+    RandomTool();
+    ~RandomTool();
+
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
+
+private:
+    struct RandomSettings;
+    RandomSettings* m_settings;
+
+    struct RandomToolPrivate;
+    RandomToolPrivate* m_impl;
 };
-  
-} // namespace BamTools
 
-#endif // BAMTOOLS_RANDOM _H
+}  // namespace BamTools
+
+#endif  // BAMTOOLS_RANDOM _H

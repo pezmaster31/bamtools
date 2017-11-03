@@ -10,7 +10,6 @@ include_directories( ${BamTools_SOURCE_DIR}/src )
 
 # add compiler definitions 
 add_definitions( -DBAMTOOLS_API_LIBRARY ) # (for proper exporting of library symbols)
-add_definitions( -fPIC ) # (attempt to force PIC compiling on CentOS, not being set on shared libs by CMake)
 
 # fetch all internal source files
 add_subdirectory( internal )
@@ -31,31 +30,26 @@ set( BamToolsAPISources
         ${InternalSources}
 )
 
-# create main BamTools API shared library
-add_library( BamTools SHARED ${BamToolsAPISources} )
-set_target_properties( BamTools PROPERTIES
-                       SOVERSION "2.4.1"
-                       OUTPUT_NAME "bamtools" )
-
-# create main BamTools API static library
-add_library( BamTools-static STATIC ${BamToolsAPISources} )
-set_target_properties( BamTools-static PROPERTIES 
-                       OUTPUT_NAME "bamtools" 
-                       PREFIX "lib" )
-
 # link libraries automatically with zlib (and Winsock2, if applicable)
+find_package( ZLIB REQUIRED )
+
 if( WIN32 )
-    set( APILibs z ws2_32 )
-else()
-    set( APILibs z )
+    set( WIN32_LIBRARIES wsock32 ws2_32 )
 endif()
 
-target_link_libraries( BamTools        ${APILibs} )
-target_link_libraries( BamTools-static ${APILibs} )
-
-# set library install destinations
-install( TARGETS BamTools        LIBRARY DESTINATION "lib/bamtools" RUNTIME DESTINATION "bin")
-install( TARGETS BamTools-static ARCHIVE DESTINATION "lib/bamtools")
+# create main BamTools API library
+add_library( BamTools ${BamToolsAPISources} )
+# The SONAME is bumped on every version increment
+# as Bamtools does not yet guarantee a stable ABI
+set_target_properties( BamTools PROPERTIES
+                       SOVERSION "${BamTools_VERSION}"
+                       OUTPUT_NAME "bamtools" )
+target_include_directories( BamTools PRIVATE "${ZLIB_INCLUDE_DIRS}" )
+target_link_libraries( BamTools PRIVATE "${ZLIB_LIBRARIES}" "${WIN32_LIBRARIES}" )
+install( TARGETS BamTools
+         ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" )
 
 # export API headers
 include(../ExportHeader.cmake)

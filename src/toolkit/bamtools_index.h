@@ -13,25 +13,26 @@
 #include "bamtools_tool.h"
 
 namespace BamTools {
-  
-class IndexTool : public AbstractTool {
-  
-    public:
-        IndexTool(void);
-        ~IndexTool(void);
-  
-    public:
-        int Help(void);
-        int Run(int argc, char* argv[]); 
-        
-    private:
-        struct IndexSettings;
-        IndexSettings* m_settings;
 
-        struct IndexToolPrivate;
-        IndexToolPrivate* m_impl;
+class IndexTool : public AbstractTool
+{
+
+public:
+    IndexTool();
+    ~IndexTool();
+
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
+
+private:
+    struct IndexSettings;
+    IndexSettings* m_settings;
+
+    struct IndexToolPrivate;
+    IndexToolPrivate* m_impl;
 };
-  
-} // namespace BamTools
 
-#endif // BAMTOOLS_INDEX_H
+}  // namespace BamTools
+
+#endif  // BAMTOOLS_INDEX_H

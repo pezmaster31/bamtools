@@ -12,26 +12,27 @@
 
 #include "bamtools_tool.h"
 
-namespace BamTools { 
-  
-class CountTool : public AbstractTool {
-  
-    public:
-        CountTool(void);
-        ~CountTool(void);
+namespace BamTools {
 
-    public:
-        int Help(void);
-        int Run(int argc, char* argv[]); 
-        
-    private: 
-        struct CountSettings;
-        CountSettings* m_settings;
+class CountTool : public AbstractTool
+{
 
-        struct CountToolPrivate;
-        CountToolPrivate* m_impl;
+public:
+    CountTool();
+    ~CountTool();
+
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
+
+private:
+    struct CountSettings;
+    CountSettings* m_settings;
+
+    struct CountToolPrivate;
+    CountToolPrivate* m_impl;
 };
-  
-} // namespace BamTools
 
-#endif // BAMTOOLS_COUNT_H
+}  // namespace BamTools
+
+#endif  // BAMTOOLS_COUNT_H

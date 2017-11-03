@@ -10,54 +10,57 @@
 #ifndef SAM_PROGRAM_H
 #define SAM_PROGRAM_H
 
-#include "api/api_global.h"
-#include "api/BamAux.h"
 #include <string>
+#include "api/BamAux.h"
+#include "api/api_global.h"
 
 namespace BamTools {
 
 class SamProgramChain;
 
-struct API_EXPORT SamProgram {
+struct API_EXPORT SamProgram
+{
 
     // ctor & dtor
-    SamProgram(void);
+    SamProgram();
     SamProgram(const std::string& id);
     SamProgram(const SamProgram& other);
-    ~SamProgram(void);
+    ~SamProgram();
 
     // query/modify entire program record
-    void Clear(void);                      // clears all data fields
+    void Clear();  // clears all data fields
 
     // convenience query methods
-    bool HasCommandLine(void) const;       // returns true if program record has a command line entry
-    bool HasID(void) const;                // returns true if program record has an ID
-    bool HasName(void) const;              // returns true if program record has a name
-    bool HasPreviousProgramID(void) const; // returns true if program record has a 'previous program ID'
-    bool HasVersion(void) const;           // returns true if program record has a version
+    bool HasCommandLine() const;  // returns true if program record has a command line entry
+    bool HasID() const;           // returns true if program record has an ID
+    bool HasName() const;         // returns true if program record has a name
+    bool HasPreviousProgramID()
+        const;                // returns true if program record has a 'previous program ID'
+    bool HasVersion() const;  // returns true if program record has a version
 
     // data members
-    std::string CommandLine;               // CL:<CommandLine>
-    std::string ID;                        // ID:<ID>          *Required for valid SAM header*
-    std::string Name;                      // PN:<Name>
-    std::string PreviousProgramID;         // PP:<PreviousProgramID>
-    std::string Version;                   // VN:<Version>
-    std::vector<CustomHeaderTag> CustomTags;   // optional custom tags
+    std::string CommandLine;                  // CL:<CommandLine>
+    std::string ID;                           // ID:<ID>          *Required for valid SAM header*
+    std::string Name;                         // PN:<Name>
+    std::string PreviousProgramID;            // PP:<PreviousProgramID>
+    std::string Version;                      // VN:<Version>
+    std::vector<CustomHeaderTag> CustomTags;  // optional custom tags
 
     // internal (non-standard) methods & fields
-    private:
-        bool HasNextProgramID(void) const;
-        std::string NextProgramID;
-        friend class BamTools::SamProgramChain;
+private:
+    bool HasNextProgramID() const;
+    std::string NextProgramID;
+    friend class BamTools::SamProgramChain;
 };
 
 /*! \fn bool operator==(const SamProgram& lhs, const SamProgram& rhs)
     \brief tests equality by comparing program IDs
 */
-API_EXPORT inline bool operator==(const SamProgram& lhs, const SamProgram& rhs) {
+API_EXPORT inline bool operator==(const SamProgram& lhs, const SamProgram& rhs)
+{
     return lhs.ID == rhs.ID;
 }
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // SAM_PROGRAM_H
+#endif  // SAM_PROGRAM_H

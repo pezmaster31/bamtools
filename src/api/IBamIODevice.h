@@ -18,81 +18,83 @@
 #ifndef IBAMIODEVICE_H
 #define IBAMIODEVICE_H
 
-#include "api/api_global.h"
 #include <cstdio>
 #include <string>
+#include "api/api_global.h"
 
 namespace BamTools {
 
-class API_EXPORT IBamIODevice {
+class API_EXPORT IBamIODevice
+{
 
     // enums
-    public: enum OpenMode { NotOpen   = 0x0000
-                          , ReadOnly  = 0x0001
-                          , WriteOnly = 0x0002
-                          , ReadWrite = ReadOnly | WriteOnly
-                          };
+public:
+    enum OpenMode
+    {
+        NotOpen = 0x0000,
+        ReadOnly = 0x0001,
+        WriteOnly = 0x0002,
+        ReadWrite = ReadOnly | WriteOnly
+    };
 
     // ctor & dtor
-    public:
-        virtual ~IBamIODevice(void) { }
+public:
+    virtual ~IBamIODevice() {}
 
     // IBamIODevice interface
-    public:
+public:
+    // TODO: add seek(pos, *from*)
 
-        // TODO: add seek(pos, *from*)
+    // pure virtuals
+    virtual void Close() = 0;
+    virtual bool IsRandomAccess() const = 0;
+    virtual bool Open(const OpenMode mode) = 0;
+    virtual int64_t Read(char* data, const unsigned int numBytes) = 0;
+    virtual bool Seek(const int64_t& position, const int origin = SEEK_SET) = 0;
+    virtual int64_t Tell() const = 0;
+    virtual int64_t Write(const char* data, const unsigned int numBytes) = 0;
 
-        // pure virtuals
-        virtual void Close(void) =0;
-        virtual bool IsRandomAccess(void) const =0;
-        virtual bool Open(const OpenMode mode) =0;
-        virtual int64_t Read(char* data, const unsigned int numBytes) =0;
-        virtual bool Seek(const int64_t& position, const int origin = SEEK_SET) =0;
-        virtual int64_t Tell(void) const =0;
-        virtual int64_t Write(const char* data, const unsigned int numBytes) =0;
-
-        // default implementation provided
-        virtual std::string GetErrorString(void);
-        virtual bool IsOpen(void) const;
-        virtual OpenMode Mode(void) const;
+    // default implementation provided
+    virtual std::string GetErrorString();
+    virtual bool IsOpen() const;
+    virtual OpenMode Mode() const;
 
     // internal methods
-    protected:
-        IBamIODevice(void); // hidden ctor
-        void SetErrorString(const std::string& where, const std::string& what);
+protected:
+    IBamIODevice();  // hidden ctor
+    void SetErrorString(const std::string& where, const std::string& what);
 
     // data members
-    protected:
-        OpenMode    m_mode;
-        std::string m_errorString;
+protected:
+    OpenMode m_mode;
+    std::string m_errorString;
 };
 
-inline
-IBamIODevice::IBamIODevice(void)
+inline IBamIODevice::IBamIODevice()
     : m_mode(IBamIODevice::NotOpen)
-{ }
+{}
 
-inline
-std::string IBamIODevice::GetErrorString(void) {
+inline std::string IBamIODevice::GetErrorString()
+{
     return m_errorString;
 }
 
-inline
-bool IBamIODevice::IsOpen(void) const {
-    return ( m_mode != IBamIODevice::NotOpen );
+inline bool IBamIODevice::IsOpen() const
+{
+    return (m_mode != IBamIODevice::NotOpen);
 }
 
-inline
-IBamIODevice::OpenMode IBamIODevice::Mode(void) const {
+inline IBamIODevice::OpenMode IBamIODevice::Mode() const
+{
     return m_mode;
 }
 
-inline
-void IBamIODevice::SetErrorString(const std::string& where, const std::string& what) {
+inline void IBamIODevice::SetErrorString(const std::string& where, const std::string& what)
+{
     static const std::string SEPARATOR = ": ";
     m_errorString = where + SEPARATOR + what;
 }
 
-} // namespace BamTools
+}  // namespace BamTools
 
-#endif // IBAMIODEVICE_H
+#endif  // IBAMIODEVICE_H

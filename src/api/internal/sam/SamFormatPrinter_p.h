@@ -29,31 +29,32 @@ struct SamHeader;
 
 namespace Internal {
 
-class SamFormatPrinter {
+class SamFormatPrinter
+{
 
     // ctor & dtor
-    public:
-        SamFormatPrinter(const BamTools::SamHeader& header);
-        ~SamFormatPrinter(void);
+public:
+    SamFormatPrinter(const BamTools::SamHeader& header);
+    ~SamFormatPrinter();
 
     // generates SAM-formatted string from header data
-    public:
-        const std::string ToString(void) const;
+public:
+    const std::string ToString() const;
 
     // internal methods
-    private:
-        void PrintHD(std::stringstream& out) const;
-        void PrintSQ(std::stringstream& out) const;
-        void PrintRG(std::stringstream& out) const;
-        void PrintPG(std::stringstream& out) const;
-        void PrintCO(std::stringstream& out) const;
+private:
+    void PrintHD(std::stringstream& out) const;
+    void PrintSQ(std::stringstream& out) const;
+    void PrintRG(std::stringstream& out) const;
+    void PrintPG(std::stringstream& out) const;
+    void PrintCO(std::stringstream& out) const;
 
     // data members
-    private:
-        const SamHeader& m_header;
+private:
+    const SamHeader& m_header;
 };
 
-} // namespace Internal
-} // namespace BamTools
+}  // namespace Internal
+}  // namespace BamTools
 
-#endif // SAM_FORMAT_PRINTER_H
+#endif  // SAM_FORMAT_PRINTER_H

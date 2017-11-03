@@ -10,7 +10,6 @@
 #include "api/SamSequence.h"
 #include <sstream>
 using namespace BamTools;
-using namespace std;
 
 /*! \struct BamTools::SamSequence
     \brief Represents a SAM sequence entry.
@@ -42,17 +41,10 @@ using namespace std;
     \brief corresponds to \@SQ UR:\<URI\>
 */
 
-/*! \fn SamSequence::SamSequence(void)
+/*! \fn SamSequence::SamSequence()
     \brief default constructor
 */
-SamSequence::SamSequence(void)
-    : AssemblyID("")
-    , Checksum("")
-    , Length("")
-    , Name("")
-    , Species("")
-    , URI("")
-{ }
+SamSequence::SamSequence() {}
 
 /*! \fn SamSequence::SamSequence(const std::string& name, const int& length)
     \brief constructs sequence with \a name and \a length
@@ -60,15 +52,10 @@ SamSequence::SamSequence(void)
     \param name   desired sequence name
     \param length desired sequence length (numeric value)
 */
-SamSequence::SamSequence(const std::string& name,
-                         const int& length)
-    : AssemblyID("")
-    , Checksum("")
-    , Name(name)
-    , Species("")
-    , URI("")
+SamSequence::SamSequence(const std::string& name, const int& length)
+    : Name(name)
 {
-    stringstream s("");
+    std::stringstream s;
     s << length;
     Length = s.str();
 }
@@ -79,15 +66,10 @@ SamSequence::SamSequence(const std::string& name,
     \param name   desired sequence name
     \param length desired sequence length (string value)
 */
-SamSequence::SamSequence(const std::string& name,
-                         const std::string& length)
-    : AssemblyID("")
-    , Checksum("")
-    , Length(length)
+SamSequence::SamSequence(const std::string& name, const std::string& length)
+    : Length(length)
     , Name(name)
-    , Species("")
-    , URI("")
-{ }
+{}
 
 /*! \fn SamSequence::SamSequence(const SamSequence& other)
     \brief copy constructor
@@ -100,17 +82,18 @@ SamSequence::SamSequence(const SamSequence& other)
     , Species(other.Species)
     , URI(other.URI)
     , CustomTags(other.CustomTags)
-{ }
+{}
 
-/*! \fn SamSequence::~SamSequence(void)
+/*! \fn SamSequence::~SamSequence()
     \brief destructor
 */
-SamSequence::~SamSequence(void) { }
+SamSequence::~SamSequence() {}
 
-/*! \fn void SamSequence::Clear(void)
+/*! \fn void SamSequence::Clear()
     \brief Clears all data fields.
 */
-void SamSequence::Clear(void) {
+void SamSequence::Clear()
+{
     AssemblyID.clear();
     Checksum.clear();
     Length.clear();
@@ -120,44 +103,50 @@ void SamSequence::Clear(void) {
     CustomTags.clear();
 }
 
-/*! \fn bool SamSequence::HasAssemblyID(void) const
+/*! \fn bool SamSequence::HasAssemblyID() const
     \brief Returns \c true if sequence contains \@SQ AS:\<AssemblyID\>
 */
-bool SamSequence::HasAssemblyID(void) const {
+bool SamSequence::HasAssemblyID() const
+{
     return (!AssemblyID.empty());
 }
 
-/*! \fn bool SamSequence::HasChecksum(void) const
+/*! \fn bool SamSequence::HasChecksum() const
     \brief Returns \c true if sequence contains \@SQ M5:\<Checksum\>
 */
-bool SamSequence::HasChecksum(void) const {
+bool SamSequence::HasChecksum() const
+{
     return (!Checksum.empty());
 }
 
-/*! \fn bool SamSequence::HasLength(void) const
+/*! \fn bool SamSequence::HasLength() const
     \brief Returns \c true if sequence contains \@SQ LN:\<Length\>
 */
-bool SamSequence::HasLength(void) const {
+bool SamSequence::HasLength() const
+{
     return (!Length.empty());
 }
 
-/*! \fn bool SamSequence::HasName(void) const
+/*! \fn bool SamSequence::HasName() const
     \brief Returns \c true if sequence contains \@SQ SN:\<Name\>
 */
-bool SamSequence::HasName(void) const {
+bool SamSequence::HasName() const
+{
     return (!Name.empty());
 }
 
-/*! \fn bool SamSequence::HasSpecies(void) const
+/*! \fn bool SamSequence::HasSpecies() const
     \brief Returns \c true if sequence contains \@SQ SP:\<Species\>
 */
-bool SamSequence::HasSpecies(void) const {
+bool SamSequence::HasSpecies() const
+{
     return (!Species.empty());
 }
 
-/*! \fn bool SamSequence::HasURI(void) const
+/*! \fn bool SamSequence::HasURI() const
     \brief Returns \c true if sequence contains \@SQ UR:\<URI\>
 */
-bool SamSequence::HasURI(void) const {
+bool SamSequence::HasURI() const
+{
     return (!URI.empty());
 }

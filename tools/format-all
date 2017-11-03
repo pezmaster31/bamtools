@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+# This command can be run by the user to clang-format everything.
+
+PLATFORM=$(uname)
+TOOLSPATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+CLANGFORMAT="${TOOLSPATH}/${PLATFORM}/clang-format -style=file"
+
+find src \( -name '*.cpp' -o -name '*.h' \) -not -path "src/third_party/*" -print0 | xargs -n1 -0 ${CLANGFORMAT} -i

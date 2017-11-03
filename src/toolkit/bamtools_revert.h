@@ -13,25 +13,26 @@
 #include "bamtools_tool.h"
 
 namespace BamTools {
-  
-class RevertTool : public AbstractTool {
-  
-    public:
-        RevertTool(void);
-        ~RevertTool(void);
-  
-    public:
-        int Help(void);
-        int Run(int argc, char* argv[]); 
-        
-    private:
-        struct RevertSettings;
-        RevertSettings* m_settings;
-        
-        struct RevertToolPrivate;
-        RevertToolPrivate* m_impl;
-};
-  
-} // namespace BamTools
 
-#endif // BAMTOOLS_REVERT_H
+class RevertTool : public AbstractTool
+{
+
+public:
+    RevertTool();
+    ~RevertTool();
+
+public:
+    int Help();
+    int Run(int argc, char* argv[]);
+
+private:
+    struct RevertSettings;
+    RevertSettings* m_settings;
+
+    struct RevertToolPrivate;
+    RevertToolPrivate* m_impl;
+};
+
+}  // namespace BamTools
+
+#endif  // BAMTOOLS_REVERT_H

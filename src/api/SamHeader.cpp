@@ -7,15 +7,14 @@
 // Provides direct read/write access to the SAM header data fields.
 // ***************************************************************************
 
-#include "api/SamConstants.h"
 #include "api/SamHeader.h"
-#include "api/internal/utils/BamException_p.h"
+#include "api/SamConstants.h"
 #include "api/internal/sam/SamFormatParser_p.h"
 #include "api/internal/sam/SamFormatPrinter_p.h"
 #include "api/internal/sam/SamHeaderValidator_p.h"
+#include "api/internal/utils/BamException_p.h"
 using namespace BamTools;
 using namespace BamTools::Internal;
-using namespace std;
 
 /*! \struct BamTools::SamHeader
     \brief Represents the SAM-formatted text header that is part of the BAM file header.
@@ -51,13 +50,11 @@ using namespace std;
     \brief corresponds to \@CO entries
 */
 
-/*! \fn SamHeader::SamHeader(const std::string& headerText = "")
+/*! \fn SamHeader::SamHeader(const std::string& headerText = std::string())
     \brief constructor
 */
 SamHeader::SamHeader(const std::string& headerText)
-    : Version("")
-    , SortOrder(Constants::SAM_HD_SORTORDER_UNKNOWN)
-    , GroupOrder("")
+    : SortOrder(Constants::SAM_HD_SORTORDER_UNKNOWN)
 {
     SetHeaderText(headerText);
 }
@@ -75,17 +72,18 @@ SamHeader::SamHeader(const SamHeader& other)
     , Programs(other.Programs)
     , Comments(other.Comments)
     , m_errorString(other.GetErrorString())
-{ }
+{}
 
-/*! \fn SamHeader::~SamHeader(void)
+/*! \fn SamHeader::~SamHeader()
     \brief destructor
 */
-SamHeader::~SamHeader(void) { }
+SamHeader::~SamHeader() {}
 
-/*! \fn void SamHeader::Clear(void)
+/*! \fn void SamHeader::Clear()
     \brief Clears all header contents.
 */
-void SamHeader::Clear(void) {
+void SamHeader::Clear()
+{
 
     // clear SAM header components
     Version.clear();
@@ -101,7 +99,7 @@ void SamHeader::Clear(void) {
     m_errorString.clear();
 }
 
-/*! \fn std::string SamHeader::GetErrorString(void) const
+/*! \fn std::string SamHeader::GetErrorString() const
     \brief Returns a human-readable description of the last error that occurred
 
     This method allows elimination of STDERR pollution. Developers of client code
@@ -109,63 +107,72 @@ void SamHeader::Clear(void) {
 
     \return error description
 */
-std::string SamHeader::GetErrorString(void) const {
+std::string SamHeader::GetErrorString() const
+{
     return m_errorString;
 }
 
-/*! \fn bool SamHeader::HasError(void) const
+/*! \fn bool SamHeader::HasError() const
     \brief Returns \c true if header encountered an error
 */
-bool SamHeader::HasError(void) const {
+bool SamHeader::HasError() const
+{
     return (!m_errorString.empty());
 }
 
-/*! \fn bool SamHeader::HasVersion(void) const
+/*! \fn bool SamHeader::HasVersion() const
     \brief Returns \c true if header contains \@HD ID:\<Version\>
 */
-bool SamHeader::HasVersion(void) const {
+bool SamHeader::HasVersion() const
+{
     return (!Version.empty());
 }
 
-/*! \fn bool SamHeader::HasSortOrder(void) const
+/*! \fn bool SamHeader::HasSortOrder() const
     \brief Returns \c true if header contains \@HD SO:\<SortOrder\>
 */
-bool SamHeader::HasSortOrder(void) const {
+bool SamHeader::HasSortOrder() const
+{
     return (!SortOrder.empty());
 }
 
-/*! \fn bool SamHeader::HasGroupOrder(void) const
+/*! \fn bool SamHeader::HasGroupOrder() const
     \brief Returns \c true if header contains \@HD GO:\<GroupOrder\>
 */
-bool SamHeader::HasGroupOrder(void) const {
+bool SamHeader::HasGroupOrder() const
+{
     return (!GroupOrder.empty());
 }
 
-/*! \fn bool SamHeader::HasSequences(void) const
+/*! \fn bool SamHeader::HasSequences() const
     \brief Returns \c true if header contains any \@SQ entries
 */
-bool SamHeader::HasSequences(void) const {
+bool SamHeader::HasSequences() const
+{
     return (!Sequences.IsEmpty());
 }
 
-/*! \fn bool SamHeader::HasReadGroups(void) const
+/*! \fn bool SamHeader::HasReadGroups() const
     \brief Returns \c true if header contains any \@RG entries
 */
-bool SamHeader::HasReadGroups(void) const {
+bool SamHeader::HasReadGroups() const
+{
     return (!ReadGroups.IsEmpty());
 }
 
-/*! \fn bool SamHeader::HasPrograms(void) const
+/*! \fn bool SamHeader::HasPrograms() const
     \brief Returns \c true if header contains any \@PG entries
 */
-bool SamHeader::HasPrograms(void) const {
+bool SamHeader::HasPrograms() const
+{
     return (!Programs.IsEmpty());
 }
 
-/*! \fn bool SamHeader::HasComments(void) const
+/*! \fn bool SamHeader::HasComments() const
     \brief Returns \c true if header contains any \@CO entries
 */
-bool SamHeader::HasComments(void) const {
+bool SamHeader::HasComments() const
+{
     return (!Comments.empty());
 }
 
@@ -176,24 +183,23 @@ bool SamHeader::HasComments(void) const {
                        Otherwise, messages are available through SamHeader::GetErrorString().
     \return \c true if SAM header is well-formed
 */
-bool SamHeader::IsValid(bool verbose) const {
+bool SamHeader::IsValid(bool verbose) const
+{
 
     SamHeaderValidator validator(*this);
 
     // if SAM header is valid, return success
-    if ( validator.Validate() )
-        return true;
+    if (validator.Validate()) return true;
 
     // otherwiser
     else {
 
         // print messages to stderr
-        if ( verbose )
-            validator.PrintMessages(std::cerr);
+        if (verbose) validator.PrintMessages(std::cerr);
 
         // or catch in local error string
         else {
-            stringstream errorStream("");
+            std::stringstream errorStream;
             validator.PrintMessages(errorStream);
             m_errorString = errorStream.str();
         }
@@ -206,7 +212,8 @@ bool SamHeader::IsValid(bool verbose) const {
 
     \param[in] headerText SAM formatted-text that will be parsed into data fields
 */
-void SamHeader::SetHeaderText(const std::string& headerText) {
+void SamHeader::SetHeaderText(const std::string& headerText)
+{
 
     // clear prior data
     Clear();
@@ -214,7 +221,7 @@ void SamHeader::SetHeaderText(const std::string& headerText) {
     try {
         SamFormatParser parser(*this);
         parser.Parse(headerText);
-    } catch ( BamException& e ) {
+    } catch (BamException& e) {
 
         // clear anything parsed so far
         // no telling what's valid and what's partially parsed
@@ -225,14 +232,15 @@ void SamHeader::SetHeaderText(const std::string& headerText) {
     }
 }
 
-/*! \fn std::string SamHeader::ToString(void) const
+/*! \fn std::string SamHeader::ToString() const
     \brief Converts data fields to SAM-formatted text.
 
     Applies any local modifications made since creating this object or calling SetHeaderText().
 
     \return SAM-formatted header text
 */
-string SamHeader::ToString(void) const {
+std::string SamHeader::ToString() const
+{
     SamFormatPrinter printer(*this);
     return printer.ToString();
 }

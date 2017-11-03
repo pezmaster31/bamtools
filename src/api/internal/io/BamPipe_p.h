@@ -20,27 +20,28 @@
 //
 // We mean it.
 
-#include "api/internal/io/ILocalIODevice_p.h"
 #include <string>
+#include "api/internal/io/ILocalIODevice_p.h"
 
 namespace BamTools {
 namespace Internal {
 
-class BamPipe : public ILocalIODevice {
+class BamPipe : public ILocalIODevice
+{
 
     // ctor & dtor
-    public:
-        BamPipe(void);
-        ~BamPipe(void);
+public:
+    BamPipe();
+    ~BamPipe();
 
     // IBamIODevice implementation
-    public:
-        bool IsRandomAccess(void) const;
-        bool Open(const IBamIODevice::OpenMode mode);
-        bool Seek(const int64_t& position, const int origin = SEEK_SET);
+public:
+    bool IsRandomAccess() const;
+    bool Open(const IBamIODevice::OpenMode mode);
+    bool Seek(const int64_t& position, const int origin = SEEK_SET);
 };
 
-} // namespace Internal
-} // namespace BamTools
+}  // namespace Internal
+}  // namespace BamTools
 
-#endif // BAMPIPE_P_H
+#endif  // BAMPIPE_P_H

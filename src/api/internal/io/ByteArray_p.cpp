@@ -11,85 +11,91 @@
 using namespace BamTools;
 using namespace BamTools::Internal;
 
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
-using namespace std;
 
 // --------------------------
 // ByteArray implementation
 // --------------------------
 
-ByteArray::ByteArray(void)
+ByteArray::ByteArray()
     : m_data()
-{ }
+{}
 
-ByteArray::ByteArray(const string& value)
+ByteArray::ByteArray(const std::string& value)
     : m_data(value.begin(), value.end())
-{ }
+{}
 
-ByteArray::ByteArray(const vector<char>& value)
+ByteArray::ByteArray(const std::vector<char>& value)
     : m_data(value)
-{ }
+{}
 
-ByteArray::ByteArray(const char* value, size_t n) {
-    const string s(value, n);
+ByteArray::ByteArray(const char* value, std::size_t n)
+{
+    const std::string s(value, n);
     m_data.assign(s.begin(), s.end());
 }
 
 ByteArray::ByteArray(const ByteArray& other)
     : m_data(other.m_data)
-{ }
+{}
 
-ByteArray::~ByteArray(void) { }
+ByteArray::~ByteArray() {}
 
-ByteArray& ByteArray::operator=(const ByteArray& other) {
+ByteArray& ByteArray::operator=(const ByteArray& other)
+{
     m_data = other.m_data;
     return *this;
 }
 
-void ByteArray::Clear(void) {
+void ByteArray::Clear()
+{
     m_data.clear();
 }
 
-const char* ByteArray::ConstData(void) const {
+const char* ByteArray::ConstData() const
+{
     return &m_data[0];
 }
 
-char* ByteArray::Data(void) {
+char* ByteArray::Data()
+{
     return &m_data[0];
 }
 
-const char& ByteArray::operator[](size_t i) const {
+const char& ByteArray::operator[](std::size_t i) const
+{
     return m_data[i];
 }
 
-char& ByteArray::operator[](size_t i) {
+char& ByteArray::operator[](std::size_t i)
+{
     return m_data[i];
 }
 
-size_t ByteArray::IndexOf(const char c, const size_t from, const size_t to) const {
-    const size_t size = ( (to == 0 ) ? m_data.size() : to );
-    for ( size_t i = from; i < size; ++i ) {
-        if ( m_data.at(i) == c ) 
-            return i;
+std::size_t ByteArray::IndexOf(const char c, const std::size_t from, const std::size_t to) const
+{
+    const std::size_t size = ((to == 0) ? m_data.size() : to);
+    for (std::size_t i = from; i < size; ++i) {
+        if (m_data.at(i) == c) return i;
     }
     return m_data.size();
 }
 
-ByteArray& ByteArray::Remove(size_t from, size_t n) {
+ByteArray& ByteArray::Remove(std::size_t from, std::size_t n)
+{
 
     // if 'from' outside range, just return
-    const size_t originalSize = m_data.size();
-    if ( from >= originalSize )
-        return *this;
+    const std::size_t originalSize = m_data.size();
+    if (from >= originalSize) return *this;
 
     // if asked to clip from 'from' to end (or beyond), simply resize
-    if ( from + n >= originalSize )
-        Resize(from);
+    if (from + n >= originalSize) Resize(from);
 
     // otherwise, shift data & resize
     else {
-        memmove( &m_data[from], &m_data[from+n], (originalSize-from-n) );
+        memmove(&m_data[from], &m_data[from + n], (originalSize - from - n));
         Resize(originalSize - n);
     }
 
@@ -97,15 +103,18 @@ ByteArray& ByteArray::Remove(size_t from, size_t n) {
     return *this;
 }
 
-void ByteArray::Resize(size_t n) {
+void ByteArray::Resize(std::size_t n)
+{
     m_data.resize(n, 0);
 }
 
-size_t ByteArray::Size(void) const {
+std::size_t ByteArray::Size() const
+{
     return m_data.size();
 }
 
-void ByteArray::Squeeze(void) {
-    vector<char> t(m_data);
+void ByteArray::Squeeze()
+{
+    std::vector<char> t(m_data);
     t.swap(m_data);
 }

@@ -306,6 +306,26 @@ bool BamReader::OpenIndex(const std::string& indexFilename)
     return d->OpenIndex(indexFilename);
 }
 
+/*! \fn bool BamReader::GetPointer()
+    \brief Returns the current file pointer.
+
+    Useful for going back to previous alignments with SetPointer().
+
+    \returns \c file pointer
+    \sa SetPointer()
+*/
+
+int64_t BamReader::GetPointer() const
+{
+	return d->GetPointer();
+}
+
+// set the current file pointer
+void BamReader::SetPointer(int64_t i)
+{
+	d->SetPointer(i);
+}
+
 /*! \fn bool BamReader::Rewind()
     \brief Returns the internal file pointer to the first alignment record.
 

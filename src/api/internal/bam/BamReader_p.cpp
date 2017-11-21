@@ -423,6 +423,16 @@ bool BamReaderPrivate::OpenIndex(const std::string& indexFilename)
     }
 }
 
+int64_t BamReaderPrivate::GetPointer() const
+{
+	return m_stream.Tell();
+}
+
+void BamReaderPrivate::SetPointer(int64_t position)
+{
+     m_stream.Seek(position);	
+}
+
 // returns BAM file pointer to beginning of alignment data
 bool BamReaderPrivate::Rewind()
 {

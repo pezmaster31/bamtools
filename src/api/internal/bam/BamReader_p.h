@@ -54,6 +54,9 @@ public:
     bool GetNextAlignment(BamAlignment& alignment);
     bool GetNextAlignmentCore(BamAlignment& alignment);
 
+	int64_t GetPointer() const;
+	void SetPointer(int64_t);
+
     // access auxiliary data
     std::string GetHeaderText() const;
     const SamHeader& GetConstSamHeader() const;

@@ -54,6 +54,12 @@ public:
     bool SetRegion(const int& leftRefID, const int& leftPosition, const int& rightRefID,
                    const int& rightPosition);
 
+    // returns current file pointer
+	int64_t GetPointer() const; 
+	
+	// set the current file pointer
+	void SetPointer(int64_t);
+
     // ----------------------
     // access alignment data
     // ----------------------

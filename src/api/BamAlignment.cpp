@@ -734,6 +734,14 @@ bool BamAlignment::HasTag(const std::string& tag) const
     return FindTag(tag, pTagData, tagDataLength, numBytesParsed);
 }
 
+/*! \fn bool BamAlignment::IsSupplementary() const
+    \return \c true if this read is supplementary
+*/
+bool BamAlignment::IsSupplementary() const
+{
+    return ((AlignmentFlag & Constants::BAM_ALIGNMENT_SUPPLEMENTARY) != 0);
+}
+
 /*! \fn bool BamAlignment::IsDuplicate() const
     \return \c true if this read is a PCR duplicate
 */

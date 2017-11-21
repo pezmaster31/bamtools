@@ -48,6 +48,7 @@ public:
     bool IsMateMapped() const;         // returns true if alignment's mate is mapped
     bool IsMateReverseStrand() const;  // returns true if alignment's mate mapped to reverse strand
     bool IsPaired() const;             // returns true if alignment part of paired-end read
+    bool IsSupplementary() const;      // returns true if this read is supplementary
     bool IsPrimaryAlignment() const;   // returns true if reported position is primary alignment
     bool IsProperPair()
         const;  // returns true if alignment is part of read that satisfied paired-end resolution

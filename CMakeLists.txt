@@ -78,8 +78,11 @@ endif()
 find_package( PkgConfig )
 pkg_search_module( JSONCPP jsoncpp>=1 )
 
+set( BAMTOOLS_PRIVATE_DEPS "zlib" )
+
 if( JSONCPP_FOUND )
     message( "Found system JsonCpp, not using bundled version" )
+    set( BAMTOOLS_PRIVATE_DEPS "${BAMTOOLS_PRIVATE_DEPS} jsoncpp" )
 else()
     message( "Did NOT find system JsonCpp, instead using bundled version" )
     set( JSONCPP_LDFLAGS jsoncpp )

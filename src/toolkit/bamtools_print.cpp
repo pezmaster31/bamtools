@@ -33,6 +33,7 @@ const std::string FORWARD_STRAND_STR = "+";
 const std::string REVERSE_STRAND_STR = "-";
 bool iequals(const std::string& a, const std::string& b);
 bool stringToBool(const std::string& s, const std::string& optionName);
+bool checkChromString(const std::string& regionString, const BamReader& reader);
 
 // ---------------------------------------------
 // SeqCounter is a class for tracking frequency of aligned sequence segments
@@ -52,6 +53,10 @@ class SeqCounter
       
         void addForward(std::string seq, seq_counter_int i);
         void addReverse(std::string seq, seq_counter_int i);
+        seq_counter_int total(void)
+        {
+            return(m_fwd + m_rev);
+        }
         void add(std::string seq, seq_counter_int i, bool reverse_strand);
         void add(std::string seq, bool reverse_strand)
         {
@@ -61,10 +66,10 @@ class SeqCounter
         {
             this->addForward(seq,1);
         }
-        void print(std::string prefix, bool include_total, bool by_strand);
+        void print(std::string prefix, bool include_total, bool by_strand, bool header);
         void print(std::string prefix)
         {
-            this->print(prefix, true, true);
+            this->print(prefix, true, true, true);
         }
         void print()
         {
@@ -118,8 +123,18 @@ SeqCounter & SeqCounter::operator+= (SeqCounter &s2)
     return(*this);
 }
 
-void SeqCounter::print(std::string prefix, bool include_total, bool by_strand)
+void SeqCounter::print(std::string prefix, bool include_total, bool by_strand, bool header)
 {
+    if(header) {
+        std::string headerString = "";
+        if(prefix != "")
+            headerString += "Infile\t";
+        if(by_strand)
+            headerString += "Seq\tFwd\tRev";
+        else
+            headerString += "Seq\tCount";
+        std::cout << headerString << std::endl;
+    }
     if(by_strand) {
         if(include_total)
             std::cout << prefix << "Total\t" << m_fwd << "\t" << m_rev << std::endl;
@@ -200,6 +215,9 @@ struct PrintTool::PrintSettings
     bool IncludeTotal;
     bool HasIncludeTotal;
     std::string IncludeTotalStr;
+    bool Header;
+    bool HasHeader;
+    std::string HeaderStr;
 
     // filenames
     std::vector<std::string> InputFiles;
@@ -222,6 +240,8 @@ struct PrintTool::PrintSettings
         , HasAllReads(false)
         , IncludeTotal(true)
         , HasIncludeTotal(false)
+        , Header(false)
+        , HasHeader(false)
     {}
 };
 
@@ -387,7 +407,12 @@ void PrintTool::PrintToolPrivate::ProcessAlignment(const BamAlignment& alignment
         if(reverse_strand)
             Utilities::ReverseComplement(target_seq);
         if(m_settings->AllReads) {
-            std::cout << infile << "\t" << alignment.Name << "\t" << strand_str << "\t" << target_seq << std::endl;
+            if(m_settings->ByBamFile)
+                std::cout << infile << "\t";
+            std::cout << alignment.Name << "\t";
+            if(m_settings->ByStrand)
+                std::cout << strand_str << "\t";
+            std::cout << target_seq << std::endl;
         }
         else {
             if(m_settings->ByStrand)
@@ -504,6 +529,8 @@ bool PrintTool::PrintToolPrivate::Run()
         m_settings->AllReads = stringToBool(m_settings->AllReadsStr,"-allReads");
     if(m_settings->HasIncludeTotal)
         m_settings->IncludeTotal = stringToBool(m_settings->IncludeTotalStr,"-includeTotal");
+    if(m_settings->HasHeader)
+        m_settings->Header = stringToBool(m_settings->HeaderStr,"-header");
 
     // set to default input if none provided
     if (!m_settings->HasInput && !m_settings->HasInputFilelist)
@@ -548,6 +575,16 @@ bool PrintTool::PrintToolPrivate::Run()
 
                 // attempt to find index file
                 reader.LocateIndex();
+                if(m_settings->Header && m_settings->AllReads) {
+                    std::string headerString = "";
+                    if(m_settings->ByBamFile)
+                        headerString += "InFile\t";
+                    headerString += "Read\t";
+                    if(m_settings->ByStrand)
+                        headerString += "Strand\t";
+                    headerString += "Seq";
+                    std::cout << headerString << std::endl;
+                }
 
                 // if index data available, we can use SetRegion
                 if (reader.HasIndex()) {
@@ -571,7 +608,7 @@ bool PrintTool::PrintToolPrivate::Run()
                     }
                     seq_count += this_seq_count;
                     if(!m_settings->AllReads && m_settings->ByBamFile)
-                        this_seq_count.print(*InputFile + "\t", m_settings->IncludeTotal, m_settings->ByStrand);
+                        this_seq_count.print(*InputFile + "\t", m_settings->IncludeTotal, m_settings->ByStrand, m_settings->Header);
                 }
 
                 // no index data available, we have to iterate through until we
@@ -589,24 +626,26 @@ bool PrintTool::PrintToolPrivate::Run()
                     }
                     seq_count += this_seq_count;
                     if(!m_settings->AllReads && m_settings->ByBamFile)
-                        this_seq_count.print(*InputFile + "\t", m_settings->IncludeTotal, m_settings->ByStrand);
+                        this_seq_count.print(*InputFile + "\t", m_settings->IncludeTotal, m_settings->ByStrand, m_settings->Header);
                 }
             }
 
-            // error parsing REGION string
+            // error parsing REGION string or chromosome is not in the bam file
             else {
-                std::cerr << "bamtools print ERROR: could not parse REGION: " << m_settings->Region
-                          << std::endl;
-                std::cerr << "Check that REGION is in valid format (see documentation) and that the "
-                             "coordinates are valid"
-                          << std::endl;
-                reader.Close();
-                return false;
+                if(!checkChromString(m_settings->Region, reader)) {
+                    std::cerr << "bamtools print ERROR: could not parse REGION: " << m_settings->Region
+                              << std::endl;
+                    std::cerr << "Check that REGION is in valid format (see documentation) and that the "
+                                 "coordinates are valid"
+                              << std::endl;
+                    reader.Close();
+                    return false;
+                }
             }
             reader.Close();
         }
-        if(!m_settings->AllReads && !m_settings->ByBamFile)
-            seq_count.print("", m_settings->IncludeTotal, m_settings->ByStrand);
+        if(!m_settings->AllReads && !m_settings->ByBamFile && seq_count.total() > 0)
+            seq_count.print("", m_settings->IncludeTotal, m_settings->ByStrand, m_settings->Header);
     }
 
     return true;
@@ -655,6 +694,9 @@ PrintTool::PrintTool()
                             PrintingOpts, FALSE_STR);
     Options::AddValueOption("-includeTotal", boolArg, "print a line indicating total number of reads",
                             "", m_settings->HasIncludeTotal, m_settings->IncludeTotalStr,
+                            PrintingOpts, TRUE_STR);
+    Options::AddValueOption("-header", boolArg, "print header line for output",
+                            "", m_settings->HasHeader, m_settings->HeaderStr,
                             PrintingOpts, TRUE_STR);
 }
 
@@ -711,4 +753,20 @@ bool iequals(const std::string& a, const std::string& b)
         if (tolower(a[i]) != tolower(b[i]))
             return false;
     return true;
+}
+
+// Return true if there is a chromosome specified in the string and the
+// chromosome is not mapped in the bam
+bool checkChromString(const std::string& regionString, const BamReader& reader)
+{
+    std::size_t foundFirstColon = regionString.find(':');
+    if (foundFirstColon == std::string::npos) {
+      return false;
+    } else {
+        std::string startChrom = regionString.substr(0, foundFirstColon);
+        if(-1 == reader.GetReferenceID(startChrom))
+            return true;
+        else
+            return false;
+    }
 }

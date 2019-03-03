@@ -20,6 +20,7 @@ add_executable( bamtools_cmd
                 bamtools_header.cpp
                 bamtools_index.cpp
                 bamtools_merge.cpp
+                bamtools_print.cpp
                 bamtools_random.cpp
                 bamtools_resolve.cpp
                 bamtools_revert.cpp

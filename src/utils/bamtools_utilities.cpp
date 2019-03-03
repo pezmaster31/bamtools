@@ -22,8 +22,14 @@ using namespace BamTools;
 
 namespace BamTools {
 
-const char REVCOMP_LOOKUP[] = {'T', 0, 'G', 'H', 0,   0,   'C', 'D', 0,   0,   0,   0,   'K',
-                               'N', 0, 0,   0,   'Y', 'W', 'A', 'A', 'B', 'S', 'X', 'R', 0};
+int REVCOMP_LOOKUP_START = 45;
+const char REVCOMP_LOOKUP[] = {'-', '.',  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,
+                                0,   0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,  0 ,
+                               'T',  0 , 'G', 'H',  0,   0,  'C', 'D',  0,   0,   0,   0,   'K',
+                               'N',  0 ,  0,   0,  'Y', 'W', 'A', 'A', 'B', 'S', 'X', 'R',   0 ,
+                                0,   0 ,  0 ,  0 ,  0 ,  0 ,
+                               't',  0 , 'g', 'h',  0,   0,  'c', 'd',  0,   0,   0,   0,   'k',
+                               'n',  0 ,  0,   0,  'y', 'w', 'a', 'a', 'b', 's', 'x', 'r',   0  };
 
 }  // namespace BamTools
 
@@ -292,7 +298,7 @@ void Utilities::ReverseComplement(std::string& sequence)
     // do complement, in-place
     std::size_t seqLength = sequence.length();
     for (std::size_t i = 0; i < seqLength; ++i)
-        sequence.replace(i, 1, 1, REVCOMP_LOOKUP[(int)sequence.at(i) - 65]);
+        sequence.replace(i, 1, 1, REVCOMP_LOOKUP[(int)sequence.at(i) - REVCOMP_LOOKUP_START]);
 
     // reverse it
     Reverse(sequence);

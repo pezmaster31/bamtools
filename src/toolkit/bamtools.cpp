@@ -19,6 +19,7 @@
 #include "bamtools_header.h"
 #include "bamtools_index.h"
 #include "bamtools_merge.h"
+#include "bamtools_print.h"
 #include "bamtools_random.h"
 #include "bamtools_resolve.h"
 #include "bamtools_revert.h"
@@ -36,6 +37,7 @@ static const std::string FILTER = "filter";
 static const std::string HEADER = "header";
 static const std::string INDEX = "index";
 static const std::string MERGE = "merge";
+static const std::string PRINT = "print";
 static const std::string RANDOM = "random";
 static const std::string RESOLVE = "resolve";
 static const std::string REVERT = "revert";
@@ -75,6 +77,7 @@ AbstractTool* CreateTool(const std::string& arg)
     if (arg == HEADER) return new HeaderTool;
     if (arg == INDEX) return new IndexTool;
     if (arg == MERGE) return new MergeTool;
+    if (arg == PRINT) return new PrintTool;
     if (arg == RANDOM) return new RandomTool;
     if (arg == RESOLVE) return new ResolveTool;
     if (arg == REVERT) return new RevertTool;
@@ -114,6 +117,7 @@ int Help(int argc, char* argv[])
     std::cerr << "\theader          Prints BAM header information" << std::endl;
     std::cerr << "\tindex           Generates index for BAM file" << std::endl;
     std::cerr << "\tmerge           Merge multiple BAM files into single file" << std::endl;
+    std::cerr << "\tprint           Text printout of alignments at a location" << std::endl;
     std::cerr << "\trandom          Select random alignments from existing BAM file(s), intended "
                  "more as a testing tool."
               << std::endl;

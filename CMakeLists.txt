@@ -97,3 +97,7 @@ include_directories( src )
 
 # list subdirectories to build in
 add_subdirectory( src )
+
+# tests
+include( CTest )
+add_subdirectory( tests )

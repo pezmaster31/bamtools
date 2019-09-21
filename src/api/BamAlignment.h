@@ -150,11 +150,13 @@ private:
     void SetErrorString(const std::string& where, const std::string& what) const;
     bool SkipToNextTag(const char storageType, char*& pTagData, unsigned int& numBytesParsed) const;
 
+    //! \internal
     // internal data
 private:
     struct BamAlignmentSupportData
     {
 
+        //! \internal
         // data members
         std::string AllCharData;
         uint32_t BlockLength;
@@ -163,6 +165,7 @@ private:
         uint32_t QuerySequenceLength;
         bool HasCoreOnly;
 
+        //! \internal
         // constructor
         BamAlignmentSupportData()
             : BlockLength(0)
@@ -177,7 +180,6 @@ private:
     friend class Internal::BamWriterPrivate;
 
     mutable std::string ErrorString;  // mutable to allow updates even in logically const methods
-    //! \endinternal
 };
 
 // ---------------------------------------------------------

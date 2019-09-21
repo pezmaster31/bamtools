@@ -928,7 +928,7 @@ bool ResolveTool::ResolveToolPrivate::CheckSettings(std::vector<std::string>& er
         // make sure required stats file supplied
         if (!m_settings->HasStatsFile)
             errors.push_back(
-                "Ouptut stats filename required for -makeStats mode. Please specify one using "
+                "Output stats filename required for -makeStats mode. Please specify one using "
                 "-stats option.");
 
         // check for UseStats options

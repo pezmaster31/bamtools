@@ -159,9 +159,9 @@ void BamStandardIndex::CalculateCandidateOffsets(const BaiReferenceSummary& refS
             for (int j = 0; j < numAlignmentChunks; ++j) {
 
                 // read chunk start & stop from buffer
-                memcpy((char*)&chunkStart, m_resources.Buffer + offset, sizeof(uint64_t));
+                std::memcpy((char*)&chunkStart, m_resources.Buffer + offset, sizeof(uint64_t));
                 offset += sizeof(uint64_t);
-                memcpy((char*)&chunkStop, m_resources.Buffer + offset, sizeof(uint64_t));
+                std::memcpy((char*)&chunkStop, m_resources.Buffer + offset, sizeof(uint64_t));
                 offset += sizeof(uint64_t);
 
                 // swap endian-ness if necessary

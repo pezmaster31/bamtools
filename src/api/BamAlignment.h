@@ -240,12 +240,12 @@ inline bool BamAlignment::AddTag(const std::string& tag, const std::string& type
     const std::size_t newTagDataLength =
         tagDataLength + newTag.size() + sizeof(T);  // leave room for new T
     RaiiBuffer originalTagData(newTagDataLength);
-    memcpy(originalTagData.Buffer, TagData.c_str(),
-           tagDataLength + 1);  // '+1' for TagData null-term
+    std::memcpy(originalTagData.Buffer, TagData.c_str(),
+                tagDataLength + 1);  // '+1' for TagData null-term
 
     // append newTag
     strcat(originalTagData.Buffer + tagDataLength, newTag.data());
-    memcpy(originalTagData.Buffer + tagDataLength + newTag.size(), un.valueBuffer, sizeof(T));
+    std::memcpy(originalTagData.Buffer + tagDataLength + newTag.size(), un.valueBuffer, sizeof(T));
 
     // store temp buffer back in TagData
     const char* newTagData = (const char*)originalTagData.Buffer;
@@ -289,8 +289,8 @@ inline bool BamAlignment::AddTag<std::string>(const std::string& tag, const std:
     const std::size_t newTagDataLength =
         tagDataLength + newTag.size() + 1;  // leave room for null-term
     RaiiBuffer originalTagData(newTagDataLength);
-    memcpy(originalTagData.Buffer, TagData.c_str(),
-           tagDataLength + 1);  // '+1' for TagData null-term
+    std::memcpy(originalTagData.Buffer, TagData.c_str(),
+                tagDataLength + 1);  // '+1' for TagData null-term
 
     // append newTag (removes original null-term, then appends newTag + null-term)
     strcat(originalTagData.Buffer + tagDataLength, newTag.data());
@@ -335,20 +335,20 @@ inline bool BamAlignment::AddTag(const std::string& tag, const std::vector<T>& v
 
     // build new tag's base information
     char newTagBase[Constants::BAM_TAG_ARRAYBASE_SIZE];
-    memcpy(newTagBase, tag.c_str(), Constants::BAM_TAG_TAGSIZE);
+    std::memcpy(newTagBase, tag.c_str(), Constants::BAM_TAG_TAGSIZE);
     newTagBase[2] = Constants::BAM_TAG_TYPE_ARRAY;
     newTagBase[3] = TagTypeHelper<T>::TypeCode();
 
     // add number of array elements to newTagBase
     const int32_t numElements = values.size();
-    memcpy(newTagBase + 4, &numElements, sizeof(int32_t));
+    std::memcpy(newTagBase + 4, &numElements, sizeof(int32_t));
 
     // copy current TagData string to temp buffer, leaving room for new tag's contents
     const std::size_t newTagDataLength =
         tagDataLength + Constants::BAM_TAG_ARRAYBASE_SIZE + numElements * sizeof(T);
     RaiiBuffer originalTagData(newTagDataLength);
-    memcpy(originalTagData.Buffer, TagData.c_str(),
-           tagDataLength + 1);  // '+1' for TagData's null-term
+    std::memcpy(originalTagData.Buffer, TagData.c_str(),
+                tagDataLength + 1);  // '+1' for TagData's null-term
 
     // write newTagBase (removes old null term)
     strcat(originalTagData.Buffer + tagDataLength, (const char*)newTagBase);
@@ -357,7 +357,8 @@ inline bool BamAlignment::AddTag(const std::string& tag, const std::vector<T>& v
     int elementsBeginOffset = tagDataLength + Constants::BAM_TAG_ARRAYBASE_SIZE;
     for (int i = 0; i < numElements; ++i) {
         const T& value = values.at(i);
-        memcpy(originalTagData.Buffer + elementsBeginOffset + i * sizeof(T), &value, sizeof(T));
+        std::memcpy(originalTagData.Buffer + elementsBeginOffset + i * sizeof(T), &value,
+                    sizeof(T));
     }
 
     // store temp buffer back in TagData
@@ -497,7 +498,7 @@ inline bool BamAlignment::GetTag(const std::string& tag, T& destination) const
 
     // store data in destination
     destination = 0;
-    memcpy(&destination, pTagData, destinationLength);
+    std::memcpy(&destination, pTagData, destinationLength);
 
     // return success
     return true;
@@ -534,7 +535,7 @@ inline bool BamAlignment::GetTag<std::string>(const std::string& tag,
     const unsigned int dataLength = strlen(pTagData);
     destination.clear();
     destination.resize(dataLength);
-    memcpy((char*)destination.data(), pTagData, dataLength);
+    std::memcpy((char*)destination.data(), pTagData, dataLength);
 
     // return success
     return true;
@@ -622,7 +623,7 @@ inline bool BamAlignment::GetTag(const std::string& tag, std::vector<T>& destina
 
     // get number of elements
     int32_t numElements;
-    memcpy(&numElements, pTagData, sizeof(int32_t));
+    std::memcpy(&numElements, pTagData, sizeof(int32_t));
     pTagData += 4;
     destination.clear();
     destination.reserve(numElements);
@@ -630,7 +631,7 @@ inline bool BamAlignment::GetTag(const std::string& tag, std::vector<T>& destina
     // read in elements
     T value;
     for (int i = 0; i < numElements; ++i) {
-        memcpy(&value, pTagData, sizeof(T));
+        std::memcpy(&value, pTagData, sizeof(T));
         pTagData += sizeof(T);
         destination.push_back(value);
     }

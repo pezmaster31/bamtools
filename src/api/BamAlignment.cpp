@@ -12,6 +12,7 @@
 using namespace BamTools;
 
 #include <cstddef>
+#include <cstring>
 
 /*! \class BamTools::BamAlignment
     \brief The main BAM alignment data structure.
@@ -304,7 +305,7 @@ bool BamAlignment::BuildCharData()
                         // swap endian-ness of number of elements in place, then retrieve for loop
                         BamTools::SwapEndian_32p(&tagData[i]);
                         uint32_t numElements;
-                        memcpy(&numElements, &tagData[i], sizeof(uint32_t));
+                        std::memcpy(&numElements, &tagData[i], sizeof(uint32_t));
                         i += sizeof(uint32_t);
 
                         // swap endian-ness of array elements
@@ -348,7 +349,7 @@ bool BamAlignment::BuildCharData()
 
         // store tagData in alignment
         TagData.resize(tagDataLength);
-        memcpy((char*)(TagData.data()), tagData, tagDataLength);
+        std::memcpy((char*)(TagData.data()), tagData, tagDataLength);
     }
 
     // clear core-only flag & return success
@@ -869,7 +870,7 @@ void BamAlignment::RemoveTag(const std::string& tag)
     numBytesParsed -= 3;
     const unsigned int beginningTagDataLength = numBytesParsed;
     newTagDataLength += beginningTagDataLength;
-    memcpy(newTagData.Buffer, pOriginalTagData, numBytesParsed);
+    std::memcpy(newTagData.Buffer, pOriginalTagData, numBytesParsed);
 
     // attemp to skip to next tag
     const char* pTagStorageType = pTagData + 2;
@@ -881,7 +882,7 @@ void BamAlignment::RemoveTag(const std::string& tag)
         const unsigned int skippedDataLength = (numBytesParsed - beginningTagDataLength);
         const unsigned int endTagDataLength =
             originalTagDataLength - beginningTagDataLength - skippedDataLength;
-        memcpy(newTagData.Buffer + beginningTagDataLength, pTagData, endTagDataLength);
+        std::memcpy(newTagData.Buffer + beginningTagDataLength, pTagData, endTagDataLength);
 
         // save modified tag data in alignment
         TagData.assign(newTagData.Buffer, beginningTagDataLength + endTagDataLength);
@@ -1083,7 +1084,8 @@ bool BamAlignment::SkipToNextTag(const char storageType, char*& pTagData,
 
             // read number of elements
             int32_t numElements;
-            memcpy(&numElements, pTagData, sizeof(uint32_t));  // already endian-swapped, if needed
+            std::memcpy(&numElements, pTagData,
+                        sizeof(uint32_t));  // already endian-swapped, if needed
             numBytesParsed += sizeof(uint32_t);
             pTagData += sizeof(uint32_t);
 

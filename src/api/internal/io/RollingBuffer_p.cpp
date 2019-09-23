@@ -211,7 +211,7 @@ std::size_t RollingBuffer::Read(char* dest, std::size_t max)
     while (bytesReadSoFar < bytesToRead) {
         const char* readPtr = ReadPointer();
         std::size_t blockBytes = std::min((bytesToRead - bytesReadSoFar), BlockSize());
-        if (dest) memcpy(dest + bytesReadSoFar, readPtr, blockBytes);
+        if (dest) std::memcpy(dest + bytesReadSoFar, readPtr, blockBytes);
         bytesReadSoFar += blockBytes;
         Free(blockBytes);
     }
@@ -234,7 +234,7 @@ std::size_t RollingBuffer::ReadLine(char* dest, std::size_t max)
         const char* readPtr = ReadPointer();
         std::size_t bytesToRead = std::min((index + 1) - bytesReadSoFar, BlockSize());
         bytesToRead = std::min(bytesToRead, (max - 1) - bytesReadSoFar);
-        memcpy(dest + bytesReadSoFar, readPtr, bytesToRead);
+        std::memcpy(dest + bytesReadSoFar, readPtr, bytesToRead);
         bytesReadSoFar += bytesToRead;
         Free(bytesToRead);
 
@@ -313,5 +313,5 @@ std::size_t RollingBuffer::Size() const
 void RollingBuffer::Write(const char* src, std::size_t n)
 {
     char* writePtr = Reserve(n);
-    memcpy(writePtr, src, n);
+    std::memcpy(writePtr, src, n);
 }

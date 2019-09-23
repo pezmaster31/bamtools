@@ -179,7 +179,8 @@ std::size_t BgzfStream::DeflateBlock(int32_t blockLength)
     if (remaining > 0) {
         if (remaining > inputLength)
             throw BamException("BgzfStream::DeflateBlock", "after deflate, remainder too large");
-        memcpy(m_uncompressedBlock.Buffer, m_uncompressedBlock.Buffer + inputLength, remaining);
+        std::memcpy(m_uncompressedBlock.Buffer, m_uncompressedBlock.Buffer + inputLength,
+                    remaining);
     }
 
     // update block data
@@ -312,7 +313,7 @@ std::size_t BgzfStream::Read(char* data, const std::size_t dataLength)
         // copy data from uncompressed source buffer into data destination buffer
         const std::size_t copyLength =
             std::min((dataLength - numBytesRead), static_cast<std::size_t>(bytesAvailable));
-        memcpy(output, m_uncompressedBlock.Buffer + m_blockOffset, copyLength);
+        std::memcpy(output, m_uncompressedBlock.Buffer + m_blockOffset, copyLength);
 
         // update counters
         m_blockOffset += copyLength;
@@ -366,7 +367,7 @@ void BgzfStream::ReadBlock()
 
     // copy header contents to compressed buffer
     const std::size_t blockLength = BamTools::UnpackUnsignedShort(&header[16]) + 1;
-    memcpy(m_compressedBlock.Buffer, header, Constants::BGZF_BLOCK_HEADER_LENGTH);
+    std::memcpy(m_compressedBlock.Buffer, header, Constants::BGZF_BLOCK_HEADER_LENGTH);
 
     // read remainder of block
     const std::size_t remaining = blockLength - Constants::BGZF_BLOCK_HEADER_LENGTH;
@@ -452,7 +453,7 @@ std::size_t BgzfStream::Write(const char* data, const std::size_t dataLength)
         unsigned int copyLength =
             std::min(blockLength - m_blockOffset, dataLength - numBytesWritten);
         char* buffer = m_uncompressedBlock.Buffer;
-        memcpy(buffer + m_blockOffset, input, copyLength);
+        std::memcpy(buffer + m_blockOffset, input, copyLength);
 
         // update counter
         m_blockOffset += copyLength;

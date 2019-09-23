@@ -22,6 +22,7 @@ using namespace BamTools::Internal;
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <iterator>
 #include <vector>
@@ -337,7 +338,7 @@ bool BamReaderPrivate::Tag2Cigar(BamAlignment& a, RaiiBuffer& buf)
     // update member variables
     a.SupportData.NumCigarOperations = tag_cigar_len;
     a.SupportData.BlockLength -= 8 + fake_bytes;
-    memcpy(buf.Buffer, new_data.c_str(), buf.NumBytes - 8 - fake_bytes);
+    std::memcpy(buf.Buffer, new_data.c_str(), buf.NumBytes - 8 - fake_bytes);
     return true;
 }
 

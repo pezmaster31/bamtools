@@ -326,7 +326,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
     if (numCigarOperations < 65536) {
         if (m_isBigEndian) {
             char* cigarData = new char[packedCigarLength]();
-            memcpy(cigarData, packedCigar.data(), packedCigarLength);
+            std::memcpy(cigarData, packedCigar.data(), packedCigarLength);
             if (m_isBigEndian) {
                 for (size_t i = 0; i < packedCigarLength; ++i)
                     BamTools::SwapEndian_32p(&cigarData[i]);
@@ -369,7 +369,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
     if (m_isBigEndian) {
 
         char* tagData = new char[tagDataLength]();
-        memcpy(tagData, al.TagData.data(), tagDataLength);
+        std::memcpy(tagData, al.TagData.data(), tagDataLength);
 
         std::size_t i = 0;
         while (i < tagDataLength) {
@@ -418,7 +418,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
                     // swap endian-ness of number of elements in place, then retrieve for loop
                     BamTools::SwapEndian_32p(&tagData[i]);
                     int32_t numElements;
-                    memcpy(&numElements, &tagData[i], sizeof(uint32_t));
+                    std::memcpy(&numElements, &tagData[i], sizeof(uint32_t));
                     i += sizeof(uint32_t);
 
                     // swap endian-ness of array elements
@@ -471,7 +471,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
             m_stream.Write((char*)&cigar_len_buf, 4);
 
             char* cigarData = new char[packedCigarLength]();
-            memcpy(cigarData, packedCigar.data(), packedCigarLength);
+            std::memcpy(cigarData, packedCigar.data(), packedCigarLength);
             if (m_isBigEndian) {
                 for (size_t i = 0; i < packedCigarLength;
                      ++i)  // FIXME: similarly, this should be "i += 4", not "++i"

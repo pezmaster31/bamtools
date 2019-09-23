@@ -133,8 +133,8 @@ HostInfo HostInfo::Lookup(const std::string& hostname, const std::string& port)
             saSize = sizeof(sa6);
             memset(&sa6, 0, sizeof(sa6));
             sa6.sin6_family = AF_INET6;
-            memcpy(sa6.sin6_addr.s6_addr, address.GetIPv6Address().data,
-                   sizeof(sa6.sin6_addr.s6_addr));
+            std::memcpy(sa6.sin6_addr.s6_addr, address.GetIPv6Address().data,
+                        sizeof(sa6.sin6_addr.s6_addr));
             sa6.sin6_port = htons(portNum);
         }
 

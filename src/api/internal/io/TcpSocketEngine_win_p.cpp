@@ -43,7 +43,7 @@ bool TcpSocketEngine::nativeConnect(const HostAddress& address, const uint16_t p
         sockAddrIPv6.sin6_port = htons(port);
 
         IPv6Address ip6 = address.GetIPv6Address();
-        memcpy(&sockAddrIPv6.sin6_addr.s6_addr, &ip6, sizeof(ip6));
+        std::memcpy(&sockAddrIPv6.sin6_addr.s6_addr, &ip6, sizeof(ip6));
 
         sockAddrSize = sizeof(sockAddrIPv6);
         sockAddrPtr = (sockaddr*)&sockAddrIPv6;

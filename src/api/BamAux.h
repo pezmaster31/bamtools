@@ -157,28 +157,22 @@ API_EXPORT inline bool FileExists(const std::string& filename)
     return !f.fail();
 }
 
-/*! \fn void SwapEndian_16(int16_t& x)
-    \brief swaps endianness of signed 16-bit integer, in place
-*/
-API_EXPORT inline void SwapEndian_16(int16_t& x)
-{
-    x = ((x >> 8) | (x << 8));
-}
-
 /*! \fn void SwapEndian_16(uint16_t& x)
     \brief swaps endianness of unsigned 16-bit integer, in place
 */
 API_EXPORT inline void SwapEndian_16(uint16_t& x)
 {
-    x = ((x >> 8) | (x << 8));
+    x = ((x & 0xFF00) >> 8) | ((x & 0x00FF) << 8);
 }
 
-/*! \fn void SwapEndian_32(int32_t& x)
-    \brief swaps endianness of signed 32-bit integer, in place
+/*! \fn void SwapEndian_16(int16_t& x)
+    \brief swaps endianness of signed 16-bit integer, in place
 */
-API_EXPORT inline void SwapEndian_32(int32_t& x)
+API_EXPORT inline void SwapEndian_16(int16_t& x)
 {
-    x = ((x >> 24) | ((x << 8) & 0x00FF0000) | ((x >> 8) & 0x0000FF00) | (x << 24));
+    uint16_t val = x;
+    SwapEndian_16(val);
+    x = val;
 }
 
 /*! \fn void SwapEndian_32(uint32_t& x)
@@ -186,17 +180,18 @@ API_EXPORT inline void SwapEndian_32(int32_t& x)
 */
 API_EXPORT inline void SwapEndian_32(uint32_t& x)
 {
-    x = ((x >> 24) | ((x << 8) & 0x00FF0000) | ((x >> 8) & 0x0000FF00) | (x << 24));
+    x = ((x & 0xFF000000) >> 24) | ((x & 0x00FF0000) >> 8) | ((x & 0x0000FF00) << 8) |
+        ((x & 0x000000FF) << 24);
 }
 
-/*! \fn void SwapEndian_64(int64_t& x)
-    \brief swaps endianness of signed 64-bit integer, in place
+/*! \fn void SwapEndian_32(int32_t& x)
+    \brief swaps endianness of signed 32-bit integer, in place
 */
-API_EXPORT inline void SwapEndian_64(int64_t& x)
+API_EXPORT inline void SwapEndian_32(int32_t& x)
 {
-    x = ((x >> 56) | ((x << 40) & 0x00FF000000000000ll) | ((x << 24) & 0x0000FF0000000000ll) |
-         ((x << 8) & 0x000000FF00000000ll) | ((x >> 8) & 0x00000000FF000000ll) |
-         ((x >> 24) & 0x0000000000FF0000ll) | ((x >> 40) & 0x000000000000FF00ll) | (x << 56));
+    uint32_t val = x;
+    SwapEndian_32(val);
+    x = val;
 }
 
 /*! \fn void SwapEndian_64(uint64_t& x)
@@ -204,9 +199,20 @@ API_EXPORT inline void SwapEndian_64(int64_t& x)
 */
 API_EXPORT inline void SwapEndian_64(uint64_t& x)
 {
-    x = ((x >> 56) | ((x << 40) & 0x00FF000000000000ll) | ((x << 24) & 0x0000FF0000000000ll) |
-         ((x << 8) & 0x000000FF00000000ll) | ((x >> 8) & 0x00000000FF000000ll) |
-         ((x >> 24) & 0x0000000000FF0000ll) | ((x >> 40) & 0x000000000000FF00ll) | (x << 56));
+    x = ((x & 0xFF00000000000000ull) >> 56) | ((x & 0x00FF000000000000ull) >> 40) |
+        ((x & 0x0000FF0000000000ull) >> 24) | ((x & 0x000000FF00000000ull) >> 8) |
+        ((x & 0x00000000FF000000ull) << 8) | ((x & 0x0000000000FF0000ull) << 24) |
+        ((x & 0x000000000000FF00ull) << 40) | ((x & 0x00000000000000FFull) << 56);
+}
+
+/*! \fn void SwapEndian_64(int64_t& x)
+    \brief swaps endianness of signed 64-bit integer, in place
+*/
+API_EXPORT inline void SwapEndian_64(int64_t& x)
+{
+    uint64_t val = x;
+    SwapEndian_64(val);
+    x = val;
 }
 
 /*! \fn void SwapEndian_16p(char* data)
@@ -214,8 +220,10 @@ API_EXPORT inline void SwapEndian_64(uint64_t& x)
 */
 API_EXPORT inline void SwapEndian_16p(char* data)
 {
-    uint16_t& value = (uint16_t&)*data;
+    uint16_t value;
+    std::memcpy(&value, data, sizeof(uint16_t));
     SwapEndian_16(value);
+    std::memcpy(data, &value, sizeof(uint16_t));
 }
 
 /*! \fn void SwapEndian_32p(char* data)
@@ -223,8 +231,10 @@ API_EXPORT inline void SwapEndian_16p(char* data)
 */
 API_EXPORT inline void SwapEndian_32p(char* data)
 {
-    uint32_t& value = (uint32_t&)*data;
+    uint32_t value;
+    std::memcpy(&value, data, sizeof(uint32_t));
     SwapEndian_32(value);
+    std::memcpy(data, &value, sizeof(uint32_t));
 }
 
 /*! \fn void SwapEndian_64p(char* data)
@@ -232,8 +242,10 @@ API_EXPORT inline void SwapEndian_32p(char* data)
 */
 API_EXPORT inline void SwapEndian_64p(char* data)
 {
-    uint64_t& value = (uint64_t&)*data;
+    uint64_t value;
+    std::memcpy(&value, data, sizeof(uint64_t));
     SwapEndian_64(value);
+    std::memcpy(data, &value, sizeof(uint64_t));
 }
 
 /*! \fn bool SystemIsBigEndian()
@@ -280,34 +292,9 @@ API_EXPORT inline void PackUnsignedShort(char* buffer, unsigned short value)
 */
 API_EXPORT inline double UnpackDouble(const char* buffer)
 {
-    union
-    {
-        double value;
-        unsigned char valueBuffer[sizeof(double)];
-    } un;
-    un.value = 0;
-    un.valueBuffer[0] = buffer[0];
-    un.valueBuffer[1] = buffer[1];
-    un.valueBuffer[2] = buffer[2];
-    un.valueBuffer[3] = buffer[3];
-    un.valueBuffer[4] = buffer[4];
-    un.valueBuffer[5] = buffer[5];
-    un.valueBuffer[6] = buffer[6];
-    un.valueBuffer[7] = buffer[7];
-    return un.value;
-}
-
-/*! \fn double UnpackDouble(char* buffer)
-    \brief reads a double value from byte buffer
-
-    This is an overloaded function.
-
-    \param[in] buffer source byte buffer
-    \return the (double) value read from the buffer
-*/
-API_EXPORT inline double UnpackDouble(char* buffer)
-{
-    return UnpackDouble((const char*)buffer);
+    double result;
+    std::memcpy(&result, buffer, sizeof(double));
+    return result;
 }
 
 /*! \fn double UnpackFloat(const char* buffer)
@@ -318,30 +305,9 @@ API_EXPORT inline double UnpackDouble(char* buffer)
 */
 API_EXPORT inline float UnpackFloat(const char* buffer)
 {
-    union
-    {
-        float value;
-        unsigned char valueBuffer[sizeof(float)];
-    } un;
-    un.value = 0;
-    un.valueBuffer[0] = buffer[0];
-    un.valueBuffer[1] = buffer[1];
-    un.valueBuffer[2] = buffer[2];
-    un.valueBuffer[3] = buffer[3];
-    return un.value;
-}
-
-/*! \fn double UnpackFloat(char* buffer)
-    \brief reads a float value from byte buffer
-
-    This is an overloaded function.
-
-    \param[in] buffer source byte buffer
-    \return the (float) value read from the buffer
-*/
-API_EXPORT inline float UnpackFloat(char* buffer)
-{
-    return UnpackFloat((const char*)buffer);
+    float result;
+    std::memcpy(&result, buffer, sizeof(float));
+    return result;
 }
 
 /*! \fn signed int UnpackSignedInt(const char* buffer)
@@ -352,30 +318,9 @@ API_EXPORT inline float UnpackFloat(char* buffer)
 */
 API_EXPORT inline signed int UnpackSignedInt(const char* buffer)
 {
-    union
-    {
-        signed int value;
-        unsigned char valueBuffer[sizeof(signed int)];
-    } un;
-    un.value = 0;
-    un.valueBuffer[0] = buffer[0];
-    un.valueBuffer[1] = buffer[1];
-    un.valueBuffer[2] = buffer[2];
-    un.valueBuffer[3] = buffer[3];
-    return un.value;
-}
-
-/*! \fn signed int UnpackSignedInt(char* buffer)
-    \brief reads a signed integer value from byte buffer
-
-    This is an overloaded function.
-
-    \param[in] buffer source byte buffer
-    \return the (signed int) value read from the buffer
-*/
-API_EXPORT inline signed int UnpackSignedInt(char* buffer)
-{
-    return UnpackSignedInt((const char*)buffer);
+    signed int result;
+    std::memcpy(&result, buffer, sizeof(signed int));
+    return result;
 }
 
 /*! \fn signed short UnpackSignedShort(const char* buffer)
@@ -386,28 +331,9 @@ API_EXPORT inline signed int UnpackSignedInt(char* buffer)
 */
 API_EXPORT inline signed short UnpackSignedShort(const char* buffer)
 {
-    union
-    {
-        signed short value;
-        unsigned char valueBuffer[sizeof(signed short)];
-    } un;
-    un.value = 0;
-    un.valueBuffer[0] = buffer[0];
-    un.valueBuffer[1] = buffer[1];
-    return un.value;
-}
-
-/*! \fn signed short UnpackSignedShort(char* buffer)
-    \brief reads a signed short integer value from byte buffer
-
-    This is an overloaded function.
-
-    \param[in] buffer source byte buffer
-    \return the (signed short) value read from the buffer
-*/
-API_EXPORT inline signed short UnpackSignedShort(char* buffer)
-{
-    return UnpackSignedShort((const char*)buffer);
+    signed short result;
+    std::memcpy(&result, buffer, sizeof(signed short));
+    return result;
 }
 
 /*! \fn unsigned int UnpackUnsignedInt(const char* buffer)
@@ -418,30 +344,9 @@ API_EXPORT inline signed short UnpackSignedShort(char* buffer)
 */
 API_EXPORT inline unsigned int UnpackUnsignedInt(const char* buffer)
 {
-    union
-    {
-        unsigned int value;
-        unsigned char valueBuffer[sizeof(unsigned int)];
-    } un;
-    un.value = 0;
-    un.valueBuffer[0] = buffer[0];
-    un.valueBuffer[1] = buffer[1];
-    un.valueBuffer[2] = buffer[2];
-    un.valueBuffer[3] = buffer[3];
-    return un.value;
-}
-
-/*! \fn unsigned int UnpackUnsignedInt(char* buffer)
-    \brief reads an unsigned integer value from byte buffer
-
-    This is an overloaded function.
-
-    \param[in] buffer source byte buffer
-    \return the (unsigned int) value read from the buffer
-*/
-API_EXPORT inline unsigned int UnpackUnsignedInt(char* buffer)
-{
-    return UnpackUnsignedInt((const char*)buffer);
+    unsigned int result;
+    std::memcpy(&result, buffer, sizeof(unsigned int));
+    return result;
 }
 
 /*! \fn unsigned short UnpackUnsignedShort(const char* buffer)
@@ -452,35 +357,18 @@ API_EXPORT inline unsigned int UnpackUnsignedInt(char* buffer)
 */
 API_EXPORT inline unsigned short UnpackUnsignedShort(const char* buffer)
 {
-    union
-    {
-        unsigned short value;
-        unsigned char valueBuffer[sizeof(unsigned short)];
-    } un;
-    un.value = 0;
+    unsigned short result;
+    std::memcpy(&result, buffer, sizeof(unsigned short));
+
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    un.valueBuffer[0] = buffer[0];
-    un.valueBuffer[1] = buffer[1];
+    // no further operations required
 #elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    un.valueBuffer[0] = buffer[1];
-    un.valueBuffer[1] = buffer[0];
+    SwapEndian_16(result);
 #else
 #error "Unsupported hardware"
 #endif
-    return un.value;
-}
 
-/*! \fn unsigned short UnpackUnsignedShort(char* buffer)
-    \brief reads an unsigned short integer value from byte buffer
-
-    This is an overloaded function.
-
-    \param[in] buffer source byte buffer
-    \return the (unsigned short) value read from the buffer
-*/
-API_EXPORT inline unsigned short UnpackUnsignedShort(char* buffer)
-{
-    return UnpackUnsignedShort((const char*)buffer);
+    return result;
 }
 
 // ----------------------------------------------------------------

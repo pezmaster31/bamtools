@@ -24,7 +24,6 @@ struct API_EXPORT SamSequence
     SamSequence();
     SamSequence(const std::string& name, const int& length);
     SamSequence(const std::string& name, const std::string& length);
-    SamSequence(const SamSequence& other);
 
     // query/modify entire sequence
     void Clear();  // clears all contents

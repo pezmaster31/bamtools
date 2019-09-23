@@ -29,7 +29,6 @@ class API_EXPORT SamSequenceDictionary
     // ctor & dtor
 public:
     SamSequenceDictionary();
-    SamSequenceDictionary(const SamSequenceDictionary& other);
 
     // query/modify sequence data
 public:

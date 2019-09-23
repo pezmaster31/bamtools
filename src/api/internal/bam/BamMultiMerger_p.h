@@ -44,11 +44,6 @@ struct MergeItem
         : Reader(reader)
         , Alignment(alignment)
     {}
-
-    MergeItem(const MergeItem& other)
-        : Reader(other.Reader)
-        , Alignment(other.Alignment)
-    {}
 };
 
 template <typename Compare>

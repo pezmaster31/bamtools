@@ -37,16 +37,6 @@ ByteArray::ByteArray(const char* value, std::size_t n)
     m_data.assign(s.begin(), s.end());
 }
 
-ByteArray::ByteArray(const ByteArray& other)
-    : m_data(other.m_data)
-{}
-
-ByteArray& ByteArray::operator=(const ByteArray& other)
-{
-    m_data = other.m_data;
-    return *this;
-}
-
 void ByteArray::Clear()
 {
     m_data.clear();

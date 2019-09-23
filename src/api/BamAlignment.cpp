@@ -93,29 +93,6 @@ BamAlignment::BamAlignment()
     , InsertSize(0)
 {}
 
-/*! \fn BamAlignment::BamAlignment(const BamAlignment& other)
-    \brief copy constructor
-*/
-BamAlignment::BamAlignment(const BamAlignment& other)
-    : Name(other.Name)
-    , Length(other.Length)
-    , QueryBases(other.QueryBases)
-    , AlignedBases(other.AlignedBases)
-    , Qualities(other.Qualities)
-    , TagData(other.TagData)
-    , RefID(other.RefID)
-    , Position(other.Position)
-    , Bin(other.Bin)
-    , MapQuality(other.MapQuality)
-    , AlignmentFlag(other.AlignmentFlag)
-    , CigarData(other.CigarData)
-    , MateRefID(other.MateRefID)
-    , MatePosition(other.MatePosition)
-    , InsertSize(other.InsertSize)
-    , Filename(other.Filename)
-    , SupportData(other.SupportData)
-{}
-
 /*! \fn bool BamAlignment::BuildCharData()
     \brief Populates alignment string fields (read name, bases, qualities, tag data).
 

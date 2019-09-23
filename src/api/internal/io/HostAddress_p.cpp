@@ -217,14 +217,6 @@ HostAddress::HostAddress(const std::string& address)
     SetAddress(address);
 }
 
-HostAddress::HostAddress(const HostAddress& other)
-    : m_protocol(other.m_protocol)
-    , m_ip4Address(other.m_ip4Address)
-    , m_ip6Address(other.m_ip6Address)
-    , m_ipString(other.m_ipString)
-    , m_hasIpAddress(other.m_hasIpAddress)
-{}
-
 bool HostAddress::operator==(const HostAddress& other) const
 {
 

@@ -59,21 +59,6 @@ SamHeader::SamHeader(const std::string& headerText)
     SetHeaderText(headerText);
 }
 
-/*! \fn SamHeader::SamHeader(const SamHeader& other)
-    \brief copy constructor
-*/
-SamHeader::SamHeader(const SamHeader& other)
-    : Version(other.Version)
-    , SortOrder(other.SortOrder)
-    , GroupOrder(other.GroupOrder)
-    , CustomTags(other.CustomTags)
-    , Sequences(other.Sequences)
-    , ReadGroups(other.ReadGroups)
-    , Programs(other.Programs)
-    , Comments(other.Comments)
-    , m_errorString(other.GetErrorString())
-{}
-
 /*! \fn void SamHeader::Clear()
     \brief Clears all header contents.
 */

@@ -30,13 +30,6 @@ using namespace BamTools;
 */
 SamProgramChain::SamProgramChain() {}
 
-/*! \fn SamProgramChain::SamProgramChain(const SamProgramChain& other)
-    \brief copy constructor
-*/
-SamProgramChain::SamProgramChain(const SamProgramChain& other)
-    : m_data(other.m_data)
-{}
-
 /*! \fn void SamProgramChain::Add(SamProgram& program)
     \brief Appends a program to program chain.
 

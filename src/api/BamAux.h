@@ -103,14 +103,6 @@ struct API_EXPORT BamRegion
         , RightPosition(rightPos)
     {}
 
-    //! copy constructor
-    BamRegion(const BamRegion& other)
-        : LeftRefID(other.LeftRefID)
-        , LeftPosition(other.LeftPosition)
-        , RightRefID(other.RightRefID)
-        , RightPosition(other.RightPosition)
-    {}
-
     //! Clears region boundaries
     void clear()
     {

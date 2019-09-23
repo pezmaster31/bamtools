@@ -25,7 +25,6 @@ struct API_EXPORT SamHeader
 
     // ctor & dtor
     SamHeader(const std::string& headerText = std::string());
-    SamHeader(const SamHeader& other);
 
     // query/modify entire SamHeader
     void Clear();  // clears all header contents

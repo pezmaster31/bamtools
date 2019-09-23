@@ -53,19 +53,6 @@ SamProgram::SamProgram(const std::string& id)
     : ID(id)
 {}
 
-/*! \fn SamProgram::SamProgram(const SamProgram& other)
-    \brief copy constructor
-*/
-SamProgram::SamProgram(const SamProgram& other)
-    : CommandLine(other.CommandLine)
-    , ID(other.ID)
-    , Name(other.Name)
-    , PreviousProgramID(other.PreviousProgramID)
-    , Version(other.Version)
-    , CustomTags(other.CustomTags)
-    , NextProgramID(other.NextProgramID)
-{}
-
 /*! \fn void SamProgram::Clear()
     \brief Clears all data fields.
 */

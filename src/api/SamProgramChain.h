@@ -29,7 +29,6 @@ class API_EXPORT SamProgramChain
     // ctor & dtor
 public:
     SamProgramChain();
-    SamProgramChain(const SamProgramChain& other);
 
     // query/modify program data
 public:

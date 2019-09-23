@@ -36,7 +36,6 @@ class API_EXPORT BamAlignment
     // constructors & destructor
 public:
     BamAlignment();
-    BamAlignment(const BamAlignment& other);
 
     // queries against alignment flags
 public:

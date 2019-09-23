@@ -318,11 +318,11 @@ std::vector<std::string> Utilities::Split(const std::string& source, const std::
     char* tok;
     char* cchars = new char[source.size() + 1];
     char* cstr = &cchars[0];
-    strcpy(cstr, source.c_str());
-    tok = strtok(cstr, delims.c_str());
+    std::strcpy(cstr, source.c_str());
+    tok = std::strtok(cstr, delims.c_str());
     while (tok != NULL) {
         fields.push_back(tok);
-        tok = strtok(NULL, delims.c_str());
+        tok = std::strtok(NULL, delims.c_str());
     }
 
     delete[] cchars;

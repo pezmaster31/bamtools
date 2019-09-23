@@ -80,7 +80,7 @@ void BamToolsIndex::CheckMagicNumber()
         throw BamException("BamToolsIndex::CheckMagicNumber", "could not read BTI magic number");
 
     // validate expected magic number
-    if (strncmp(magic, BamToolsIndex::BTI_MAGIC, 4) != 0)
+    if (std::strncmp(magic, BamToolsIndex::BTI_MAGIC, 4) != 0)
         throw BamException("BamToolsIndex::CheckMagicNumber", "invalid BTI magic number");
 }
 

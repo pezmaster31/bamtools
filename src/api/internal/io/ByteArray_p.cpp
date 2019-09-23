@@ -83,7 +83,7 @@ ByteArray& ByteArray::Remove(std::size_t from, std::size_t n)
 
     // otherwise, shift data & resize
     else {
-        memmove(&m_data[from], &m_data[from + n], (originalSize - from - n));
+        std::memmove(&m_data[from], &m_data[from + n], (originalSize - from - n));
         Resize(originalSize - n);
     }
 

@@ -112,7 +112,7 @@ HostInfo HostInfo::Lookup(const std::string& hostname, const std::string& port)
         if (address.GetProtocol() == HostAddress::IPv4Protocol) {
             sa = (sockaddr*)&sa4;
             saSize = sizeof(sa4);
-            memset(&sa4, 0, sizeof(sa4));
+            std::memset(&sa4, 0, sizeof(sa4));
             sa4.sin_family = AF_INET;
             sa4.sin_addr.s_addr = htonl(address.GetIPv4Address());
             sa4.sin_port = htons(portNum);
@@ -122,7 +122,7 @@ HostInfo HostInfo::Lookup(const std::string& hostname, const std::string& port)
         else if (address.GetProtocol() == HostAddress::IPv4Protocol) {
             sa = (sockaddr*)&sa6;
             saSize = sizeof(sa6);
-            memset(&sa6, 0, sizeof(sa6));
+            std::memset(&sa6, 0, sizeof(sa6));
             sa6.sin6_family = AF_INET6;
             std::memcpy(sa6.sin6_addr.s6_addr, address.GetIPv6Address().data,
                         sizeof(sa6.sin6_addr.s6_addr));
@@ -152,7 +152,7 @@ HostInfo HostInfo::Lookup(const std::string& hostname, const std::string& port)
 
         // setup address lookup 'hints'
         addrinfo hints;
-        memset(&hints, 0, sizeof(hints));
+        std::memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_UNSPEC;      // allow either IPv4 or IPv6
         hints.ai_socktype = SOCK_STREAM;  // for TCP
         hints.ai_protocol = IPPROTO_TCP;

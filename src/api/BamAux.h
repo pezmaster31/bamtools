@@ -390,7 +390,7 @@ struct RaiiBuffer
     // add'l methods
     void Clear()
     {
-        memset(Buffer, 0, NumBytes);
+        std::memset(Buffer, 0, NumBytes);
     }
 };
 

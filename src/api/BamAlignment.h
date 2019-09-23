@@ -242,7 +242,7 @@ bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const
                 tagDataLength + 1);  // '+1' for TagData null-term
 
     // append newTag
-    strcat(originalTagData.Buffer + tagDataLength, newTag.data());
+    std::strcat(originalTagData.Buffer + tagDataLength, newTag.data());
     std::memcpy(originalTagData.Buffer + tagDataLength + newTag.size(), un.valueBuffer, sizeof(T));
 
     // store temp buffer back in TagData
@@ -291,7 +291,7 @@ inline bool BamAlignment::AddTag<std::string>(const std::string& tag, const std:
                 tagDataLength + 1);  // '+1' for TagData null-term
 
     // append newTag (removes original null-term, then appends newTag + null-term)
-    strcat(originalTagData.Buffer + tagDataLength, newTag.data());
+    std::strcat(originalTagData.Buffer + tagDataLength, newTag.data());
 
     // store temp buffer back in TagData
     const char* newTagData = (const char*)originalTagData.Buffer;
@@ -349,7 +349,7 @@ bool BamAlignment::AddTag(const std::string& tag, const std::vector<T>& values)
                 tagDataLength + 1);  // '+1' for TagData's null-term
 
     // write newTagBase (removes old null term)
-    strcat(originalTagData.Buffer + tagDataLength, (const char*)newTagBase);
+    std::strcat(originalTagData.Buffer + tagDataLength, (const char*)newTagBase);
 
     // add vector elements to tag
     int elementsBeginOffset = tagDataLength + Constants::BAM_TAG_ARRAYBASE_SIZE;
@@ -530,7 +530,7 @@ inline bool BamAlignment::GetTag<std::string>(const std::string& tag,
     }
 
     // otherwise copy data into destination
-    const unsigned int dataLength = strlen(pTagData);
+    const unsigned int dataLength = std::strlen(pTagData);
     destination.clear();
     destination.resize(dataLength);
     std::memcpy((char*)destination.data(), pTagData, dataLength);

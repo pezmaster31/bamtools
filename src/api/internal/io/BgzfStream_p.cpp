@@ -93,7 +93,7 @@ std::size_t BgzfStream::DeflateBlock(int32_t blockLength)
 
     // initialize the gzip header
     char* buffer = m_compressedBlock.Buffer;
-    memset(buffer, 0, 18);
+    std::memset(buffer, 0, 18);
     buffer[0] = Constants::GZIP_ID1;
     buffer[1] = Constants::GZIP_ID2;
     buffer[2] = Constants::CM_DEFLATE;

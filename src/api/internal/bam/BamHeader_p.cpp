@@ -25,7 +25,8 @@ using namespace BamTools::Internal;
 
 static bool isValidMagicNumber(const char* buffer)
 {
-    return (strncmp(buffer, Constants::BAM_HEADER_MAGIC, Constants::BAM_HEADER_MAGIC_LENGTH) == 0);
+    return (std::strncmp(buffer, Constants::BAM_HEADER_MAGIC, Constants::BAM_HEADER_MAGIC_LENGTH) ==
+            0);
 }
 
 // --------------------------

@@ -38,7 +38,7 @@ bool TcpSocketEngine::nativeConnect(const HostAddress& address, const uint16_t p
     // IPv6
     if (address.GetProtocol() == HostAddress::IPv6Protocol) {
 
-        memset(&sockAddrIPv6, 0, sizeof(sockAddrIPv6));
+        std::memset(&sockAddrIPv6, 0, sizeof(sockAddrIPv6));
         sockAddrIPv6.sin6_family = AF_INET6;
         sockAddrIPv6.sin6_port = htons(port);
 
@@ -52,7 +52,7 @@ bool TcpSocketEngine::nativeConnect(const HostAddress& address, const uint16_t p
     // IPv4
     else if (address.GetProtocol() == HostAddress::IPv4Protocol) {
 
-        memset(&sockAddrIPv4, 0, sizeof(sockAddrIPv4));
+        std::memset(&sockAddrIPv4, 0, sizeof(sockAddrIPv4));
         sockAddrIPv4.sin_family = AF_INET;
         sockAddrIPv4.sin_port = htons(port);
         sockAddrIPv4.sin_addr.s_addr = htonl(address.GetIPv4Address());

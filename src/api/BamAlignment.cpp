@@ -357,7 +357,7 @@ bool BamAlignment::FindTag(const std::string& tag, char*& pTagData,
         numBytesParsed += 3;
 
         // check the current tag, return true on match
-        if (strncmp(pTagType, tag.c_str(), 2) == 0) return true;
+        if (std::strncmp(pTagType, tag.c_str(), 2) == 0) return true;
 
         // get the storage class and find the next tag
         if (*pTagStorageType == '\0') return false;

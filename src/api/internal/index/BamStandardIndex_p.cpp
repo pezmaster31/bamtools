@@ -241,7 +241,7 @@ void BamStandardIndex::CheckMagicNumber()
         throw BamException("BamStandardIndex::CheckMagicNumber", "could not read BAI magic number");
 
     // compare to expected value
-    if (strncmp(magic, BamStandardIndex::BAI_MAGIC, 4) != 0)
+    if (std::strncmp(magic, BamStandardIndex::BAI_MAGIC, 4) != 0)
         throw BamException("BamStandardIndex::CheckMagicNumber", "invalid BAI magic number");
 }
 

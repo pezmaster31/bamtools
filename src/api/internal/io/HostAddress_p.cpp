@@ -14,6 +14,7 @@ using namespace BamTools::Internal;
 #include <cctype>
 #include <cstddef>
 #include <cstdlib>
+#include <cstring>
 #include <sstream>
 #include <vector>
 
@@ -229,7 +230,7 @@ bool HostAddress::operator==(const HostAddress& other) const
     // if self is IPv6
     else if (m_protocol == HostAddress::IPv6Protocol) {
         return (other.m_protocol == HostAddress::IPv6Protocol &&
-                memcmp(&m_ip6Address, &other.m_ip6Address, sizeof(IPv6Address)) == 0);
+                std::memcmp(&m_ip6Address, &other.m_ip6Address, sizeof(IPv6Address)) == 0);
     }
 
     // otherwise compare protocols
@@ -248,7 +249,7 @@ bool HostAddress::operator<(const HostAddress& other) const
     // if self is IPv6
     else if (m_protocol == HostAddress::IPv6Protocol) {
         if (other.m_protocol == HostAddress::IPv6Protocol)
-            return (memcmp(&m_ip6Address, &other.m_ip6Address, sizeof(IPv6Address)) < 0);
+            return (std::memcmp(&m_ip6Address, &other.m_ip6Address, sizeof(IPv6Address)) < 0);
     }
 
     // otherwise compare protocol types
@@ -260,7 +261,7 @@ void HostAddress::Clear()
 
     m_protocol = HostAddress::UnknownNetworkProtocol;
     m_ip4Address = 0;
-    memset(&m_ip6Address, 0, sizeof(IPv6Address));
+    std::memset(&m_ip6Address, 0, sizeof(IPv6Address));
     m_ipString.clear();
 
     // this may feel funny, but cleared IP (equivalent to '0.0.0.0') is technically valid

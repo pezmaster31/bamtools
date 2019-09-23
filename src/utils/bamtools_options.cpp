@@ -68,7 +68,7 @@ void Options::DisplayHelp()
     std::ostringstream sb;
 
     char indentBuffer[MAX_LINE_LENGTH - DESC_LENGTH + 1];
-    memset(indentBuffer, ' ', MAX_LINE_LENGTH - DESC_LENGTH);
+    std::memset(indentBuffer, ' ', MAX_LINE_LENGTH - DESC_LENGTH);
     indentBuffer[MAX_LINE_LENGTH - DESC_LENGTH] = 0;
 
     // display the menu

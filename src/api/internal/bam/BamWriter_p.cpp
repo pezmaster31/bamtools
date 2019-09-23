@@ -355,7 +355,8 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
         char* pBaseQualities = new char[queryLength]();
         if (al.Qualities.empty() || (al.Qualities.size() == 1 && al.Qualities[0] == '*') ||
             al.Qualities[0] == (char)0xFF)
-            memset(pBaseQualities, 0xFF, queryLength);  // if missing or '*', fill with invalid qual
+            std::memset(pBaseQualities, 0xFF,
+                        queryLength);  // if missing or '*', fill with invalid qual
         else {
             for (std::size_t i = 0; i < queryLength; ++i)
                 pBaseQualities[i] =

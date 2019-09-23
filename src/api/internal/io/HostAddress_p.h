@@ -34,7 +34,7 @@ struct IPv6Address
     // ctor
     IPv6Address()
     {
-        memset(&data, 0, sizeof(uint8_t) * 16);
+        std::memset(&data, 0, sizeof(uint8_t) * 16);
     }
 
     // data access (no bounds checking)

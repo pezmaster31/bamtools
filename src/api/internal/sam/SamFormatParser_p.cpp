@@ -22,8 +22,6 @@ SamFormatParser::SamFormatParser(SamHeader& header)
     : m_header(header)
 {}
 
-SamFormatParser::~SamFormatParser() {}
-
 void SamFormatParser::Parse(const std::string& headerText)
 {
 

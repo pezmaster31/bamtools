@@ -35,7 +35,7 @@ class HttpHeader
 public:
     HttpHeader();
     HttpHeader(const std::string& s);
-    virtual ~HttpHeader();
+    virtual ~HttpHeader() {}
 
     // HttpHeader interface
 public:
@@ -80,7 +80,6 @@ public:
                       const std::string& resource,  // filename
                       int majorVersion = 1,         // version info
                       int minorVersion = 1);
-    ~HttpRequestHeader();
 
     // HttpRequestHeader interface
 public:
@@ -110,7 +109,6 @@ public:
                        int majorVersion = 1,                       // version info
                        int minorVersion = 1);
     HttpResponseHeader(const std::string& s);
-    ~HttpResponseHeader();
 
     // HttpRequestHeader interface
 public:

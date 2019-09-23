@@ -30,7 +30,6 @@ class API_EXPORT SamProgramChain
 public:
     SamProgramChain();
     SamProgramChain(const SamProgramChain& other);
-    ~SamProgramChain();
 
     // query/modify program data
 public:

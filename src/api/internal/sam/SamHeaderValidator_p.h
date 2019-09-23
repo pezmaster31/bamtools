@@ -38,7 +38,6 @@ class SamHeaderValidator
     // ctor & dtor
 public:
     SamHeaderValidator(const SamHeader& header);
-    ~SamHeaderValidator();
 
     // SamHeaderValidator interface
 public:

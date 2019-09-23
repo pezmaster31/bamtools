@@ -70,8 +70,6 @@ SamHeaderValidator::SamHeaderValidator(const SamHeader& header)
     : m_header(header)
 {}
 
-SamHeaderValidator::~SamHeaderValidator() {}
-
 void SamHeaderValidator::AddError(const std::string& message)
 {
     m_errorMessages.push_back(ERROR_PREFIX + message + NEWLINE);

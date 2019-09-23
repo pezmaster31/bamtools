@@ -32,7 +32,6 @@ class BamFile : public ILocalIODevice
     // ctor & dtor
 public:
     BamFile(const std::string& filename);
-    ~BamFile();
 
     // ILocalIODevice implementation
 public:

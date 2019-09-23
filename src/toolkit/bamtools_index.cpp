@@ -49,8 +49,6 @@ public:
         : m_settings(settings)
     {}
 
-    ~IndexToolPrivate() {}
-
     // interface
 public:
     bool Run();

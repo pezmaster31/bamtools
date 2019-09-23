@@ -64,8 +64,6 @@ public:
         : m_settings(settings)
     {}
 
-    ~MergeToolPrivate() {}
-
     // interface
 public:
     bool Run();

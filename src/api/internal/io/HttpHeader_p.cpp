@@ -110,8 +110,6 @@ HttpHeader::HttpHeader(const std::string& s)
     Parse(s);
 }
 
-HttpHeader::~HttpHeader() {}
-
 bool HttpHeader::ContainsKey(const std::string& key) const
 {
     return (m_fields.find(key) != m_fields.end());
@@ -250,8 +248,6 @@ HttpRequestHeader::HttpRequestHeader(const std::string& method, const std::strin
     SetVersion(majorVersion, minorVersion);
 }
 
-HttpRequestHeader::~HttpRequestHeader() {}
-
 std::string HttpRequestHeader::GetMethod() const
 {
     return m_method;
@@ -333,8 +329,6 @@ HttpResponseHeader::HttpResponseHeader(const std::string& s)
 {
     Parse(s);
 }
-
-HttpResponseHeader::~HttpResponseHeader() {}
 
 std::string HttpResponseHeader::GetReason() const
 {

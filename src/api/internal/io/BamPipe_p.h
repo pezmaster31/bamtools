@@ -32,7 +32,6 @@ class BamPipe : public ILocalIODevice
     // ctor & dtor
 public:
     BamPipe();
-    ~BamPipe();
 
     // IBamIODevice implementation
 public:

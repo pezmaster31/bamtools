@@ -84,11 +84,6 @@ SamSequence::SamSequence(const SamSequence& other)
     , CustomTags(other.CustomTags)
 {}
 
-/*! \fn SamSequence::~SamSequence()
-    \brief destructor
-*/
-SamSequence::~SamSequence() {}
-
 /*! \fn void SamSequence::Clear()
     \brief Clears all data fields.
 */

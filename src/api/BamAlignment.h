@@ -37,7 +37,6 @@ class API_EXPORT BamAlignment
 public:
     BamAlignment();
     BamAlignment(const BamAlignment& other);
-    ~BamAlignment();
 
     // queries against alignment flags
 public:

@@ -225,8 +225,6 @@ HostAddress::HostAddress(const HostAddress& other)
     , m_hasIpAddress(other.m_hasIpAddress)
 {}
 
-HostAddress::~HostAddress() {}
-
 bool HostAddress::operator==(const HostAddress& other) const
 {
 

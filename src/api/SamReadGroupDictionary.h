@@ -30,7 +30,6 @@ class API_EXPORT SamReadGroupDictionary
 public:
     SamReadGroupDictionary();
     SamReadGroupDictionary(const SamReadGroupDictionary& other);
-    ~SamReadGroupDictionary();
 
     // query/modify read group data
 public:

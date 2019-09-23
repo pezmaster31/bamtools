@@ -402,7 +402,6 @@ class FilterTool::FilterToolPrivate
     // ctor & dtor
 public:
     FilterToolPrivate(FilterTool::FilterSettings* settings);
-    ~FilterToolPrivate();
 
     // 'public' interface
 public:
@@ -434,9 +433,6 @@ private:
 FilterTool::FilterToolPrivate::FilterToolPrivate(FilterTool::FilterSettings* settings)
     : m_settings(settings)
 {}
-
-// destructor
-FilterTool::FilterToolPrivate::~FilterToolPrivate() {}
 
 bool FilterTool::FilterToolPrivate::AddPropertyTokensToFilter(
     const std::string& filterName, const std::map<std::string, std::string>& propertyTokens)

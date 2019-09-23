@@ -880,7 +880,6 @@ public:
     ResolveToolPrivate(ResolveTool::ResolveSettings* settings)
         : m_settings(settings)
     {}
-    ~ResolveToolPrivate() {}
 
     // 'public' interface
 public:

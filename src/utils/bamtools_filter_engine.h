@@ -85,8 +85,6 @@ public:
         , NOT_OPERATOR(1, '!')
     {}
 
-    ~FilterEngine() {}
-
     // 'filter set' methods
 public:
     // creates a new filter set, returns true if created, false if error or already exists

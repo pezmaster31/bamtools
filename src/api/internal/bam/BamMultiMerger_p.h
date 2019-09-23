@@ -49,8 +49,6 @@ struct MergeItem
         : Reader(other.Reader)
         , Alignment(other.Alignment)
     {}
-
-    ~MergeItem() {}
 };
 
 template <typename Compare>
@@ -105,7 +103,6 @@ public:
         : IMultiMerger()
         , m_data(MergeType(comp))
     {}
-    ~MultiMerger() {}
 
 public:
     void Add(MergeItem item);
@@ -199,7 +196,6 @@ public:
     explicit MultiMerger(const Algorithms::Sort::Unsorted& = Algorithms::Sort::Unsorted())
         : IMultiMerger()
     {}
-    ~MultiMerger() {}
 
 public:
     void Add(MergeItem item);

@@ -121,7 +121,6 @@ private:
         Impl(T v)
             : data(v)
         {}
-        ~Impl() {}
         T data;
     };
 

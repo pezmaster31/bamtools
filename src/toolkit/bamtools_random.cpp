@@ -31,7 +31,7 @@ const unsigned int RANDOM_MAX_ALIGNMENT_COUNT = 10000;
 int getRandomInt(const int& lowerBound, const int& upperBound)
 {
     const int range = (upperBound - lowerBound) + 1;
-    return (lowerBound + (int)(range * (double)rand() / ((double)RAND_MAX + 1)));
+    return (lowerBound + (int)(range * (double)std::rand() / ((double)RAND_MAX + 1)));
 }
 
 }  // namespace BamTools
@@ -178,9 +178,9 @@ bool RandomTool::RandomToolPrivate::Run()
 
     // seed our random number generator
     if (m_settings->HasRandomNumberSeed)
-        srand(m_settings->RandomNumberSeed);
+        std::srand(m_settings->RandomNumberSeed);
     else
-        srand(time(NULL));
+        std::srand(time(NULL));
 
     // grab random alignments
     BamAlignment al;

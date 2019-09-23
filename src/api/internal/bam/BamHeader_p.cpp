@@ -96,19 +96,19 @@ void BamHeader::ReadHeaderText(BgzfStream* stream, const uint32_t& length)
 {
 
     // read header text
-    char* headerText = (char*)calloc(length + 1, 1);
+    char* headerText = (char*)std::calloc(length + 1, 1);
     const std::size_t bytesRead = stream->Read(headerText, length);
 
     // if error reading, clean up buffer & throw
     if (bytesRead != length) {
-        free(headerText);
+        std::free(headerText);
         throw BamException("BamHeader::ReadHeaderText", "could not read header text");
     }
 
     // otherwise, text was read OK
     // store & cleanup
     m_header.SetHeaderText(static_cast<std::string>((const char*)headerText));
-    free(headerText);
+    std::free(headerText);
 }
 
 // returns const-reference to SamHeader data object

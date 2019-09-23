@@ -43,7 +43,7 @@ typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 #define strtoui64 _strtoui64
 #else
-#define strtoui64 strtoull
+#define strtoui64 std::strtoull
 #endif
 
 struct UTILS_EXPORT Option

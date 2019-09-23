@@ -213,13 +213,11 @@ void Options::Parse(int argc, char* argv[], int offset)
                         ++i;
 
                         if (ovMapIter->second.VariantValue.is_type<unsigned int>()) {
-                            const unsigned int uint32 =
-                                (unsigned int)strtoul(val.c_str(), &end_ptr, 10);
+                            const unsigned int uint32 = std::strtoul(val.c_str(), &end_ptr, 10);
                             unsigned int* varValue = (unsigned int*)ovMapIter->second.pValue;
                             *varValue = uint32;
                         } else if (ovMapIter->second.VariantValue.is_type<unsigned char>()) {
-                            const unsigned char uint8 =
-                                (unsigned char)strtoul(val.c_str(), &end_ptr, 10);
+                            const unsigned char uint8 = std::strtoul(val.c_str(), &end_ptr, 10);
                             unsigned char* varValue = (unsigned char*)ovMapIter->second.pValue;
                             *varValue = uint8;
                         } else if (ovMapIter->second.VariantValue.is_type<uint64_t>()) {
@@ -227,11 +225,11 @@ void Options::Parse(int argc, char* argv[], int offset)
                             uint64_t* varValue = (uint64_t*)ovMapIter->second.pValue;
                             *varValue = uint64;
                         } else if (ovMapIter->second.VariantValue.is_type<double>()) {
-                            const double d = strtod(val.c_str(), &end_ptr);
+                            const double d = std::strtod(val.c_str(), &end_ptr);
                             double* varValue = (double*)ovMapIter->second.pValue;
                             *varValue = d;
                         } else if (ovMapIter->second.VariantValue.is_type<float>()) {
-                            const float f = (float)strtod(val.c_str(), &end_ptr);
+                            const float f = std::strtod(val.c_str(), &end_ptr);
                             float* varValue = (float*)ovMapIter->second.pValue;
                             *varValue = f;
                         } else if (ovMapIter->second.VariantValue.is_type<std::string>()) {

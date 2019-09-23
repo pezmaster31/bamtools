@@ -143,7 +143,7 @@ static bool ParseIp6(const std::string& address, uint8_t* maybeIp6)
 
         // field has data
         else {
-            uint32_t value = static_cast<uint32_t>(strtoul(field.c_str(), 0, 16));
+            uint32_t value = std::strtoul(field.c_str(), 0, 16);
 
             if (value <= 0xffff) {
                 maybeIp6[--index] = value & 0xff;

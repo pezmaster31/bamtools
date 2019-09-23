@@ -234,7 +234,7 @@ ReadGroupResolver::ReadGroupResolver()
 
 bool ReadGroupResolver::IsValidInsertSize(const BamAlignment& al) const
 {
-    const int32_t absInsertSize = abs(al.InsertSize);
+    const int32_t absInsertSize = std::abs(al.InsertSize);
     return (absInsertSize >= MinFragmentLength && absInsertSize <= MaxFragmentLength);
 }
 
@@ -1076,7 +1076,7 @@ bool ResolveTool::ResolveToolPrivate::MakeStats()
                 // determine model type & store fragment length for stats calculation
                 const uint16_t currentModelType = CalculateModelType(al);
                 assert(currentModelType != ModelType::DUMMY_ID);
-                resolver.Models[currentModelType].push_back(abs(al.InsertSize));
+                resolver.Models[currentModelType].push_back(std::abs(al.InsertSize));
             }
 
             // unique or not, remove read name from map

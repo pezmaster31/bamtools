@@ -16,6 +16,7 @@ using namespace BamTools;
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdlib>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -223,7 +224,7 @@ void StatsTool::StatsToolPrivate::ProcessAlignment(const BamAlignment& al)
 
         // store insert size for first mate
         if (m_settings->IsShowingInsertSizeSummary && al.IsFirstMate() && (al.InsertSize != 0)) {
-            int insertSize = abs(al.InsertSize);
+            int insertSize = std::abs(al.InsertSize);
             m_insertSizes.push_back(insertSize);
         }
     }

@@ -70,7 +70,6 @@ public:
     explicit HostAddress(const uint8_t* ip6Address);
     explicit HostAddress(const IPv6Address& ip6Address);
     explicit HostAddress(const std::string& address);
-    HostAddress(const HostAddress& other);
 
     // HostAddress interface
 public:

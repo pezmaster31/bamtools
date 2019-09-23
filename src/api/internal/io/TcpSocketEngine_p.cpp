@@ -27,17 +27,6 @@ TcpSocketEngine::TcpSocketEngine()
     , m_socketState(TcpSocket::UnconnectedState)
 {}
 
-TcpSocketEngine::TcpSocketEngine(const TcpSocketEngine& other)
-    : m_socketDescriptor(other.m_socketDescriptor)
-    //    , m_localAddress(other.m_localAddress)
-    , m_remoteAddress(other.m_remoteAddress)
-    //    , m_localPort(other.m_localPort)
-    , m_remotePort(other.m_remotePort)
-    , m_socketError(other.m_socketError)
-    , m_socketState(other.m_socketState)
-    , m_errorString(other.m_errorString)
-{}
-
 TcpSocketEngine::~TcpSocketEngine()
 {
     Close();

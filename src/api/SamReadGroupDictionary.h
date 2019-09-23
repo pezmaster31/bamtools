@@ -29,7 +29,6 @@ class API_EXPORT SamReadGroupDictionary
     // ctor & dtor
 public:
     SamReadGroupDictionary();
-    SamReadGroupDictionary(const SamReadGroupDictionary& other);
 
     // query/modify read group data
 public:

@@ -38,7 +38,6 @@ class TcpSocketEngine
     // ctors & dtor
 public:
     TcpSocketEngine();
-    TcpSocketEngine(const TcpSocketEngine& other);
     ~TcpSocketEngine();
 
     // TcpSocketEngine interface

@@ -41,7 +41,6 @@ public:
     // ctors & dtor
 public:
     HostInfo();
-    HostInfo(const HostInfo& other);
 
     // HostInfo interface
 public:

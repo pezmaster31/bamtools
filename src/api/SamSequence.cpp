@@ -71,19 +71,6 @@ SamSequence::SamSequence(const std::string& name, const std::string& length)
     , Name(name)
 {}
 
-/*! \fn SamSequence::SamSequence(const SamSequence& other)
-    \brief copy constructor
-*/
-SamSequence::SamSequence(const SamSequence& other)
-    : AssemblyID(other.AssemblyID)
-    , Checksum(other.Checksum)
-    , Length(other.Length)
-    , Name(other.Name)
-    , Species(other.Species)
-    , URI(other.URI)
-    , CustomTags(other.CustomTags)
-{}
-
 /*! \fn void SamSequence::Clear()
     \brief Clears all data fields.
 */

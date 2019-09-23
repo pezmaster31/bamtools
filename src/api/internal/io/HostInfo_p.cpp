@@ -31,13 +31,6 @@ HostInfo::HostInfo()
     : m_error(HostInfo::NoError)
 {}
 
-HostInfo::HostInfo(const HostInfo& other)
-    : m_hostName(other.m_hostName)
-    , m_addresses(other.m_addresses)
-    , m_error(other.m_error)
-    , m_errorString(other.m_errorString)
-{}
-
 std::vector<HostAddress> HostInfo::Addresses() const
 {
     return m_addresses;

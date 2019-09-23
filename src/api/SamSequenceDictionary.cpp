@@ -24,14 +24,6 @@ using namespace BamTools;
 */
 SamSequenceDictionary::SamSequenceDictionary() {}
 
-/*! \fn SamSequenceDictionary::SamSequenceDictionary(const SamSequenceDictionary& other)
-    \brief copy constructor
-*/
-SamSequenceDictionary::SamSequenceDictionary(const SamSequenceDictionary& other)
-    : m_data(other.m_data)
-    , m_lookupData(other.m_lookupData)
-{}
-
 /*! \fn void SamSequenceDictionary::Add(const SamSequence& sequence)
     \brief Appends a sequence to the dictionary.
 

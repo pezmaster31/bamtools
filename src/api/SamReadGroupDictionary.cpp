@@ -24,14 +24,6 @@ using namespace BamTools;
 */
 SamReadGroupDictionary::SamReadGroupDictionary() {}
 
-/*! \fn SamReadGroupDictionary::SamReadGroupDictionary(const SamReadGroupDictionary& other)
-    \brief copy constructor
-*/
-SamReadGroupDictionary::SamReadGroupDictionary(const SamReadGroupDictionary& other)
-    : m_data(other.m_data)
-    , m_lookupData(other.m_lookupData)
-{}
-
 /*! \fn void SamReadGroupDictionary::Add(const SamReadGroup& readGroup)
     \brief Appends a read group to the dictionary.
 

@@ -70,25 +70,6 @@ SamReadGroup::SamReadGroup(const std::string& id)
     : ID(id)
 {}
 
-/*! \fn SamReadGroup::SamReadGroup(const SamReadGroup& other)
-    \brief copy constructor
-*/
-SamReadGroup::SamReadGroup(const SamReadGroup& other)
-    : Description(other.Description)
-    , FlowOrder(other.FlowOrder)
-    , ID(other.ID)
-    , KeySequence(other.KeySequence)
-    , Library(other.Library)
-    , PlatformUnit(other.PlatformUnit)
-    , PredictedInsertSize(other.PredictedInsertSize)
-    , ProductionDate(other.ProductionDate)
-    , Program(other.Program)
-    , Sample(other.Sample)
-    , SequencingCenter(other.SequencingCenter)
-    , SequencingTechnology(other.SequencingTechnology)
-    , CustomTags(other.CustomTags)
-{}
-
 /*! \fn void SamReadGroup::Clear()
     \brief Clears all data fields.
 */

@@ -24,7 +24,6 @@ struct API_EXPORT SamProgram
     // ctor & dtor
     SamProgram();
     SamProgram(const std::string& id);
-    SamProgram(const SamProgram& other);
 
     // query/modify entire program record
     void Clear();  // clears all data fields

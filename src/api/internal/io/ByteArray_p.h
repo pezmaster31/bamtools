@@ -38,9 +38,6 @@ public:
     ByteArray(const std::string& value);
     ByteArray(const std::vector<char>& value);
     ByteArray(const char* value, std::size_t n);
-    ByteArray(const ByteArray& other);
-
-    ByteArray& operator=(const ByteArray& other);
 
     // ByteArray interface
 public:

@@ -196,7 +196,7 @@ class MultiMerger<Algorithms::Sort::Unsorted> : public IMultiMerger
 {
 
 public:
-    explicit MultiMerger(const Algorithms::Sort::Unsorted& comp = Algorithms::Sort::Unsorted())
+    explicit MultiMerger(const Algorithms::Sort::Unsorted& = Algorithms::Sort::Unsorted())
         : IMultiMerger()
     {}
     ~MultiMerger() {}

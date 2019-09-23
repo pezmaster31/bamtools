@@ -62,7 +62,7 @@ public:
         : m_comp(comp)
     {}
 
-    bool operator()(const MergeItem& lhs, const MergeItem& rhs)
+    bool operator()(const MergeItem& lhs, const MergeItem& rhs) const
     {
         const BamAlignment& l = *lhs.Alignment;
         const BamAlignment& r = *rhs.Alignment;

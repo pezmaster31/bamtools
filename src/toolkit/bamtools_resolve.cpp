@@ -562,7 +562,7 @@ bool ResolveTool::StatsFileReader::IsComment(const std::string& line) const
 bool ResolveTool::StatsFileReader::IsWhitespace(const std::string& line) const
 {
     if (line.empty()) return true;
-    return (isspace(line.at(0)));
+    return std::isspace(line.at(0));
 }
 
 bool ResolveTool::StatsFileReader::Open(const std::string& filename)

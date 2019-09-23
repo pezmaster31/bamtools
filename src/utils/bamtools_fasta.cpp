@@ -10,6 +10,7 @@
 #include "utils/bamtools_fasta.h"
 using namespace BamTools;
 
+#include <cctype>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -153,7 +154,7 @@ bool Fasta::FastaPrivate::CreateIndex(const std::string& indexFilename)
     char c = fgetc(Stream);
     while ((c >= 0) && (c != '\n')) {
         ++byteLength;
-        if (isgraph(c)) ++lineLength;
+        if (std::isgraph(c)) ++lineLength;
         c = fgetc(Stream);
     }
     ++byteLength;  // store newline

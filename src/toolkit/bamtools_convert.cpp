@@ -17,6 +17,7 @@
 #include <utils/bamtools_utilities.h>
 using namespace BamTools;
 
+#include <cctype>
 #include <cstddef>
 #include <fstream>
 #include <iostream>
@@ -895,14 +896,14 @@ void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData)
             char base = ba.QueryBases.at(pa.PositionInAlignment);
 
             // if base matches reference
-            if (base == '=' || toupper(base) == toupper(referenceBase) ||
-                tolower(base) == tolower(referenceBase)) {
+            if (base == '=' || std::toupper(base) == std::toupper(referenceBase) ||
+                std::tolower(base) == std::tolower(referenceBase)) {
                 base = (ba.IsReverseStrand() ? ',' : '.');
             }
 
             // mismatches reference
             else
-                base = (ba.IsReverseStrand() ? tolower(base) : toupper(base));
+                base = (ba.IsReverseStrand() ? std::tolower(base) : std::toupper(base));
 
             // store base
             bases << base;
@@ -912,8 +913,8 @@ void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData)
                 bases << '+' << pa.InsertionLength;
                 for (int i = 1; i <= pa.InsertionLength; ++i) {
                     char insertedBase = (char)ba.QueryBases.at(pa.PositionInAlignment + i);
-                    bases << (ba.IsReverseStrand() ? (char)tolower(insertedBase)
-                                                   : (char)toupper(insertedBase));
+                    bases << (ba.IsReverseStrand() ? (char)std::tolower(insertedBase)
+                                                   : (char)std::toupper(insertedBase));
                 }
             }
 
@@ -932,8 +933,8 @@ void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData)
                             return;
                         }
                     }
-                    bases << (ba.IsReverseStrand() ? (char)tolower(deletedBase)
-                                                   : (char)toupper(deletedBase));
+                    bases << (ba.IsReverseStrand() ? (char)std::tolower(deletedBase)
+                                                   : (char)std::toupper(deletedBase));
                 }
             }
         }

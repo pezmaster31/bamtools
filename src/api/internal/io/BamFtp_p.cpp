@@ -80,7 +80,7 @@ static inline std::string toLower(const std::string& s)
     const std::size_t sSize = s.size();
     out.resize(sSize);
     for (std::size_t i = 0; i < sSize; ++i)
-        out[i] = tolower(s[i]);
+        out[i] = std::tolower(s[i]);
     return out;
 }
 
@@ -395,8 +395,9 @@ bool BamFtp::ReceiveReply()
         m_response += headerLine;
 
         // if line is of form 'xyz ', quit reading lines
-        if ((headerLine.length() >= 4) && isdigit(headerLine[0]) && isdigit(headerLine[1]) &&
-            isdigit(headerLine[2]) && (headerLine[3] != MULTILINE_CONTINUE)) {
+        if ((headerLine.length() >= 4) && std::isdigit(headerLine[0]) &&
+            std::isdigit(headerLine[1]) && std::isdigit(headerLine[2]) &&
+            (headerLine[3] != MULTILINE_CONTINUE)) {
             headerEnd = true;
         }
     }

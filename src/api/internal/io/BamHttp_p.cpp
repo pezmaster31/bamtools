@@ -59,7 +59,7 @@ static inline std::string toLower(const std::string& s)
     const std::size_t sSize = s.size();
     out.reserve(sSize);
     for (std::size_t i = 0; i < sSize; ++i)
-        out[i] = tolower(s[i]);
+        out[i] = std::tolower(s[i]);
     return out;
 }
 

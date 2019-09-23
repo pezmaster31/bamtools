@@ -62,7 +62,7 @@ static bool ParseIp4(const std::string& address, uint32_t& maybeIp4)
         const std::string& field = addressFields.at(i);
         const std::size_t fieldSize = field.size();
         for (std::size_t j = 0; j < fieldSize; ++j) {
-            if (!isdigit(field[j])) return false;
+            if (!std::isdigit(field[j])) return false;
         }
 
         int value = std::atoi(addressFields.at(i).c_str());

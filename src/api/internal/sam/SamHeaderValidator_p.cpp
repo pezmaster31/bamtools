@@ -31,9 +31,9 @@ static bool caseInsensitiveCompare(const std::string& lhs, const std::string& rh
     const int rhsLength = rhs.length();
     if (lhsLength != rhsLength) return false;
 
-    // do *basic* toupper checks on each string char's
+    // do *basic* std::toupper checks on each string char's
     for (int i = 0; i < lhsLength; ++i) {
-        if (toupper((int)lhs.at(i)) != toupper((int)rhs.at(i))) return false;
+        if (std::toupper((int)lhs.at(i)) != std::toupper((int)rhs.at(i))) return false;
     }
 
     // otherwise OK

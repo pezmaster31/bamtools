@@ -143,7 +143,7 @@ struct CustomHeaderTag
 /*! \fn bool FileExists(const std::string& filename)
     \brief returns true if the file exists
 */
-API_EXPORT inline bool FileExists(const std::string& filename)
+inline bool FileExists(const std::string& filename)
 {
     std::ifstream f(filename.c_str(), std::ifstream::in);
     return !f.fail();
@@ -152,7 +152,7 @@ API_EXPORT inline bool FileExists(const std::string& filename)
 /*! \fn void SwapEndian_16(uint16_t& x)
     \brief swaps endianness of unsigned 16-bit integer, in place
 */
-API_EXPORT inline void SwapEndian_16(uint16_t& x)
+inline void SwapEndian_16(uint16_t& x)
 {
     x = ((x & 0xFF00) >> 8) | ((x & 0x00FF) << 8);
 }
@@ -160,7 +160,7 @@ API_EXPORT inline void SwapEndian_16(uint16_t& x)
 /*! \fn void SwapEndian_16(int16_t& x)
     \brief swaps endianness of signed 16-bit integer, in place
 */
-API_EXPORT inline void SwapEndian_16(int16_t& x)
+inline void SwapEndian_16(int16_t& x)
 {
     uint16_t val = x;
     SwapEndian_16(val);
@@ -170,7 +170,7 @@ API_EXPORT inline void SwapEndian_16(int16_t& x)
 /*! \fn void SwapEndian_32(uint32_t& x)
     \brief swaps endianness of unsigned 32-bit integer, in place
 */
-API_EXPORT inline void SwapEndian_32(uint32_t& x)
+inline void SwapEndian_32(uint32_t& x)
 {
     x = ((x & 0xFF000000) >> 24) | ((x & 0x00FF0000) >> 8) | ((x & 0x0000FF00) << 8) |
         ((x & 0x000000FF) << 24);
@@ -179,7 +179,7 @@ API_EXPORT inline void SwapEndian_32(uint32_t& x)
 /*! \fn void SwapEndian_32(int32_t& x)
     \brief swaps endianness of signed 32-bit integer, in place
 */
-API_EXPORT inline void SwapEndian_32(int32_t& x)
+inline void SwapEndian_32(int32_t& x)
 {
     uint32_t val = x;
     SwapEndian_32(val);
@@ -189,7 +189,7 @@ API_EXPORT inline void SwapEndian_32(int32_t& x)
 /*! \fn void SwapEndian_64(uint64_t& x)
     \brief swaps endianness of unsigned 64-bit integer, in place
 */
-API_EXPORT inline void SwapEndian_64(uint64_t& x)
+inline void SwapEndian_64(uint64_t& x)
 {
     x = ((x & 0xFF00000000000000ull) >> 56) | ((x & 0x00FF000000000000ull) >> 40) |
         ((x & 0x0000FF0000000000ull) >> 24) | ((x & 0x000000FF00000000ull) >> 8) |
@@ -200,7 +200,7 @@ API_EXPORT inline void SwapEndian_64(uint64_t& x)
 /*! \fn void SwapEndian_64(int64_t& x)
     \brief swaps endianness of signed 64-bit integer, in place
 */
-API_EXPORT inline void SwapEndian_64(int64_t& x)
+inline void SwapEndian_64(int64_t& x)
 {
     uint64_t val = x;
     SwapEndian_64(val);
@@ -210,7 +210,7 @@ API_EXPORT inline void SwapEndian_64(int64_t& x)
 /*! \fn void SwapEndian_16p(char* data)
     \brief swaps endianness of the next 2 bytes in a buffer, in place
 */
-API_EXPORT inline void SwapEndian_16p(char* data)
+inline void SwapEndian_16p(char* data)
 {
     uint16_t value;
     std::memcpy(&value, data, sizeof(uint16_t));
@@ -221,7 +221,7 @@ API_EXPORT inline void SwapEndian_16p(char* data)
 /*! \fn void SwapEndian_32p(char* data)
     \brief swaps endianness of the next 4 bytes in a buffer, in place
 */
-API_EXPORT inline void SwapEndian_32p(char* data)
+inline void SwapEndian_32p(char* data)
 {
     uint32_t value;
     std::memcpy(&value, data, sizeof(uint32_t));
@@ -232,7 +232,7 @@ API_EXPORT inline void SwapEndian_32p(char* data)
 /*! \fn void SwapEndian_64p(char* data)
     \brief swaps endianness of the next 8 bytes in a buffer, in place
 */
-API_EXPORT inline void SwapEndian_64p(char* data)
+inline void SwapEndian_64p(char* data)
 {
     uint64_t value;
     std::memcpy(&value, data, sizeof(uint64_t));
@@ -244,7 +244,7 @@ API_EXPORT inline void SwapEndian_64p(char* data)
     \brief checks host architecture's byte order
     \return \c true if system uses big-endian ordering
 */
-API_EXPORT inline bool SystemIsBigEndian()
+inline bool SystemIsBigEndian()
 {
     const uint16_t one = 0x0001;
     return ((*(char*)&one) == 0);
@@ -256,7 +256,7 @@ API_EXPORT inline bool SystemIsBigEndian()
     \param[out] buffer destination buffer
     \param[in]  value  value to 'pack' in buffer
 */
-API_EXPORT inline void PackUnsignedInt(char* buffer, unsigned int value)
+inline void PackUnsignedInt(char* buffer, unsigned int value)
 {
     buffer[0] = (char)value;
     buffer[1] = (char)(value >> 8);
@@ -270,7 +270,7 @@ API_EXPORT inline void PackUnsignedInt(char* buffer, unsigned int value)
     \param[out] buffer destination buffer
     \param[in]  value  value to 'pack' in buffer
 */
-API_EXPORT inline void PackUnsignedShort(char* buffer, unsigned short value)
+inline void PackUnsignedShort(char* buffer, unsigned short value)
 {
     buffer[0] = (char)value;
     buffer[1] = (char)(value >> 8);
@@ -282,7 +282,7 @@ API_EXPORT inline void PackUnsignedShort(char* buffer, unsigned short value)
     \param[in] buffer source byte buffer
     \return the (double) value read from the buffer
 */
-API_EXPORT inline double UnpackDouble(const char* buffer)
+inline double UnpackDouble(const char* buffer)
 {
     double result;
     std::memcpy(&result, buffer, sizeof(double));
@@ -295,7 +295,7 @@ API_EXPORT inline double UnpackDouble(const char* buffer)
     \param[in] buffer source byte buffer
     \return the (float) value read from the buffer
 */
-API_EXPORT inline float UnpackFloat(const char* buffer)
+inline float UnpackFloat(const char* buffer)
 {
     float result;
     std::memcpy(&result, buffer, sizeof(float));
@@ -308,7 +308,7 @@ API_EXPORT inline float UnpackFloat(const char* buffer)
     \param[in] buffer source byte buffer
     \return the (signed int) value read from the buffer
 */
-API_EXPORT inline signed int UnpackSignedInt(const char* buffer)
+inline signed int UnpackSignedInt(const char* buffer)
 {
     signed int result;
     std::memcpy(&result, buffer, sizeof(signed int));
@@ -321,7 +321,7 @@ API_EXPORT inline signed int UnpackSignedInt(const char* buffer)
     \param[in] buffer source byte buffer
     \return the (signed short) value read from the buffer
 */
-API_EXPORT inline signed short UnpackSignedShort(const char* buffer)
+inline signed short UnpackSignedShort(const char* buffer)
 {
     signed short result;
     std::memcpy(&result, buffer, sizeof(signed short));
@@ -334,7 +334,7 @@ API_EXPORT inline signed short UnpackSignedShort(const char* buffer)
     \param[in] buffer source byte buffer
     \return the (unsigned int) value read from the buffer
 */
-API_EXPORT inline unsigned int UnpackUnsignedInt(const char* buffer)
+inline unsigned int UnpackUnsignedInt(const char* buffer)
 {
     unsigned int result;
     std::memcpy(&result, buffer, sizeof(unsigned int));
@@ -347,7 +347,7 @@ API_EXPORT inline unsigned int UnpackUnsignedInt(const char* buffer)
     \param[in] buffer source byte buffer
     \return the (unsigned short) value read from the buffer
 */
-API_EXPORT inline unsigned short UnpackUnsignedShort(const char* buffer)
+inline unsigned short UnpackUnsignedShort(const char* buffer)
 {
     unsigned short result;
     std::memcpy(&result, buffer, sizeof(unsigned short));

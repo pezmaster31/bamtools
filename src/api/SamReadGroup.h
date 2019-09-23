@@ -61,7 +61,7 @@ struct API_EXPORT SamReadGroup
 /*! \fn bool operator==(const SamReadGroup& lhs, const SamReadGroup& rhs)
     \brief tests equality by comparing read group IDs
 */
-API_EXPORT inline bool operator==(const SamReadGroup& lhs, const SamReadGroup& rhs)
+inline bool operator==(const SamReadGroup& lhs, const SamReadGroup& rhs)
 {
     return lhs.ID == rhs.ID;
 }

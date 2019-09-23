@@ -74,11 +74,6 @@ SamHeader::SamHeader(const SamHeader& other)
     , m_errorString(other.GetErrorString())
 {}
 
-/*! \fn SamHeader::~SamHeader()
-    \brief destructor
-*/
-SamHeader::~SamHeader() {}
-
 /*! \fn void SamHeader::Clear()
     \brief Clears all header contents.
 */

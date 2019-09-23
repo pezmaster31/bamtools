@@ -50,12 +50,6 @@ public:
         , m_minorVersion(minor)
     {}
 
-    ~SamHeaderVersion()
-    {
-        m_majorVersion = 0;
-        m_minorVersion = 0;
-    }
-
     // acess data
 public:
     unsigned int MajorVersion() const

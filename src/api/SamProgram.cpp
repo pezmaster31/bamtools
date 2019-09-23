@@ -66,11 +66,6 @@ SamProgram::SamProgram(const SamProgram& other)
     , NextProgramID(other.NextProgramID)
 {}
 
-/*! \fn SamProgram::~SamProgram()
-    \brief destructor
-*/
-SamProgram::~SamProgram() {}
-
 /*! \fn void SamProgram::Clear()
     \brief Clears all data fields.
 */

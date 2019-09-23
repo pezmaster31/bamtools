@@ -35,9 +35,6 @@ static inline bool isValidMagicNumber(const char* buffer)
 // ctor
 BamHeader::BamHeader() {}
 
-// dtor
-BamHeader::~BamHeader() {}
-
 // reads magic number from BGZF stream, returns true if valid
 void BamHeader::CheckMagicNumber(BgzfStream* stream)
 {

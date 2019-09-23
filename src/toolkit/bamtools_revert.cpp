@@ -64,7 +64,6 @@ public:
     RevertToolPrivate(RevertTool::RevertSettings* settings)
         : m_settings(settings)
     {}
-    ~RevertToolPrivate() {}
 
     // 'public' interface
 public:

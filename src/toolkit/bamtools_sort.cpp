@@ -83,7 +83,6 @@ class SortTool::SortToolPrivate
     // ctor & dtor
 public:
     SortToolPrivate(SortTool::SortSettings* settings);
-    ~SortToolPrivate() {}
 
     // 'public' interface
 public:

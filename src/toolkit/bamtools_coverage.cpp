@@ -33,7 +33,6 @@ public:
         , m_references(references)
         , m_out(out)
     {}
-    ~CoverageVisitor() {}
 
     // PileupVisitor interface implementation
 public:
@@ -86,8 +85,6 @@ public:
         : m_settings(settings)
         , m_out(std::cout.rdbuf())
     {}
-
-    ~CoverageToolPrivate() {}
 
     // interface
 public:

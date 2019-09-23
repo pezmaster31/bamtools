@@ -56,8 +56,6 @@ public:
         : m_settings(settings)
     {}
 
-    ~CountToolPrivate() {}
-
     // interface
 public:
     bool Run();

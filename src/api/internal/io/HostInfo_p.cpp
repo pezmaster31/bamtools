@@ -38,8 +38,6 @@ HostInfo::HostInfo(const HostInfo& other)
     , m_errorString(other.m_errorString)
 {}
 
-HostInfo::~HostInfo() {}
-
 std::vector<HostAddress> HostInfo::Addresses() const
 {
     return m_addresses;

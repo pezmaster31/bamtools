@@ -41,8 +41,6 @@ ByteArray::ByteArray(const ByteArray& other)
     : m_data(other.m_data)
 {}
 
-ByteArray::~ByteArray() {}
-
 ByteArray& ByteArray::operator=(const ByteArray& other)
 {
     m_data = other.m_data;

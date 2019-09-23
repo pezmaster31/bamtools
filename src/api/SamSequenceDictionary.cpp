@@ -32,11 +32,6 @@ SamSequenceDictionary::SamSequenceDictionary(const SamSequenceDictionary& other)
     , m_lookupData(other.m_lookupData)
 {}
 
-/*! \fn SamSequenceDictionary::~SamSequenceDictionary()
-    \brief destructor
-*/
-SamSequenceDictionary::~SamSequenceDictionary() {}
-
 /*! \fn void SamSequenceDictionary::Add(const SamSequence& sequence)
     \brief Appends a sequence to the dictionary.
 

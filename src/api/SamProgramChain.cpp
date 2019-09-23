@@ -37,11 +37,6 @@ SamProgramChain::SamProgramChain(const SamProgramChain& other)
     : m_data(other.m_data)
 {}
 
-/*! \fn SamProgramChain::~SamProgramChain()
-    \brief destructor
-*/
-SamProgramChain::~SamProgramChain() {}
-
 /*! \fn void SamProgramChain::Add(SamProgram& program)
     \brief Appends a program to program chain.
 

@@ -89,11 +89,6 @@ SamReadGroup::SamReadGroup(const SamReadGroup& other)
     , CustomTags(other.CustomTags)
 {}
 
-/*! \fn SamReadGroup::~SamReadGroup()
-    \brief destructor
-*/
-SamReadGroup::~SamReadGroup() {}
-
 /*! \fn void SamReadGroup::Clear()
     \brief Clears all data fields.
 */

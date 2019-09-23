@@ -19,8 +19,6 @@ BamFile::BamFile(const std::string& filename)
     , m_filename(filename)
 {}
 
-BamFile::~BamFile() {}
-
 void BamFile::Close()
 {
     if (IsOpen()) {

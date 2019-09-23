@@ -86,8 +86,6 @@ public:
         : m_settings(settings)
     {}
 
-    ~RandomToolPrivate() {}
-
     // interface
 public:
     bool Run();

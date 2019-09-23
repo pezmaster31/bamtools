@@ -55,7 +55,6 @@ struct StatsTool::StatsToolPrivate
     // ctor & dtor
 public:
     StatsToolPrivate(StatsTool::StatsSettings* _settings);
-    ~StatsToolPrivate() {}
 
     // 'public' interface
 public:

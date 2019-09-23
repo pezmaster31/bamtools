@@ -24,7 +24,6 @@ struct API_EXPORT SamReadGroup
     SamReadGroup();
     SamReadGroup(const std::string& id);
     SamReadGroup(const SamReadGroup& other);
-    ~SamReadGroup();
 
     // query/modify entire read group
     void Clear();  // clears all data fields

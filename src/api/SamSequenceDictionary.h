@@ -30,7 +30,6 @@ class API_EXPORT SamSequenceDictionary
 public:
     SamSequenceDictionary();
     SamSequenceDictionary(const SamSequenceDictionary& other);
-    ~SamSequenceDictionary();
 
     // query/modify sequence data
 public:

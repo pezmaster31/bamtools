@@ -42,7 +42,6 @@ public:
 public:
     HostInfo();
     HostInfo(const HostInfo& other);
-    ~HostInfo();
 
     // HostInfo interface
 public:

@@ -35,8 +35,6 @@ SamFormatPrinter::SamFormatPrinter(const SamHeader& header)
     : m_header(header)
 {}
 
-SamFormatPrinter::~SamFormatPrinter() {}
-
 const std::string SamFormatPrinter::ToString() const
 {
 

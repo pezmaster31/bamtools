@@ -71,7 +71,6 @@ public:
     explicit HostAddress(const IPv6Address& ip6Address);
     explicit HostAddress(const std::string& address);
     HostAddress(const HostAddress& other);
-    ~HostAddress();
 
     // HostAddress interface
 public:

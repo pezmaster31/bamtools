@@ -116,8 +116,6 @@ public:
         ignoreQuotes();
     }
 
-    ~RuleParser() {}
-
     // public interface
 public:
     void parse();

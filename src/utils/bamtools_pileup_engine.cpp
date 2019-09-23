@@ -34,7 +34,6 @@ struct PileupEngine::PileupEnginePrivate
         , CurrentPosition(-1)
         , IsFirstAlignment(true)
     {}
-    ~PileupEnginePrivate() {}
 
     // 'public' methods
     bool AddAlignment(const BamAlignment& al);

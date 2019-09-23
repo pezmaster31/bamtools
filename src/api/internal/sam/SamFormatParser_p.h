@@ -35,7 +35,6 @@ class SamFormatParser
     // ctor & dtor
 public:
     SamFormatParser(BamTools::SamHeader& header);
-    ~SamFormatParser();
 
     // parse text & populate header data
 public:

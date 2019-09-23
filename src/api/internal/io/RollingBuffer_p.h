@@ -39,7 +39,6 @@ class RollingBuffer
     // ctors & dtor
 public:
     RollingBuffer(std::size_t growth);
-    ~RollingBuffer();
 
     // RollingBuffer interface
 public:

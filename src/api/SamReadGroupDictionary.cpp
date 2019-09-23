@@ -32,11 +32,6 @@ SamReadGroupDictionary::SamReadGroupDictionary(const SamReadGroupDictionary& oth
     , m_lookupData(other.m_lookupData)
 {}
 
-/*! \fn SamReadGroupDictionary::~SamReadGroupDictionary()
-    \brief destructor
-*/
-SamReadGroupDictionary::~SamReadGroupDictionary() {}
-
 /*! \fn void SamReadGroupDictionary::Add(const SamReadGroup& readGroup)
     \brief Appends a read group to the dictionary.
 

@@ -124,8 +124,6 @@ public:
         , m_out(std::cout.rdbuf())
     {}
 
-    ~ConvertToolPrivate() {}
-
     // interface
 public:
     bool Run();

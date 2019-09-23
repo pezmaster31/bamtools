@@ -35,8 +35,6 @@ RollingBuffer::RollingBuffer(std::size_t growth)
     Clear();
 }
 
-RollingBuffer::~RollingBuffer() {}
-
 std::size_t RollingBuffer::BlockSize() const
 {
 

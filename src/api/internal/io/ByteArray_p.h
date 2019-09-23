@@ -39,7 +39,6 @@ public:
     ByteArray(const std::vector<char>& value);
     ByteArray(const char* value, std::size_t n);
     ByteArray(const ByteArray& other);
-    ~ByteArray();
 
     ByteArray& operator=(const ByteArray& other);
 

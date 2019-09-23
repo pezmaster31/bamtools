@@ -116,11 +116,6 @@ BamAlignment::BamAlignment(const BamAlignment& other)
     , SupportData(other.SupportData)
 {}
 
-/*! \fn BamAlignment::~BamAlignment()
-    \brief destructor
-*/
-BamAlignment::~BamAlignment() {}
-
 /*! \fn bool BamAlignment::BuildCharData()
     \brief Populates alignment string fields (read name, bases, qualities, tag data).
 

@@ -34,7 +34,6 @@ class BamHeader
     // ctor & dtor
 public:
     BamHeader();
-    ~BamHeader();
 
     // BamHeader interface
 public:

@@ -35,7 +35,6 @@ class SamFormatPrinter
     // ctor & dtor
 public:
     SamFormatPrinter(const BamTools::SamHeader& header);
-    ~SamFormatPrinter();
 
     // generates SAM-formatted string from header data
 public:

@@ -18,8 +18,6 @@ BamPipe::BamPipe()
     : ILocalIODevice()
 {}
 
-BamPipe::~BamPipe() {}
-
 bool BamPipe::IsRandomAccess() const
 {
     return false;

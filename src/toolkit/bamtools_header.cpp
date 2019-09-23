@@ -49,8 +49,6 @@ public:
         : m_settings(settings)
     {}
 
-    ~HeaderToolPrivate() {}
-
     // interface
 public:
     bool Run();

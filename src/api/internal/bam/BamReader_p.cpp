@@ -405,18 +405,21 @@ bool BamReaderPrivate::LoadNextAlignment(BamAlignment& alignment)
         // need to calculate this here so that  BamAlignment::GetEndPosition() performs correctly,
         // even when GetNextAlignmentCore() is called
         const unsigned int cigarDataOffset = alignment.SupportData.QueryNameLength;
-        uint32_t* cigarData = (uint32_t*)(allCharData.Buffer + cigarDataOffset);
+        const char* cigarDataPtr = allCharData.Buffer + cigarDataOffset;
         CigarOp op;
         alignment.CigarData.clear();
         alignment.CigarData.reserve(alignment.SupportData.NumCigarOperations);
-        for (unsigned int i = 0; i < alignment.SupportData.NumCigarOperations; ++i) {
+        for (unsigned int i = 0; i < alignment.SupportData.NumCigarOperations;
+             cigarDataPtr += sizeof(uint32_t), ++i) {
+            uint32_t cigarData;
+            std::memcpy(&cigarData, cigarDataPtr, sizeof(uint32_t));
 
             // swap endian-ness if necessary
-            if (m_isBigEndian) BamTools::SwapEndian_32(cigarData[i]);
+            if (m_isBigEndian) BamTools::SwapEndian_32(cigarData);
 
             // build CigarOp structure
-            op.Length = (cigarData[i] >> Constants::BAM_CIGAR_SHIFT);
-            op.Type = Constants::BAM_CIGAR_LOOKUP[(cigarData[i] & Constants::BAM_CIGAR_MASK)];
+            op.Length = (cigarData >> Constants::BAM_CIGAR_SHIFT);
+            op.Type = Constants::BAM_CIGAR_LOOKUP[(cigarData & Constants::BAM_CIGAR_MASK)];
 
             // save CigarOp
             alignment.CigarData.push_back(op);

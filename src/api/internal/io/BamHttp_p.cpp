@@ -48,12 +48,12 @@ static const char PROXY_SEPARATOR = ':';
 // utility methods
 // -----------------
 
-static inline bool endsWith(const std::string& source, const std::string& pattern)
+static bool endsWith(const std::string& source, const std::string& pattern)
 {
     return (source.find(pattern) == (source.length() - pattern.length()));
 }
 
-static inline std::string toLower(const std::string& s)
+static std::string toLower(const std::string& s)
 {
     std::string out;
     const std::size_t sSize = s.size();

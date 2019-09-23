@@ -43,7 +43,7 @@ static const std::string HTTP_STRING = "HTTP/";
 
 namespace Internal {
 
-static inline bool IsSpace(const char c)
+static bool IsSpace(const char c)
 {
     const int n = static_cast<int>(c);
     return (n == 0 || (n <= 13 && n >= 9));

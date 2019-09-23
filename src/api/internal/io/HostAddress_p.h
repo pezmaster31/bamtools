@@ -32,17 +32,18 @@ struct IPv6Address
 {
 
     // ctor
-    inline IPv6Address()
+    IPv6Address()
     {
         memset(&data, 0, sizeof(uint8_t) * 16);
     }
 
     // data access (no bounds checking)
-    inline uint8_t& operator[](std::size_t index)
+    uint8_t& operator[](std::size_t index)
     {
         return data[index];
     }
-    inline uint8_t operator[](std::size_t index) const
+
+    uint8_t operator[](std::size_t index) const
     {
         return data[index];
     }

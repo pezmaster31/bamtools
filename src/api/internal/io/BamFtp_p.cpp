@@ -57,7 +57,7 @@ static const char PASV_REPLY_SUFFIX = ')';
 // utility methods
 // -----------------
 
-static inline std::vector<std::string> split(const std::string& source, const char delim)
+static std::vector<std::string> split(const std::string& source, const char delim)
 {
 
     std::stringstream ss(source);
@@ -69,12 +69,12 @@ static inline std::vector<std::string> split(const std::string& source, const ch
     return fields;
 }
 
-static inline bool startsWith(const std::string& source, const std::string& pattern)
+static bool startsWith(const std::string& source, const std::string& pattern)
 {
     return (source.find(pattern) == 0);
 }
 
-static inline std::string toLower(const std::string& s)
+static std::string toLower(const std::string& s)
 {
     std::string out;
     const std::size_t sSize = s.size();

@@ -37,14 +37,13 @@ struct API_EXPORT Sort
         DescendingOrder
     };
 
-    /*! \fn template<typename ElemType> static inline bool sort_helper(const Sort::Order& order, const ElemType& lhs, const ElemType& rhs)
+    /*! \fn template<typename ElemType> static bool sort_helper(const Sort::Order& order, const ElemType& lhs, const ElemType& rhs)
         \internal
 
         Determines necessary STL function object depending on requested Sort::Order
     */
     template <typename ElemType>
-    static inline bool sort_helper(const Sort::Order& order, const ElemType& lhs,
-                                   const ElemType& rhs)
+    static bool sort_helper(const Sort::Order& order, const ElemType& lhs, const ElemType& rhs)
     {
         switch (order) {
             case (Sort::AscendingOrder): {
@@ -95,7 +94,7 @@ struct API_EXPORT Sort
         }
 
         // used by BamMultiReader internals
-        static inline bool UsesCharData()
+        static bool UsesCharData()
         {
             return true;
         }
@@ -145,7 +144,7 @@ struct API_EXPORT Sort
         }
 
         // used by BamMultiReader internals
-        static inline bool UsesCharData()
+        static bool UsesCharData()
         {
             return false;
         }
@@ -196,7 +195,7 @@ struct API_EXPORT Sort
         }
 
         // used by BamMultiReader internals
-        static inline bool UsesCharData()
+        static bool UsesCharData()
         {
             return true;
         }
@@ -222,13 +221,13 @@ struct API_EXPORT Sort
     {
 
         // comparison function
-        inline bool operator()(const BamTools::BamAlignment&, const BamTools::BamAlignment&) const
+        bool operator()(const BamTools::BamAlignment&, const BamTools::BamAlignment&) const
         {
             return false;  // returning false tends to retain insertion order
         }
 
         // used by BamMultiReader internals
-        static inline bool UsesCharData()
+        static bool UsesCharData()
         {
             return false;
         }
@@ -248,8 +247,7 @@ struct API_EXPORT Sort
         \param[in]     comp comparison function object
     */
     template <typename Compare>
-    static inline void SortAlignments(std::vector<BamAlignment>& data,
-                                      const Compare& comp = Compare())
+    static void SortAlignments(std::vector<BamAlignment>& data, const Compare& comp = Compare())
     {
         std::sort(data.begin(), data.end(), comp);
     }
@@ -270,8 +268,8 @@ struct API_EXPORT Sort
         \return sorted copy of the input data
     */
     template <typename Compare>
-    static inline std::vector<BamAlignment> SortAlignments(const std::vector<BamAlignment>& input,
-                                                           const Compare& comp = Compare())
+    static std::vector<BamAlignment> SortAlignments(const std::vector<BamAlignment>& input,
+                                                    const Compare& comp = Compare())
     {
         std::vector<BamAlignment> output(input);
         SortAlignments(output, comp);

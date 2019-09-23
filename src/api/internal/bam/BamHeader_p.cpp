@@ -23,7 +23,7 @@ using namespace BamTools::Internal;
 // static utility methods
 // ------------------------
 
-static inline bool isValidMagicNumber(const char* buffer)
+static bool isValidMagicNumber(const char* buffer)
 {
     return (strncmp(buffer, Constants::BAM_HEADER_MAGIC, Constants::BAM_HEADER_MAGIC_LENGTH) == 0);
 }

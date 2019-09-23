@@ -247,7 +247,7 @@ void BamReaderPrivate::LoadHeaderData()
     m_header.Load(&m_stream);
 }
 
-static inline int bam_aux_type2size(int x)
+static int bam_aux_type2size(int x)
 {
     if (x == 'C' || x == 'c' || x == 'A')
         return 1;
@@ -282,7 +282,7 @@ static unsigned char* bam_aux_get(int aux_data_len, const unsigned char* aux_sta
     return NULL;
 }
 
-static inline int hts_reg2bin(int64_t beg, int64_t end, int min_shift, int n_lvls)
+static int hts_reg2bin(int64_t beg, int64_t end, int min_shift, int n_lvls)
 {
     int l, s = min_shift, t = ((1 << ((n_lvls << 1) + n_lvls)) - 1) / 7;
     for (--end, l = n_lvls; l > 0; --l, s += 3, t -= 1 << ((l << 1) + l))

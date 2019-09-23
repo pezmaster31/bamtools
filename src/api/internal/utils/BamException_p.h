@@ -30,14 +30,14 @@ class BamException : public std::exception
 {
 
 public:
-    inline BamException(const std::string& where, const std::string& message)
+    BamException(const std::string& where, const std::string& message)
         : std::exception()
         , m_errorString(where + SEPARATOR + message)
     {}
 
-    inline ~BamException() throw() {}
+    ~BamException() throw() {}
 
-    inline const char* what() const throw()
+    const char* what() const throw()
     {
         return m_errorString.c_str();
     }

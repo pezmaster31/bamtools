@@ -22,7 +22,7 @@ using namespace BamTools::Internal;
 // static utility methods
 // ------------------------
 
-static inline const std::string FormatTag(const std::string& tag, const std::string& value)
+static const std::string FormatTag(const std::string& tag, const std::string& value)
 {
     return std::string(Constants::SAM_TAB + tag + Constants::SAM_COLON + value);
 }

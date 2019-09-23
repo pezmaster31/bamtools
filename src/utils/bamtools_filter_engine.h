@@ -180,14 +180,14 @@ private:
 
 // creates a new filter set, returns true if created, false if error or already exists
 template <typename FilterChecker>
-inline bool FilterEngine<FilterChecker>::addFilter(const std::string& filterName)
+bool FilterEngine<FilterChecker>::addFilter(const std::string& filterName)
 {
     return (m_filters.insert(std::make_pair(filterName, PropertyFilter()))).second;
 }
 
 // add a new known property & type to engine
 template <typename FilterChecker>
-inline bool FilterEngine<FilterChecker>::addProperty(const std::string& propertyName)
+bool FilterEngine<FilterChecker>::addProperty(const std::string& propertyName)
 {
     const std::vector<std::string> propertyNames = allPropertyNames();
     bool found = std::binary_search(propertyNames.begin(), propertyNames.end(), propertyName);
@@ -200,7 +200,7 @@ inline bool FilterEngine<FilterChecker>::addProperty(const std::string& property
 // returns list of all properties known by FilterEngine
 // ( any that were created using addProperty() )
 template <typename FilterChecker>
-inline const std::vector<std::string> FilterEngine<FilterChecker>::allPropertyNames()
+const std::vector<std::string> FilterEngine<FilterChecker>::allPropertyNames()
 {
     // set up stringlist
     std::vector<std::string> names;
@@ -217,7 +217,7 @@ inline const std::vector<std::string> FilterEngine<FilterChecker>::allPropertyNa
 // builds a default rule string based on m_defaultCompareType
 // used if user supplied an explicit rule string
 template <typename FilterChecker>
-inline void FilterEngine<FilterChecker>::buildDefaultRuleString()
+void FilterEngine<FilterChecker>::buildDefaultRuleString()
 {
 
     // set up temp string stream
@@ -241,7 +241,7 @@ inline void FilterEngine<FilterChecker>::buildDefaultRuleString()
 
 // build expression queue based on ruleString
 template <typename FilterChecker>
-inline void FilterEngine<FilterChecker>::buildRuleQueue()
+void FilterEngine<FilterChecker>::buildRuleQueue()
 {
 
     // skip if no filters present
@@ -275,7 +275,7 @@ bool FilterEngine<FilterChecker>::check(const T& query)
 
 // returns list of property names that are 'enabled' ( only those touched by setProperty() )
 template <typename FilterChecker>
-inline const std::vector<std::string> FilterEngine<FilterChecker>::enabledPropertyNames()
+const std::vector<std::string> FilterEngine<FilterChecker>::enabledPropertyNames()
 {
     // initialize stringlist
     std::vector<std::string> names;
@@ -353,7 +353,7 @@ bool FilterEngine<FilterChecker>::evaluateFilterRules(const T& query)
 
 // return list of current filter names
 template <typename FilterChecker>
-inline const std::vector<std::string> FilterEngine<FilterChecker>::filterNames()
+const std::vector<std::string> FilterEngine<FilterChecker>::filterNames()
 {
     // initialize stringlist
     std::vector<std::string> names;
@@ -490,7 +490,7 @@ bool FilterEngine<FilterChecker>::parseToken(const std::string& token, T& value,
 // sets comparison operator between filters if no rule string given
 // default is to do an OR on each filter
 template <typename FilterChecker>
-inline void FilterEngine<FilterChecker>::setDefaultCompareType(const FilterCompareType::Type& type)
+void FilterEngine<FilterChecker>::setDefaultCompareType(const FilterCompareType::Type& type)
 {
     // check for supported compare type
     if (type == FilterCompareType::AND || type == FilterCompareType::OR) {
@@ -560,7 +560,7 @@ bool FilterEngine<FilterChecker>::setProperty(const std::string& filterName,
 
 // sets user-specified rule string & signals update of rule-expression queue
 template <typename FilterChecker>
-inline void FilterEngine<FilterChecker>::setRule(const std::string& ruleString)
+void FilterEngine<FilterChecker>::setRule(const std::string& ruleString)
 {
     if (m_ruleString != ruleString) {
         m_ruleString = ruleString;

@@ -195,7 +195,7 @@ private:
     \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
 template <typename T>
-inline bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const T& value)
+bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const T& value)
 {
 
     // if char data not populated, do that first
@@ -310,7 +310,7 @@ inline bool BamAlignment::AddTag<std::string>(const std::string& tag, const std:
     \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
 template <typename T>
-inline bool BamAlignment::AddTag(const std::string& tag, const std::vector<T>& values)
+bool BamAlignment::AddTag(const std::string& tag, const std::vector<T>& values)
 {
 
     // if char data not populated, do that first
@@ -380,7 +380,7 @@ inline bool BamAlignment::AddTag(const std::string& tag, const std::vector<T>& v
     \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
 template <typename T>
-inline bool BamAlignment::EditTag(const std::string& tag, const std::string& type, const T& value)
+bool BamAlignment::EditTag(const std::string& tag, const std::string& type, const T& value)
 {
 
     // if char data not populated, do that first
@@ -403,7 +403,7 @@ inline bool BamAlignment::EditTag(const std::string& tag, const std::string& typ
     \sa \samSpecURL for more details on reserved tag names, supported tag types, etc.
 */
 template <typename T>
-inline bool BamAlignment::EditTag(const std::string& tag, const std::vector<T>& values)
+bool BamAlignment::EditTag(const std::string& tag, const std::vector<T>& values)
 {
 
     // if char data not populated, do that first
@@ -422,7 +422,7 @@ inline bool BamAlignment::EditTag(const std::string& tag, const std::vector<T>& 
     \return \c true if found
 */
 template <typename T>
-inline bool BamAlignment::GetTag(const std::string& tag, T& destination) const
+bool BamAlignment::GetTag(const std::string& tag, T& destination) const
 {
 
     // skip if alignment is core-only
@@ -547,7 +547,7 @@ inline bool BamAlignment::GetTag<std::string>(const std::string& tag,
     \return \c true if found
 */
 template <typename T>
-inline bool BamAlignment::GetTag(const std::string& tag, std::vector<T>& destination) const
+bool BamAlignment::GetTag(const std::string& tag, std::vector<T>& destination) const
 {
 
     // skip if alignment is core-only

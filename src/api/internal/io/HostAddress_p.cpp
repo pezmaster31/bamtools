@@ -25,7 +25,7 @@ namespace BamTools {
 namespace Internal {
 
 // split a string into fields, on delimiter character
-static inline std::vector<std::string> Split(const std::string& source, char delim)
+static std::vector<std::string> Split(const std::string& source, char delim)
 {
     std::stringstream ss(source);
     std::string field;
@@ -36,7 +36,7 @@ static inline std::vector<std::string> Split(const std::string& source, char del
 }
 
 // return number of occurrences of @pattern in @source
-static inline uint8_t CountHits(const std::string& source, const std::string& pattern)
+static uint8_t CountHits(const std::string& source, const std::string& pattern)
 {
 
     uint8_t count(0);

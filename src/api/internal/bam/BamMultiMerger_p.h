@@ -117,7 +117,7 @@ private:
 };
 
 template <typename Compare>
-inline void MultiMerger<Compare>::Add(MergeItem item)
+void MultiMerger<Compare>::Add(MergeItem item)
 {
 
     // N.B. - any future custom Compare types must define this method
@@ -128,25 +128,25 @@ inline void MultiMerger<Compare>::Add(MergeItem item)
 }
 
 template <typename Compare>
-inline void MultiMerger<Compare>::Clear()
+void MultiMerger<Compare>::Clear()
 {
     m_data.clear();
 }
 
 template <typename Compare>
-inline const MergeItem& MultiMerger<Compare>::First() const
+const MergeItem& MultiMerger<Compare>::First() const
 {
     const ValueType& entry = (*m_data.begin());
     return entry;
 }
 
 template <typename Compare>
-inline bool MultiMerger<Compare>::IsEmpty() const
+bool MultiMerger<Compare>::IsEmpty() const
 {
     return m_data.empty();
 }
 template <typename Compare>
-inline void MultiMerger<Compare>::Remove(BamReader* reader)
+void MultiMerger<Compare>::Remove(BamReader* reader)
 {
 
     if (reader == 0) return;
@@ -168,13 +168,13 @@ inline void MultiMerger<Compare>::Remove(BamReader* reader)
     }
 }
 template <typename Compare>
-inline int MultiMerger<Compare>::Size() const
+int MultiMerger<Compare>::Size() const
 {
     return m_data.size();
 }
 
 template <typename Compare>
-inline MergeItem MultiMerger<Compare>::TakeFirst()
+MergeItem MultiMerger<Compare>::TakeFirst()
 {
     DataIterator firstIter = m_data.begin();
     MergeItem firstItem = (*firstIter);

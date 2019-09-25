@@ -261,7 +261,7 @@ void HostAddress::Clear()
 
     m_protocol = HostAddress::UnknownNetworkProtocol;
     m_ip4Address = 0;
-    std::memset(&m_ip6Address, 0, sizeof(IPv6Address));
+    m_ip6Address = IPv6Address();
     m_ipString.clear();
 
     // this may feel funny, but cleared IP (equivalent to '0.0.0.0') is technically valid

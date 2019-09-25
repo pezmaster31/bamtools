@@ -200,7 +200,7 @@ void PileupEngine::PileupEnginePrivate::ParseAlignmentCigar(const BamAlignment& 
     PileupAlignment pileupAlignment(al);
 
     // iterate over CIGAR operations
-    const int numCigarOps = (const int)al.CigarData.size();
+    const int numCigarOps = al.CigarData.size();
     for (int i = 0; i < numCigarOps; ++i) {
         const CigarOp& op = al.CigarData.at(i);
 

@@ -20,6 +20,11 @@ if( NOT CMAKE_BUILD_TYPE )
     set( CMAKE_BUILD_TYPE "Release" )
 endif()
 
+# Need C++11 due to JsonCpp nowadays
+set( CMAKE_CXX_STANDARD 11 )
+set( CMAKE_CXX_STANDARD_REQUIRED ON )
+set( CMAKE_CXX_EXTENSIONS OFF )
+
 # Adhere to GNU filesystem layout conventions
 include( GNUInstallDirs )
 

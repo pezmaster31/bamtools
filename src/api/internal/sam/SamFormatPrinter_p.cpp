@@ -78,7 +78,7 @@ void SamFormatPrinter::PrintHD(std::stringstream& out) const
             }
         }
         // newline
-        out << std::endl;
+        out << '\n';
     }
 }
 
@@ -116,7 +116,7 @@ void SamFormatPrinter::PrintSQ(std::stringstream& out) const
         }
 
         // newline
-        out << std::endl;
+        out << '\n';
     }
 }
 
@@ -181,7 +181,7 @@ void SamFormatPrinter::PrintRG(std::stringstream& out) const
         }
 
         // newline
-        out << std::endl;
+        out << '\n';
     }
 }
 
@@ -220,7 +220,7 @@ void SamFormatPrinter::PrintPG(std::stringstream& out) const
         }
 
         // newline
-        out << std::endl;
+        out << '\n';
     }
 }
 
@@ -233,6 +233,6 @@ void SamFormatPrinter::PrintCO(std::stringstream& out) const
     for (; commentIter != commentEnd; ++commentIter) {
 
         // @CO <Comment>
-        out << Constants::SAM_CO_BEGIN_TOKEN << Constants::SAM_TAB << (*commentIter) << std::endl;
+        out << Constants::SAM_CO_BEGIN_TOKEN << Constants::SAM_TAB << (*commentIter) << '\n';
     }
 }

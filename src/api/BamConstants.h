@@ -43,6 +43,7 @@ const int BAM_ALIGNMENT_READ_2 = 0x0080;
 const int BAM_ALIGNMENT_SECONDARY = 0x0100;
 const int BAM_ALIGNMENT_QC_FAILED = 0x0200;
 const int BAM_ALIGNMENT_DUPLICATE = 0x0400;
+const int SUPPLEMENTARY           = 0x0800;  // Additional patch by tiddit package
 
 // CIGAR constants
 const char* const BAM_CIGAR_LOOKUP = "MIDNSHP=X";

@@ -795,6 +795,13 @@ bool BamAlignment::IsSecondMate() const
     return ((AlignmentFlag & Constants::BAM_ALIGNMENT_READ_2) != 0);
 }
 
+/*! \fn bool BamAlignment::IsSupplementaryAlignment() const
+    \return \c true if ailgnment is supplementary (This is an additional patch by tiddit package)
+ */
+bool BamAlignment::IsSupplementaryAlignment(void) const {
+    return ( (AlignmentFlag & Constants::SUPPLEMENTARY) != 0 );
+}
+
 /*! \fn bool BamAlignment::IsValidSize(const std::string& tag, const std::string& type) const
     \internal
 

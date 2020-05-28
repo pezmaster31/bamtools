@@ -51,6 +51,7 @@ public:
         const;  // returns true if alignment is part of read that satisfied paired-end resolution
     bool IsReverseStrand() const;  // returns true if alignment mapped to reverse strand
     bool IsSecondMate() const;     // returns true if alignment is second mate on read
+    bool IsSupplementaryAlignment(void) const;	// Additional patch by tiddit package
 
     // manipulate alignment flags
 public:

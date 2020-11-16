@@ -43,6 +43,36 @@ matrix:
     - os: osx
       compiler: clang
 
+#Powerjobs
+    - os: linux
+      arch: ppc64le
+      compiler: clang
+      addons:
+        apt:
+          sources:
+            - llvm-toolchain-trusty-5.0
+          packages:
+            - clang-5.0
+            - cmake
+      env:
+        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+
+# Ubuntu distribution for LOP doesn't include gcc 4.9.
+# Hence not including it.
+
+    - os: linux
+      arch: ppc64le
+      compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+            - cmake
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+
 before_install:
   - eval "${MATRIX_EVAL}"
 

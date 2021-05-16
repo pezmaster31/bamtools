@@ -461,13 +461,13 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
 
                 case (Constants::BAM_TAG_TYPE_INT8):
                     // force value into integer-type (instead of char value)
-                    m_out << static_cast<int16_t>(tagData[index]);
+                    m_out << int(static_cast<int8_t>(tagData[index]));
                     ++index;
                     break;
 
                 case (Constants::BAM_TAG_TYPE_UINT8):
                     // force value into integer-type (instead of char value)
-                    m_out << static_cast<uint16_t>(tagData[index]);
+                    m_out << int(static_cast<uint8_t>(tagData[index]));
                     ++index;
                     break;
 
@@ -598,13 +598,13 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a)
 
             case (Constants::BAM_TAG_TYPE_INT8):
                 // force value into integer-type (instead of char value)
-                m_out << "i:" << static_cast<int16_t>(tagData[index]);
+                m_out << "i:" << int(static_cast<int8_t>(tagData[index]));
                 ++index;
                 break;
 
             case (Constants::BAM_TAG_TYPE_UINT8):
                 // force value into integer-type (instead of char value)
-                m_out << "i:" << static_cast<uint16_t>(tagData[index]);
+                m_out << "i:" << int(static_cast<uint8_t>(tagData[index]));
                 ++index;
                 break;
 

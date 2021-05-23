@@ -5,7 +5,7 @@
 # src/api/internal/bam
 # ==========================
 
-set( InternalBamDir "${InternalDir}/bam" )
+set( InternalBamDir ${InternalDir}/bam )
 
 set( InternalBamSources
          ${InternalBamDir}/BamHeader_p.cpp

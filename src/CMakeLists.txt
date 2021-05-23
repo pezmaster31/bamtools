@@ -11,7 +11,7 @@ add_subdirectory( toolkit )
 add_subdirectory( utils )
 
 # export shared headers
-install( FILES shared/bamtools_global.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/shared" COMPONENT Development )
+install( FILES shared/bamtools_global.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/shared COMPONENT Development )
 
 # configure and install pkg-config file
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/bamtools.pc.in ${CMAKE_CURRENT_BINARY_DIR}/bamtools-1.pc @ONLY )

@@ -5,7 +5,7 @@
 # src/api/internal/index
 # ==========================
 
-set( InternalIndexDir "${InternalDir}/index" )
+set( InternalIndexDir ${InternalDir}/index )
 
 set( InternalIndexSources
         ${InternalIndexDir}/BamIndexFactory_p.cpp

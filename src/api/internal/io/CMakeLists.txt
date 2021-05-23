@@ -5,7 +5,7 @@
 # src/api/internal/io
 # ==========================
 
-set( InternalIODir "${InternalDir}/io" )
+set( InternalIODir ${InternalDir}/io )
 
 #--------------------------
 # platform-independent IO

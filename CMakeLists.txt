@@ -17,7 +17,7 @@ project( BamTools LANGUAGES CXX VERSION 2.5.1 )
 #   CXXFLAGS = -O3 -DNDEBUG
 #
 if( NOT CMAKE_BUILD_TYPE )
-    set( CMAKE_BUILD_TYPE "Release" )
+    set( CMAKE_BUILD_TYPE Release )
 endif()
 
 # Need C++11 due to JsonCpp nowadays
@@ -67,7 +67,7 @@ if( EnableNodeJS )
 endif()
 
 # If running on SunOS
-if( "${CMAKE_SYSTEM_NAME}" MATCHES "SunOS" )
+if( ${CMAKE_SYSTEM_NAME} MATCHES SunOS )
     add_definitions( -DSUN_OS )
 endif()
 
@@ -75,7 +75,7 @@ endif()
 find_package( PkgConfig )
 pkg_search_module( JSONCPP jsoncpp>=1 )
 
-set( BAMTOOLS_PRIVATE_DEPS "zlib" )
+set( BAMTOOLS_PRIVATE_DEPS zlib )
 
 if( JSONCPP_FOUND )
     message( "Found system JsonCpp, not using bundled version" )

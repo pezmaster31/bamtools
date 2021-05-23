@@ -5,7 +5,7 @@
 # src/api/internal/utils
 # ==========================
 
-set( InternalUtilsDir "${InternalDir}/utils" )
+set( InternalUtilsDir ${InternalDir}/utils )
 
 set( InternalUtilsSources
         ${InternalUtilsDir}/BamException_p.cpp

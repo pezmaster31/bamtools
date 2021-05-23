@@ -5,7 +5,7 @@
 # src/api/internal/sam
 # ==========================
 
-set( InternalSamDir "${InternalDir}/sam" )
+set( InternalSamDir ${InternalDir}/sam )
 
 set( InternalSamSources
         ${InternalSamDir}/SamFormatParser_p.cpp

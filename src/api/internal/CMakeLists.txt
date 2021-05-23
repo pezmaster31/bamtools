@@ -5,7 +5,7 @@
 # src/api/internal
 # ==========================
 
-set( InternalDir "internal" )
+set( InternalDir internal )
 
 add_subdirectory( bam )
 add_subdirectory( index )

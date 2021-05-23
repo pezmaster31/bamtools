@@ -31,7 +31,7 @@ add_executable( bamtools_cmd
 
 # set BamTools application properties
 set_target_properties( bamtools_cmd PROPERTIES
-                       OUTPUT_NAME "bamtools"
+                       OUTPUT_NAME bamtools
                      )
 # make version info available in application
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/bamtools_version.h.in ${CMAKE_CURRENT_BINARY_DIR}/bamtools_version.h )
@@ -44,4 +44,4 @@ target_include_directories( bamtools_cmd PRIVATE ${JSONCPP_INCLUDE_DIRS} )
 target_link_libraries( bamtools_cmd BamTools BamTools-utils ${JSONCPP_LDFLAGS} )
 
 # set application install destinations
-install( TARGETS bamtools_cmd DESTINATION "${CMAKE_INSTALL_BINDIR}" )
+install( TARGETS bamtools_cmd DESTINATION ${CMAKE_INSTALL_BINDIR} )

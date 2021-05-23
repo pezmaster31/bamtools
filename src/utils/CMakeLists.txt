@@ -25,5 +25,5 @@ target_link_libraries( BamTools-utils BamTools )
 # set BamTools library properties
 set_target_properties( BamTools-utils PROPERTIES
                        OUTPUT_NAME bamtools-utils
-                       PREFIX "lib"
+                       PREFIX lib
                      )

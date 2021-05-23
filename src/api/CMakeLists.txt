@@ -42,32 +42,32 @@ add_library( BamTools ${BamToolsAPISources} )
 # The SONAME is bumped on every version increment
 # as Bamtools does not yet guarantee a stable ABI
 set_target_properties( BamTools PROPERTIES
-                       SOVERSION "${BamTools_VERSION}"
-                       OUTPUT_NAME "bamtools" )
-target_include_directories( BamTools PRIVATE "${ZLIB_INCLUDE_DIRS}" )
-target_link_libraries( BamTools PRIVATE "${ZLIB_LIBRARIES}" "${WIN32_LIBRARIES}" )
+                       SOVERSION ${BamTools_VERSION}
+                       OUTPUT_NAME bamtools )
+target_include_directories( BamTools PRIVATE ${ZLIB_INCLUDE_DIRS} )
+target_link_libraries( BamTools PRIVATE ${ZLIB_LIBRARIES} ${WIN32_LIBRARIES} )
 install( TARGETS BamTools
-         ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" )
+         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
 
-install( FILES api_global.h              DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES BamAlgorithms.h           DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES BamAlignment.h            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES BamAux.h                  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES BamConstants.h            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES BamIndex.h                DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES BamMultiReader.h          DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES BamReader.h               DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES BamWriter.h               DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES IBamIODevice.h            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES SamConstants.h            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES SamHeader.h               DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES SamProgram.h              DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES SamProgramChain.h         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES SamReadGroup.h            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES SamReadGroupDictionary.h  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES SamSequence.h             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
-install( FILES SamSequenceDictionary.h   DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api" COMPONENT Development )
+install( FILES api_global.h              DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES BamAlgorithms.h           DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES BamAlignment.h            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES BamAux.h                  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES BamConstants.h            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES BamIndex.h                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES BamMultiReader.h          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES BamReader.h               DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES BamWriter.h               DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES IBamIODevice.h            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES SamConstants.h            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES SamHeader.h               DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES SamProgram.h              DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES SamProgramChain.h         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES SamReadGroup.h            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES SamReadGroupDictionary.h  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES SamSequence.h             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
+install( FILES SamSequenceDictionary.h   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api COMPONENT Development )
 
-install( FILES algorithms/Sort.h         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api/algorithms" COMPONENT Development )
+install( FILES algorithms/Sort.h         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api/algorithms COMPONENT Development )

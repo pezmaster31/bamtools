@@ -201,7 +201,7 @@ void SamHeader::SetHeaderText(const std::string& headerText)
     try {
         SamFormatParser parser(*this);
         parser.Parse(headerText);
-    } catch (BamException& e) {
+    } catch (const BamException& e) {
 
         // clear anything parsed so far
         // no telling what's valid and what's partially parsed

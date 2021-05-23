@@ -208,7 +208,7 @@ void BamStandardIndex::CheckBufferSize(char*& buffer, unsigned int& bufferLength
             delete[] buffer;
             buffer = new char[bufferLength];
         }
-    } catch (std::bad_alloc&) {
+    } catch (const std::bad_alloc&) {
         std::stringstream s;
         s << "out of memory when allocating " << requestedBytes << " bytes";
         throw BamException("BamStandardIndex::CheckBufferSize", s.str());
@@ -224,7 +224,7 @@ void BamStandardIndex::CheckBufferSize(unsigned char*& buffer, unsigned int& buf
             delete[] buffer;
             buffer = new unsigned char[bufferLength];
         }
-    } catch (std::bad_alloc&) {
+    } catch (const std::bad_alloc&) {
         std::stringstream s;
         s << "out of memory when allocating " << requestedBytes << " bytes";
         throw BamException("BamStandardIndex::CheckBufferSize", s.str());
@@ -413,7 +413,7 @@ bool BamStandardIndex::Create()
             WriteReferenceEntry(emptyEntry);
         }
 
-    } catch (BamException& e) {
+    } catch (const BamException& e) {
         m_errorString = e.what();
         return false;
     }
@@ -541,7 +541,7 @@ bool BamStandardIndex::Jump(const BamRegion& region, bool* hasAlignmentsInRegion
     int64_t offset;
     try {
         GetOffset(region, offset, hasAlignmentsInRegion);
-    } catch (BamException& e) {
+    } catch (const BamException& e) {
         m_errorString = e.what();
         return false;
     }
@@ -572,7 +572,7 @@ bool BamStandardIndex::Load(const std::string& filename)
         // return success
         return true;
 
-    } catch (BamException& e) {
+    } catch (const BamException& e) {
         m_errorString = e.what();
         return false;
     }

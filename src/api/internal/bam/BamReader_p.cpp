@@ -59,7 +59,7 @@ bool BamReaderPrivate::Close()
     if (IsOpen()) {
         try {
             m_stream.Close();
-        } catch (BamException& e) {
+        } catch (const BamException& e) {
             const std::string streamError = e.what();
             const std::string message =
                 std::string("encountered error closing BAM file: \n\t") + streamError;
@@ -193,7 +193,7 @@ bool BamReaderPrivate::GetNextAlignmentCore(BamAlignment& alignment)
         alignment.SupportData.HasCoreOnly = true;
         return true;
 
-    } catch (BamException& e) {
+    } catch (const BamException& e) {
         const std::string streamError = e.what();
         const std::string message =
             std::string("encountered error reading BAM alignment: \n\t") + streamError;
@@ -503,7 +503,7 @@ bool BamReaderPrivate::Open(const std::string& filename)
         // return success
         return true;
 
-    } catch (BamException& e) {
+    } catch (const BamException& e) {
         const std::string error = e.what();
         const std::string message =
             std::string("could not open file: ") + filename + "\n\t" + error;
@@ -555,7 +555,7 @@ bool BamReaderPrivate::Seek(const int64_t& position)
     try {
         m_stream.Seek(position);
         return true;
-    } catch (BamException& e) {
+    } catch (const BamException& e) {
         const std::string streamError = e.what();
         const std::string message = std::string("could not seek in BAM file: \n\t") + streamError;
         SetErrorString("BamReader::Seek", message);

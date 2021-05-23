@@ -266,7 +266,7 @@ bool BamToolsIndex::Create()
                 WriteReferenceEntry(BtiReferenceEntry(i));
         }
 
-    } catch (BamException& e) {
+    } catch (const BamException& e) {
         m_errorString = e.what();
         return false;
     }
@@ -405,7 +405,7 @@ bool BamToolsIndex::Jump(const BamTools::BamRegion& region, bool* hasAlignmentsI
     int64_t offset;
     try {
         GetOffset(region, offset, hasAlignmentsInRegion);
-    } catch (BamException& e) {
+    } catch (const BamException& e) {
         m_errorString = e.what();
         return false;
     }
@@ -430,7 +430,7 @@ bool BamToolsIndex::Load(const std::string& filename)
         // return success
         return true;
 
-    } catch (BamException& e) {
+    } catch (const BamException& e) {
         m_errorString = e.what();
         return false;
     }

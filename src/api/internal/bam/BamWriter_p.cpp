@@ -52,7 +52,7 @@ void BamWriterPrivate::Close()
     // close output stream
     try {
         m_stream.Close();
-    } catch (BamException& e) {
+    } catch (const BamException& e) {
         m_errorString = e.what();
     }
 }
@@ -228,7 +228,7 @@ bool BamWriterPrivate::Open(const std::string& filename, const std::string& samH
         // return success
         return true;
 
-    } catch (BamException& e) {
+    } catch (const BamException& e) {
         m_errorString = e.what();
         return false;
     }
@@ -252,7 +252,7 @@ bool BamWriterPrivate::SaveAlignment(const BamAlignment& al)
         // if we get here, everything OK
         return true;
 
-    } catch (BamException& e) {
+    } catch (const BamException& e) {
         m_errorString = e.what();
         return false;
     }

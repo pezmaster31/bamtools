@@ -26,11 +26,6 @@ option(BUILD_SHARED_LIBS "Build all libraries as shared" OFF)
 # cmake -DEnableNodeJS=true
 option(EnableNodeJS "Enable running in a Node.js environment" OFF)
 
-# If running on SunOS
-if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
-    add_definitions(-DSUN_OS)
-endif()
-
 # find system JsonCpp
 find_package(PkgConfig)
 pkg_search_module(JSONCPP jsoncpp>=1)

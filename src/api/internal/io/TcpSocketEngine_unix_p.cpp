@@ -12,7 +12,7 @@
 using namespace BamTools;
 using namespace BamTools::Internal;
 
-#ifdef SUN_OS
+#if defined(sun) || defined(__sun)
 #include <sys/filio.h>
 #endif
 

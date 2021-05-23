@@ -15,22 +15,14 @@
     \internal
 */
 #ifndef BAMTOOLS_LIBRARY_EXPORT
-#if defined(WIN32)
-#define BAMTOOLS_LIBRARY_EXPORT __declspec(dllexport)
-#else
-#define BAMTOOLS_LIBRARY_EXPORT __attribute__((visibility("default")))
-#endif
+#define BAMTOOLS_LIBRARY_EXPORT
 #endif  // BAMTOOLS_LIBRARY_EXPORT
 
 /*! \brief Library import macro
     \internal
 */
 #ifndef BAMTOOLS_LIBRARY_IMPORT
-#if defined(WIN32)
-#define BAMTOOLS_LIBRARY_IMPORT __declspec(dllimport)
-#else
 #define BAMTOOLS_LIBRARY_IMPORT
-#endif
 #endif  // BAMTOOLS_LIBRARY_IMPORT
 
 /*! \brief Platform-specific type definitions

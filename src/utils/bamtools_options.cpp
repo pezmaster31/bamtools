@@ -72,16 +72,16 @@ void Options::DisplayHelp()
     indentBuffer[MAX_LINE_LENGTH - DESC_LENGTH] = 0;
 
     // display the menu
-    printf("Description: %s.\n\n", m_description.c_str());
-    printf("Usage: ");
-    printf("%s", m_programName.c_str());
-    printf(" %s\n\n", m_exampleArguments.c_str());
+    std::printf("Description: %s.\n\n", m_description.c_str());
+    std::printf("Usage: ");
+    std::printf("%s", m_programName.c_str());
+    std::printf(" %s\n\n", m_exampleArguments.c_str());
 
     std::vector<Option>::const_iterator optionIter;
     std::vector<OptionGroup>::const_iterator groupIter;
     for (groupIter = m_optionGroups.begin(); groupIter != m_optionGroups.end(); ++groupIter) {
 
-        printf("%s:\n", groupIter->Name.c_str());
+        std::printf("%s:\n", groupIter->Name.c_str());
 
         for (optionIter = groupIter->Options.begin(); optionIter != groupIter->Options.end();
              ++optionIter) {
@@ -92,7 +92,7 @@ void Options::DisplayHelp()
             else
                 std::snprintf(argumentBuffer, ARGUMENT_LENGTH + 1, "  %s",
                               optionIter->Argument.c_str());
-            printf("%-35s ", argumentBuffer);
+            std::printf("%-35s ", argumentBuffer);
 
             std::string description = optionIter->Description;
 
@@ -114,7 +114,7 @@ void Options::DisplayHelp()
                     const std::string stringValue = optionIter->DefaultValue;
                     sb << stringValue;
                 } else {
-                    printf(
+                    std::printf(
                         "ERROR: Found an unsupported data type for argument %s when casting the "
                         "default value.\n",
                         optionIter->Argument.c_str());
@@ -126,7 +126,7 @@ void Options::DisplayHelp()
             }
 
             if (description.size() <= DESC_LENGTH_FIRST_ROW) {
-                printf("%s\n", description.c_str());
+                std::printf("%s\n", description.c_str());
             } else {
 
                 // handle the first row
@@ -134,7 +134,7 @@ void Options::DisplayHelp()
                 unsigned int cutIndex = DESC_LENGTH_FIRST_ROW;
                 while (pDescription[cutIndex] != ' ')
                     cutIndex--;
-                printf("%s\n", description.substr(0, cutIndex).c_str());
+                std::printf("%s\n", description.substr(0, cutIndex).c_str());
                 description = description.substr(cutIndex + 1);
 
                 // handle subsequent rows
@@ -143,20 +143,20 @@ void Options::DisplayHelp()
                     cutIndex = DESC_LENGTH;
                     while (pDescription[cutIndex] != ' ')
                         cutIndex--;
-                    printf("%s%s\n", indentBuffer, description.substr(0, cutIndex).c_str());
+                    std::printf("%s%s\n", indentBuffer, description.substr(0, cutIndex).c_str());
                     description = description.substr(cutIndex + 1);
                 }
 
                 // handle last row
-                printf("%s%s\n", indentBuffer, description.c_str());
+                std::printf("%s%s\n", indentBuffer, description.c_str());
             }
         }
 
-        printf("\n");
+        std::printf("\n");
     }
 
-    printf("Help:\n");
-    printf("  --help, -h                        shows this help text\n");
+    std::printf("Help:\n");
+    std::printf("  --help, -h                        shows this help text\n");
     std::exit(EXIT_FAILURE);
 }
 
@@ -242,7 +242,7 @@ void Options::Parse(int argc, char* argv[], int offset)
                                 (std::vector<std::string>*)ovMapIter->second.pValue;
                             pVectorValue->push_back(val);
                         } else {
-                            printf(
+                            std::printf(
                                 "ERROR: Found an unsupported data type for argument %s when "
                                 "parsing the arguments.\n",
                                 argument.c_str());
@@ -274,10 +274,11 @@ void Options::Parse(int argc, char* argv[], int offset)
 
     // print the errors if any were found
     if (foundError) {
-        printf("ERROR: Some problems were encountered when parsing the command line options:\n");
-        printf("%s\n", errorBuilder.str().c_str());
-        printf("For a complete list of command line options, type \"%s help %s\"\n", argv[0],
-               argv[1]);
+        std::printf(
+            "ERROR: Some problems were encountered when parsing the command line options:\n");
+        std::printf("%s\n", errorBuilder.str().c_str());
+        std::printf("For a complete list of command line options, type \"%s help %s\"\n", argv[0],
+                    argv[1]);
         std::exit(EXIT_FAILURE);
     }
 }

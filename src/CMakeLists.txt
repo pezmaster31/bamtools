@@ -1,7 +1,20 @@
 add_subdirectory(third_party)
 
 if(MSVC)
+    # We need full support for C++ exceptions
+    add_compile_options(/EHsc)
+    # -Wall -Wextra -pedantic
     add_compile_options(/W4)
+    # 'argument' : conversion from 'type1' to 'type2', possible loss of data
+    add_compile_options(/wd4244)
+    # 'var' : conversion from 'size_t' to 'type', possible loss of data
+    add_compile_options(/wd4267)
+    # cast truncates constant value
+    add_compile_options(/wd4310)
+    # declaration of 'identifier' hides previous local declaration
+    add_compile_options(/wd4456)
+    # 'strcat': This function or variable may be unsafe
+    add_compile_options(/wd4996)
 else()
     add_compile_options(-Wall -Wextra -pedantic)
     # define compiler flags for all code, copied from Autoconf's AC_SYS_LARGEFILE

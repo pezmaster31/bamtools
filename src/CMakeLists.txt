@@ -7,6 +7,9 @@ if(MSVC)
     add_compile_options(/W4)
     # 'argument' : conversion from 'type1' to 'type2', possible loss of data
     add_compile_options(/wd4244)
+    # 'type' : class 'type1' needs to have dll-interface to be used by clients of class 'type2'
+    # This is due to the fact that we're using STL containers in the interface
+    add_compile_options(/wd4251)
     # 'var' : conversion from 'size_t' to 'type', possible loss of data
     add_compile_options(/wd4267)
     # cast truncates constant value

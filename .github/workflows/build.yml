@@ -8,26 +8,46 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          linux-cmake,
-          macos-cmake,
-          windows-cmake
+          linux-cmake-shared,
+          linux-cmake-static,
+          macos-cmake-shared,
+          macos-cmake-static,
+          windows-cmake-shared,
+          windows-cmake-static,
         ]
         include:
-          - name: linux-cmake
+          - name: linux-cmake-shared
             os: ubuntu-latest
             build-system: cmake
             CXXFLAGS: -Werror
+            cmake-options: -DBUILD_SHARED_LIBS=ON
+          - name: linux-cmake-static
+            os: ubuntu-latest
+            build-system: cmake
+            CXXFLAGS: -Werror
+            cmake-options: -DBUILD_SHARED_LIBS=OFF
 
-          - name: macos-cmake
+          - name: macos-cmake-shared
             os: macos-latest
             build-system: cmake
             CXXFLAGS: -Werror
+            cmake-options: -DBUILD_SHARED_LIBS=ON
+          - name: macos-cmake-static
+            os: macos-latest
+            build-system: cmake
+            CXXFLAGS: -Werror
+            cmake-options: -DBUILD_SHARED_LIBS=OFF
 
-          - name: windows-cmake
+          - name: windows-cmake-shared
             os: windows-latest
             build-system: cmake
             CXXFLAGS: /WX
-            cmake-options: -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake
+            cmake-options: -DBUILD_SHARED_LIBS=ON -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake
+          - name: windows-cmake-static
+            os: windows-latest
+            build-system: cmake
+            CXXFLAGS: /WX
+            cmake-options: -DBUILD_SHARED_LIBS=OFF -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake
 
     runs-on: ${{ matrix.os }}
     steps:

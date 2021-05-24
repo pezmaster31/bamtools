@@ -16,14 +16,17 @@ jobs:
           - name: linux-cmake
             os: ubuntu-latest
             build-system: cmake
+            CXXFLAGS: -Werror
 
           - name: macos-cmake
             os: macos-latest
             build-system: cmake
+            CXXFLAGS: -Werror
 
           - name: windows-cmake
             os: windows-latest
             build-system: cmake
+            CXXFLAGS: /WX
             cmake-options: -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake
 
     runs-on: ${{ matrix.os }}
@@ -49,7 +52,7 @@ jobs:
 
     - name: Configure CMake
       working-directory: ${{runner.workspace}}/build
-      run: cmake ${{github.workspace}} ${{matrix.cmake-options}}
+      run: cmake ${{github.workspace}} -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_FLAGS="${{matrix.CXXFLAGS}}" ${{matrix.cmake-options}}
 
     - name: Build CMake
       working-directory: ${{runner.workspace}}/build

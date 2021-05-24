@@ -7,4 +7,4 @@ Version: @BamTools_VERSION@
 
 Requires.private: @BAMTOOLS_PRIVATE_DEPS@
 Libs: -L${libdir} -lbamtools
-Cflags: -I${includedir}
+Cflags: -I${includedir}/bamtools

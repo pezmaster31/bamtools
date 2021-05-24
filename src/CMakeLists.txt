@@ -83,7 +83,8 @@ set_target_properties(
 target_include_directories(
     BamTools PRIVATE
     ${ZLIB_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR})
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(
     BamTools PRIVATE
     ${ZLIB_LIBRARIES})
@@ -123,7 +124,8 @@ set_target_properties(
     CXX_EXTENSIONS OFF)
 target_include_directories(
     BamTools-utils PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR})
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(
     BamTools-utils PRIVATE
     BamTools)
@@ -171,6 +173,14 @@ target_link_libraries(
     bamtools_cmd PRIVATE
     BamTools BamTools-utils ${JSONCPP_LDFLAGS})
 
+##############
+# visibility #
+##############
+
+# can't inline this here, since we need to
+# emulate the source tree and its includes.
+add_subdirectory(api)
+
 ###################
 # install targets #
 ###################
@@ -207,6 +217,7 @@ install(
         api/SamSequence.h
         api/SamSequenceDictionary.h
         api/api_global.h
+        ${CMAKE_CURRENT_BINARY_DIR}/api/bamtools_api_export.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/bamtools/api
     COMPONENT Development)
 install(

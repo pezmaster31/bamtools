@@ -131,7 +131,7 @@ struct API_EXPORT BamRegion
     }
 };
 
-struct CustomHeaderTag
+struct API_EXPORT CustomHeaderTag
 {
     std::string TagName;
     std::string TagValue;
@@ -369,7 +369,7 @@ inline unsigned short UnpackUnsignedShort(const char* buffer)
 /*! \struct RaiiBuffer
     \internal
 */
-struct RaiiBuffer
+struct API_NO_EXPORT RaiiBuffer
 {
 
     // data members

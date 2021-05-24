@@ -10,6 +10,8 @@
 #ifndef SAM_HEADERVERSION_P_H
 #define SAM_HEADERVERSION_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -28,7 +30,7 @@
 namespace BamTools {
 namespace Internal {
 
-class SamHeaderVersion
+class API_NO_EXPORT SamHeaderVersion
 {
 
     // ctors & dtor

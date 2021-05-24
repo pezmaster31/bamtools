@@ -10,6 +10,8 @@
 #ifndef BAMHEADER_P_H
 #define BAMHEADER_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -28,7 +30,7 @@ namespace Internal {
 
 class BgzfStream;
 
-class BamHeader
+class API_NO_EXPORT BamHeader
 {
 
     // ctor & dtor

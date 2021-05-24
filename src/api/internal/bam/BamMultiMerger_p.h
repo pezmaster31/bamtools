@@ -11,6 +11,8 @@
 #ifndef BAMMULTIMERGER_P_H
 #define BAMMULTIMERGER_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -32,7 +34,7 @@
 namespace BamTools {
 namespace Internal {
 
-struct MergeItem
+struct API_NO_EXPORT MergeItem
 {
 
     // data members
@@ -47,7 +49,7 @@ struct MergeItem
 };
 
 template <typename Compare>
-struct MergeItemSorter : public std::binary_function<MergeItem, MergeItem, bool>
+struct API_NO_EXPORT MergeItemSorter : public std::binary_function<MergeItem, MergeItem, bool>
 {
 
 public:
@@ -67,7 +69,7 @@ private:
 };
 
 // pure ABC so we can just work polymorphically with any specific merger implementation
-class IMultiMerger
+class API_NO_EXPORT IMultiMerger
 {
 
 public:
@@ -86,7 +88,7 @@ public:
 
 // general merger
 template <typename Compare>
-class MultiMerger : public IMultiMerger
+class API_NO_EXPORT MultiMerger : public IMultiMerger
 {
 
 public:
@@ -184,7 +186,7 @@ MergeItem MultiMerger<Compare>::TakeFirst()
 
 // unsorted "merger"
 template <>
-class MultiMerger<Algorithms::Sort::Unsorted> : public IMultiMerger
+class API_NO_EXPORT MultiMerger<Algorithms::Sort::Unsorted> : public IMultiMerger
 {
 
 public:

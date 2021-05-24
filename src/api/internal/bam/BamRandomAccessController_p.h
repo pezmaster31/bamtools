@@ -10,6 +10,8 @@
 #ifndef BAMRACONTROLLER_P_H
 #define BAMRACONTROLLER_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -31,7 +33,7 @@ namespace Internal {
 
 class BamReaderPrivate;
 
-class BamRandomAccessController
+class API_NO_EXPORT BamRandomAccessController
 {
 
     // enums

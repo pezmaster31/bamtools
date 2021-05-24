@@ -12,6 +12,8 @@
 #ifndef NETWIN_P_H
 #define NETWIN_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -39,7 +41,7 @@ namespace BamTools {
 namespace Internal {
 
 // use RAII to ensure WSA is initialized
-class WindowsSockInit
+class API_NO_EXPORT WindowsSockInit
 {
 public:
     WindowsSockInit()

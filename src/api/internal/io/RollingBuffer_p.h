@@ -14,6 +14,8 @@
 #ifndef ROLLINGBUFFER_P_H
 #define ROLLINGBUFFER_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -27,13 +29,12 @@
 #include <cstddef>
 #include <deque>
 #include <string>
-#include "api/api_global.h"
 #include "api/internal/io/ByteArray_p.h"
 
 namespace BamTools {
 namespace Internal {
 
-class RollingBuffer
+class API_NO_EXPORT RollingBuffer
 {
 
     // ctors & dtor

@@ -10,6 +10,8 @@
 #ifndef BAMDEVICEFACTORY_P_H
 #define BAMDEVICEFACTORY_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -26,7 +28,7 @@
 namespace BamTools {
 namespace Internal {
 
-class BamDeviceFactory
+class API_NO_EXPORT BamDeviceFactory
 {
 public:
     static IBamIODevice* CreateDevice(const std::string& source);

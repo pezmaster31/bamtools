@@ -10,13 +10,15 @@
 #ifndef BAMINDEX_FACTORY_P_H
 #define BAMINDEX_FACTORY_P_H
 
+#include "api/api_global.h"
+
 #include <string>
 #include "api/BamIndex.h"
 
 namespace BamTools {
 namespace Internal {
 
-class BamIndexFactory
+class API_NO_EXPORT BamIndexFactory
 {
 
     // static interface methods

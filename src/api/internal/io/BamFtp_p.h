@@ -10,6 +10,8 @@
 #ifndef BAMFTP_P_H
 #define BAMFTP_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -28,7 +30,7 @@ namespace Internal {
 
 class TcpSocket;
 
-class BamFtp : public IBamIODevice
+class API_NO_EXPORT BamFtp : public IBamIODevice
 {
 
     // ctor & dtor

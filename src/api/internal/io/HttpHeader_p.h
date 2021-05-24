@@ -11,6 +11,8 @@
 #ifndef HTTP_HEADER_P_H
 #define HTTP_HEADER_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -23,12 +25,11 @@
 
 #include <map>
 #include <string>
-#include "api/api_global.h"
 
 namespace BamTools {
 namespace Internal {
 
-class HttpHeader
+class API_NO_EXPORT HttpHeader
 {
 
     // ctors & dtor
@@ -71,7 +72,7 @@ private:
     int m_minorVersion;
 };
 
-class HttpRequestHeader : public HttpHeader
+class API_NO_EXPORT HttpRequestHeader : public HttpHeader
 {
 
     // ctor & dtor
@@ -99,7 +100,7 @@ private:
     std::string m_resource;
 };
 
-class HttpResponseHeader : public HttpHeader
+class API_NO_EXPORT HttpResponseHeader : public HttpHeader
 {
 
     // ctor & dtor

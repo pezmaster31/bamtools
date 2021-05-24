@@ -10,6 +10,8 @@
 #ifndef HOSTADDRESS_P_H
 #define HOSTADDRESS_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -23,12 +25,11 @@
 #include <cstddef>
 #include <cstring>
 #include <string>
-#include "api/api_global.h"
 
 namespace BamTools {
 namespace Internal {
 
-struct IPv6Address
+struct API_NO_EXPORT IPv6Address
 {
 
     // ctor
@@ -52,7 +53,7 @@ struct IPv6Address
     uint8_t data[16];
 };
 
-class HostAddress
+class API_NO_EXPORT HostAddress
 {
 
     // enums

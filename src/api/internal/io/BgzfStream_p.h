@@ -12,6 +12,8 @@
 #ifndef BGZFSTREAM_P_H
 #define BGZFSTREAM_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -26,12 +28,11 @@
 #include <string>
 #include "api/BamAux.h"
 #include "api/IBamIODevice.h"
-#include "api/api_global.h"
 
 namespace BamTools {
 namespace Internal {
 
-class BgzfStream
+class API_NO_EXPORT BgzfStream
 {
 
     // constructor & destructor

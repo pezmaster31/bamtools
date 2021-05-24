@@ -10,6 +10,8 @@
 #ifndef TCPSOCKET_P_H
 #define TCPSOCKET_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -32,7 +34,7 @@ namespace Internal {
 class BamHttp;
 class TcpSocketEngine;
 
-class TcpSocket
+class API_NO_EXPORT TcpSocket
 {
 
     // enums

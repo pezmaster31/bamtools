@@ -10,6 +10,8 @@
 #ifndef BAMMULTIREADER_P_H
 #define BAMMULTIREADER_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -29,7 +31,7 @@
 namespace BamTools {
 namespace Internal {
 
-class BamMultiReaderPrivate
+class API_NO_EXPORT BamMultiReaderPrivate
 {
 
     // typedefs

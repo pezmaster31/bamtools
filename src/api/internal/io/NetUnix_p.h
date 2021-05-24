@@ -10,6 +10,8 @@
 #ifndef NETUNIX_P_H
 #define NETUNIX_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------

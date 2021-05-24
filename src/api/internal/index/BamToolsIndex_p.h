@@ -10,6 +10,8 @@
 #ifndef BAMTOOLS_INDEX_FORMAT_H
 #define BAMTOOLS_INDEX_FORMAT_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -31,7 +33,7 @@ namespace BamTools {
 namespace Internal {
 
 // contains data for each 'block' in a BTI index
-struct BtiBlock
+struct API_NO_EXPORT BtiBlock
 {
 
     // data members
@@ -53,7 +55,7 @@ typedef std::vector<BtiBlock> BtiBlockVector;
 
 // contains all fields necessary for building, loading, & writing
 // full BTI index data for a single reference
-struct BtiReferenceEntry
+struct API_NO_EXPORT BtiReferenceEntry
 {
 
     // data members
@@ -67,7 +69,7 @@ struct BtiReferenceEntry
 };
 
 // provides (persistent) summary of BtiReferenceEntry's index data
-struct BtiReferenceSummary
+struct API_NO_EXPORT BtiReferenceSummary
 {
 
     // data members
@@ -84,7 +86,7 @@ struct BtiReferenceSummary
 // convenience typedef for describing a full BTI index file summary
 typedef std::vector<BtiReferenceSummary> BtiFileSummary;
 
-class BamToolsIndex : public BamIndex
+class API_NO_EXPORT BamToolsIndex : public BamIndex
 {
 
     // keep a list of any supported versions here

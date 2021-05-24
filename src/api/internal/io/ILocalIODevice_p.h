@@ -10,6 +10,8 @@
 #ifndef ILOCALIODEVICE_P_H
 #define ILOCALIODEVICE_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -25,7 +27,7 @@
 namespace BamTools {
 namespace Internal {
 
-class ILocalIODevice : public IBamIODevice
+class API_NO_EXPORT ILocalIODevice : public IBamIODevice
 {
 
     // ctor & dtor

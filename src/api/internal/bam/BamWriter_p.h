@@ -10,6 +10,8 @@
 #ifndef BAMWRITER_P_H
 #define BAMWRITER_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -31,7 +33,7 @@ class BamAlignment;
 
 namespace Internal {
 
-class BamWriterPrivate
+class API_NO_EXPORT BamWriterPrivate
 {
 
     // ctor & dtor

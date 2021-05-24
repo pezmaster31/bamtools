@@ -10,6 +10,8 @@
 #ifndef SAM_FORMAT_PARSER_H
 #define SAM_FORMAT_PARSER_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -29,7 +31,7 @@ struct SamHeader;
 
 namespace Internal {
 
-class SamFormatParser
+class API_NO_EXPORT SamFormatParser
 {
 
     // ctor & dtor

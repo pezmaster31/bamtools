@@ -10,6 +10,8 @@
 #ifndef BYTEARRAY_P_H
 #define BYTEARRAY_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -23,13 +25,12 @@
 #include <cstddef>
 #include <string>
 #include <vector>
-#include "api/api_global.h"
 
 namespace BamTools {
 namespace Internal {
 
 // provides a wrapper around a byte vector
-class ByteArray
+class API_NO_EXPORT ByteArray
 {
 
     // ctors & dtor

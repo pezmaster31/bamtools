@@ -10,6 +10,8 @@
 #ifndef SAM_HEADER_VALIDATOR_P_H
 #define SAM_HEADER_VALIDATOR_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -32,7 +34,7 @@ struct SamSequence;
 
 namespace Internal {
 
-class SamHeaderValidator
+class API_NO_EXPORT SamHeaderValidator
 {
 
     // ctor & dtor

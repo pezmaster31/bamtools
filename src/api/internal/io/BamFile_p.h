@@ -10,6 +10,8 @@
 #ifndef BAMFILE_P_H
 #define BAMFILE_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -26,7 +28,7 @@
 namespace BamTools {
 namespace Internal {
 
-class BamFile : public ILocalIODevice
+class API_NO_EXPORT BamFile : public ILocalIODevice
 {
 
     // ctor & dtor

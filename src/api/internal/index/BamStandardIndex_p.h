@@ -10,6 +10,8 @@
 #ifndef BAM_STANDARD_INDEX_FORMAT_H
 #define BAM_STANDARD_INDEX_FORMAT_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -35,7 +37,7 @@ namespace Internal {
 // BamStandardIndex data structures
 
 // defines start and end of a contiguous run of alignments
-struct BaiAlignmentChunk
+struct API_NO_EXPORT BaiAlignmentChunk
 {
 
     // data members
@@ -66,7 +68,7 @@ typedef std::vector<uint64_t> BaiLinearOffsetVector;
 
 // contains all fields necessary for building, loading, & writing
 // full BAI index data for a single reference
-struct BaiReferenceEntry
+struct API_NO_EXPORT BaiReferenceEntry
 {
 
     // data members
@@ -81,7 +83,7 @@ struct BaiReferenceEntry
 };
 
 // provides (persistent) summary of BaiReferenceEntry's index data
-struct BaiReferenceSummary
+struct API_NO_EXPORT BaiReferenceSummary
 {
 
     // data members
@@ -105,7 +107,7 @@ typedef std::vector<BaiReferenceSummary> BaiFileSummary;
 // end BamStandardIndex data structures
 // -----------------------------------------------------------------------------
 
-class BamStandardIndex : public BamIndex
+class API_NO_EXPORT BamStandardIndex : public BamIndex
 {
 
     // ctor & dtor

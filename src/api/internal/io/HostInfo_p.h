@@ -10,6 +10,8 @@
 #ifndef HOSTINFO_P_H
 #define HOSTINFO_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -27,7 +29,7 @@
 namespace BamTools {
 namespace Internal {
 
-class HostInfo
+class API_NO_EXPORT HostInfo
 {
 
 public:

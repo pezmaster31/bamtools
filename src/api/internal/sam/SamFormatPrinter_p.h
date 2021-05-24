@@ -10,6 +10,8 @@
 #ifndef SAM_FORMAT_PRINTER_H
 #define SAM_FORMAT_PRINTER_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -29,7 +31,7 @@ struct SamHeader;
 
 namespace Internal {
 
-class SamFormatPrinter
+class API_NO_EXPORT SamFormatPrinter
 {
 
     // ctor & dtor

@@ -10,6 +10,8 @@
 #ifndef BAMHTTP_P_H
 #define BAMHTTP_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -31,7 +33,7 @@ class HttpRequestHeader;
 class HttpResponseHeader;
 class TcpSocket;
 
-class BamHttp : public IBamIODevice
+class API_NO_EXPORT BamHttp : public IBamIODevice
 {
 
     // ctor & dtor

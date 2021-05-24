@@ -10,6 +10,8 @@
 #ifndef BAMEXCEPTION_P_H
 #define BAMEXCEPTION_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -26,7 +28,7 @@
 namespace BamTools {
 namespace Internal {
 
-class BamException : public std::exception
+class API_NO_EXPORT BamException : public std::exception
 {
 
 public:

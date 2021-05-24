@@ -10,6 +10,8 @@
 #ifndef BAMREADER_P_H
 #define BAMREADER_P_H
 
+#include "api/api_global.h"
+
 //  -------------
 //  W A R N I N G
 //  -------------
@@ -32,7 +34,7 @@
 namespace BamTools {
 namespace Internal {
 
-class BamReaderPrivate
+class API_NO_EXPORT BamReaderPrivate
 {
 
     // ctor & dtor

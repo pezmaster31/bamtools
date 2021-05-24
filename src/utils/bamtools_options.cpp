@@ -87,10 +87,11 @@ void Options::DisplayHelp()
              ++optionIter) {
 
             if (optionIter->StoreValue)
-                snprintf(argumentBuffer, ARGUMENT_LENGTH + 1, "  %s <%s>",
-                         optionIter->Argument.c_str(), optionIter->ValueDescription.c_str());
+                std::snprintf(argumentBuffer, ARGUMENT_LENGTH + 1, "  %s <%s>",
+                              optionIter->Argument.c_str(), optionIter->ValueDescription.c_str());
             else
-                snprintf(argumentBuffer, ARGUMENT_LENGTH + 1, "  %s", optionIter->Argument.c_str());
+                std::snprintf(argumentBuffer, ARGUMENT_LENGTH + 1, "  %s",
+                              optionIter->Argument.c_str());
             printf("%-35s ", argumentBuffer);
 
             std::string description = optionIter->Description;
@@ -221,7 +222,7 @@ void Options::Parse(int argc, char* argv[], int offset)
                             unsigned char* varValue = (unsigned char*)ovMapIter->second.pValue;
                             *varValue = uint8;
                         } else if (ovMapIter->second.VariantValue.is_type<uint64_t>()) {
-                            const uint64_t uint64 = strtoui64(val.c_str(), &end_ptr, 10);
+                            const uint64_t uint64 = std::strtoull(val.c_str(), &end_ptr, 10);
                             uint64_t* varValue = (uint64_t*)ovMapIter->second.pValue;
                             *varValue = uint64;
                         } else if (ovMapIter->second.VariantValue.is_type<double>()) {

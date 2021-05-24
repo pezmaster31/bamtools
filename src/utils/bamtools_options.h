@@ -22,13 +22,10 @@
 #include "utils/bamtools_variant.h"
 #include "utils/utils_global.h"
 
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
-
-#ifndef WIN32
-#include <stdint.h>
-#endif
 
 namespace BamTools {
 
@@ -36,15 +33,6 @@ namespace BamTools {
 #define DESC_LENGTH_FIRST_ROW 30
 #define DESC_LENGTH 42
 #define MAX_LINE_LENGTH 78
-
-#ifdef WIN32
-#define snprintf _snprintf
-typedef __int64 int64_t;
-typedef unsigned __int64 uint64_t;
-#define strtoui64 _strtoui64
-#else
-#define strtoui64 std::strtoull
-#endif
 
 struct UTILS_EXPORT Option
 {

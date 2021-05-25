@@ -19,6 +19,7 @@ using namespace BamTools;
 
 #include <cctype>
 #include <cstddef>
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -439,7 +440,7 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
                 m_out << "f,";
                 break;
             default:
-                throw BadDataException(std::string("Unknown B array type: " + tagData[0]));
+                throw BadDataException(std::string("Unknown B array type: ") + tagData[0]);
         }
     }
 

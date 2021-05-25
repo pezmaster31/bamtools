@@ -115,13 +115,10 @@ class BadDataException : public std::exception
 {
 public:
     BadDataException(const std::string& message)
-        : std::exception()
-        , m_errorString(message)
+        : m_errorString(message)
     {}
 
-    inline ~BadDataException() throw() {}
-
-    inline const char* what() const throw()
+    const char* what() const noexcept
     {
         return m_errorString.c_str();
     }
@@ -305,7 +302,7 @@ bool ConvertTool::ConvertToolPrivate::Run()
 
                 // set flag for successful conversion
                 convertedOk = true;
-            } catch (BadDataException& e) {
+            } catch (const BadDataException& e) {
                 std::cerr << "Conversion failed : " << e.what() << '\n';
 
                 convertedOk = false;
@@ -442,7 +439,7 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
                 m_out << "f,";
                 break;
             default:
-                throw BadDataException("Unknown B array type");
+                throw BadDataException(std::string("Unknown B array type: " + tagData[0]));
         }
     }
 
@@ -456,15 +453,15 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
             for (i = 0; i < arrayLength && index + sizeof(int8_t) <= tagDataLength;
                  i++, index += sizeof(int8_t)) {
                 if (i > 0) m_out << ",";
-                m_out << static_cast<int16_t>(tagData[index]);
+                m_out << int(static_cast<int8_t>(tagData[index]));
             }
             break;
 
         case (Constants::BAM_TAG_TYPE_UINT8):
             for (i = 0; i < arrayLength && index + sizeof(uint8_t) <= tagDataLength;
-                 i++, index += sizeof(int8_t)) {
+                 i++, index += sizeof(uint8_t)) {
                 if (i > 0) m_out << ",";
-                m_out << static_cast<int16_t>(static_cast<uint8_t>(tagData[index]));
+                m_out << int(static_cast<uint8_t>(tagData[index]));
             }
             break;
 
@@ -658,9 +655,9 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
                     break;
 
                 case (Constants::BAM_TAG_TYPE_ARRAY):
-                    m_out << "[";
+                    m_out << '[';
                     index += PrintBArrayValues(tagData + index, tagDataLength - index);
-                    m_out << "]";
+                    m_out << ']';
                     break;
 
                 default:

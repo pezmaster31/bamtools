@@ -43,12 +43,14 @@ void BamHeader::CheckMagicNumber(BgzfStream* stream)
     // try to read magic number
     char buffer[Constants::BAM_HEADER_MAGIC_LENGTH];
     const std::size_t numBytesRead = stream->Read(buffer, Constants::BAM_HEADER_MAGIC_LENGTH);
-    if (numBytesRead != (int)Constants::BAM_HEADER_MAGIC_LENGTH)
+    if (numBytesRead != (int)Constants::BAM_HEADER_MAGIC_LENGTH) {
         throw BamException("BamHeader::CheckMagicNumber", "could not read magic number");
+    }
 
     // validate magic number
-    if (!isValidMagicNumber(buffer))
+    if (!isValidMagicNumber(buffer)) {
         throw BamException("BamHeader::CheckMagicNumber", "invalid magic number");
+    }
 }
 
 // clear SamHeader data
@@ -83,12 +85,15 @@ void BamHeader::ReadHeaderLength(BgzfStream* stream, uint32_t& length)
     // read BAM header text length
     char buffer[sizeof(uint32_t)];
     const std::size_t numBytesRead = stream->Read(buffer, sizeof(uint32_t));
-    if (numBytesRead != sizeof(uint32_t))
+    if (numBytesRead != sizeof(uint32_t)) {
         throw BamException("BamHeader::ReadHeaderLength", "could not read header length");
+    }
 
     // convert char buffer to length
     length = BamTools::UnpackUnsignedInt(buffer);
-    if (BamTools::SystemIsBigEndian()) BamTools::SwapEndian_32(length);
+    if (BamTools::SystemIsBigEndian()) {
+        BamTools::SwapEndian_32(length);
+    }
 }
 
 // reads SAM header text from BGZF stream, stores in SamHeader object

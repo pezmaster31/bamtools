@@ -51,12 +51,17 @@ struct API_EXPORT SamSequence
 */
 inline bool operator==(const SamSequence& lhs, const SamSequence& rhs)
 {
-    if (lhs.Name != rhs.Name) return false;
-    if (lhs.Length != rhs.Length) return false;
-    if (lhs.HasChecksum() && rhs.HasChecksum())
+    if (lhs.Name != rhs.Name) {
+        return false;
+    }
+    if (lhs.Length != rhs.Length) {
+        return false;
+    }
+    if (lhs.HasChecksum() && rhs.HasChecksum()) {
         return (lhs.Checksum == rhs.Checksum);
-    else
+    } else {
         return true;
+    }
 }
 
 }  // namespace BamTools

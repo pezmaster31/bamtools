@@ -39,7 +39,9 @@ std::size_t RollingBuffer::BlockSize() const
 {
 
     // if only one byte array in buffer <- needed?
-    if (m_tailBufferIndex == 0) return m_tail - m_head;
+    if (m_tailBufferIndex == 0) {
+        return m_tail - m_head;
+    }
 
     // otherwise return remaining num bytes in first array
     const ByteArray& first = m_data.front();
@@ -55,10 +57,11 @@ void RollingBuffer::Chop(std::size_t n)
 {
 
     // update buffer size
-    if (n > m_totalBufferSize)
+    if (n > m_totalBufferSize) {
         m_totalBufferSize = 0;
-    else
+    } else {
         m_totalBufferSize -= n;
+    }
 
     // loop until target case hit
     for (;;) {
@@ -92,7 +95,9 @@ void RollingBuffer::Chop(std::size_t n)
     }
 
     // if buffer is now empty, reset state & clear up memory
-    if (IsEmpty()) Clear();
+    if (IsEmpty()) {
+        Clear();
+    }
 }
 
 void RollingBuffer::Clear()
@@ -116,10 +121,11 @@ void RollingBuffer::Free(std::size_t n)
 {
 
     // update buffer size
-    if (n > m_totalBufferSize)
+    if (n > m_totalBufferSize) {
         m_totalBufferSize = 0;
-    else
+    } else {
         m_totalBufferSize -= n;
+    }
 
     // loop until target case hit
     for (;;) {
@@ -147,7 +153,9 @@ void RollingBuffer::Free(std::size_t n)
 
         // special case - there was only 1 array
         if (m_data.size() == 1) {
-            if (m_data.at(0).Size() != m_bufferGrowth) m_data[0].Resize(m_bufferGrowth);
+            if (m_data.at(0).Size() != m_bufferGrowth) {
+                m_data[0].Resize(m_bufferGrowth);
+            }
             m_head = 0;
             m_tail = 0;
             m_tailBufferIndex = 0;
@@ -161,14 +169,18 @@ void RollingBuffer::Free(std::size_t n)
     }
 
     // if buffer is now empty, reset state & clear up memory
-    if (IsEmpty()) Clear();
+    if (IsEmpty()) {
+        Clear();
+    }
 }
 
 std::size_t RollingBuffer::IndexOf(char c) const
 {
 
     // skip processing if empty buffer
-    if (IsEmpty()) return std::string::npos;
+    if (IsEmpty()) {
+        return std::string::npos;
+    }
 
     std::size_t index(0);
 
@@ -186,7 +198,9 @@ std::size_t RollingBuffer::IndexOf(char c) const
         // look through this iteration's byte array for @c
         const char* p = current.ConstData() + start;
         for (std::size_t j = start; j < end; ++j) {
-            if (*p++ == c) return index;
+            if (*p++ == c) {
+                return index;
+            }
             ++index;
         }
     }
@@ -209,7 +223,9 @@ std::size_t RollingBuffer::Read(char* dest, std::size_t max)
     while (bytesReadSoFar < bytesToRead) {
         const char* readPtr = ReadPointer();
         std::size_t blockBytes = std::min((bytesToRead - bytesReadSoFar), BlockSize());
-        if (dest) std::memcpy(dest + bytesReadSoFar, readPtr, blockBytes);
+        if (dest) {
+            std::memcpy(dest + bytesReadSoFar, readPtr, blockBytes);
+        }
         bytesReadSoFar += blockBytes;
         Free(blockBytes);
     }
@@ -221,7 +237,9 @@ std::size_t RollingBuffer::ReadLine(char* dest, std::size_t max)
 {
 
     // if we can't read line or if max is 0
-    if (!CanReadLine() || max == 0) return 0;
+    if (!CanReadLine() || max == 0) {
+        return 0;
+    }
 
     // otherwise, read until we hit newline
     std::size_t bytesReadSoFar = 0;
@@ -236,7 +254,9 @@ std::size_t RollingBuffer::ReadLine(char* dest, std::size_t max)
         bytesReadSoFar += bytesToRead;
         Free(bytesToRead);
 
-        if (!((bytesReadSoFar < index + 1) && (bytesReadSoFar < max - 1))) finished = true;
+        if (!((bytesReadSoFar < index + 1) && (bytesReadSoFar < max - 1))) {
+            finished = true;
+        }
     }
 
     // null terminate 'dest' & return numBytesRead
@@ -248,7 +268,9 @@ const char* RollingBuffer::ReadPointer() const
 {
 
     // return null if empty buffer
-    if (m_data.empty()) return 0;
+    if (m_data.empty()) {
+        return 0;
+    }
 
     // otherwise return pointer to current position
     const ByteArray& first = m_data.front();

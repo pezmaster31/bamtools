@@ -31,15 +31,17 @@ bool BamPipe::Open(const IBamIODevice::OpenMode mode)
 
     // open stdin/stdout depending on requested openmode
 #if defined(SYSTEM_NODEJS) && SYSTEM_NODEJS == 1
-    if (mode == IBamIODevice::ReadOnly)
+    if (mode == IBamIODevice::ReadOnly) {
         m_stream = stdin;
-    else if (mode == IBamIODevice::WriteOnly)
+    } else if (mode == IBamIODevice::WriteOnly) {
         m_stream = stdout;
+    }
 #else
-    if (mode == IBamIODevice::ReadOnly)
+    if (mode == IBamIODevice::ReadOnly) {
         m_stream = freopen(0, "rb", stdin);
-    else if (mode == IBamIODevice::WriteOnly)
+    } else if (mode == IBamIODevice::WriteOnly) {
         m_stream = freopen(0, "wb", stdout);
+    }
 #endif  // SYSTEM_NODEJS
 
     else {

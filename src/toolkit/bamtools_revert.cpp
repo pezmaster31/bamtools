@@ -96,7 +96,9 @@ void RevertTool::RevertToolPrivate::RevertAlignment(BamAlignment& al)
     }
 
     // clear duplicate flag, if requested
-    if (!m_settings->IsKeepDuplicateFlag) al.SetIsDuplicate(false);
+    if (!m_settings->IsKeepDuplicateFlag) {
+        al.SetIsDuplicate(false);
+    }
 }
 
 bool RevertTool::RevertToolPrivate::Run()
@@ -118,7 +120,9 @@ bool RevertTool::RevertToolPrivate::Run()
     bool writeUncompressed =
         (m_settings->OutputFilename == Options::StandardOut() && !m_settings->IsForceCompression);
     BamWriter::CompressionMode compressionMode = BamWriter::Compressed;
-    if (writeUncompressed) compressionMode = BamWriter::Uncompressed;
+    if (writeUncompressed) {
+        compressionMode = BamWriter::Uncompressed;
+    }
 
     // open BamWriter
     BamWriter writer;
@@ -204,8 +208,9 @@ int RevertTool::Run(int argc, char* argv[])
     m_impl = new RevertToolPrivate(m_settings);
 
     // run RevertTool, return success/fail
-    if (m_impl->Run())
+    if (m_impl->Run()) {
         return 0;
-    else
+    } else {
         return 1;
+    }
 }

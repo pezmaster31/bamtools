@@ -109,7 +109,9 @@ bool StatsTool::StatsToolPrivate::CalculateMedian(std::vector<int>& data, double
 {
 
     // skip if data empty
-    if (data.empty()) return false;
+    if (data.empty()) {
+        return false;
+    }
 
     // find middle element
     std::size_t middleIndex = data.size() / 2;
@@ -176,8 +178,9 @@ void StatsTool::StatsToolPrivate::PrintStats()
         }
 
         double medianInsertSize = 0.0;
-        if (CalculateMedian(m_insertSizes, medianInsertSize))
+        if (CalculateMedian(m_insertSizes, medianInsertSize)) {
             std::cout << "Median insert size (absolute value): " << medianInsertSize << std::endl;
+        }
     }
     std::cout << std::endl;
 }
@@ -190,15 +193,22 @@ void StatsTool::StatsToolPrivate::ProcessAlignment(const BamAlignment& al)
     ++m_numReads;
 
     // incrememt counters for pairing-independent flags
-    if (al.IsDuplicate()) ++m_numDuplicates;
-    if (al.IsFailedQC()) ++m_numFailedQC;
-    if (al.IsMapped()) ++m_numMapped;
+    if (al.IsDuplicate()) {
+        ++m_numDuplicates;
+    }
+    if (al.IsFailedQC()) {
+        ++m_numFailedQC;
+    }
+    if (al.IsMapped()) {
+        ++m_numMapped;
+    }
 
     // increment strand counters
-    if (al.IsReverseStrand())
+    if (al.IsReverseStrand()) {
         ++m_numReverseStrand;
-    else
+    } else {
         ++m_numForwardStrand;
+    }
 
     // if alignment is paired-end
     if (al.IsPaired()) {
@@ -207,20 +217,28 @@ void StatsTool::StatsToolPrivate::ProcessAlignment(const BamAlignment& al)
         ++m_numPaired;
 
         // increment first mate/second mate counters
-        if (al.IsFirstMate()) ++m_numFirstMate;
-        if (al.IsSecondMate()) ++m_numSecondMate;
+        if (al.IsFirstMate()) {
+            ++m_numFirstMate;
+        }
+        if (al.IsSecondMate()) {
+            ++m_numSecondMate;
+        }
 
         // if alignment is mapped, check mate status
         if (al.IsMapped()) {
             // if mate mapped
-            if (al.IsMateMapped()) ++m_numBothMatesMapped;
-            // else singleton
-            else
+            if (al.IsMateMapped()) {
+                ++m_numBothMatesMapped;
+                // else singleton
+            } else {
                 ++m_numSingletons;
+            }
         }
 
         // check for explicit proper pair flag
-        if (al.IsProperPair()) ++m_numProperPair;
+        if (al.IsProperPair()) {
+            ++m_numProperPair;
+        }
 
         // store insert size for first mate
         if (m_settings->IsShowingInsertSizeSummary && al.IsFirstMate() && (al.InsertSize != 0)) {
@@ -234,8 +252,9 @@ bool StatsTool::StatsToolPrivate::Run()
 {
 
     // set to default input if none provided
-    if (!m_settings->HasInput && !m_settings->HasInputFilelist)
+    if (!m_settings->HasInput && !m_settings->HasInputFilelist) {
         m_settings->InputFiles.push_back(Options::StandardIn());
+    }
 
     // add files in the filelist to the input file list
     if (m_settings->HasInputFilelist) {
@@ -248,8 +267,9 @@ bool StatsTool::StatsToolPrivate::Run()
         }
 
         std::string line;
-        while (std::getline(filelist, line))
+        while (std::getline(filelist, line)) {
             m_settings->InputFiles.push_back(line);
+        }
     }
 
     // open the BAM files
@@ -263,8 +283,9 @@ bool StatsTool::StatsToolPrivate::Run()
 
     // plow through alignments, keeping track of stats
     BamAlignment al;
-    while (reader.GetNextAlignmentCore(al))
+    while (reader.GetNextAlignmentCore(al)) {
         ProcessAlignment(al);
+    }
     reader.Close();
 
     // print stats & exit
@@ -323,8 +344,9 @@ int StatsTool::Run(int argc, char* argv[])
     m_impl = new StatsToolPrivate(m_settings);
 
     // run StatsTool, return success/fail
-    if (m_impl->Run())
+    if (m_impl->Run()) {
         return 0;
-    else
+    } else {
         return 1;
+    }
 }

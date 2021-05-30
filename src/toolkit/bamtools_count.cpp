@@ -69,8 +69,9 @@ bool CountTool::CountToolPrivate::Run()
 {
 
     // set to default input if none provided
-    if (!m_settings->HasInput && !m_settings->HasInputFilelist)
+    if (!m_settings->HasInput && !m_settings->HasInputFilelist) {
         m_settings->InputFiles.push_back(Options::StandardIn());
+    }
 
     // add files in the filelist to the input file list
     if (m_settings->HasInputFilelist) {
@@ -83,8 +84,9 @@ bool CountTool::CountToolPrivate::Run()
         }
 
         std::string line;
-        while (std::getline(filelist, line))
+        while (std::getline(filelist, line)) {
             m_settings->InputFiles.push_back(line);
+        }
     }
 
     // open reader without index
@@ -101,8 +103,9 @@ bool CountTool::CountToolPrivate::Run()
 
     // if no region specified, count entire file
     if (!m_settings->HasRegion) {
-        while (reader.GetNextAlignmentCore(al))
+        while (reader.GetNextAlignmentCore(al)) {
             ++alignmentCount;
+        }
     }
 
     // otherwise attempt to use region as constraint
@@ -129,8 +132,9 @@ bool CountTool::CountToolPrivate::Run()
                 }
 
                 // everything checks out, just iterate through specified region, counting alignments
-                while (reader.GetNextAlignmentCore(al))
+                while (reader.GetNextAlignmentCore(al)) {
                     ++alignmentCount;
+                }
             }
 
             // no index data available, we have to iterate through until we
@@ -219,8 +223,9 @@ int CountTool::Run(int argc, char* argv[])
     m_impl = new CountToolPrivate(m_settings);
 
     // run CountTool, return success/fail
-    if (m_impl->Run())
+    if (m_impl->Run()) {
         return 0;
-    else
+    } else {
         return 1;
+    }
 }

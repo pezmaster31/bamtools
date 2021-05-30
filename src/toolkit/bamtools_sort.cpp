@@ -115,8 +115,9 @@ SortTool::SortToolPrivate::SortToolPrivate(SortTool::SortSettings* settings)
     // that way multiple sort runs don't trip on each other's temp files
     if (m_settings) {
         std::size_t extensionFound = m_settings->InputBamFilename.find(".bam");
-        if (extensionFound != std::string::npos)
+        if (extensionFound != std::string::npos) {
             m_tempFilenameStub = m_settings->InputBamFilename.substr(0, extensionFound);
+        }
         m_tempFilenameStub.append(".sort.temp.");
     }
 }
@@ -135,7 +136,9 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns()
 
     // get basic data that will be shared by all temp/output files
     SamHeader header = reader.GetHeader();
-    if (!header.HasVersion()) header.Version = Constants::SAM_CURRENT_VERSION;
+    if (!header.HasVersion()) {
+        header.Version = Constants::SAM_CURRENT_VERSION;
+    }
     header.SortOrder = (m_settings->IsSortingByName ? Constants::SAM_HD_SORTORDER_QUERYNAME
                                                     : Constants::SAM_HD_SORTORDER_COORDINATE);
     m_headerText = header.ToString();
@@ -158,10 +161,11 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns()
             bufferFull = (buffer.size() >= m_settings->MaxBufferCount);
 
             // store alignments until buffer is "full"
-            if (!bufferFull) buffer.push_back(al);
+            if (!bufferFull) {
+                buffer.push_back(al);
 
-            // if buffer is "full"
-            else {
+                // if buffer is "full"
+            } else {
                 // so create a sorted temp file with current buffer contents
                 // then push "al" into fresh buffer
                 CreateSortedTempFile(buffer);
@@ -180,10 +184,11 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns()
             bufferFull = (buffer.size() >= m_settings->MaxBufferCount);
 
             // store alignments until buffer is "full"
-            if (!bufferFull) buffer.push_back(al);
+            if (!bufferFull) {
+                buffer.push_back(al);
 
-            // if buffer is "full"
-            else {
+                // if buffer is "full"
+            } else {
                 // create a sorted temp file with current buffer contents
                 // then push "al" into fresh buffer
                 CreateSortedTempFile(buffer);
@@ -193,7 +198,9 @@ bool SortTool::SortToolPrivate::GenerateSortedRuns()
     }
 
     // handle any leftover buffer contents
-    if (!buffer.empty()) CreateSortedTempFile(buffer);
+    if (!buffer.empty()) {
+        CreateSortedTempFile(buffer);
+    }
 
     // close reader & return success
     reader.Close();
@@ -248,8 +255,9 @@ bool SortTool::SortToolPrivate::MergeSortedRuns()
 
     // while data available in temp files
     BamAlignment al;
-    while (multiReader.GetNextAlignmentCore(al))
+    while (multiReader.GetNextAlignmentCore(al)) {
         mergedWriter.SaveAlignment(al);
+    }
 
     // close files
     multiReader.Close();
@@ -273,10 +281,11 @@ bool SortTool::SortToolPrivate::Run()
     // this does a single pass, chunking up the input file into smaller sorted temp files,
     // then write out using BamMultiReader to handle merging
 
-    if (GenerateSortedRuns())
+    if (GenerateSortedRuns()) {
         return MergeSortedRuns();
-    else
+    } else {
         return false;
+    }
 }
 
 void SortTool::SortToolPrivate::SortBuffer(std::vector<BamAlignment>& buffer)
@@ -285,10 +294,11 @@ void SortTool::SortToolPrivate::SortBuffer(std::vector<BamAlignment>& buffer)
     // ** add further custom sort options later ?? **
 
     // sort buffer by desired method
-    if (m_settings->IsSortingByName)
+    if (m_settings->IsSortingByName) {
         std::stable_sort(buffer.begin(), buffer.end(), Sort::ByName());
-    else
+    } else {
         std::stable_sort(buffer.begin(), buffer.end(), Sort::ByPosition());
+    }
 }
 
 bool SortTool::SortToolPrivate::WriteTempFile(const std::vector<BamAlignment>& buffer,
@@ -373,8 +383,9 @@ int SortTool::Run(int argc, char* argv[])
     m_impl = new SortToolPrivate(m_settings);
 
     // run SortTool, return success/fail
-    if (m_impl->Run())
+    if (m_impl->Run()) {
         return 0;
-    else
+    } else {
         return 1;
+    }
 }

@@ -64,8 +64,9 @@ void SamReadGroupDictionary::Add(const SamReadGroupDictionary& readGroups)
 {
     SamReadGroupConstIterator rgIter = readGroups.ConstBegin();
     SamReadGroupConstIterator rgEnd = readGroups.ConstEnd();
-    for (; rgIter != rgEnd; ++rgIter)
+    for (; rgIter != rgEnd; ++rgIter) {
         Add(*rgIter);
+    }
 }
 
 /*! \fn void SamReadGroupDictionary::Add(const std::vector<SamReadGroup>& readGroups)
@@ -80,8 +81,9 @@ void SamReadGroupDictionary::Add(const std::vector<SamReadGroup>& readGroups)
 {
     std::vector<SamReadGroup>::const_iterator rgIter = readGroups.begin();
     std::vector<SamReadGroup>::const_iterator rgEnd = readGroups.end();
-    for (; rgIter != rgEnd; ++rgIter)
+    for (; rgIter != rgEnd; ++rgIter) {
         Add(*rgIter);
+    }
 }
 
 /*! \fn void SamReadGroupDictionary::Add(const std::vector<std::string>& readGroupIds)
@@ -96,8 +98,9 @@ void SamReadGroupDictionary::Add(const std::vector<std::string>& readGroupIds)
 {
     std::vector<std::string>::const_iterator rgIter = readGroupIds.begin();
     std::vector<std::string>::const_iterator rgEnd = readGroupIds.end();
-    for (; rgIter != rgEnd; ++rgIter)
+    for (; rgIter != rgEnd; ++rgIter) {
         Add(*rgIter);
+    }
 }
 
 /*! \fn SamReadGroupIterator SamReadGroupDictionary::Begin()
@@ -224,7 +227,9 @@ void SamReadGroupDictionary::Remove(const std::string& readGroupId)
 {
 
     // skip if empty dictionary or if ID unknown
-    if (IsEmpty() || !Contains(readGroupId)) return;
+    if (IsEmpty() || !Contains(readGroupId)) {
+        return;
+    }
 
     // update 'lookup index' for every entry after @readGroupId
     const std::size_t indexToRemove = m_lookupData[readGroupId];
@@ -251,8 +256,9 @@ void SamReadGroupDictionary::Remove(const std::vector<SamReadGroup>& readGroups)
 {
     std::vector<SamReadGroup>::const_iterator rgIter = readGroups.begin();
     std::vector<SamReadGroup>::const_iterator rgEnd = readGroups.end();
-    for (; rgIter != rgEnd; ++rgIter)
+    for (; rgIter != rgEnd; ++rgIter) {
         Remove(*rgIter);
+    }
 }
 
 /*! \fn void SamReadGroupDictionary::Remove(const std::vector<std::string>& readGroupIds)
@@ -267,8 +273,9 @@ void SamReadGroupDictionary::Remove(const std::vector<std::string>& readGroupIds
 {
     std::vector<std::string>::const_iterator rgIter = readGroupIds.begin();
     std::vector<std::string>::const_iterator rgEnd = readGroupIds.end();
-    for (; rgIter != rgEnd; ++rgIter)
+    for (; rgIter != rgEnd; ++rgIter) {
         Remove(*rgIter);
+    }
 }
 
 /*! \fn int SamReadGroupDictionary::Size() const

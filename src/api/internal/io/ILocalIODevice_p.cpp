@@ -27,7 +27,9 @@ void ILocalIODevice::Close()
 {
 
     // skip if not open
-    if (!IsOpen()) return;
+    if (!IsOpen()) {
+        return;
+    }
 
     // flush & close FILE*
     fflush(m_stream);

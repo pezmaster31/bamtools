@@ -191,7 +191,9 @@ bool FilterEngine<FilterChecker>::addProperty(const std::string& propertyName)
 {
     const std::vector<std::string> propertyNames = allPropertyNames();
     bool found = std::binary_search(propertyNames.begin(), propertyNames.end(), propertyName);
-    if (found) return false;
+    if (found) {
+        return false;
+    }
     m_properties.push_back(Property(propertyName));
     std::sort(m_properties.begin(), m_properties.end());
     return true;
@@ -208,8 +210,9 @@ const std::vector<std::string> FilterEngine<FilterChecker>::allPropertyNames()
     // iterate through all properties, appending to stringlist
     std::vector<Property>::const_iterator propIter = m_properties.begin();
     std::vector<Property>::const_iterator propEnd = m_properties.end();
-    for (; propIter != propEnd; ++propIter)
+    for (; propIter != propEnd; ++propIter) {
         names.push_back((*propIter).Name);
+    }
     // return stringlist
     return names;
 }
@@ -230,9 +233,10 @@ void FilterEngine<FilterChecker>::buildDefaultRuleString()
     // if there are more filters present
     // iterate over remaining filters, appending compare operator and filter name
     if (m_filters.size() > 1) {
-        for (++mapIter; mapIter != m_filters.end(); ++mapIter)
+        for (++mapIter; mapIter != m_filters.end(); ++mapIter) {
             ruleStream << ((m_defaultCompareType == FilterCompareType::AND) ? " & " : " | ")
                        << (*mapIter).first;
+        }
     }
 
     // set m_ruleString from temp stream
@@ -245,14 +249,19 @@ void FilterEngine<FilterChecker>::buildRuleQueue()
 {
 
     // skip if no filters present
-    if (m_filters.empty()) return;
+    if (m_filters.empty()) {
+        return;
+    }
 
     // clear out any prior expression queue data
-    while (!m_ruleQueue.empty())
+    while (!m_ruleQueue.empty()) {
         m_ruleQueue.pop();
+    }
 
     // create a rule string, if not provided
-    if (m_ruleString.empty()) buildDefaultRuleString();
+    if (m_ruleString.empty()) {
+        buildDefaultRuleString();
+    }
 
     // initialize RuleParser, run, and retrieve results
     RuleParser ruleParser(m_ruleString);
@@ -283,8 +292,11 @@ const std::vector<std::string> FilterEngine<FilterChecker>::enabledPropertyNames
     // iterate over all properties, appending if enabled
     std::vector<Property>::const_iterator propIter = m_properties.begin();
     std::vector<Property>::const_iterator propEnd = m_properties.end();
-    for (; propIter != propEnd; ++propIter)
-        if ((*propIter).IsEnabled) names.push_back((*propIter).Name);
+    for (; propIter != propEnd; ++propIter) {
+        if ((*propIter).IsEnabled) {
+            names.push_back((*propIter).Name);
+        }
+    }
     // return stringlist
     return names;
 }
@@ -296,7 +308,9 @@ bool FilterEngine<FilterChecker>::evaluateFilterRules(const T& query)
 {
 
     // build ruleQueue if not done before
-    if (!m_isRuleQueueGenerated) buildRuleQueue();
+    if (!m_isRuleQueueGenerated) {
+        buildRuleQueue();
+    }
 
     std::stack<bool> resultStack;
     FilterMap::const_iterator filterIter;
@@ -361,8 +375,9 @@ const std::vector<std::string> FilterEngine<FilterChecker>::filterNames()
     // iterate over all filters, appending filter name
     FilterMap::const_iterator mapIter = m_filters.begin();
     FilterMap::const_iterator mapEnd = m_filters.end();
-    for (; mapIter != mapEnd; ++mapIter)
+    for (; mapIter != mapEnd; ++mapIter) {
         names.push_back((*mapIter).first);
+    }
     // return stringlist
     return names;
 }
@@ -375,7 +390,9 @@ bool FilterEngine<FilterChecker>::parseToken(const std::string& token, T& value,
 {
 
     // skip if token is empty
-    if (token.empty()) return false;
+    if (token.empty()) {
+        return false;
+    }
 
     // will store token after special chars are removed
     std::string strippedToken;
@@ -400,7 +417,9 @@ bool FilterEngine<FilterChecker>::parseToken(const std::string& token, T& value,
 
                 // check for '>=' case
                 if (token.at(1) == FilterEngine<FilterChecker>::EQUAL_CHAR) {
-                    if (token.length() == 2) return false;
+                    if (token.length() == 2) {
+                        return false;
+                    }
                     strippedToken = token.substr(2);
                     type = PropertyFilterValue::GREATER_THAN_EQUAL;
                 }
@@ -417,7 +436,9 @@ bool FilterEngine<FilterChecker>::parseToken(const std::string& token, T& value,
 
                 // check for '<=' case
                 if (token.at(1) == FilterEngine<FilterChecker>::EQUAL_CHAR) {
-                    if (token.length() == 2) return false;
+                    if (token.length() == 2) {
+                        return false;
+                    }
                     strippedToken = token.substr(2);
                     type = PropertyFilterValue::LESS_THAN_EQUAL;
                 }
@@ -434,7 +455,9 @@ bool FilterEngine<FilterChecker>::parseToken(const std::string& token, T& value,
 
                 // check for *str* case (CONTAINS)
                 if (token.at(token.length() - 1) == FilterEngine<FilterChecker>::WILDCARD_CHAR) {
-                    if (token.length() == 2) return false;
+                    if (token.length() == 2) {
+                        return false;
+                    }
                     strippedToken = token.substr(1, token.length() - 2);
                     type = PropertyFilterValue::CONTAINS;
                 }
@@ -450,7 +473,9 @@ bool FilterEngine<FilterChecker>::parseToken(const std::string& token, T& value,
             default:
                 // check for str* case (STARTS_WITH)
                 if (token.at(token.length() - 1) == FilterEngine<FilterChecker>::WILDCARD_CHAR) {
-                    if (token.length() == 2) return false;
+                    if (token.length() == 2) {
+                        return false;
+                    }
                     strippedToken = token.substr(0, token.length() - 1);
                     type = PropertyFilterValue::STARTS_WITH;
                 }
@@ -467,10 +492,11 @@ bool FilterEngine<FilterChecker>::parseToken(const std::string& token, T& value,
 
     // convert stripped token to value
     std::stringstream stream(strippedToken);
-    if (strippedToken == "true" || strippedToken == "false")
+    if (strippedToken == "true" || strippedToken == "false") {
         stream >> std::boolalpha >> value;
-    else
+    } else {
         stream >> value;
+    }
 
     // check for valid CompareType on type T
     Variant variantCheck = value;
@@ -478,9 +504,10 @@ bool FilterEngine<FilterChecker>::parseToken(const std::string& token, T& value,
     // if T is not string AND CompareType is for string values, return false
     if (!variantCheck.is_type<std::string>()) {
         if (type == PropertyFilterValue::CONTAINS || type == PropertyFilterValue::ENDS_WITH ||
-            type == PropertyFilterValue::STARTS_WITH)
+            type == PropertyFilterValue::STARTS_WITH) {
 
             return false;
+        }
     }
 
     // return success
@@ -512,7 +539,9 @@ bool FilterEngine<FilterChecker>::setProperty(const std::string& filterName,
 {
     // lookup filter by name, return false if not found
     FilterMap::iterator filterIter = m_filters.find(filterName);
-    if (filterIter == m_filters.end()) return false;
+    if (filterIter == m_filters.end()) {
+        return false;
+    }
 
     // lookup property for filter, add new PropertyFilterValue if not found, modify if already exists
     PropertyFilter& filter = (*filterIter).second;
@@ -521,13 +550,13 @@ bool FilterEngine<FilterChecker>::setProperty(const std::string& filterName,
     bool success;
 
     // property not found for this filter, create new entry
-    if (propertyIter == filter.Properties.end())
+    if (propertyIter == filter.Properties.end()) {
         success = (filter.Properties.insert(
                        std::make_pair(propertyName, PropertyFilterValue(value, type))))
                       .second;
 
-    // property already exists, modify
-    else {
+        // property already exists, modify
+    } else {
         PropertyFilterValue& filterValue = (*propertyIter).second;
         filterValue.Value = value;
         filterValue.Type = type;
@@ -535,7 +564,9 @@ bool FilterEngine<FilterChecker>::setProperty(const std::string& filterName,
     }
 
     // if error so far, return false
-    if (!success) return false;
+    if (!success) {
+        return false;
+    }
 
     // --------------------------------------------
     // otherwise, set Property.IsEnabled to true
@@ -551,8 +582,9 @@ bool FilterEngine<FilterChecker>::setProperty(const std::string& filterName,
     }
 
     // property already known, set as enabled
-    else
+    else {
         (*knownPropertyIter).IsEnabled = true;
+    }
 
     // return success
     return true;

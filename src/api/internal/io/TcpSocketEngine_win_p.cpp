@@ -114,7 +114,9 @@ bool TcpSocketEngine::nativeConnect(const HostAddress& address, const uint16_t p
         }
 
         // double check that we're not in 'connected' state; if so, return failure
-        if (m_socketState != TcpSocket::ConnectedState) return false;
+        if (m_socketState != TcpSocket::ConnectedState) {
+            return false;
+        }
     }
 
     // otherwise, we should be good
@@ -187,7 +189,9 @@ int64_t TcpSocketEngine::nativeRead(char* dest, std::size_t max)
 {
 
     // skip if invalid socket
-    if (!IsValid()) return -1;
+    if (!IsValid()) {
+        return -1;
+    }
 
     // set up our WSA output buffer
     WSABUF buf;
@@ -198,7 +202,9 @@ int64_t TcpSocketEngine::nativeRead(char* dest, std::size_t max)
     DWORD flags = 0;
     DWORD bytesRead = 0;
     const int readResult = WSARecv(m_socketDescriptor, &buf, 1, &bytesRead, &flags, 0, 0);
-    if (readResult == SOCKET_ERROR) return -1;
+    if (readResult == SOCKET_ERROR) {
+        return -1;
+    }
 
     // return number of bytes read
     return static_cast<int64_t>(bytesRead);
@@ -217,10 +223,11 @@ int TcpSocketEngine::nativeSelect(int msecs, bool isRead) const
     tv.tv_usec = (msecs % 1000) * 1000;
 
     // do 'select'
-    if (isRead)
+    if (isRead) {
         return select(0, &fds, 0, 0, (msecs < 0 ? 0 : &tv));
-    else
+    } else {
         return select(0, 0, &fds, 0, (msecs < 0 ? 0 : &tv));
+    }
 }
 
 int64_t TcpSocketEngine::nativeWrite(const char* data, std::size_t length)
@@ -235,7 +242,9 @@ int64_t TcpSocketEngine::nativeWrite(const char* data, std::size_t length)
     DWORD flags = 0;
     DWORD bytesWritten = 0;
     const int writeResult = WSASend(m_socketDescriptor, &buf, 1, &bytesWritten, flags, 0, 0);
-    if (writeResult == SOCKET_ERROR) return -1;
+    if (writeResult == SOCKET_ERROR) {
+        return -1;
+    }
 
     // return number of bytes written
     return static_cast<int64_t>(bytesWritten);

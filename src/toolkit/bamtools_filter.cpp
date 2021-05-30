@@ -78,9 +78,9 @@ struct BamAlignmentChecker
             const std::string& propertyName = (*propertyIter).first;
             const PropertyFilterValue& valueFilter = (*propertyIter).second;
 
-            if (propertyName == ALIGNMENTFLAG_PROPERTY)
+            if (propertyName == ALIGNMENTFLAG_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.AlignmentFlag);
-            else if (propertyName == CIGAR_PROPERTY) {
+            } else if (propertyName == CIGAR_PROPERTY) {
                 std::stringstream cigarSs;
                 const std::vector<CigarOp>& cigarData = al.CigarData;
                 if (!cigarData.empty()) {
@@ -93,66 +93,71 @@ struct BamAlignmentChecker
                     }
                     keepAlignment &= valueFilter.check(cigarSs.str());
                 }
-            } else if (propertyName == INSERTSIZE_PROPERTY)
+            } else if (propertyName == INSERTSIZE_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.InsertSize);
-            else if (propertyName == ISDUPLICATE_PROPERTY)
+            } else if (propertyName == ISDUPLICATE_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.IsDuplicate());
-            else if (propertyName == ISFAILEDQC_PROPERTY)
+            } else if (propertyName == ISFAILEDQC_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.IsFailedQC());
-            else if (propertyName == ISFIRSTMATE_PROPERTY)
+            } else if (propertyName == ISFIRSTMATE_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.IsFirstMate());
-            else if (propertyName == ISMAPPED_PROPERTY)
+            } else if (propertyName == ISMAPPED_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.IsMapped());
-            else if (propertyName == ISMATEMAPPED_PROPERTY)
+            } else if (propertyName == ISMATEMAPPED_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.IsMateMapped());
-            else if (propertyName == ISMATEREVERSESTRAND_PROPERTY)
+            } else if (propertyName == ISMATEREVERSESTRAND_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.IsMateReverseStrand());
-            else if (propertyName == ISPAIRED_PROPERTY)
+            } else if (propertyName == ISPAIRED_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.IsPaired());
-            else if (propertyName == ISPRIMARYALIGNMENT_PROPERTY)
+            } else if (propertyName == ISPRIMARYALIGNMENT_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.IsPrimaryAlignment());
-            else if (propertyName == ISPROPERPAIR_PROPERTY)
+            } else if (propertyName == ISPROPERPAIR_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.IsProperPair());
-            else if (propertyName == ISREVERSESTRAND_PROPERTY)
+            } else if (propertyName == ISREVERSESTRAND_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.IsReverseStrand());
-            else if (propertyName == ISSECONDMATE_PROPERTY)
+            } else if (propertyName == ISSECONDMATE_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.IsSecondMate());
-            else if (propertyName == ISSINGLETON_PROPERTY) {
+            } else if (propertyName == ISSINGLETON_PROPERTY) {
                 const bool isSingleton = al.IsPaired() && al.IsMapped() && !al.IsMateMapped();
                 keepAlignment &= valueFilter.check(isSingleton);
-            } else if (propertyName == LENGTH_PROPERTY)
+            } else if (propertyName == LENGTH_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.Length);
-            else if (propertyName == MAPQUALITY_PROPERTY)
+            } else if (propertyName == MAPQUALITY_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.MapQuality);
-            else if (propertyName == MATEPOSITION_PROPERTY)
+            } else if (propertyName == MATEPOSITION_PROPERTY) {
                 keepAlignment &=
                     (al.IsPaired() && al.IsMateMapped() && valueFilter.check(al.MateRefID));
-            else if (propertyName == MATEREFERENCE_PROPERTY) {
-                if (!al.IsPaired() || !al.IsMateMapped()) return false;
+            } else if (propertyName == MATEREFERENCE_PROPERTY) {
+                if (!al.IsPaired() || !al.IsMateMapped()) {
+                    return false;
+                }
                 BAMTOOLS_ASSERT_MESSAGE(
                     (al.MateRefID >= 0 && (al.MateRefID < (int)filterToolReferences.size())),
                     "Invalid MateRefID");
                 const std::string& refName = filterToolReferences.at(al.MateRefID).RefName;
                 keepAlignment &= valueFilter.check(refName);
-            } else if (propertyName == NAME_PROPERTY)
+            } else if (propertyName == NAME_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.Name);
-            else if (propertyName == POSITION_PROPERTY)
+            } else if (propertyName == POSITION_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.Position);
-            else if (propertyName == QUERYBASES_PROPERTY)
+            } else if (propertyName == QUERYBASES_PROPERTY) {
                 keepAlignment &= valueFilter.check(al.QueryBases);
-            else if (propertyName == REFERENCE_PROPERTY) {
+            } else if (propertyName == REFERENCE_PROPERTY) {
                 BAMTOOLS_ASSERT_MESSAGE(
                     (al.RefID >= 0 && (al.RefID < (int)filterToolReferences.size())),
                     "Invalid RefID");
                 const std::string& refName = filterToolReferences.at(al.RefID).RefName;
                 keepAlignment &= valueFilter.check(refName);
-            } else if (propertyName == TAG_PROPERTY)
+            } else if (propertyName == TAG_PROPERTY) {
                 keepAlignment &= checkAlignmentTag(valueFilter, al);
-            else
+            } else {
                 BAMTOOLS_ASSERT_UNREACHABLE;
+            }
 
             // if alignment fails at ANY point, just quit and return false
-            if (!keepAlignment) return false;
+            if (!keepAlignment) {
+                return false;
+            }
         }
 
         BAMTOOLS_ASSERT_MESSAGE(
@@ -165,20 +170,26 @@ struct BamAlignmentChecker
 
         // ensure filter contains string data
         Variant entireTagFilter = valueFilter.Value;
-        if (!entireTagFilter.is_type<std::string>()) return false;
+        if (!entireTagFilter.is_type<std::string>()) {
+            return false;
+        }
 
         // localize string from variant
         const std::string& entireTagFilterString = entireTagFilter.get<std::string>();
 
         // ensure we have at least "XX:x"
-        if (entireTagFilterString.length() < 4) return false;
+        if (entireTagFilterString.length() < 4) {
+            return false;
+        }
 
         // get tagName & lookup in alignment
         // if found, set tagType to tag type character
         // if not found, return false
         const std::string& tagName = entireTagFilterString.substr(0, 2);
         char tagType = '\0';
-        if (!al.GetTagType(tagName, tagType)) return false;
+        if (!al.GetTagType(tagName, tagType)) {
+            return false;
+        }
 
         // remove tagName & ':' from beginning tagFilter
         std::string tagFilterString = entireTagFilterString.substr(3);
@@ -534,7 +545,9 @@ const std::string FilterTool::FilterToolPrivate::GetScriptContents()
         // peek ahead, make sure there is data available
         char ch = fgetc(inFile);
         ungetc(ch, inFile);
-        if (feof(inFile)) break;
+        if (feof(inFile)) {
+            break;
+        }
 
         // read next block of data
         if (fgets(buffer, 1024, inFile) == 0) {
@@ -584,8 +597,9 @@ void FilterTool::FilterToolPrivate::InitProperties()
     // add vector contents to FilterEngine<BamAlignmentChecker>
     std::vector<std::string>::const_iterator propertyNameIter = m_propertyNames.begin();
     std::vector<std::string>::const_iterator propertyNameEnd = m_propertyNames.end();
-    for (; propertyNameIter != propertyNameEnd; ++propertyNameIter)
+    for (; propertyNameIter != propertyNameEnd; ++propertyNameIter) {
         m_filterEngine.addProperty((*propertyNameIter));
+    }
 }
 
 bool FilterTool::FilterToolPrivate::ParseCommandLine()
@@ -597,47 +611,66 @@ bool FilterTool::FilterToolPrivate::ParseCommandLine()
 
     // map property names to command line args
     std::map<std::string, std::string> propertyTokens;
-    if (m_settings->HasAlignmentFlagFilter)
+    if (m_settings->HasAlignmentFlagFilter) {
         propertyTokens.insert(make_pair(ALIGNMENTFLAG_PROPERTY, m_settings->AlignmentFlagFilter));
-    if (m_settings->HasInsertSizeFilter)
+    }
+    if (m_settings->HasInsertSizeFilter) {
         propertyTokens.insert(make_pair(INSERTSIZE_PROPERTY, m_settings->InsertSizeFilter));
-    if (m_settings->HasIsDuplicateFilter)
+    }
+    if (m_settings->HasIsDuplicateFilter) {
         propertyTokens.insert(make_pair(ISDUPLICATE_PROPERTY, m_settings->IsDuplicateFilter));
-    if (m_settings->HasIsFailedQCFilter)
+    }
+    if (m_settings->HasIsFailedQCFilter) {
         propertyTokens.insert(make_pair(ISFAILEDQC_PROPERTY, m_settings->IsFailedQCFilter));
-    if (m_settings->HasIsFirstMateFilter)
+    }
+    if (m_settings->HasIsFirstMateFilter) {
         propertyTokens.insert(make_pair(ISFIRSTMATE_PROPERTY, m_settings->IsFirstMateFilter));
-    if (m_settings->HasIsMappedFilter)
+    }
+    if (m_settings->HasIsMappedFilter) {
         propertyTokens.insert(make_pair(ISMAPPED_PROPERTY, m_settings->IsMappedFilter));
-    if (m_settings->HasIsMateMappedFilter)
+    }
+    if (m_settings->HasIsMateMappedFilter) {
         propertyTokens.insert(make_pair(ISMATEMAPPED_PROPERTY, m_settings->IsMateMappedFilter));
-    if (m_settings->HasIsMateReverseStrandFilter)
+    }
+    if (m_settings->HasIsMateReverseStrandFilter) {
         propertyTokens.insert(
             make_pair(ISMATEREVERSESTRAND_PROPERTY, m_settings->IsMateReverseStrandFilter));
-    if (m_settings->HasIsPairedFilter)
+    }
+    if (m_settings->HasIsPairedFilter) {
         propertyTokens.insert(make_pair(ISPAIRED_PROPERTY, m_settings->IsPairedFilter));
-    if (m_settings->HasIsPrimaryAlignmentFilter)
+    }
+    if (m_settings->HasIsPrimaryAlignmentFilter) {
         propertyTokens.insert(
             make_pair(ISPRIMARYALIGNMENT_PROPERTY, m_settings->IsPrimaryAlignmentFilter));
-    if (m_settings->HasIsProperPairFilter)
+    }
+    if (m_settings->HasIsProperPairFilter) {
         propertyTokens.insert(make_pair(ISPROPERPAIR_PROPERTY, m_settings->IsProperPairFilter));
-    if (m_settings->HasIsReverseStrandFilter)
+    }
+    if (m_settings->HasIsReverseStrandFilter) {
         propertyTokens.insert(
             make_pair(ISREVERSESTRAND_PROPERTY, m_settings->IsReverseStrandFilter));
-    if (m_settings->HasIsSecondMateFilter)
+    }
+    if (m_settings->HasIsSecondMateFilter) {
         propertyTokens.insert(make_pair(ISSECONDMATE_PROPERTY, m_settings->IsSecondMateFilter));
-    if (m_settings->HasIsSingletonFilter)
+    }
+    if (m_settings->HasIsSingletonFilter) {
         propertyTokens.insert(make_pair(ISSINGLETON_PROPERTY, m_settings->IsSingletonFilter));
-    if (m_settings->HasLengthFilter)
+    }
+    if (m_settings->HasLengthFilter) {
         propertyTokens.insert(make_pair(LENGTH_PROPERTY, m_settings->LengthFilter));
-    if (m_settings->HasMapQualityFilter)
+    }
+    if (m_settings->HasMapQualityFilter) {
         propertyTokens.insert(make_pair(MAPQUALITY_PROPERTY, m_settings->MapQualityFilter));
-    if (m_settings->HasNameFilter)
+    }
+    if (m_settings->HasNameFilter) {
         propertyTokens.insert(make_pair(NAME_PROPERTY, m_settings->NameFilter));
-    if (m_settings->HasQueryBasesFilter)
+    }
+    if (m_settings->HasQueryBasesFilter) {
         propertyTokens.insert(make_pair(QUERYBASES_PROPERTY, m_settings->QueryBasesFilter));
-    if (m_settings->HasTagFilter)
+    }
+    if (m_settings->HasTagFilter) {
         propertyTokens.insert(make_pair(TAG_PROPERTY, m_settings->TagFilter));
+    }
 
     // send add these properties to filter set "COMMAND_LINE"
     return AddPropertyTokensToFilter(CMD, propertyTokens);
@@ -662,8 +695,9 @@ bool FilterTool::FilterToolPrivate::ParseFilterObject(const std::string& filterN
 
         // if property defined in filter, add to token list
         propertyValue = filterObject.get(propertyName, null);
-        if (propertyValue != null)
+        if (propertyValue != null) {
             propertyTokens.insert(make_pair(propertyName, propertyValue.asString()));
+        }
     }
 
     // add this filter to engin
@@ -712,10 +746,11 @@ bool FilterTool::FilterToolPrivate::ParseScript()
 
             // if id tag supplied
             const Json::Value id = filter["id"];
-            if (!id.isNull()) filterName = id.asString();
+            if (!id.isNull()) {
+                filterName = id.asString();
 
-            // use array index
-            else {
+                // use array index
+            } else {
                 std::stringstream convert;
                 convert << filterIndex;
                 filterName = convert.str();
@@ -729,7 +764,9 @@ bool FilterTool::FilterToolPrivate::ParseScript()
         // otherwise, use filter engine's default rule behavior
         std::string ruleString;
         const Json::Value rule = root["rule"];
-        if (rule.isString()) ruleString = rule.asString();
+        if (rule.isString()) {
+            ruleString = rule.asString();
+        }
         m_filterEngine.setRule(ruleString);
 
         // return success/fail
@@ -738,8 +775,9 @@ bool FilterTool::FilterToolPrivate::ParseScript()
 
     // otherwise, root is the only filter (just contains properties)
     // create & parse filter named "ROOT"
-    else
+    else {
         success = ParseFilterObject("ROOT", root);
+    }
 
     // return success/failure
     return success;
@@ -749,8 +787,9 @@ bool FilterTool::FilterToolPrivate::Run()
 {
 
     // set to default input if none provided
-    if (!m_settings->HasInput && !m_settings->HasInputFilelist)
+    if (!m_settings->HasInput && !m_settings->HasInputFilelist) {
         m_settings->InputFiles.push_back(Options::StandardIn());
+    }
 
     // add files in the filelist to the input file list
     if (m_settings->HasInputFilelist) {
@@ -763,13 +802,16 @@ bool FilterTool::FilterToolPrivate::Run()
         }
 
         std::string line;
-        while (std::getline(filelist, line))
+        while (std::getline(filelist, line)) {
             m_settings->InputFiles.push_back(line);
+        }
     }
 
     // initialize defined properties & user-specified filters
     // quit if failed
-    if (!SetupFilters()) return false;
+    if (!SetupFilters()) {
+        return false;
+    }
 
     // open reader without index
     BamMultiReader reader;
@@ -786,7 +828,9 @@ bool FilterTool::FilterToolPrivate::Run()
     bool writeUncompressed =
         (m_settings->OutputFilename == Options::StandardOut() && !m_settings->IsForceCompression);
     BamWriter::CompressionMode compressionMode = BamWriter::Compressed;
-    if (writeUncompressed) compressionMode = BamWriter::Uncompressed;
+    if (writeUncompressed) {
+        compressionMode = BamWriter::Uncompressed;
+    }
 
     // open BamWriter
     BamWriter writer;
@@ -802,7 +846,9 @@ bool FilterTool::FilterToolPrivate::Run()
     BamAlignment al;
     if (!m_settings->HasRegion) {
         while (reader.GetNextAlignment(al)) {
-            if (CheckAlignment(al)) writer.SaveAlignment(al);
+            if (CheckAlignment(al)) {
+                writer.SaveAlignment(al);
+            }
         }
     }
 
@@ -830,8 +876,11 @@ bool FilterTool::FilterToolPrivate::Run()
                 }
 
                 // everything checks out, just iterate through specified region, filtering alignments
-                while (reader.GetNextAlignment(al))
-                    if (CheckAlignment(al)) writer.SaveAlignment(al);
+                while (reader.GetNextAlignment(al)) {
+                    if (CheckAlignment(al)) {
+                        writer.SaveAlignment(al);
+                    }
+                }
             }
 
             // no index data available, we have to iterate through until we
@@ -841,7 +890,9 @@ bool FilterTool::FilterToolPrivate::Run()
                     if ((al.RefID >= region.LeftRefID) &&
                         ((al.Position + al.Length) >= region.LeftPosition) &&
                         (al.RefID <= region.RightRefID) && (al.Position <= region.RightPosition)) {
-                        if (CheckAlignment(al)) writer.SaveAlignment(al);
+                        if (CheckAlignment(al)) {
+                            writer.SaveAlignment(al);
+                        }
                     }
                 }
             }
@@ -872,11 +923,13 @@ bool FilterTool::FilterToolPrivate::SetupFilters()
     InitProperties();
 
     // parse script for filter rules, if given
-    if (m_settings->HasScript) return ParseScript();
+    if (m_settings->HasScript) {
+        return ParseScript();
 
-    // otherwise check command line for filters
-    else
+        // otherwise check command line for filters
+    } else {
         return ParseCommandLine();
+    }
 }
 
 // ---------------------------------------------
@@ -1037,8 +1090,9 @@ int FilterTool::Run(int argc, char* argv[])
     m_impl = new FilterToolPrivate(m_settings);
 
     // run FilterTool, return success/fail
-    if (m_impl->Run())
+    if (m_impl->Run()) {
         return 0;
-    else
+    } else {
         return 1;
+    }
 }

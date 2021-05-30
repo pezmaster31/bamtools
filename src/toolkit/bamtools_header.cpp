@@ -62,8 +62,9 @@ bool HeaderTool::HeaderToolPrivate::Run()
 {
 
     // set to default input if none provided
-    if (!m_settings->HasInput && !m_settings->HasInputFilelist)
+    if (!m_settings->HasInput && !m_settings->HasInputFilelist) {
         m_settings->InputFiles.push_back(Options::StandardIn());
+    }
 
     // add files in the filelist to the input file list
     if (m_settings->HasInputFilelist) {
@@ -76,8 +77,9 @@ bool HeaderTool::HeaderToolPrivate::Run()
         }
 
         std::string line;
-        while (std::getline(filelist, line))
+        while (std::getline(filelist, line)) {
             m_settings->InputFiles.push_back(line);
+        }
     }
 
     // attemp to open BAM files
@@ -143,8 +145,9 @@ int HeaderTool::Run(int argc, char* argv[])
     m_impl = new HeaderToolPrivate(m_settings);
 
     // run HeaderTool, return success/fail
-    if (m_impl->Run())
+    if (m_impl->Run()) {
         return 0;
-    else
+    } else {
         return 1;
+    }
 }

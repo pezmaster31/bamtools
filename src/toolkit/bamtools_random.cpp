@@ -99,8 +99,9 @@ bool RandomTool::RandomToolPrivate::Run()
 {
 
     // set to default stdin if no input files provided
-    if (!m_settings->HasInput && !m_settings->HasInputFilelist)
+    if (!m_settings->HasInput && !m_settings->HasInputFilelist) {
         m_settings->InputFiles.push_back(Options::StandardIn());
+    }
 
     // add files in the filelist to the input file list
     if (m_settings->HasInputFilelist) {
@@ -113,8 +114,9 @@ bool RandomTool::RandomToolPrivate::Run()
         }
 
         std::string line;
-        while (std::getline(filelist, line))
+        while (std::getline(filelist, line)) {
             m_settings->InputFiles.push_back(line);
+        }
     }
 
     // open our reader
@@ -150,7 +152,9 @@ bool RandomTool::RandomToolPrivate::Run()
     bool writeUncompressed =
         (m_settings->OutputFilename == Options::StandardOut() && !m_settings->IsForceCompression);
     BamWriter::CompressionMode compressionMode = BamWriter::Compressed;
-    if (writeUncompressed) compressionMode = BamWriter::Uncompressed;
+    if (writeUncompressed) {
+        compressionMode = BamWriter::Uncompressed;
+    }
 
     // open BamWriter
     BamWriter writer;
@@ -177,10 +181,11 @@ bool RandomTool::RandomToolPrivate::Run()
     }
 
     // seed our random number generator
-    if (m_settings->HasRandomNumberSeed)
+    if (m_settings->HasRandomNumberSeed) {
         std::srand(m_settings->RandomNumberSeed);
-    else
+    } else {
         std::srand(time(NULL));
+    }
 
     // grab random alignments
     BamAlignment al;
@@ -307,8 +312,9 @@ int RandomTool::Run(int argc, char* argv[])
     m_impl = new RandomToolPrivate(m_settings);
 
     // run RandomTool, return success/fail
-    if (m_impl->Run())
+    if (m_impl->Run()) {
         return 0;
-    else
+    } else {
         return 1;
+    }
 }

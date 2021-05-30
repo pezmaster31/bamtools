@@ -32,7 +32,9 @@ void BamRandomAccessController::AdjustRegion(const int& referenceCount)
 {
 
     // skip if no index available
-    if (m_index == 0) return;
+    if (m_index == 0) {
+        return;
+    }
 
     // see if any references in region have alignments
     m_hasAlignmentsInRegion = false;
@@ -41,12 +43,16 @@ void BamRandomAccessController::AdjustRegion(const int& referenceCount)
         (m_region.isRightBoundSpecified() ? m_region.RightRefID : referenceCount - 1);
     while (currentId <= rightBoundRefId) {
         m_hasAlignmentsInRegion = m_index->HasAlignments(currentId);
-        if (m_hasAlignmentsInRegion) break;
+        if (m_hasAlignmentsInRegion) {
+            break;
+        }
         ++currentId;
     }
 
     // if no data found on any reference in region
-    if (!m_hasAlignmentsInRegion) return;
+    if (!m_hasAlignmentsInRegion) {
+        return;
+    }
 
     // if left bound of desired region had no data, use first reference that had data
     // otherwise, leave requested region as-is
@@ -62,16 +68,21 @@ BamRandomAccessController::RegionState BamRandomAccessController::AlignmentState
 {
 
     // if region has no left bound at all
-    if (!m_region.isLeftBoundSpecified()) return OverlapsRegion;
+    if (!m_region.isLeftBoundSpecified()) {
+        return OverlapsRegion;
+    }
 
     // handle unmapped reads - return AFTER region to halt processing
-    if (alignment.RefID == -1) return AfterRegion;
+    if (alignment.RefID == -1) {
+        return AfterRegion;
+    }
 
     // if alignment is on any reference before left bound reference
-    if (alignment.RefID < m_region.LeftRefID) return BeforeRegion;
+    if (alignment.RefID < m_region.LeftRefID) {
+        return BeforeRegion;
 
-    // if alignment is on left bound reference
-    else if (alignment.RefID == m_region.LeftRefID) {
+        // if alignment is on left bound reference
+    } else if (alignment.RefID == m_region.LeftRefID) {
 
         // if alignment starts at or after left bound position
         if (alignment.Position >= m_region.LeftPosition) {
@@ -80,22 +91,24 @@ BamRandomAccessController::RegionState BamRandomAccessController::AlignmentState
                 m_region.LeftRefID ==
                     m_region.RightRefID &&  // left & right bounds on same reference AND
                 alignment.Position >=
-                    m_region.RightPosition)  // alignment starts on or after right bound position
+                    m_region.RightPosition) {  // alignment starts on or after right bound position
                 return AfterRegion;
 
-            // otherwise, alignment overlaps region
-            else
+                // otherwise, alignment overlaps region
+            } else {
                 return OverlapsRegion;
+            }
         }
 
         // alignment starts before left bound position
         else {
 
             // if alignment overlaps left bound position
-            if (alignment.GetEndPosition() > m_region.LeftPosition)
+            if (alignment.GetEndPosition() > m_region.LeftPosition) {
                 return OverlapsRegion;
-            else
+            } else {
                 return BeforeRegion;
+            }
         }
     }
 
@@ -106,26 +119,29 @@ BamRandomAccessController::RegionState BamRandomAccessController::AlignmentState
         if (m_region.isRightBoundSpecified()) {
 
             // alignment is on any reference between boundaries
-            if (alignment.RefID < m_region.RightRefID) return OverlapsRegion;
+            if (alignment.RefID < m_region.RightRefID) {
+                return OverlapsRegion;
 
-            // alignment is on any reference after right boundary
-            else if (alignment.RefID > m_region.RightRefID)
+                // alignment is on any reference after right boundary
+            } else if (alignment.RefID > m_region.RightRefID) {
                 return AfterRegion;
 
-            // alignment is on right bound reference
-            else {
+                // alignment is on right bound reference
+            } else {
 
                 // if alignment starts before right bound position
-                if (alignment.Position < m_region.RightPosition)
+                if (alignment.Position < m_region.RightPosition) {
                     return OverlapsRegion;
-                else
+                } else {
                     return AfterRegion;
+                }
             }
         }
 
         // otherwise, alignment starts after left bound and there is no right bound given
-        else
+        else {
             return OverlapsRegion;
+        }
     }
 }
 
@@ -260,7 +276,9 @@ void BamRandomAccessController::SetErrorString(const std::string& where, const s
 
 void BamRandomAccessController::SetIndex(BamIndex* index)
 {
-    if (m_index) ClearIndex();
+    if (m_index) {
+        ClearIndex();
+    }
     m_index = index;
 }
 
@@ -283,7 +301,9 @@ bool BamRandomAccessController::SetRegion(const BamRegion& region, const int& re
     //   * Not an error, but future attempts to access alignments in this region will not return data
     //     Returning true is useful in a BamMultiReader setting where some BAM files may
     //     lack alignments in regions where other files still have data available.
-    if (!m_hasAlignmentsInRegion) return true;
+    if (!m_hasAlignmentsInRegion) {
+        return true;
+    }
 
     // return success/failure of jump to specified region,
     //
@@ -297,6 +317,7 @@ bool BamRandomAccessController::SetRegion(const BamRegion& region, const int& re
         const std::string message = std::string("could not set region\n\t") + indexError;
         SetErrorString("BamRandomAccessController::OpenIndex", message);
         return false;
-    } else
+    } else {
         return true;
+    }
 }

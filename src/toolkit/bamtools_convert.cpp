@@ -453,7 +453,7 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
         case (Constants::BAM_TAG_TYPE_INT8):
             for (i = 0; i < arrayLength && index + sizeof(int8_t) <= tagDataLength;
                  i++, index += sizeof(int8_t)) {
-                if (i > 0) m_out << ",";
+                if (i > 0) m_out << ',';
                 m_out << int(static_cast<int8_t>(tagData[index]));
             }
             break;
@@ -461,7 +461,7 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
         case (Constants::BAM_TAG_TYPE_UINT8):
             for (i = 0; i < arrayLength && index + sizeof(uint8_t) <= tagDataLength;
                  i++, index += sizeof(uint8_t)) {
-                if (i > 0) m_out << ",";
+                if (i > 0) m_out << ',';
                 m_out << int(static_cast<uint8_t>(tagData[index]));
             }
             break;
@@ -469,7 +469,7 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
         case (Constants::BAM_TAG_TYPE_INT16):
             for (i = 0; i < arrayLength && index + sizeof(int16_t) <= tagDataLength;
                  i++, index += sizeof(int16_t)) {
-                if (i > 0) m_out << ",";
+                if (i > 0) m_out << ',';
                 m_out << BamTools::UnpackSignedShort(&tagData[index]);
             }
             break;
@@ -477,7 +477,7 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
         case (Constants::BAM_TAG_TYPE_UINT16):
             for (i = 0; i < arrayLength && index + sizeof(uint16_t) <= tagDataLength;
                  i++, index += sizeof(uint16_t)) {
-                if (i > 0) m_out << ",";
+                if (i > 0) m_out << ',';
                 m_out << BamTools::UnpackUnsignedShort(&tagData[index]);
             }
             break;
@@ -485,7 +485,7 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
         case (Constants::BAM_TAG_TYPE_INT32):
             for (i = 0; i < arrayLength && index + sizeof(int32_t) <= tagDataLength;
                  i++, index += sizeof(int32_t)) {
-                if (i > 0) m_out << ",";
+                if (i > 0) m_out << ',';
                 m_out << BamTools::UnpackSignedInt(&tagData[index]);
             }
             break;
@@ -493,7 +493,7 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
         case (Constants::BAM_TAG_TYPE_UINT32):
             for (i = 0; i < arrayLength && index + sizeof(uint32_t) <= tagDataLength;
                  i++, index += sizeof(uint32_t)) {
-                if (i > 0) m_out << ",";
+                if (i > 0) m_out << ',';
                 m_out << BamTools::UnpackUnsignedInt(&tagData[index]);
             }
             break;
@@ -501,7 +501,7 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
         case (Constants::BAM_TAG_TYPE_FLOAT):
             for (i = 0; i < arrayLength && index + sizeof(float) <= tagDataLength;
                  i++, index += sizeof(float)) {
-                if (i > 0) m_out << ",";
+                if (i > 0) m_out << ',';
                 m_out << BamTools::UnpackFloat(&tagData[index]);
             }
             break;

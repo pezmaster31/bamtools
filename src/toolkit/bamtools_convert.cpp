@@ -19,6 +19,7 @@ using namespace BamTools;
 
 #include <cctype>
 #include <cstddef>
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -111,6 +112,22 @@ struct ConvertTool::ConvertSettings
     {}
 };
 
+class BadDataException : public std::exception
+{
+public:
+    BadDataException(const std::string& message)
+        : m_errorString(message)
+    {}
+
+    const char* what() const noexcept
+    {
+        return m_errorString.c_str();
+    }
+
+private:
+    std::string m_errorString;
+};
+
 // ---------------------------------------------
 // ConvertToolPrivate implementation
 
@@ -136,6 +153,7 @@ private:
     void PrintJson(const BamAlignment& a);
     void PrintSam(const BamAlignment& a);
     void PrintYaml(const BamAlignment& a);
+    std::size_t PrintBArrayValues(const char* tagData, std::size_t tagDataLength);
 
     // special case - uses the PileupEngine
     bool RunPileupConversion(BamMultiReader* reader);
@@ -277,13 +295,19 @@ bool ConvertTool::ConvertToolPrivate::Run()
             if ((m_settings->Format == FORMAT_SAM) && !m_settings->IsOmittingSamHeader)
                 m_out << reader.GetHeaderText();
 
-            // iterate through file, doing conversion
-            BamAlignment a;
-            while (reader.GetNextAlignment(a))
-                (this->*pFunction)(a);
+            try {
+                // iterate through file, doing conversion
+                BamAlignment a;
+                while (reader.GetNextAlignment(a))
+                    (this->*pFunction)(a);
 
-            // set flag for successful conversion
-            convertedOk = true;
+                // set flag for successful conversion
+                convertedOk = true;
+            } catch (const BadDataException& e) {
+                std::cerr << "Conversion failed : " << e.what() << '\n';
+
+                convertedOk = false;
+            }
         }
     }
 
@@ -381,6 +405,112 @@ void ConvertTool::ConvertToolPrivate::PrintFastq(const BamAlignment& a)
           << qualities << std::endl;
 }
 
+// Print out the list of values in a B-type tag.
+// tagData should point to the sub-type character (after the B).
+// tagDataLength is the number of bytes remaining in the buffer.
+// Returns the number of bytes consumed.
+std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagData,
+                                                               std::size_t tagDataLength)
+{
+    // Need at least 5 bytes for type and array length
+    if (tagDataLength < 5) throw BadDataException("Incomplete array tag data");
+
+    if (m_settings->Format == FORMAT_SAM) {
+        // Print array type letter
+        switch (tagData[0]) {
+            case (Constants::BAM_TAG_TYPE_INT8):
+                m_out << "c,";
+                break;
+            case (Constants::BAM_TAG_TYPE_UINT8):
+                m_out << "C,";
+                break;
+            case (Constants::BAM_TAG_TYPE_INT16):
+                m_out << "s,";
+                break;
+            case (Constants::BAM_TAG_TYPE_UINT16):
+                m_out << "S,";
+                break;
+            case (Constants::BAM_TAG_TYPE_INT32):
+                m_out << "i,";
+                break;
+            case (Constants::BAM_TAG_TYPE_UINT32):
+                m_out << "I,";
+                break;
+            case (Constants::BAM_TAG_TYPE_FLOAT):
+                m_out << "f,";
+                break;
+            default:
+                throw BadDataException(std::string("Unknown B array type: ") + tagData[0]);
+        }
+    }
+
+    uint32_t arrayLength = BamTools::UnpackUnsignedInt(&tagData[1]);
+    std::size_t index = 1 + sizeof(uint32_t);
+    uint32_t i = 0;
+
+    // Print array values.
+    switch (tagData[0]) {
+        case (Constants::BAM_TAG_TYPE_INT8):
+            for (i = 0; i < arrayLength && index + sizeof(int8_t) <= tagDataLength;
+                 i++, index += sizeof(int8_t)) {
+                if (i > 0) m_out << ",";
+                m_out << int(static_cast<int8_t>(tagData[index]));
+            }
+            break;
+
+        case (Constants::BAM_TAG_TYPE_UINT8):
+            for (i = 0; i < arrayLength && index + sizeof(uint8_t) <= tagDataLength;
+                 i++, index += sizeof(uint8_t)) {
+                if (i > 0) m_out << ",";
+                m_out << int(static_cast<uint8_t>(tagData[index]));
+            }
+            break;
+
+        case (Constants::BAM_TAG_TYPE_INT16):
+            for (i = 0; i < arrayLength && index + sizeof(int16_t) <= tagDataLength;
+                 i++, index += sizeof(int16_t)) {
+                if (i > 0) m_out << ",";
+                m_out << BamTools::UnpackSignedShort(&tagData[index]);
+            }
+            break;
+
+        case (Constants::BAM_TAG_TYPE_UINT16):
+            for (i = 0; i < arrayLength && index + sizeof(uint16_t) <= tagDataLength;
+                 i++, index += sizeof(uint16_t)) {
+                if (i > 0) m_out << ",";
+                m_out << BamTools::UnpackUnsignedShort(&tagData[index]);
+            }
+            break;
+
+        case (Constants::BAM_TAG_TYPE_INT32):
+            for (i = 0; i < arrayLength && index + sizeof(int32_t) <= tagDataLength;
+                 i++, index += sizeof(int32_t)) {
+                if (i > 0) m_out << ",";
+                m_out << BamTools::UnpackSignedInt(&tagData[index]);
+            }
+            break;
+
+        case (Constants::BAM_TAG_TYPE_UINT32):
+            for (i = 0; i < arrayLength && index + sizeof(uint32_t) <= tagDataLength;
+                 i++, index += sizeof(uint32_t)) {
+                if (i > 0) m_out << ",";
+                m_out << BamTools::UnpackUnsignedInt(&tagData[index]);
+            }
+            break;
+
+        case (Constants::BAM_TAG_TYPE_FLOAT):
+            for (i = 0; i < arrayLength && index + sizeof(float) <= tagDataLength;
+                 i++, index += sizeof(float)) {
+                if (i > 0) m_out << ",";
+                m_out << BamTools::UnpackFloat(&tagData[index]);
+            }
+            break;
+    }
+    if (i < arrayLength) throw BadDataException("Incomplete array tag data");
+
+    return index;
+}
+
 // print BamAlignment in JSON format
 void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
 {
@@ -443,6 +573,11 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
         m_out << "\"tags\":{";
 
         while (index < tagDataLength) {
+            // Need at least four bytes for a tag:
+            //    two for name
+            //    one for type
+            //    at least one for value
+            if (tagDataLength - index < 4) throw BadDataException("Incomplete tag data");
 
             if (index > 0) m_out << ',';
 
@@ -472,26 +607,36 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
                     break;
 
                 case (Constants::BAM_TAG_TYPE_INT16):
+                    if (tagDataLength - index < sizeof(int16_t))
+                        throw BadDataException("Incomplete tag data");
                     m_out << BamTools::UnpackSignedShort(&tagData[index]);
                     index += sizeof(int16_t);
                     break;
 
                 case (Constants::BAM_TAG_TYPE_UINT16):
+                    if (tagDataLength - index < sizeof(uint16_t))
+                        throw BadDataException("Incomplete tag data");
                     m_out << BamTools::UnpackUnsignedShort(&tagData[index]);
                     index += sizeof(uint16_t);
                     break;
 
                 case (Constants::BAM_TAG_TYPE_INT32):
+                    if (tagDataLength - index < sizeof(int32_t))
+                        throw BadDataException("Incomplete tag data");
                     m_out << BamTools::UnpackSignedInt(&tagData[index]);
                     index += sizeof(int32_t);
                     break;
 
                 case (Constants::BAM_TAG_TYPE_UINT32):
+                    if (tagDataLength - index < sizeof(uint32_t))
+                        throw BadDataException("Incomplete tag data");
                     m_out << BamTools::UnpackUnsignedInt(&tagData[index]);
                     index += sizeof(uint32_t);
                     break;
 
                 case (Constants::BAM_TAG_TYPE_FLOAT):
+                    if (tagDataLength - index < sizeof(float))
+                        throw BadDataException("Incomplete tag data");
                     m_out << BamTools::UnpackFloat(&tagData[index]);
                     index += sizeof(float);
                     break;
@@ -509,9 +654,18 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
                     m_out << '"';
                     ++index;
                     break;
+
+                case (Constants::BAM_TAG_TYPE_ARRAY):
+                    m_out << '[';
+                    index += PrintBArrayValues(tagData + index, tagDataLength - index);
+                    m_out << ']';
+                    break;
+
+                default:
+                    throw BadDataException(std::string("Unknown tag type: ") + tagData[0]);
             }
 
-            if (tagData[index] == '\0') break;
+            if (index >= tagDataLength || tagData[index] == '\0') break;
         }
 
         m_out << '}';
@@ -582,6 +736,12 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a)
     std::size_t index = 0;
     while (index < tagDataLength) {
 
+        // Need at least four bytes for a tag:
+        //    two for name
+        //    one for type
+        //    at least one for value
+        if (tagDataLength - index < 4) throw BadDataException("Incomplete tag data");
+
         // write tag name
         std::string tagName = a.TagData.substr(index, 2);
         m_out << '\t' << tagName << ':';
@@ -609,26 +769,36 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a)
                 break;
 
             case (Constants::BAM_TAG_TYPE_INT16):
+                if (tagDataLength - index < sizeof(int16_t))
+                    throw BadDataException("Incomplete tag data");
                 m_out << "i:" << BamTools::UnpackSignedShort(&tagData[index]);
                 index += sizeof(int16_t);
                 break;
 
             case (Constants::BAM_TAG_TYPE_UINT16):
+                if (tagDataLength - index < sizeof(uint16_t))
+                    throw BadDataException("Incomplete tag data");
                 m_out << "i:" << BamTools::UnpackUnsignedShort(&tagData[index]);
                 index += sizeof(uint16_t);
                 break;
 
             case (Constants::BAM_TAG_TYPE_INT32):
+                if (tagDataLength - index < sizeof(int32_t))
+                    throw BadDataException("Incomplete tag data");
                 m_out << "i:" << BamTools::UnpackSignedInt(&tagData[index]);
                 index += sizeof(int32_t);
                 break;
 
             case (Constants::BAM_TAG_TYPE_UINT32):
+                if (tagDataLength - index < sizeof(uint32_t))
+                    throw BadDataException("Incomplete tag data");
                 m_out << "i:" << BamTools::UnpackUnsignedInt(&tagData[index]);
                 index += sizeof(uint32_t);
                 break;
 
             case (Constants::BAM_TAG_TYPE_FLOAT):
+                if (tagDataLength - index < sizeof(float))
+                    throw BadDataException("Incomplete tag data");
                 m_out << "f:" << BamTools::UnpackFloat(&tagData[index]);
                 index += sizeof(float);
                 break;
@@ -642,9 +812,17 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a)
                 }
                 ++index;
                 break;
+
+            case (Constants::BAM_TAG_TYPE_ARRAY):
+                m_out << "B:";
+                index += PrintBArrayValues(tagData + index, tagDataLength - index);
+                break;
+
+            default:
+                throw BadDataException(std::string("Unknown tag type: ") + tagData[0]);
         }
 
-        if (tagData[index] == '\0') break;
+        if (index >= tagDataLength || tagData[index] == '\0') break;
     }
 
     m_out << std::endl;

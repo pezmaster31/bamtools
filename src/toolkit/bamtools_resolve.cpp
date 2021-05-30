@@ -165,15 +165,31 @@ uint16_t CalculateModelType(const BamAlignment& al)
 
     // determine 'model type'
     if (m1_begin < m2_begin) {
-        if (!m1_isReverseStrand && !m2_isReverseStrand) return 0;  // ID: 1
-        if (!m1_isReverseStrand && m2_isReverseStrand) return 1;   // ID: 2
-        if (m1_isReverseStrand && !m2_isReverseStrand) return 2;   // ID: 3
-        if (m1_isReverseStrand && m2_isReverseStrand) return 3;    // ID: 4
+        if (!m1_isReverseStrand && !m2_isReverseStrand) {
+            return 0;  // ID: 1
+        }
+        if (!m1_isReverseStrand && m2_isReverseStrand) {
+            return 1;  // ID: 2
+        }
+        if (m1_isReverseStrand && !m2_isReverseStrand) {
+            return 2;  // ID: 3
+        }
+        if (m1_isReverseStrand && m2_isReverseStrand) {
+            return 3;  // ID: 4
+        }
     } else {
-        if (!m2_isReverseStrand && !m1_isReverseStrand) return 4;  // ID: 5
-        if (!m2_isReverseStrand && m1_isReverseStrand) return 5;   // ID: 6
-        if (m2_isReverseStrand && !m1_isReverseStrand) return 6;   // ID: 7
-        if (m2_isReverseStrand && m1_isReverseStrand) return 7;    // ID: 8
+        if (!m2_isReverseStrand && !m1_isReverseStrand) {
+            return 4;  // ID: 5
+        }
+        if (!m2_isReverseStrand && m1_isReverseStrand) {
+            return 5;  // ID: 6
+        }
+        if (m2_isReverseStrand && !m1_isReverseStrand) {
+            return 6;  // ID: 7
+        }
+        if (m2_isReverseStrand && m1_isReverseStrand) {
+            return 7;  // ID: 8
+        }
     }
 
     // unknown model
@@ -228,8 +244,9 @@ ReadGroupResolver::ReadGroupResolver()
 {
     // pre-allocate space for 8 models
     Models.reserve(NUM_MODELS);
-    for (uint16_t i = 0; i < NUM_MODELS; ++i)
+    for (uint16_t i = 0; i < NUM_MODELS; ++i) {
         Models.push_back(ModelType(i + 1));
+    }
 }
 
 bool ReadGroupResolver::IsValidInsertSize(const BamAlignment& al) const
@@ -258,7 +275,9 @@ void ReadGroupResolver::DetermineTopModels(const std::string& readGroupName)
     // make sure that the 2 most common models are some threshold more common
     // than the remaining models
     const unsigned int activeModelCountSum = Models[0].size() + Models[1].size();
-    if (activeModelCountSum == 0) return;  // skip if no data in this read group
+    if (activeModelCountSum == 0) {
+        return;  // skip if no data in this read group
+    }
     const unsigned int unusedModelCountSum = Models[2].size() + Models[3].size() +
                                              Models[4].size() + Models[5].size() +
                                              Models[6].size() + Models[7].size();
@@ -303,8 +322,9 @@ void ReadGroupResolver::DetermineTopModels(const std::string& readGroupName)
     if (fragments.empty()) {
         HasData = false;
         return;
-    } else
+    } else {
         HasData = true;
+    }
 
     // calculate & store the min,median, & max fragment lengths
     const unsigned int numFragmentLengths = fragments.size();
@@ -411,7 +431,9 @@ private:
 
 void ResolveTool::ReadNamesFileReader::Close()
 {
-    if (m_stream.is_open()) m_stream.close();
+    if (m_stream.is_open()) {
+        m_stream.close();
+    }
 }
 
 bool ResolveTool::ReadNamesFileReader::Open(const std::string& filename)
@@ -429,7 +451,9 @@ bool ResolveTool::ReadNamesFileReader::Read(std::map<std::string, ReadGroupResol
 {
 
     // up-front sanity check
-    if (!m_stream.is_open()) return false;
+    if (!m_stream.is_open()) {
+        return false;
+    }
 
     // parse read names file
     std::string line;
@@ -439,15 +463,21 @@ bool ResolveTool::ReadNamesFileReader::Read(std::map<std::string, ReadGroupResol
     while (std::getline(m_stream, line)) {
 
         // skip if empty line
-        if (line.empty()) continue;
+        if (line.empty()) {
+            continue;
+        }
 
         // split line on '\t'
         fields = Utilities::Split(line, TAB_CHAR);
-        if (fields.size() != 2) continue;
+        if (fields.size() != 2) {
+            continue;
+        }
 
         // look up resolver for read group
         rgIter = readGroups.find(fields[0]);
-        if (rgIter == rgEnd) return false;
+        if (rgIter == rgEnd) {
+            return false;
+        }
         ReadGroupResolver& resolver = (*rgIter).second;
 
         // store read name with resolver
@@ -484,7 +514,9 @@ private:
 
 void ResolveTool::ReadNamesFileWriter::Close()
 {
-    if (m_stream.is_open()) m_stream.close();
+    if (m_stream.is_open()) {
+        m_stream.close();
+    }
 }
 
 bool ResolveTool::ReadNamesFileWriter::Open(const std::string& filename)
@@ -550,7 +582,9 @@ private:
 
 void ResolveTool::StatsFileReader::Close()
 {
-    if (m_stream.is_open()) m_stream.close();
+    if (m_stream.is_open()) {
+        m_stream.close();
+    }
 }
 
 bool ResolveTool::StatsFileReader::IsComment(const std::string& line) const
@@ -561,7 +595,9 @@ bool ResolveTool::StatsFileReader::IsComment(const std::string& line) const
 
 bool ResolveTool::StatsFileReader::IsWhitespace(const std::string& line) const
 {
-    if (line.empty()) return true;
+    if (line.empty()) {
+        return true;
+    }
     return std::isspace(line.at(0));
 }
 
@@ -587,7 +623,9 @@ bool ResolveTool::StatsFileReader::ParseOptionLine(const std::string& line,
 {
     // split line into option, value
     std::vector<std::string> fields = Utilities::Split(line, EQUAL_CHAR);
-    if (fields.size() != NUM_OPTIONS_FIELDS) return false;
+    if (fields.size() != NUM_OPTIONS_FIELDS) {
+        return false;
+    }
     const std::string& option = fields.at(0);
     std::stringstream value(fields.at(1));
 
@@ -632,7 +670,9 @@ bool ResolveTool::StatsFileReader::ParseReadGroupLine(
 {
     // split read group data in to fields
     std::vector<std::string> fields = Utilities::Split(line, WHITESPACE_CHARS);
-    if (fields.size() != NUM_READGROUPS_FIELDS) return false;
+    if (fields.size() != NUM_READGROUPS_FIELDS) {
+        return false;
+    }
 
     // retrieve RG name
     const std::string& name = fields.at(0);
@@ -672,7 +712,9 @@ bool ResolveTool::StatsFileReader::Read(ResolveTool::ResolveSettings* settings,
                                         std::map<std::string, ReadGroupResolver>& readGroups)
 {
     // up-front sanity checks
-    if (!m_stream.is_open() || settings == 0) return false;
+    if (!m_stream.is_open() || settings == 0) {
+        return false;
+    }
 
     // clear out read group data
     readGroups.clear();
@@ -687,27 +729,30 @@ bool ResolveTool::StatsFileReader::Read(ResolveTool::ResolveSettings* settings,
         bool foundError = false;
 
         // switch state on keyword found
-        if (Utilities::StartsWith(line, INPUT_TOKEN))
+        if (Utilities::StartsWith(line, INPUT_TOKEN)) {
             currentState = StatsFileReader::InInput;
-        else if (Utilities::StartsWith(line, OPTIONS_TOKEN))
+        } else if (Utilities::StartsWith(line, OPTIONS_TOKEN)) {
             currentState = StatsFileReader::InOptions;
-        else if (Utilities::StartsWith(line, READGROUPS_TOKEN))
+        } else if (Utilities::StartsWith(line, READGROUPS_TOKEN)) {
             currentState = StatsFileReader::InReadGroups;
 
-        // otherwise parse data line, depending on state
-        else {
-            if (currentState == StatsFileReader::InInput)
+            // otherwise parse data line, depending on state
+        } else {
+            if (currentState == StatsFileReader::InInput) {
                 foundError = !ParseInputLine(line);
-            else if (currentState == StatsFileReader::InOptions)
+            } else if (currentState == StatsFileReader::InOptions) {
                 foundError = !ParseOptionLine(line, settings);
-            else if (currentState == StatsFileReader::InReadGroups)
+            } else if (currentState == StatsFileReader::InReadGroups) {
                 foundError = !ParseReadGroupLine(line, readGroups);
-            else
+            } else {
                 foundError = true;
+            }
         }
 
         // break out if error found
-        if (foundError) return false;
+        if (foundError) {
+            return false;
+        }
 
         // get next line
         line = SkipCommentsAndWhitespace();
@@ -721,7 +766,9 @@ std::string ResolveTool::StatsFileReader::SkipCommentsAndWhitespace()
 {
     std::string line;
     do {
-        if (m_stream.eof()) return std::string();
+        if (m_stream.eof()) {
+            return std::string();
+        }
         std::getline(m_stream, line);
     } while (IsWhitespace(line) || IsComment(line));
     return line;
@@ -762,7 +809,9 @@ private:
 
 void ResolveTool::StatsFileWriter::Close()
 {
-    if (m_stream.is_open()) m_stream.close();
+    if (m_stream.is_open()) {
+        m_stream.close();
+    }
 }
 
 bool ResolveTool::StatsFileWriter::Open(const std::string& filename)
@@ -780,7 +829,9 @@ bool ResolveTool::StatsFileWriter::Write(ResolveTool::ResolveSettings* settings,
                                          const std::map<std::string, ReadGroupResolver>& readGroups)
 {
     // return failure if file not open
-    if (!m_stream.is_open()) return false;
+    if (!m_stream.is_open()) {
+        return false;
+    }
 
     // write stats file elements
     WriteHeader();
@@ -856,7 +907,9 @@ void ResolveTool::StatsFileWriter::WriteReadGroups(
         const ReadGroupResolver& resolver = (*rgIter).second;
 
         // skip if read group has no data
-        if (!resolver.HasData) continue;
+        if (!resolver.HasData) {
+            continue;
+        }
 
         // write read group data
         m_stream << name << TAB_CHAR << resolver.MedianFragmentLength << TAB_CHAR
@@ -911,87 +964,104 @@ bool ResolveTool::ResolveToolPrivate::CheckSettings(std::vector<std::string>& er
     if (m_settings->IsMakeStats) {
 
         // ensure mutex mode
-        if (m_settings->IsMarkPairs)
+        if (m_settings->IsMarkPairs) {
             errors.push_back(
                 "Cannot run in both -makeStats & -markPairs modes. Please select ONE.");
-        if (m_settings->IsTwoPass)
+        }
+        if (m_settings->IsTwoPass) {
             errors.push_back("Cannot run in both -makeStats & -twoPass modes. Please select ONE.");
+        }
 
         // error if output BAM options supplied
-        if (m_settings->HasOutputBamFile)
+        if (m_settings->HasOutputBamFile) {
             errors.push_back("Cannot use -out (output BAM file) in -makeStats mode.");
-        if (m_settings->IsForceCompression)
+        }
+        if (m_settings->IsForceCompression) {
             errors.push_back(
                 "Cannot use -forceCompression. No output BAM file is being generated.");
+        }
 
         // make sure required stats file supplied
-        if (!m_settings->HasStatsFile)
+        if (!m_settings->HasStatsFile) {
             errors.push_back(
                 "Output stats filename required for -makeStats mode. Please specify one using "
                 "-stats option.");
+        }
 
         // check for UseStats options
-        if (m_settings->HasForceMarkReadGroups)
+        if (m_settings->HasForceMarkReadGroups) {
             errors.push_back(
                 "Cannot use -forceMarkReadGroups. -markPairs options are DISABLED in -makeStats "
                 "mode.");
+        }
     }
 
     // if MarkPairs mode
     else if (m_settings->IsMarkPairs) {
 
         // ensure mutex mode
-        if (m_settings->IsMakeStats)
+        if (m_settings->IsMakeStats) {
             errors.push_back(
                 "Cannot run in both -makeStats & -markPairs modes. Please select ONE.");
-        if (m_settings->IsTwoPass)
+        }
+        if (m_settings->IsTwoPass) {
             errors.push_back("Cannot run in both -markPairs & -twoPass modes. Please select ONE.");
+        }
 
         // make sure required stats file supplied
-        if (!m_settings->HasStatsFile)
+        if (!m_settings->HasStatsFile) {
             errors.push_back(
                 "Input stats filename required for -markPairs mode. Please specify one using "
                 "-stats option.");
+        }
 
         // check for MakeStats options
-        if (m_settings->HasConfidenceInterval)
+        if (m_settings->HasConfidenceInterval) {
             errors.push_back("Cannot use -ci. -makeStats options are DISABLED is -markPairs mode.");
+        }
     }
 
     // if TwoPass mode
     else if (m_settings->IsTwoPass) {
 
         // ensure mutex mode
-        if (m_settings->IsMakeStats)
+        if (m_settings->IsMakeStats) {
             errors.push_back("Cannot run in both -makeStats & -twoPass modes. Please select ONE.");
-        if (m_settings->IsMarkPairs)
+        }
+        if (m_settings->IsMarkPairs) {
             errors.push_back("Cannot run in both -markPairs & -twoPass modes. Please select ONE.");
+        }
 
         // make sure input is file not stdin
-        if (!m_settings->HasInputBamFile || m_settings->InputBamFilename == Options::StandardIn())
+        if (!m_settings->HasInputBamFile || m_settings->InputBamFilename == Options::StandardIn()) {
             errors.push_back(
                 "Cannot run -twoPass mode with BAM data from stdin. Please specify existing file "
                 "using -in option.");
+        }
     }
 
     // no mode selected
-    else
+    else {
         errors.push_back(
             "No resolve mode specified. Please select ONE of the following: -makeStats, "
             "-markPairs, or -twoPass. See help for more info.");
+    }
 
     // boundary checks on values
     if (m_settings->HasConfidenceInterval) {
-        if (m_settings->ConfidenceInterval < 0.0 || m_settings->ConfidenceInterval > 1.0)
+        if (m_settings->ConfidenceInterval < 0.0 || m_settings->ConfidenceInterval > 1.0) {
             errors.push_back("Invalid confidence interval. Must be between 0 and 1");
+        }
     }
     if (m_settings->HasMinimumMapQuality) {
-        if (m_settings->MinimumMapQuality >= 256)
+        if (m_settings->MinimumMapQuality >= 256) {
             errors.push_back("Invalid minimum map quality. Must be between 0 and 255");
+        }
     }
     if (m_settings->HasUnusedModelThreshold) {
-        if (m_settings->UnusedModelThreshold < 0.0 || m_settings->UnusedModelThreshold > 1.0)
+        if (m_settings->UnusedModelThreshold < 0.0 || m_settings->UnusedModelThreshold > 1.0) {
             errors.push_back("Invalid unused model threshold. Must be between 0 and 1");
+        }
     }
 
     // return success if no errors found
@@ -1034,10 +1104,14 @@ bool ResolveTool::ResolveToolPrivate::MakeStats()
     while (bamReader.GetNextAlignmentCore(al)) {
 
         // skip if alignment is not paired, mapped, nor mate is mapped
-        if (!al.IsPaired() || !al.IsMapped() || !al.IsMateMapped()) continue;
+        if (!al.IsPaired() || !al.IsMapped() || !al.IsMateMapped()) {
+            continue;
+        }
 
         // skip if alignment & mate not on same reference sequence
-        if (al.RefID != al.MateRefID) continue;
+        if (al.RefID != al.MateRefID) {
+            continue;
+        }
 
         // flesh out the char data, so we can retrieve its read group ID
         al.BuildCharData();
@@ -1084,8 +1158,9 @@ bool ResolveTool::ResolveToolPrivate::MakeStats()
         }
 
         // if read name not found, store new entry
-        else
+        else {
             resolver.ReadNames.insert(std::make_pair(al.Name, isCurrentMateUnique));
+        }
     }
 
     // close files
@@ -1126,7 +1201,9 @@ bool ResolveTool::ResolveToolPrivate::ReadStatsFile()
 {
 
     // skip if no filename provided
-    if (m_settings->StatsFilename.empty()) return false;
+    if (m_settings->StatsFilename.empty()) {
+        return false;
+    }
 
     // attempt to open stats file
     ResolveTool::StatsFileReader statsReader;
@@ -1154,16 +1231,24 @@ void ResolveTool::ResolveToolPrivate::ResolveAlignment(BamAlignment& al)
     al.SetIsProperPair(false);
 
     // quit check if alignment is not from paired-end read
-    if (!al.IsPaired()) return;
+    if (!al.IsPaired()) {
+        return;
+    }
 
     // quit check if either alignment or its mate are unmapped
-    if (!al.IsMapped() || !al.IsMateMapped()) return;
+    if (!al.IsMapped() || !al.IsMateMapped()) {
+        return;
+    }
 
     // quit check if alignment & its mate are on differenct references
-    if (al.RefID != al.MateRefID) return;
+    if (al.RefID != al.MateRefID) {
+        return;
+    }
 
     // quit check if map quality less than cutoff
-    if (al.MapQuality < m_settings->MinimumMapQuality) return;
+    if (al.MapQuality < m_settings->MinimumMapQuality) {
+        return;
+    }
 
     // get read group from alignment
     // empty string if not found, this is OK - we handle empty read group case
@@ -1180,15 +1265,21 @@ void ResolveTool::ResolveToolPrivate::ResolveAlignment(BamAlignment& al)
     const ReadGroupResolver& resolver = (*rgIter).second;
 
     // quit check if pairs are not in proper orientation (can differ for each RG)
-    if (!resolver.IsValidOrientation(al)) return;
+    if (!resolver.IsValidOrientation(al)) {
+        return;
+    }
 
     // quit check if pairs are not within "reasonable" distance (can differ for each RG)
-    if (!resolver.IsValidInsertSize(al)) return;
+    if (!resolver.IsValidInsertSize(al)) {
+        return;
+    }
 
     // quit check if alignment is not a "candidate proper pair"
     std::map<std::string, bool>::const_iterator readNameIter;
     readNameIter = resolver.ReadNames.find(al.Name);
-    if (readNameIter == resolver.ReadNames.end()) return;
+    if (readNameIter == resolver.ReadNames.end()) {
+        return;
+    }
 
     // if we get here, alignment is OK - set 'proper pair' flag
     al.SetIsProperPair(true);
@@ -1236,7 +1327,9 @@ bool ResolveTool::ResolveToolPrivate::ResolvePairs()
     bool writeUncompressed = (m_settings->OutputBamFilename == Options::StandardOut() &&
                               !m_settings->IsForceCompression);
     BamWriter::CompressionMode compressionMode = BamWriter::Compressed;
-    if (writeUncompressed) compressionMode = BamWriter::Uncompressed;
+    if (writeUncompressed) {
+        compressionMode = BamWriter::Uncompressed;
+    }
 
     // open BamWriter
     BamWriter writer;
@@ -1271,8 +1364,9 @@ bool ResolveTool::ResolveToolPrivate::Run()
         std::cerr << "bamtools resolve ERROR - invalid settings: " << std::endl;
         std::vector<std::string>::const_iterator errorIter = errors.begin();
         std::vector<std::string>::const_iterator errorEnd = errors.end();
-        for (; errorIter != errorEnd; ++errorIter)
+        for (; errorIter != errorEnd; ++errorIter) {
             std::cerr << (*errorIter) << std::endl;
+        }
         return false;
     }
 
@@ -1282,8 +1376,9 @@ bool ResolveTool::ResolveToolPrivate::Run()
     // init readname filename
     // uses (adjusted) stats filename if provided (req'd for makeStats, markPairs modes; optional for twoPass)
     // else keep default filename
-    if (m_settings->HasStatsFile)
+    if (m_settings->HasStatsFile) {
         m_settings->ReadNamesFilename = m_settings->StatsFilename + READNAME_FILE_SUFFIX;
+    }
 
     // -makeStats mode
     if (m_settings->IsMakeStats) {
@@ -1333,9 +1428,10 @@ bool ResolveTool::ResolveToolPrivate::Run()
 
             // write stats to file
             // emit warning if write fails, but paired-end resolution should be allowed to proceed
-            if (!WriteStatsFile())
+            if (!WriteStatsFile()) {
                 std::cerr << "bamtools resolve WARNING - could not write stats file: "
                           << m_settings->StatsFilename << std::endl;
+            }
         }
 
         // do paired-end resolution
@@ -1353,7 +1449,9 @@ bool ResolveTool::ResolveToolPrivate::WriteStatsFile()
 {
 
     // skip if no filename provided
-    if (m_settings->StatsFilename.empty()) return false;
+    if (m_settings->StatsFilename.empty()) {
+        return false;
+    }
 
     // attempt to open stats file
     ResolveTool::StatsFileWriter statsWriter;
@@ -1515,8 +1613,9 @@ int ResolveTool::Run(int argc, char* argv[])
     m_impl = new ResolveToolPrivate(m_settings);
 
     // run ResolveTool, return success/failure
-    if (m_impl->Run())
+    if (m_impl->Run()) {
         return 0;
-    else
+    } else {
         return 1;
+    }
 }

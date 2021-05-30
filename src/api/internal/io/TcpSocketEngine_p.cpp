@@ -113,7 +113,9 @@ bool TcpSocketEngine::Initialize(HostAddress::NetworkProtocol protocol)
 {
 
     // close current socket if we have one open
-    if (IsValid()) Close();
+    if (IsValid()) {
+        Close();
+    }
 
     // attempt to create new socket
     return nativeCreateSocket(protocol);
@@ -141,7 +143,9 @@ int64_t TcpSocketEngine::Read(char* dest, std::size_t max)
 {
 
     // return failure if can't read
-    if (!IsValid() || (m_socketState != TcpSocket::ConnectedState)) return -1;
+    if (!IsValid() || (m_socketState != TcpSocket::ConnectedState)) {
+        return -1;
+    }
 
     // otherwise return number of bytes read
     return nativeRead(dest, max);

@@ -86,12 +86,13 @@ void Options::DisplayHelp()
         for (optionIter = groupIter->Options.begin(); optionIter != groupIter->Options.end();
              ++optionIter) {
 
-            if (optionIter->StoreValue)
+            if (optionIter->StoreValue) {
                 std::snprintf(argumentBuffer, ARGUMENT_LENGTH + 1, "  %s <%s>",
                               optionIter->Argument.c_str(), optionIter->ValueDescription.c_str());
-            else
+            } else {
                 std::snprintf(argumentBuffer, ARGUMENT_LENGTH + 1, "  %s",
                               optionIter->Argument.c_str());
+            }
             std::printf("%-35s ", argumentBuffer);
 
             std::string description = optionIter->Description;
@@ -132,8 +133,9 @@ void Options::DisplayHelp()
                 // handle the first row
                 const char* pDescription = description.data();
                 unsigned int cutIndex = DESC_LENGTH_FIRST_ROW;
-                while (pDescription[cutIndex] != ' ')
+                while (pDescription[cutIndex] != ' ') {
                     cutIndex--;
+                }
                 std::printf("%s\n", description.substr(0, cutIndex).c_str());
                 description = description.substr(cutIndex + 1);
 
@@ -141,8 +143,9 @@ void Options::DisplayHelp()
                 while (description.size() > DESC_LENGTH) {
                     pDescription = description.data();
                     cutIndex = DESC_LENGTH;
-                    while (pDescription[cutIndex] != ' ')
+                    while (pDescription[cutIndex] != ' ') {
                         cutIndex--;
+                    }
                     std::printf("%s%s\n", indentBuffer, description.substr(0, cutIndex).c_str());
                     description = description.substr(cutIndex + 1);
                 }
@@ -178,13 +181,17 @@ void Options::Parse(int argc, char* argv[], int offset)
     if (argc > 1) {
         for (int i = 1; i < argc; i++) {
             const std::string argument = argv[i];
-            if ((argument == "-h") || (argument == "--help") || (argument == "help"))
+            if ((argument == "-h") || (argument == "--help") || (argument == "help")) {
                 showHelpMenu = true;
+            }
         }
-    } else
+    } else {
         showHelpMenu = true;
+    }
 
-    if (showHelpMenu) DisplayHelp();
+    if (showHelpMenu) {
+        DisplayHelp();
+    }
 
     // check each argument
     for (int i = offset + 1; i < argc; i++) {

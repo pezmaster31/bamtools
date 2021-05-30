@@ -136,13 +136,16 @@ bool CoverageTool::CoverageToolPrivate::Run()
 
     // process input data
     BamAlignment al;
-    while (reader.GetNextAlignment(al))
+    while (reader.GetNextAlignment(al)) {
         pileup.AddAlignment(al);
+    }
     pileup.Flush();
 
     // clean up
     reader.Close();
-    if (m_settings->HasOutputFile) outFile.close();
+    if (m_settings->HasOutputFile) {
+        outFile.close();
+    }
     delete cv;
     cv = 0;
 
@@ -197,8 +200,9 @@ int CoverageTool::Run(int argc, char* argv[])
     m_impl = new CoverageToolPrivate(m_settings);
 
     // run CoverageTool, return success/fail
-    if (m_impl->Run())
+    if (m_impl->Run()) {
         return 0;
-    else
+    } else {
         return 1;
+    }
 }

@@ -29,11 +29,15 @@ static bool caseInsensitiveCompare(const std::string& lhs, const std::string& rh
     // can omit checking chars if lengths not equal
     const int lhsLength = lhs.length();
     const int rhsLength = rhs.length();
-    if (lhsLength != rhsLength) return false;
+    if (lhsLength != rhsLength) {
+        return false;
+    }
 
     // do *basic* std::toupper checks on each string char's
     for (int i = 0; i < lhsLength; ++i) {
-        if (std::toupper((int)lhs.at(i)) != std::toupper((int)rhs.at(i))) return false;
+        if (std::toupper((int)lhs.at(i)) != std::toupper((int)rhs.at(i))) {
+            return false;
+        }
     }
 
     // otherwise OK
@@ -84,7 +88,9 @@ void SamHeaderValidator::PrintErrorMessages(std::ostream& stream)
 {
 
     // skip if no error messages
-    if (m_errorMessages.empty()) return;
+    if (m_errorMessages.empty()) {
+        return;
+    }
 
     // print error header line
     stream << "* SAM header has " << m_errorMessages.size() << " errors:" << std::endl;
@@ -92,8 +98,9 @@ void SamHeaderValidator::PrintErrorMessages(std::ostream& stream)
     // print each error message
     std::vector<std::string>::const_iterator errorIter = m_errorMessages.begin();
     std::vector<std::string>::const_iterator errorEnd = m_errorMessages.end();
-    for (; errorIter != errorEnd; ++errorIter)
+    for (; errorIter != errorEnd; ++errorIter) {
         stream << (*errorIter);
+    }
 }
 
 void SamHeaderValidator::PrintMessages(std::ostream& stream)
@@ -106,7 +113,9 @@ void SamHeaderValidator::PrintWarningMessages(std::ostream& stream)
 {
 
     // skip if no warning messages
-    if (m_warningMessages.empty()) return;
+    if (m_warningMessages.empty()) {
+        return;
+    }
 
     // print warning header line
     stream << "* SAM header has " << m_warningMessages.size() << " warnings:" << std::endl;
@@ -114,8 +123,9 @@ void SamHeaderValidator::PrintWarningMessages(std::ostream& stream)
     // print each warning message
     std::vector<std::string>::const_iterator warnIter = m_warningMessages.begin();
     std::vector<std::string>::const_iterator warnEnd = m_warningMessages.end();
-    for (; warnIter != warnEnd; ++warnIter)
+    for (; warnIter != warnEnd; ++warnIter) {
         stream << (*warnIter);
+    }
 }
 
 // entry point for validation
@@ -217,7 +227,9 @@ bool SamHeaderValidator::ValidateGroupOrder()
     const std::string& groupOrder = m_header.GroupOrder;
 
     // if no group order, no problem, just return OK
-    if (groupOrder.empty()) return true;
+    if (groupOrder.empty()) {
+        return true;
+    }
 
     // if group order is valid keyword
     if (groupOrder == Constants::SAM_HD_GROUPORDER_NONE ||
@@ -445,7 +457,9 @@ bool SamHeaderValidator::CheckSequencingTechnology(const std::string& technology
 {
 
     // if no technology provided, no problem, just return OK
-    if (technology.empty()) return true;
+    if (technology.empty()) {
+        return true;
+    }
 
     // if technology is valid keyword
     if (caseInsensitiveCompare(technology, Constants::SAM_RG_SEQTECHNOLOGY_CAPILLARY) ||
@@ -520,7 +534,9 @@ bool SamHeaderValidator::ValidatePreviousProgramIds()
 
         // ignore record for validation if PreviousProgramID is empty
         const std::string& ppId = pg.PreviousProgramID;
-        if (ppId.empty()) continue;
+        if (ppId.empty()) {
+            continue;
+        }
 
         // see if program "chain" contains an entry for ppId
         if (!programs.Contains(ppId)) {

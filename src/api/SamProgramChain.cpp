@@ -46,11 +46,15 @@ void SamProgramChain::Add(SamProgram& program)
 {
 
     // ignore duplicated records
-    if (Contains(program)) return;
+    if (Contains(program)) {
+        return;
+    }
 
     // if other programs already in chain, try to find the "next" record
     // tries to match another record's PPID with @program's ID
-    if (!IsEmpty()) program.NextProgramID = NextIdFor(program.ID);
+    if (!IsEmpty()) {
+        program.NextProgramID = NextIdFor(program.ID);
+    }
 
     // store program record
     m_data.push_back(program);
@@ -68,8 +72,9 @@ void SamProgramChain::Add(std::vector<SamProgram>& programs)
 {
     std::vector<SamProgram>::iterator pgIter = programs.begin();
     std::vector<SamProgram>::iterator pgEnd = programs.end();
-    for (; pgIter != pgEnd; ++pgIter)
+    for (; pgIter != pgEnd; ++pgIter) {
         Add(*pgIter);
+    }
 }
 
 /*! \fn SamProgramIterator SamProgramChain::Begin()
@@ -181,7 +186,9 @@ SamProgram& SamProgramChain::First()
     SamProgramIterator end = End();
     for (; iter != end; ++iter) {
         SamProgram& current = (*iter);
-        if (!current.HasPreviousProgramID()) return current;
+        if (!current.HasPreviousProgramID()) {
+            return current;
+        }
     }
 
     // otherwise error
@@ -208,7 +215,9 @@ const SamProgram& SamProgramChain::First() const
     SamProgramConstIterator end = ConstEnd();
     for (; iter != end; ++iter) {
         const SamProgram& current = (*iter);
-        if (!current.HasPreviousProgramID()) return current;
+        if (!current.HasPreviousProgramID()) {
+            return current;
+        }
     }
 
     // otherwise error
@@ -228,7 +237,9 @@ int SamProgramChain::IndexOf(const std::string& programId) const
     SamProgramConstIterator end = ConstEnd();
     for (; iter != end; ++iter) {
         const SamProgram& current = (*iter);
-        if (current.ID == programId) break;
+        if (current.ID == programId) {
+            break;
+        }
     }
     return distance(begin, iter);
 }
@@ -258,7 +269,9 @@ SamProgram& SamProgramChain::Last()
     SamProgramIterator end = End();
     for (; iter != end; ++iter) {
         SamProgram& current = (*iter);
-        if (!current.HasNextProgramID()) return current;
+        if (!current.HasNextProgramID()) {
+            return current;
+        }
     }
 
     // otherwise error
@@ -284,7 +297,9 @@ const SamProgram& SamProgramChain::Last() const
     SamProgramConstIterator end = ConstEnd();
     for (; iter != end; ++iter) {
         const SamProgram& current = (*iter);
-        if (!current.HasNextProgramID()) return current;
+        if (!current.HasNextProgramID()) {
+            return current;
+        }
     }
 
     // otherwise error

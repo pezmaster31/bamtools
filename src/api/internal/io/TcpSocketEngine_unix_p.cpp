@@ -75,8 +75,9 @@ bool TcpSocketEngine::nativeConnect(const HostAddress& address, const uint16_t p
     }
 
     // unknown (should be unreachable)
-    else
+    else {
         BT_ASSERT_X(false, "TcpSocketEngine::nativeConnect() : unknown network protocol");
+    }
 
     // attempt connection
     int connectResult = connect(m_socketDescriptor, sockAddrPtr, sockAddrSize);
@@ -125,7 +126,9 @@ bool TcpSocketEngine::nativeConnect(const HostAddress& address, const uint16_t p
         }
 
         // double check that we're not in 'connected' state; if so, return failure
-        if (m_socketState != TcpSocket::ConnectedState) return false;
+        if (m_socketState != TcpSocket::ConnectedState) {
+            return false;
+        }
     }
 
     // otherwise, we should be good
@@ -183,7 +186,9 @@ int64_t TcpSocketEngine::nativeNumBytesAvailable() const
 
     // fetch number of bytes, return 0 on error
     int numBytes(0);
-    if (ioctl(m_socketDescriptor, FIONREAD, (char*)&numBytes) < 0) return -1;
+    if (ioctl(m_socketDescriptor, FIONREAD, (char*)&numBytes) < 0) {
+        return -1;
+    }
     return static_cast<int64_t>(numBytes);
 }
 
@@ -208,10 +213,11 @@ int TcpSocketEngine::nativeSelect(int msecs, bool isRead) const
     tv.tv_usec = (msecs % 1000) * 1000;
 
     // do 'select'
-    if (isRead)
+    if (isRead) {
         return select(m_socketDescriptor + 1, &fds, 0, 0, (msecs < 0 ? 0 : &tv));
-    else
+    } else {
         return select(m_socketDescriptor + 1, 0, &fds, 0, (msecs < 0 ? 0 : &tv));
+    }
 }
 
 int64_t TcpSocketEngine::nativeWrite(const char* data, std::size_t length)

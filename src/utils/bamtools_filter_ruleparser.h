@@ -144,25 +144,34 @@ private:
 
 inline char RuleParser::getNextChar()
 {
-    if (m_current == m_end) return 0;
+    if (m_current == m_end) {
+        return 0;
+    }
     return *m_current++;
 }
 
 inline void RuleParser::ignoreQuotes()
 {
-    if (*m_begin == '\"') ++m_begin;
-    if (*m_end == '\"') --m_end;
+    if (*m_begin == '\"') {
+        ++m_begin;
+    }
+    if (*m_end == '\"') {
+        --m_end;
+    }
 }
 
 inline void RuleParser::parse()
 {
 
     // clear out any prior data
-    while (!m_ruleQueue.empty())
+    while (!m_ruleQueue.empty()) {
         m_ruleQueue.pop();
+    }
 
     // skip if no rule to parse
-    if (m_ruleString.empty()) return;
+    if (m_ruleString.empty()) {
+        return;
+    }
 
     // start at beginning of ruleString
     m_current = m_begin;
@@ -171,13 +180,16 @@ inline void RuleParser::parse()
     RuleToken token;
     while (readToken(token)) {
 
-        if (token.Value.empty()) break;
+        if (token.Value.empty()) {
+            break;
+        }
 
         // if token is an operand
-        if (isOperand(token)) m_ruleQueue.push(token.Value);
+        if (isOperand(token)) {
+            m_ruleQueue.push(token.Value);
 
-        // if token is an operator
-        else if (isOperator(token)) {
+            // if token is an operator
+        } else if (isOperator(token)) {
 
             // pop any operators at top of stack with higher priority
             while (!m_operatorStack.empty()) {
@@ -186,8 +198,9 @@ inline void RuleParser::parse()
                     (isRightAssociative(token) && (priority(token) < priority(opToken)))) {
                     m_ruleQueue.push(opToken.Value);
                     m_operatorStack.pop();
-                } else
+                } else {
                     break;
+                }
             }
 
             // push current operator token onto stack
@@ -195,21 +208,22 @@ inline void RuleParser::parse()
         }
 
         // if token is left parenthesis
-        else if (isLeftParenthesis(token))
+        else if (isLeftParenthesis(token)) {
             m_operatorStack.push(token);
 
-        // if token is right parenthesis
-        else if (isRightParenthesis(token)) {
+            // if token is right parenthesis
+        } else if (isRightParenthesis(token)) {
 
             bool foundLeftParenthesis = false;
 
             // push operators into rule queue until left parenthesis found
             while (!m_operatorStack.empty() && !foundLeftParenthesis) {
                 const RuleToken& opToken = m_operatorStack.top();
-                if (!isLeftParenthesis(opToken))
+                if (!isLeftParenthesis(opToken)) {
                     m_ruleQueue.push(opToken.Value);
-                else
+                } else {
                     foundLeftParenthesis = true;
+                }
                 m_operatorStack.pop();
             }
 
@@ -219,8 +233,9 @@ inline void RuleParser::parse()
         }
 
         // error: unknown operand
-        else
+        else {
             BAMTOOLS_ASSERT_UNREACHABLE;
+        }
     }
 
     // while there are still operators on stack
@@ -238,7 +253,9 @@ inline bool RuleParser::readToken(RuleToken& token)
 
     // skip any preceding whitespace
     skipSpaces();
-    if (m_current == m_end) return false;
+    if (m_current == m_end) {
+        return false;
+    }
 
     // clear out prior token value
     token.Value.clear();
@@ -262,9 +279,9 @@ inline bool RuleParser::readToken(RuleToken& token)
 
             // current char is ')'
             case (RIGHT_PARENTHESIS_CHAR):
-                if (inOperandString)
+                if (inOperandString) {
                     --m_current;
-                else {
+                } else {
                     token.Type = RuleToken::RIGHT_PARENTHESIS;
                     token.Value.append(1, RIGHT_PARENTHESIS_CHAR);
                 }
@@ -273,9 +290,9 @@ inline bool RuleParser::readToken(RuleToken& token)
 
             // current char is '&'
             case (AND_OPERATOR_CHAR):
-                if (inOperandString)
+                if (inOperandString) {
                     --m_current;
-                else {
+                } else {
                     token.Type = RuleToken::AND_OPERATOR;
                     token.Value.append(1, AND_OPERATOR_CHAR);
                 }
@@ -284,9 +301,9 @@ inline bool RuleParser::readToken(RuleToken& token)
 
             // current char is '|'
             case (OR_OPERATOR_CHAR):
-                if (inOperandString)
+                if (inOperandString) {
                     --m_current;
-                else {
+                } else {
                     token.Type = RuleToken::OR_OPERATOR;
                     token.Value.append(1, OR_OPERATOR_CHAR);
                 }
@@ -323,10 +340,11 @@ inline void RuleParser::skipSpaces()
 {
     while (m_current != m_end) {
         const char c = *m_current;
-        if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+        if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
             ++m_current;
-        else
+        } else {
             break;
+        }
     }
 }
 

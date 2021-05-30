@@ -39,13 +39,13 @@ bool BamFile::Open(const IBamIODevice::OpenMode mode)
     Close();
 
     // attempt to open FILE* depending on requested openmode
-    if (mode == IBamIODevice::ReadOnly)
+    if (mode == IBamIODevice::ReadOnly) {
         m_stream = fopen(m_filename.c_str(), "rb");
-    else if (mode == IBamIODevice::WriteOnly)
+    } else if (mode == IBamIODevice::WriteOnly) {
         m_stream = fopen(m_filename.c_str(), "wb");
-    else if (mode == IBamIODevice::ReadWrite)
+    } else if (mode == IBamIODevice::ReadWrite) {
         m_stream = fopen(m_filename.c_str(), "w+b");
-    else {
+    } else {
         SetErrorString("BamFile::Open", "unknown open mode requested");
         return false;
     }

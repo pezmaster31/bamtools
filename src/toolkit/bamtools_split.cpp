@@ -167,16 +167,18 @@ void SplitTool::SplitToolPrivate::DetermineOutputFilenameStub()
 {
 
     // if user supplied output filename stub, use that
-    if (m_settings->HasCustomOutputStub) m_outputFilenameStub = m_settings->CustomOutputStub;
+    if (m_settings->HasCustomOutputStub) {
+        m_outputFilenameStub = m_settings->CustomOutputStub;
 
-    // else if user supplied input BAM filename, use that (minus ".bam" extension) as stub
-    else if (m_settings->HasInputFilename)
+        // else if user supplied input BAM filename, use that (minus ".bam" extension) as stub
+    } else if (m_settings->HasInputFilename) {
         m_outputFilenameStub = RemoveFilenameExtension(m_settings->InputFilename);
 
-    // otherwise, user did not specify -stub, and input is coming from STDIN
-    // generate stub from timestamp
-    else
+        // otherwise, user did not specify -stub, and input is coming from STDIN
+        // generate stub from timestamp
+    } else {
         m_outputFilenameStub = GetTimestampString();
+    }
 }
 
 bool SplitTool::SplitToolPrivate::OpenReader()
@@ -202,13 +204,23 @@ bool SplitTool::SplitToolPrivate::Run()
     DetermineOutputFilenameStub();
 
     // open up BamReader
-    if (!OpenReader()) return false;
+    if (!OpenReader()) {
+        return false;
+    }
 
     // determine split type from settings
-    if (m_settings->IsSplittingMapped) return SplitMapped();
-    if (m_settings->IsSplittingPaired) return SplitPaired();
-    if (m_settings->IsSplittingReference) return SplitReference();
-    if (m_settings->IsSplittingTag) return SplitTag();
+    if (m_settings->IsSplittingMapped) {
+        return SplitMapped();
+    }
+    if (m_settings->IsSplittingPaired) {
+        return SplitPaired();
+    }
+    if (m_settings->IsSplittingReference) {
+        return SplitReference();
+    }
+    if (m_settings->IsSplittingTag) {
+        return SplitTag();
+    }
 
     // if we get here, no property was specified
     std::cerr
@@ -254,11 +266,14 @@ bool SplitTool::SplitToolPrivate::SplitMapped()
         }
 
         // else grab corresponding writer
-        else
+        else {
             writer = (*writerIter).second;
+        }
 
         // store alignment in proper BAM output file
-        if (writer) writer->SaveAlignment(al);
+        if (writer) {
+            writer->SaveAlignment(al);
+        }
     }
 
     // clean up BamWriters
@@ -304,11 +319,14 @@ bool SplitTool::SplitToolPrivate::SplitPaired()
         }
 
         // else grab corresponding writer
-        else
+        else {
             writer = (*writerIter).second;
+        }
 
         // store alignment in proper BAM output file
-        if (writer) writer->SaveAlignment(al);
+        if (writer) {
+            writer->SaveAlignment(al);
+        }
     }
 
     // clean up BamWriters
@@ -327,11 +345,15 @@ bool SplitTool::SplitToolPrivate::SplitReference()
 
     // determine reference prefix
     std::string refPrefix = SPLIT_REFERENCE_TOKEN;
-    if (m_settings->HasCustomRefPrefix) refPrefix = m_settings->CustomRefPrefix;
+    if (m_settings->HasCustomRefPrefix) {
+        refPrefix = m_settings->CustomRefPrefix;
+    }
 
     // make sure prefix starts with '.'
     const std::size_t dotFound = refPrefix.find('.');
-    if (dotFound != 0) refPrefix = std::string(1, '.') + refPrefix;
+    if (dotFound != 0) {
+        refPrefix = std::string(1, '.') + refPrefix;
+    }
 
     // iterate through alignments
     BamAlignment al;
@@ -348,10 +370,11 @@ bool SplitTool::SplitToolPrivate::SplitReference()
 
             // fetch reference name for ID
             std::string refName;
-            if (currentRefId == -1)
+            if (currentRefId == -1) {
                 refName = "unmapped";
-            else
+            } else {
                 refName = m_references.at(currentRefId).RefName;
+            }
 
             // construct new output filename
             const std::string outputFilename = m_outputFilenameStub + refPrefix + refName + ".bam";
@@ -369,11 +392,14 @@ bool SplitTool::SplitToolPrivate::SplitReference()
         }
 
         // else grab corresponding writer
-        else
+        else {
             writer = (*writerIter).second;
+        }
 
         // store alignment in proper BAM output file
-        if (writer) writer->SaveAlignment(al);
+        if (writer) {
+            writer->SaveAlignment(al);
+        }
     }
 
     // clean up BamWriters
@@ -393,7 +419,9 @@ bool SplitTool::SplitToolPrivate::SplitTag()
 
         // look for tag in this alignment and get tag type
         char tagType(0);
-        if (!al.GetTagType(m_settings->TagToSplit, tagType)) continue;
+        if (!al.GetTagType(m_settings->TagToSplit, tagType)) {
+            continue;
+        }
 
         // request split method based on tag type
         // pass it the current alignment found
@@ -422,7 +450,9 @@ bool SplitTool::SplitToolPrivate::SplitTag()
             case (Constants::BAM_TAG_TYPE_ARRAY): {
 
                 char arrayTagType(0);
-                if (!al.GetArrayTagType(m_settings->TagToSplit, arrayTagType)) continue;
+                if (!al.GetArrayTagType(m_settings->TagToSplit, arrayTagType)) {
+                    continue;
+                }
                 switch (arrayTagType) {
                     case (Constants::BAM_TAG_TYPE_INT8):
                         return SplitListTagImpl<int8_t>(al);
@@ -476,7 +506,9 @@ void SplitTool::SplitToolPrivate::CloseWriters(std::map<T, BamWriter*>& writers)
     WriterMapIterator writerEnd = writers.end();
     for (; writerIter != writerEnd; ++writerIter) {
         BamWriter* writer = (*writerIter).second;
-        if (writer == 0) continue;
+        if (writer == 0) {
+            continue;
+        }
 
         // close BamWriter
         writer->Close();
@@ -505,11 +537,15 @@ bool SplitTool::SplitToolPrivate::SplitListTagImpl(BamAlignment& al)
 
     // determine tag prefix
     std::string tagPrefix = SPLIT_TAG_TOKEN;
-    if (m_settings->HasCustomTagPrefix) tagPrefix = m_settings->CustomTagPrefix;
+    if (m_settings->HasCustomTagPrefix) {
+        tagPrefix = m_settings->CustomTagPrefix;
+    }
 
     // make sure prefix starts with '.'
     const std::size_t dotFound = tagPrefix.find('.');
-    if (dotFound != 0) tagPrefix = std::string(1, '.') + tagPrefix;
+    if (dotFound != 0) {
+        tagPrefix = std::string(1, '.') + tagPrefix;
+    }
 
     const std::string tag = m_settings->TagToSplit;
     BamWriter* writer;
@@ -517,20 +553,22 @@ bool SplitTool::SplitToolPrivate::SplitListTagImpl(BamAlignment& al)
     while (m_reader.GetNextAlignment(al)) {
 
         std::string listTagLabel;
-        if (!al.GetTag(tag, currentValue))
+        if (!al.GetTag(tag, currentValue)) {
             listTagLabel = "none";
-        else {
+        } else {
             // make list label from tag data
             std::stringstream listTagLabelStream;
             typename TagValueType::const_iterator tagValueIter = currentValue.begin();
             typename TagValueType::const_iterator tagValueEnd = currentValue.end();
-            for (; tagValueIter != tagValueEnd; ++tagValueIter)
+            for (; tagValueIter != tagValueEnd; ++tagValueIter) {
                 listTagLabelStream << (*tagValueIter) << m_settings->ListTagDelimiter;
+            }
             listTagLabel = listTagLabelStream.str();
-            if (!listTagLabel.empty())
+            if (!listTagLabel.empty()) {
                 listTagLabel = listTagLabel.substr(
                     0, listTagLabel.size() -
                            m_settings->ListTagDelimiter.size());  // pop last delimiter
+            }
         }
 
         // lookup writer for label
@@ -555,11 +593,14 @@ bool SplitTool::SplitToolPrivate::SplitListTagImpl(BamAlignment& al)
         }
 
         // else grab existing writer
-        else
+        else {
             writer = (*writerIter).second;
+        }
 
         // store alignment in proper BAM output file
-        if (writer) writer->SaveAlignment(al);
+        if (writer) {
+            writer->SaveAlignment(al);
+        }
     }
 
     // clean up & return success
@@ -582,11 +623,15 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al)
 
     // determine tag prefix
     std::string tagPrefix = SPLIT_TAG_TOKEN;
-    if (m_settings->HasCustomTagPrefix) tagPrefix = m_settings->CustomTagPrefix;
+    if (m_settings->HasCustomTagPrefix) {
+        tagPrefix = m_settings->CustomTagPrefix;
+    }
 
     // make sure prefix starts with '.'
     const std::size_t dotFound = tagPrefix.find('.');
-    if (dotFound != 0) tagPrefix = std::string(1, '.') + tagPrefix;
+    if (dotFound != 0) {
+        tagPrefix = std::string(1, '.') + tagPrefix;
+    }
 
     // local variables
     const std::string tag = m_settings->TagToSplit;
@@ -619,7 +664,9 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al)
     while (m_reader.GetNextAlignment(al)) {
 
         // skip if this alignment doesn't have TAG
-        if (!al.GetTag(tag, currentValue)) continue;
+        if (!al.GetTag(tag, currentValue)) {
+            continue;
+        }
 
         // look up tag value in map
         writerIter = outputFiles.find(currentValue);
@@ -645,11 +692,14 @@ bool SplitTool::SplitToolPrivate::SplitTagImpl(BamAlignment& al)
         }
 
         // else grab corresponding writer
-        else
+        else {
             writer = (*writerIter).second;
+        }
 
         // store alignment in proper BAM output file
-        if (writer) writer->SaveAlignment(al);
+        if (writer) {
+            writer->SaveAlignment(al);
+        }
     }
 
     // clean up BamWriters
@@ -743,8 +793,9 @@ int SplitTool::Run(int argc, char* argv[])
     m_impl = new SplitToolPrivate(m_settings);
 
     // run SplitTool, return success/fail
-    if (m_impl->Run())
+    if (m_impl->Run()) {
         return 0;
-    else
+    } else {
         return 1;
+    }
 }

@@ -55,8 +55,9 @@ static std::vector<std::string> Split(const std::string& source, const char deli
     std::stringstream ss(source);
     std::string field;
     std::vector<std::string> fields;
-    while (std::getline(ss, field, delim))
+    while (std::getline(ss, field, delim)) {
         fields.push_back(field);
+    }
     return fields;
 }
 
@@ -64,7 +65,9 @@ static std::string Trim(const std::string& source)
 {
 
     // skip if empty string
-    if (source.empty()) return source;
+    if (source.empty()) {
+        return source;
+    }
 
     // fetch string data
     const char* s = source.data();  // ignoring null-term on purpose
@@ -73,16 +76,20 @@ static std::string Trim(const std::string& source)
     std::size_t end = size - 1;
 
     // skip if no spaces at start or end
-    if (!IsSpace(s[start]) && !IsSpace(s[end])) return source;
+    if (!IsSpace(s[start]) && !IsSpace(s[end])) {
+        return source;
+    }
 
     // remove leading whitespace
-    while ((start != end) && IsSpace(s[start]))
+    while ((start != end) && IsSpace(s[start])) {
         ++start;
+    }
 
     // remove trailing whitespace
     if (start <= end) {
-        while (end && IsSpace(s[end]))
+        while (end && IsSpace(s[end])) {
             --end;
+        }
     }
 
     // return result
@@ -127,10 +134,11 @@ int HttpHeader::GetMinorVersion() const
 
 std::string HttpHeader::GetValue(const std::string& key)
 {
-    if (ContainsKey(key))
+    if (ContainsKey(key)) {
         return m_fields[key];
-    else
+    } else {
         return std::string();
+    }
 }
 
 bool HttpHeader::IsValid() const
@@ -158,18 +166,24 @@ void HttpHeader::Parse(const std::string& s)
         std::string& field = (*rawFieldIter);
 
         // skip empty fields
-        if (field.empty()) continue;
+        if (field.empty()) {
+            continue;
+        }
 
         // remove carriage returns
         const std::size_t fieldSize = field.size();
-        if (field[fieldSize - 1] == Constants::CAR_RET_CHAR) field.resize(fieldSize - 1);
+        if (field[fieldSize - 1] == Constants::CAR_RET_CHAR) {
+            field.resize(fieldSize - 1);
+        }
 
         // store cleaned field
         cleanFields.push_back(field);
     }
 
     // skip add'l processing if nothing here
-    if (cleanFields.empty()) return;
+    if (cleanFields.empty()) {
+        return;
+    }
 
     // parse header lines
     int lineNumber = 0;
@@ -188,7 +202,9 @@ bool HttpHeader::ParseLine(const std::string& line, int)
 
     // find colon position, return failure if not found
     const std::size_t colonFound = line.find(Constants::COLON_CHAR);
-    if (colonFound == std::string::npos) return false;
+    if (colonFound == std::string::npos) {
+        return false;
+    }
 
     // store key/value (without leading/trailing whitespace) & return success
     const std::string key = Trim(line.substr(0, colonFound));
@@ -262,27 +278,41 @@ bool HttpRequestHeader::ParseLine(const std::string& line, int lineNumber)
 {
 
     // if not 'request line', just let base class parse
-    if (lineNumber != 0) return HttpHeader::ParseLine(line, lineNumber);
+    if (lineNumber != 0) {
+        return HttpHeader::ParseLine(line, lineNumber);
+    }
 
     // fail if empty line
-    if (line.empty()) return false;
+    if (line.empty()) {
+        return false;
+    }
 
     // walk through request line, storing positions
     //    GET /path/to/resource HTTP/1.1
     //    ^  ^^                ^^
     const std::size_t foundMethod =
         line.find_first_not_of(Constants::SPACE_CHAR);  // skip any leading whitespace
-    if (foundMethod == std::string::npos) return false;
+    if (foundMethod == std::string::npos) {
+        return false;
+    }
     const std::size_t foundFirstSpace = line.find(Constants::SPACE_CHAR, foundMethod + 1);
-    if (foundFirstSpace == std::string::npos) return false;
+    if (foundFirstSpace == std::string::npos) {
+        return false;
+    }
     const std::size_t foundResource =
         line.find_first_not_of(Constants::SPACE_CHAR, foundFirstSpace + 1);
-    if (foundResource == std::string::npos) return false;
+    if (foundResource == std::string::npos) {
+        return false;
+    }
     const std::size_t foundSecondSpace = line.find(Constants::SPACE_CHAR, foundResource + 1);
-    if (foundSecondSpace == std::string::npos) return false;
+    if (foundSecondSpace == std::string::npos) {
+        return false;
+    }
     const std::size_t foundVersion =
         line.find_first_not_of(Constants::SPACE_CHAR, foundSecondSpace + 1);
-    if (foundVersion == std::string::npos) return false;
+    if (foundVersion == std::string::npos) {
+        return false;
+    }
 
     // parse out method & resource
     m_method = line.substr(foundMethod, foundFirstSpace - foundMethod);
@@ -290,7 +320,9 @@ bool HttpRequestHeader::ParseLine(const std::string& line, int lineNumber)
 
     // parse out version numbers
     const std::string temp = line.substr(foundVersion);
-    if ((temp.find(Constants::HTTP_STRING) != 0) || (temp.size() != 8)) return false;
+    if ((temp.find(Constants::HTTP_STRING) != 0) || (temp.size() != 8)) {
+        return false;
+    }
     const int major = static_cast<int>(temp.at(5) - '0');
     const int minor = static_cast<int>(temp.at(7) - '0');
     SetVersion(major, minor);
@@ -344,10 +376,14 @@ bool HttpResponseHeader::ParseLine(const std::string& line, int lineNumber)
 {
 
     // if not 'status line', just let base class
-    if (lineNumber != 0) return HttpHeader::ParseLine(line, lineNumber);
+    if (lineNumber != 0) {
+        return HttpHeader::ParseLine(line, lineNumber);
+    }
 
     // fail if empty line
-    if (line.empty()) return false;
+    if (line.empty()) {
+        return false;
+    }
 
     // walk through status line, storing positions
     //    HTTP/1.1 200 OK
@@ -355,28 +391,42 @@ bool HttpResponseHeader::ParseLine(const std::string& line, int lineNumber)
 
     const std::size_t foundVersion =
         line.find_first_not_of(Constants::SPACE_CHAR);  // skip any leading whitespace
-    if (foundVersion == std::string::npos) return false;
+    if (foundVersion == std::string::npos) {
+        return false;
+    }
     const std::size_t foundFirstSpace = line.find(Constants::SPACE_CHAR, foundVersion + 1);
-    if (foundFirstSpace == std::string::npos) return false;
+    if (foundFirstSpace == std::string::npos) {
+        return false;
+    }
     const std::size_t foundStatusCode =
         line.find_first_not_of(Constants::SPACE_CHAR, foundFirstSpace + 1);
-    if (foundStatusCode == std::string::npos) return false;
+    if (foundStatusCode == std::string::npos) {
+        return false;
+    }
     const std::size_t foundSecondSpace = line.find(Constants::SPACE_CHAR, foundStatusCode + 1);
-    if (foundSecondSpace == std::string::npos) return false;
+    if (foundSecondSpace == std::string::npos) {
+        return false;
+    }
     const std::size_t foundReason =
         line.find_first_not_of(Constants::SPACE_CHAR, foundSecondSpace + 1);
-    if (foundReason == std::string::npos) return false;
+    if (foundReason == std::string::npos) {
+        return false;
+    }
 
     // parse version numbers
     std::string temp = line.substr(foundVersion, foundFirstSpace - foundVersion);
-    if ((temp.find(Constants::HTTP_STRING) != 0) || (temp.size() != 8)) return false;
+    if ((temp.find(Constants::HTTP_STRING) != 0) || (temp.size() != 8)) {
+        return false;
+    }
     const int major = static_cast<int>(temp.at(5) - '0');
     const int minor = static_cast<int>(temp.at(7) - '0');
     SetVersion(major, minor);
 
     // parse status code
     temp = line.substr(foundStatusCode, foundSecondSpace - foundStatusCode);
-    if (temp.size() != 3) return false;
+    if (temp.size() != 3) {
+        return false;
+    }
     m_statusCode = std::atoi(temp.c_str());
 
     // reason phrase should be everything else left

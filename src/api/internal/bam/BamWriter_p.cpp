@@ -34,11 +34,21 @@ BamWriterPrivate::~BamWriterPrivate()
 uint32_t BamWriterPrivate::CalculateMinimumBin(const int begin, int end) const
 {
     --end;
-    if ((begin >> 14) == (end >> 14)) return 4681 + (begin >> 14);
-    if ((begin >> 17) == (end >> 17)) return 585 + (begin >> 17);
-    if ((begin >> 20) == (end >> 20)) return 73 + (begin >> 20);
-    if ((begin >> 23) == (end >> 23)) return 9 + (begin >> 23);
-    if ((begin >> 26) == (end >> 26)) return 1 + (begin >> 26);
+    if ((begin >> 14) == (end >> 14)) {
+        return 4681 + (begin >> 14);
+    }
+    if ((begin >> 17) == (end >> 17)) {
+        return 585 + (begin >> 17);
+    }
+    if ((begin >> 20) == (end >> 20)) {
+        return 73 + (begin >> 20);
+    }
+    if ((begin >> 23) == (end >> 23)) {
+        return 9 + (begin >> 23);
+    }
+    if ((begin >> 26) == (end >> 26)) {
+        return 1 + (begin >> 26);
+    }
     return 0;
 }
 
@@ -47,7 +57,9 @@ void BamWriterPrivate::Close()
 {
 
     // skip if file not open
-    if (!IsOpen()) return;
+    if (!IsOpen()) {
+        return;
+    }
 
     // close output stream
     try {
@@ -242,12 +254,14 @@ bool BamWriterPrivate::SaveAlignment(const BamAlignment& al)
 
         // if BamAlignment contains only the core data and a raw char data buffer
         // (as a result of BamReader::GetNextAlignmentCore())
-        if (al.SupportData.HasCoreOnly) WriteCoreAlignment(al);
+        if (al.SupportData.HasCoreOnly) {
+            WriteCoreAlignment(al);
 
-        // otherwise, BamAlignment should contain character in the standard fields: Name, QueryBases, etc
-        // (resulting from BamReader::GetNextAlignment() *OR* being generated directly by client code)
-        else
+            // otherwise, BamAlignment should contain character in the standard fields: Name, QueryBases, etc
+            // (resulting from BamReader::GetNextAlignment() *OR* being generated directly by client code)
+        } else {
             WriteAlignment(al);
+        }
 
         // if we get here, everything OK
         return true;
@@ -261,7 +275,9 @@ bool BamWriterPrivate::SaveAlignment(const BamAlignment& al)
 void BamWriterPrivate::SetWriteCompressed(bool ok)
 {
     // modifying compression is not allowed if BAM file is open
-    if (!IsOpen()) m_stream.SetWriteCompressed(ok);
+    if (!IsOpen()) {
+        m_stream.SetWriteCompressed(ok);
+    }
 }
 
 void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
@@ -295,8 +311,12 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
                                        queryLength +  // here referring to quality length
                                        tagDataLength;
     unsigned int blockSize = Constants::BAM_CORE_SIZE + dataBlockSize;
-    if (numCigarOperations >= 65536) blockSize += 16;
-    if (m_isBigEndian) BamTools::SwapEndian_32(blockSize);
+    if (numCigarOperations >= 65536) {
+        blockSize += 16;
+    }
+    if (m_isBigEndian) {
+        BamTools::SwapEndian_32(blockSize);
+    }
     m_stream.Write((char*)&blockSize, Constants::BAM_SIZEOF_INT);
 
     // assign the BAM core data
@@ -312,8 +332,9 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
 
     // swap BAM core endian-ness, if necessary
     if (m_isBigEndian) {
-        for (int i = 0; i < 8; ++i)
+        for (int i = 0; i < 8; ++i) {
             BamTools::SwapEndian_32(buffer[i]);
+        }
     }
 
     // write the BAM core
@@ -328,13 +349,15 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
             char* cigarData = new char[packedCigarLength]();
             std::memcpy(cigarData, packedCigar.data(), packedCigarLength);
             if (m_isBigEndian) {
-                for (size_t i = 0; i < packedCigarLength; ++i)
+                for (size_t i = 0; i < packedCigarLength; ++i) {
                     BamTools::SwapEndian_32p(&cigarData[i]);
+                }
             }
             m_stream.Write(cigarData, packedCigarLength);
             delete[] cigarData;  // TODO: cleanup on Write exception thrown?
-        } else
+        } else {
             m_stream.Write(packedCigar.data(), packedCigarLength);
+        }
     } else {
         unsigned int cigar[2];
         cigar[0] = queryLength << 4 | 4;
@@ -354,13 +377,14 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
         // write the base qualities
         char* pBaseQualities = new char[queryLength]();
         if (al.Qualities.empty() || (al.Qualities.size() == 1 && al.Qualities[0] == '*') ||
-            al.Qualities[0] == (char)0xFF)
+            al.Qualities[0] == (char)0xFF) {
             std::memset(pBaseQualities, 0xFF,
                         queryLength);  // if missing or '*', fill with invalid qual
-        else {
-            for (std::size_t i = 0; i < queryLength; ++i)
+        } else {
+            for (std::size_t i = 0; i < queryLength; ++i) {
                 pBaseQualities[i] =
                     al.Qualities.at(i) - 33;  // FASTQ ASCII -> phred score conversion
+            }
         }
         m_stream.Write(pBaseQualities, queryLength);
         delete[] pBaseQualities;
@@ -403,8 +427,9 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
                 case (Constants::BAM_TAG_TYPE_HEX):
                 case (Constants::BAM_TAG_TYPE_STRING):
                     // no endian swapping necessary for hex-string/string data
-                    while (tagData[i])
+                    while (tagData[i]) {
                         ++i;
+                    }
                     // increment one more for null terminator
                     ++i;
                     break;
@@ -461,8 +486,9 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
 
         m_stream.Write(tagData, tagDataLength);
         delete[] tagData;  // TODO: cleanup on Write exception thrown?
-    } else
+    } else {
         m_stream.Write(al.TagData.data(), tagDataLength);
+    }
 
     if (numCigarOperations >= 65536) {
         m_stream.Write("CGBI", 4);
@@ -475,8 +501,9 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
             std::memcpy(cigarData, packedCigar.data(), packedCigarLength);
             if (m_isBigEndian) {
                 for (size_t i = 0; i < packedCigarLength;
-                     ++i)  // FIXME: similarly, this should be "i += 4", not "++i"
+                     ++i) {  // FIXME: similarly, this should be "i += 4", not "++i"
                     BamTools::SwapEndian_32p(&cigarData[i]);
+                }
             }
             m_stream.Write(cigarData, packedCigarLength);
             delete[] cigarData;  // TODO: cleanup on Write exception thrown?
@@ -492,8 +519,12 @@ void BamWriterPrivate::WriteCoreAlignment(const BamAlignment& al)
 
     // write the block size
     unsigned int blockSize = al.SupportData.BlockLength;
-    if (al.SupportData.NumCigarOperations >= 65536) blockSize += 16;
-    if (m_isBigEndian) BamTools::SwapEndian_32(blockSize);
+    if (al.SupportData.NumCigarOperations >= 65536) {
+        blockSize += 16;
+    }
+    if (m_isBigEndian) {
+        BamTools::SwapEndian_32(blockSize);
+    }
     m_stream.Write((char*)&blockSize, Constants::BAM_SIZEOF_INT);
 
     // re-calculate bin (in case BamAlignment's position has been previously modified)
@@ -513,8 +544,9 @@ void BamWriterPrivate::WriteCoreAlignment(const BamAlignment& al)
 
     // swap BAM core endian-ness, if necessary
     if (m_isBigEndian) {
-        for (int i = 0; i < 8; ++i)
+        for (int i = 0; i < 8; ++i) {
             BamTools::SwapEndian_32(buffer[i]);
+        }
     }
 
     // write the BAM core
@@ -562,7 +594,9 @@ void BamWriterPrivate::WriteReferences(const BamTools::RefVector& referenceSeque
 
     // write the number of reference sequences
     uint32_t numReferenceSequences = referenceSequences.size();
-    if (m_isBigEndian) BamTools::SwapEndian_32(numReferenceSequences);
+    if (m_isBigEndian) {
+        BamTools::SwapEndian_32(numReferenceSequences);
+    }
     m_stream.Write((char*)&numReferenceSequences, Constants::BAM_SIZEOF_INT);
 
     // foreach reference sequence
@@ -573,7 +607,9 @@ void BamWriterPrivate::WriteReferences(const BamTools::RefVector& referenceSeque
         // write the reference sequence name length (+1 for terminator)
         const uint32_t actualNameLen = rsIter->RefName.size() + 1;
         uint32_t maybeSwappedNameLen = actualNameLen;
-        if (m_isBigEndian) BamTools::SwapEndian_32(maybeSwappedNameLen);
+        if (m_isBigEndian) {
+            BamTools::SwapEndian_32(maybeSwappedNameLen);
+        }
         m_stream.Write((char*)&maybeSwappedNameLen, Constants::BAM_SIZEOF_INT);
 
         // write the reference sequence name
@@ -581,7 +617,9 @@ void BamWriterPrivate::WriteReferences(const BamTools::RefVector& referenceSeque
 
         // write the reference sequence length
         int32_t referenceLength = rsIter->RefLength;
-        if (m_isBigEndian) BamTools::SwapEndian_32(referenceLength);
+        if (m_isBigEndian) {
+            BamTools::SwapEndian_32(referenceLength);
+        }
         m_stream.Write((char*)&referenceLength, Constants::BAM_SIZEOF_INT);
     }
 }
@@ -592,9 +630,13 @@ void BamWriterPrivate::WriteSamHeaderText(const std::string& samHeaderText)
     // write the SAM header  text length
     const uint32_t actualHeaderLen = samHeaderText.size();
     uint32_t maybeSwappedHeaderLen = samHeaderText.size();
-    if (m_isBigEndian) BamTools::SwapEndian_32(maybeSwappedHeaderLen);
+    if (m_isBigEndian) {
+        BamTools::SwapEndian_32(maybeSwappedHeaderLen);
+    }
     m_stream.Write((char*)&maybeSwappedHeaderLen, Constants::BAM_SIZEOF_INT);
 
     // write the SAM header text
-    if (actualHeaderLen > 0) m_stream.Write(samHeaderText.data(), actualHeaderLen);
+    if (actualHeaderLen > 0) {
+        m_stream.Write(samHeaderText.data(), actualHeaderLen);
+    }
 }

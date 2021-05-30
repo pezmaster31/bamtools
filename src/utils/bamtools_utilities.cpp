@@ -67,7 +67,9 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamRead
     // parse region string
 
     // check first for empty string
-    if (regionString.empty()) return false;
+    if (regionString.empty()) {
+        return false;
+    }
 
     // non-empty string, look for a colom
     std::size_t foundFirstColon = regionString.find(':');
@@ -142,22 +144,32 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamRead
 
     // if startRefID not found, return false
     int startRefID = reader.GetReferenceID(startChrom);
-    if (startRefID == -1) return false;
+    if (startRefID == -1) {
+        return false;
+    }
 
     // startPos cannot be greater than or equal to reference length
     const RefData& startReference = references.at(startRefID);
-    if (startPos >= startReference.RefLength) return false;
+    if (startPos >= startReference.RefLength) {
+        return false;
+    }
 
     // if stopRefID not found, return false
     int stopRefID = reader.GetReferenceID(stopChrom);
-    if (stopRefID == -1) return false;
+    if (stopRefID == -1) {
+        return false;
+    }
 
     // stopPosition cannot be larger than reference length
     const RefData& stopReference = references.at(stopRefID);
-    if (stopPos > stopReference.RefLength) return false;
+    if (stopPos > stopReference.RefLength) {
+        return false;
+    }
 
     // if no stopPosition specified, set to reference end
-    if (stopPos == -1) stopPos = stopReference.RefLength;
+    if (stopPos == -1) {
+        stopPos = stopReference.RefLength;
+    }
 
     // -------------------------------
     // set up Region struct & return
@@ -178,7 +190,9 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamMult
     // parse region string
 
     // check first for empty string
-    if (regionString.empty()) return false;
+    if (regionString.empty()) {
+        return false;
+    }
 
     // non-empty string, look for a colom
     std::size_t foundFirstColon = regionString.find(':');
@@ -253,22 +267,32 @@ bool Utilities::ParseRegionString(const std::string& regionString, const BamMult
 
     // if startRefID not found, return false
     int startRefID = reader.GetReferenceID(startChrom);
-    if (startRefID == -1) return false;
+    if (startRefID == -1) {
+        return false;
+    }
 
     // startPos cannot be greater than or equal to reference length
     const RefData& startReference = references.at(startRefID);
-    if (startPos >= startReference.RefLength) return false;
+    if (startPos >= startReference.RefLength) {
+        return false;
+    }
 
     // if stopRefID not found, return false
     int stopRefID = reader.GetReferenceID(stopChrom);
-    if (stopRefID == -1) return false;
+    if (stopRefID == -1) {
+        return false;
+    }
 
     // stopPosition cannot be larger than reference length
     const RefData& stopReference = references.at(stopRefID);
-    if (stopPos > stopReference.RefLength) return false;
+    if (stopPos > stopReference.RefLength) {
+        return false;
+    }
 
     // if no stopPosition specified, set to reference end
-    if (stopPos == -1) stopPos = stopReference.RefLength;
+    if (stopPos == -1) {
+        stopPos = stopReference.RefLength;
+    }
 
     // -------------------------------
     // set up Region struct & return
@@ -291,8 +315,9 @@ void Utilities::ReverseComplement(std::string& sequence)
 
     // do complement, in-place
     std::size_t seqLength = sequence.length();
-    for (std::size_t i = 0; i < seqLength; ++i)
+    for (std::size_t i = 0; i < seqLength; ++i) {
         sequence.replace(i, 1, 1, REVCOMP_LOOKUP[(int)sequence.at(i) - 65]);
+    }
 
     // reverse it
     Reverse(sequence);
@@ -305,8 +330,9 @@ std::vector<std::string> Utilities::Split(const std::string& source, const char 
     std::string field;
     std::vector<std::string> fields;
 
-    while (std::getline(ss, field, delim))
+    while (std::getline(ss, field, delim)) {
         fields.push_back(field);
+    }
     return fields;
 }
 

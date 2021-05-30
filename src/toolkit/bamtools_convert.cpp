@@ -172,8 +172,9 @@ bool ConvertTool::ConvertToolPrivate::Run()
     // initialize conversion input/output
 
     // set to default input if none provided
-    if (!m_settings->HasInput && !m_settings->HasInputFilelist)
+    if (!m_settings->HasInput && !m_settings->HasInputFilelist) {
         m_settings->InputFiles.push_back(Options::StandardIn());
+    }
 
     // add files in the filelist to the input file list
     if (m_settings->HasInputFilelist) {
@@ -186,8 +187,9 @@ bool ConvertTool::ConvertToolPrivate::Run()
         }
 
         std::string line;
-        while (std::getline(filelist, line))
+        while (std::getline(filelist, line)) {
             m_settings->InputFiles.push_back(line);
+        }
     }
 
     // open input files
@@ -259,28 +261,29 @@ bool ConvertTool::ConvertToolPrivate::Run()
 
     // pileup is special case
     // conversion not done per alignment, like the other formats
-    if (m_settings->Format == FORMAT_PILEUP) convertedOk = RunPileupConversion(&reader);
+    if (m_settings->Format == FORMAT_PILEUP) {
+        convertedOk = RunPileupConversion(&reader);
 
-    // all other formats
-    else {
+        // all other formats
+    } else {
 
         bool formatError = false;
 
         // set function pointer to proper conversion method
         void (BamTools::ConvertTool::ConvertToolPrivate::*pFunction)(const BamAlignment&) = 0;
-        if (m_settings->Format == FORMAT_BED)
+        if (m_settings->Format == FORMAT_BED) {
             pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintBed;
-        else if (m_settings->Format == FORMAT_FASTA)
+        } else if (m_settings->Format == FORMAT_FASTA) {
             pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintFasta;
-        else if (m_settings->Format == FORMAT_FASTQ)
+        } else if (m_settings->Format == FORMAT_FASTQ) {
             pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintFastq;
-        else if (m_settings->Format == FORMAT_JSON)
+        } else if (m_settings->Format == FORMAT_JSON) {
             pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintJson;
-        else if (m_settings->Format == FORMAT_SAM)
+        } else if (m_settings->Format == FORMAT_SAM) {
             pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintSam;
-        else if (m_settings->Format == FORMAT_YAML)
+        } else if (m_settings->Format == FORMAT_YAML) {
             pFunction = &BamTools::ConvertTool::ConvertToolPrivate::PrintYaml;
-        else {
+        } else {
             std::cerr << "bamtools convert ERROR: unrecognized format: " << m_settings->Format
                       << std::endl;
             std::cerr << "Please see documentation for list of supported formats " << std::endl;
@@ -292,14 +295,16 @@ bool ConvertTool::ConvertToolPrivate::Run()
         if (!formatError) {
 
             // if SAM format & not omitting header, print SAM header first
-            if ((m_settings->Format == FORMAT_SAM) && !m_settings->IsOmittingSamHeader)
+            if ((m_settings->Format == FORMAT_SAM) && !m_settings->IsOmittingSamHeader) {
                 m_out << reader.GetHeaderText();
+            }
 
             try {
                 // iterate through file, doing conversion
                 BamAlignment a;
-                while (reader.GetNextAlignment(a))
+                while (reader.GetNextAlignment(a)) {
                     (this->*pFunction)(a);
+                }
 
                 // set flag for successful conversion
                 convertedOk = true;
@@ -314,7 +319,9 @@ bool ConvertTool::ConvertToolPrivate::Run()
     // ------------------------
     // clean up & exit
     reader.Close();
-    if (m_settings->HasOutput) outFile.close();
+    if (m_settings->HasOutput) {
+        outFile.close();
+    }
     return convertedOk;
 }
 
@@ -350,13 +357,16 @@ void ConvertTool::ConvertToolPrivate::PrintFasta(const BamAlignment& a)
 
     // handle reverse strand alignment - bases
     std::string sequence = a.QueryBases;
-    if (a.IsReverseStrand()) Utilities::ReverseComplement(sequence);
+    if (a.IsReverseStrand()) {
+        Utilities::ReverseComplement(sequence);
+    }
 
     // if sequence fits on single line
-    if (sequence.length() <= FASTA_LINE_MAX) m_out << sequence << std::endl;
+    if (sequence.length() <= FASTA_LINE_MAX) {
+        m_out << sequence << std::endl;
 
-    // else split over multiple lines
-    else {
+        // else split over multiple lines
+    } else {
 
         std::size_t position = 0;
         std::size_t seqLength =
@@ -388,7 +398,9 @@ void ConvertTool::ConvertToolPrivate::PrintFastq(const BamAlignment& a)
 
     // handle paired-end alignments
     std::string name = a.Name;
-    if (a.IsPaired()) name.append((a.IsFirstMate() ? "/1" : "/2"));
+    if (a.IsPaired()) {
+        name.append((a.IsFirstMate() ? "/1" : "/2"));
+    }
 
     // handle reverse strand alignment - bases & qualities
     std::string qualities = a.Qualities;
@@ -413,7 +425,9 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
                                                                std::size_t tagDataLength)
 {
     // Need at least 5 bytes for type and array length
-    if (tagDataLength < 5) throw BadDataException("Incomplete array tag data");
+    if (tagDataLength < 5) {
+        throw BadDataException("Incomplete array tag data");
+    }
 
     if (m_settings->Format == FORMAT_SAM) {
         // Print array type letter
@@ -453,7 +467,9 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
         case (Constants::BAM_TAG_TYPE_INT8):
             for (i = 0; i < arrayLength && index + sizeof(int8_t) <= tagDataLength;
                  i++, index += sizeof(int8_t)) {
-                if (i > 0) m_out << ',';
+                if (i > 0) {
+                    m_out << ',';
+                }
                 m_out << int(static_cast<int8_t>(tagData[index]));
             }
             break;
@@ -461,7 +477,9 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
         case (Constants::BAM_TAG_TYPE_UINT8):
             for (i = 0; i < arrayLength && index + sizeof(uint8_t) <= tagDataLength;
                  i++, index += sizeof(uint8_t)) {
-                if (i > 0) m_out << ',';
+                if (i > 0) {
+                    m_out << ',';
+                }
                 m_out << int(static_cast<uint8_t>(tagData[index]));
             }
             break;
@@ -469,7 +487,9 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
         case (Constants::BAM_TAG_TYPE_INT16):
             for (i = 0; i < arrayLength && index + sizeof(int16_t) <= tagDataLength;
                  i++, index += sizeof(int16_t)) {
-                if (i > 0) m_out << ',';
+                if (i > 0) {
+                    m_out << ',';
+                }
                 m_out << BamTools::UnpackSignedShort(&tagData[index]);
             }
             break;
@@ -477,7 +497,9 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
         case (Constants::BAM_TAG_TYPE_UINT16):
             for (i = 0; i < arrayLength && index + sizeof(uint16_t) <= tagDataLength;
                  i++, index += sizeof(uint16_t)) {
-                if (i > 0) m_out << ',';
+                if (i > 0) {
+                    m_out << ',';
+                }
                 m_out << BamTools::UnpackUnsignedShort(&tagData[index]);
             }
             break;
@@ -485,7 +507,9 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
         case (Constants::BAM_TAG_TYPE_INT32):
             for (i = 0; i < arrayLength && index + sizeof(int32_t) <= tagDataLength;
                  i++, index += sizeof(int32_t)) {
-                if (i > 0) m_out << ',';
+                if (i > 0) {
+                    m_out << ',';
+                }
                 m_out << BamTools::UnpackSignedInt(&tagData[index]);
             }
             break;
@@ -493,7 +517,9 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
         case (Constants::BAM_TAG_TYPE_UINT32):
             for (i = 0; i < arrayLength && index + sizeof(uint32_t) <= tagDataLength;
                  i++, index += sizeof(uint32_t)) {
-                if (i > 0) m_out << ',';
+                if (i > 0) {
+                    m_out << ',';
+                }
                 m_out << BamTools::UnpackUnsignedInt(&tagData[index]);
             }
             break;
@@ -501,12 +527,16 @@ std::size_t ConvertTool::ConvertToolPrivate::PrintBArrayValues(const char* tagDa
         case (Constants::BAM_TAG_TYPE_FLOAT):
             for (i = 0; i < arrayLength && index + sizeof(float) <= tagDataLength;
                  i++, index += sizeof(float)) {
-                if (i > 0) m_out << ',';
+                if (i > 0) {
+                    m_out << ',';
+                }
                 m_out << BamTools::UnpackFloat(&tagData[index]);
             }
             break;
     }
-    if (i < arrayLength) throw BadDataException("Incomplete array tag data");
+    if (i < arrayLength) {
+        throw BadDataException("Incomplete array tag data");
+    }
 
     return index;
 }
@@ -519,8 +549,9 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
     m_out << "{\"name\":\"" << a.Name << "\",\"alignmentFlag\":\"" << a.AlignmentFlag << "\",";
 
     // write reference name
-    if ((a.RefID >= 0) && (a.RefID < (int)m_references.size()))
+    if ((a.RefID >= 0) && (a.RefID < (int)m_references.size())) {
         m_out << "\"reference\":\"" << m_references[a.RefID].RefName << "\",";
+    }
 
     // write position & map quality
     m_out << "\"position\":" << a.Position + 1 << ",\"mapQuality\":" << a.MapQuality << ',';
@@ -534,7 +565,9 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
         std::vector<CigarOp>::const_iterator cigarEnd = cigarData.end();
         for (; cigarIter != cigarEnd; ++cigarIter) {
             const CigarOp& op = (*cigarIter);
-            if (cigarIter != cigarBegin) m_out << ',';
+            if (cigarIter != cigarBegin) {
+                m_out << ',';
+            }
             m_out << '"' << op.Length << op.Type << '"';
         }
         m_out << "],";
@@ -549,15 +582,18 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
     }
 
     // write sequence
-    if (!a.QueryBases.empty()) m_out << "\"queryBases\":\"" << a.QueryBases << "\",";
+    if (!a.QueryBases.empty()) {
+        m_out << "\"queryBases\":\"" << a.QueryBases << "\",";
+    }
 
     // write qualities
     if (!a.Qualities.empty() && a.Qualities.at(0) != (char)0xFF) {
         std::string::const_iterator s = a.Qualities.begin();
         m_out << "\"qualities\":[" << static_cast<short>(*s) - 33;
         ++s;
-        for (; s != a.Qualities.end(); ++s)
+        for (; s != a.Qualities.end(); ++s) {
             m_out << ',' << static_cast<short>(*s) - 33;
+        }
         m_out << "],";
     }
 
@@ -577,9 +613,13 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
             //    two for name
             //    one for type
             //    at least one for value
-            if (tagDataLength - index < 4) throw BadDataException("Incomplete tag data");
+            if (tagDataLength - index < 4) {
+                throw BadDataException("Incomplete tag data");
+            }
 
-            if (index > 0) m_out << ',';
+            if (index > 0) {
+                m_out << ',';
+            }
 
             // write tag name
             m_out << '"' << a.TagData.substr(index, 2) << "\":";
@@ -607,36 +647,41 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
                     break;
 
                 case (Constants::BAM_TAG_TYPE_INT16):
-                    if (tagDataLength - index < sizeof(int16_t))
+                    if (tagDataLength - index < sizeof(int16_t)) {
                         throw BadDataException("Incomplete tag data");
+                    }
                     m_out << BamTools::UnpackSignedShort(&tagData[index]);
                     index += sizeof(int16_t);
                     break;
 
                 case (Constants::BAM_TAG_TYPE_UINT16):
-                    if (tagDataLength - index < sizeof(uint16_t))
+                    if (tagDataLength - index < sizeof(uint16_t)) {
                         throw BadDataException("Incomplete tag data");
+                    }
                     m_out << BamTools::UnpackUnsignedShort(&tagData[index]);
                     index += sizeof(uint16_t);
                     break;
 
                 case (Constants::BAM_TAG_TYPE_INT32):
-                    if (tagDataLength - index < sizeof(int32_t))
+                    if (tagDataLength - index < sizeof(int32_t)) {
                         throw BadDataException("Incomplete tag data");
+                    }
                     m_out << BamTools::UnpackSignedInt(&tagData[index]);
                     index += sizeof(int32_t);
                     break;
 
                 case (Constants::BAM_TAG_TYPE_UINT32):
-                    if (tagDataLength - index < sizeof(uint32_t))
+                    if (tagDataLength - index < sizeof(uint32_t)) {
                         throw BadDataException("Incomplete tag data");
+                    }
                     m_out << BamTools::UnpackUnsignedInt(&tagData[index]);
                     index += sizeof(uint32_t);
                     break;
 
                 case (Constants::BAM_TAG_TYPE_FLOAT):
-                    if (tagDataLength - index < sizeof(float))
+                    if (tagDataLength - index < sizeof(float)) {
                         throw BadDataException("Incomplete tag data");
+                    }
                     m_out << BamTools::UnpackFloat(&tagData[index]);
                     index += sizeof(float);
                     break;
@@ -645,10 +690,11 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
                 case (Constants::BAM_TAG_TYPE_STRING):
                     m_out << '"';
                     while (tagData[index]) {
-                        if (tagData[index] == '\"')
+                        if (tagData[index] == '\"') {
                             m_out << "\\\"";  // escape for json
-                        else
+                        } else {
                             m_out << tagData[index];
+                        }
                         ++index;
                     }
                     m_out << '"';
@@ -665,7 +711,9 @@ void ConvertTool::ConvertToolPrivate::PrintJson(const BamAlignment& a)
                     throw BadDataException(std::string("Unknown tag type: ") + tagData[0]);
             }
 
-            if (index >= tagDataLength || tagData[index] == '\0') break;
+            if (index >= tagDataLength || tagData[index] == '\0') {
+                break;
+            }
         }
 
         m_out << '}';
@@ -685,19 +733,20 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a)
     m_out << a.Name << '\t' << a.AlignmentFlag << '\t';
 
     // write reference name
-    if ((a.RefID >= 0) && (a.RefID < (int)m_references.size()))
+    if ((a.RefID >= 0) && (a.RefID < (int)m_references.size())) {
         m_out << m_references[a.RefID].RefName << '\t';
-    else
+    } else {
         m_out << "*\t";
+    }
 
     // write position & map quality
     m_out << a.Position + 1 << '\t' << a.MapQuality << '\t';
 
     // write CIGAR
     const std::vector<CigarOp>& cigarData = a.CigarData;
-    if (cigarData.empty())
+    if (cigarData.empty()) {
         m_out << "*\t";
-    else {
+    } else {
         std::vector<CigarOp>::const_iterator cigarIter = cigarData.begin();
         std::vector<CigarOp>::const_iterator cigarEnd = cigarData.end();
         for (; cigarIter != cigarEnd; ++cigarIter) {
@@ -709,25 +758,29 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a)
 
     // write mate reference name, mate position, & insert size
     if (a.IsPaired() && (a.MateRefID >= 0) && (a.MateRefID < (int)m_references.size())) {
-        if (a.MateRefID == a.RefID)
+        if (a.MateRefID == a.RefID) {
             m_out << "=\t";
-        else
+        } else {
             m_out << m_references[a.MateRefID].RefName << '\t';
+        }
         m_out << a.MatePosition + 1 << '\t' << a.InsertSize << '\t';
-    } else
+    } else {
         m_out << "*\t0\t0\t";
+    }
 
     // write sequence
-    if (a.QueryBases.empty())
+    if (a.QueryBases.empty()) {
         m_out << "*\t";
-    else
+    } else {
         m_out << a.QueryBases << '\t';
+    }
 
     // write qualities
-    if (a.Qualities.empty() || (a.Qualities.at(0) == (char)0xFF))
+    if (a.Qualities.empty() || (a.Qualities.at(0) == (char)0xFF)) {
         m_out << '*';
-    else
+    } else {
         m_out << a.Qualities;
+    }
 
     // write tag data
     const char* tagData = a.TagData.c_str();
@@ -740,7 +793,9 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a)
         //    two for name
         //    one for type
         //    at least one for value
-        if (tagDataLength - index < 4) throw BadDataException("Incomplete tag data");
+        if (tagDataLength - index < 4) {
+            throw BadDataException("Incomplete tag data");
+        }
 
         // write tag name
         std::string tagName = a.TagData.substr(index, 2);
@@ -769,36 +824,41 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a)
                 break;
 
             case (Constants::BAM_TAG_TYPE_INT16):
-                if (tagDataLength - index < sizeof(int16_t))
+                if (tagDataLength - index < sizeof(int16_t)) {
                     throw BadDataException("Incomplete tag data");
+                }
                 m_out << "i:" << BamTools::UnpackSignedShort(&tagData[index]);
                 index += sizeof(int16_t);
                 break;
 
             case (Constants::BAM_TAG_TYPE_UINT16):
-                if (tagDataLength - index < sizeof(uint16_t))
+                if (tagDataLength - index < sizeof(uint16_t)) {
                     throw BadDataException("Incomplete tag data");
+                }
                 m_out << "i:" << BamTools::UnpackUnsignedShort(&tagData[index]);
                 index += sizeof(uint16_t);
                 break;
 
             case (Constants::BAM_TAG_TYPE_INT32):
-                if (tagDataLength - index < sizeof(int32_t))
+                if (tagDataLength - index < sizeof(int32_t)) {
                     throw BadDataException("Incomplete tag data");
+                }
                 m_out << "i:" << BamTools::UnpackSignedInt(&tagData[index]);
                 index += sizeof(int32_t);
                 break;
 
             case (Constants::BAM_TAG_TYPE_UINT32):
-                if (tagDataLength - index < sizeof(uint32_t))
+                if (tagDataLength - index < sizeof(uint32_t)) {
                     throw BadDataException("Incomplete tag data");
+                }
                 m_out << "i:" << BamTools::UnpackUnsignedInt(&tagData[index]);
                 index += sizeof(uint32_t);
                 break;
 
             case (Constants::BAM_TAG_TYPE_FLOAT):
-                if (tagDataLength - index < sizeof(float))
+                if (tagDataLength - index < sizeof(float)) {
                     throw BadDataException("Incomplete tag data");
+                }
                 m_out << "f:" << BamTools::UnpackFloat(&tagData[index]);
                 index += sizeof(float);
                 break;
@@ -822,7 +882,9 @@ void ConvertTool::ConvertToolPrivate::PrintSam(const BamAlignment& a)
                 throw BadDataException(std::string("Unknown tag type: ") + tagData[0]);
         }
 
-        if (index >= tagDataLength || tagData[index] == '\0') break;
+        if (index >= tagDataLength || tagData[index] == '\0') {
+            break;
+        }
     }
 
     m_out << std::endl;
@@ -888,7 +950,9 @@ bool ConvertTool::ConvertToolPrivate::RunPileupConversion(BamMultiReader* reader
 {
 
     // check for valid BamMultiReader
-    if (reader == 0) return false;
+    if (reader == 0) {
+        return false;
+    }
 
     // set up our pileup format 'visitor'
     ConvertPileupFormatVisitor* v = new ConvertPileupFormatVisitor(
@@ -900,8 +964,9 @@ bool ConvertTool::ConvertToolPrivate::RunPileupConversion(BamMultiReader* reader
 
     // iterate through data
     BamAlignment al;
-    while (reader->GetNextAlignment(al))
+    while (reader->GetNextAlignment(al)) {
         pileup.AddAlignment(al);
+    }
     pileup.Flush();
 
     // clean up
@@ -982,10 +1047,11 @@ int ConvertTool::Run(int argc, char* argv[])
     m_impl = new ConvertToolPrivate(m_settings);
 
     // run ConvertTool, return success/fail
-    if (m_impl->Run())
+    if (m_impl->Run()) {
         return 0;
-    else
+    } else {
         return 1;
+    }
 }
 
 // ---------------------------------------------
@@ -1006,10 +1072,14 @@ ConvertPileupFormatVisitor::ConvertPileupFormatVisitor(const RefVector& referenc
 
         // check for FASTA index
         std::string indexFilename;
-        if (Utilities::FileExists(fastaFilename + ".fai")) indexFilename = fastaFilename + ".fai";
+        if (Utilities::FileExists(fastaFilename + ".fai")) {
+            indexFilename = fastaFilename + ".fai";
+        }
 
         // open FASTA file
-        if (m_fasta.Open(fastaFilename, indexFilename)) m_hasFasta = true;
+        if (m_fasta.Open(fastaFilename, indexFilename)) {
+            m_hasFasta = true;
+        }
     }
 }
 
@@ -1026,7 +1096,9 @@ void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData)
 {
 
     // skip if no alignments at this position
-    if (pileupData.PileupAlignments.empty()) return;
+    if (pileupData.PileupAlignments.empty()) {
+        return;
+    }
 
     // retrieve reference name
     const std::string& referenceName = m_references[pileupData.RefId].RefName;
@@ -1061,9 +1133,10 @@ void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData)
         const BamAlignment& ba = pa.Alignment;
 
         // if beginning of read segment
-        if (pa.IsSegmentBegin)
+        if (pa.IsSegmentBegin) {
             bases << '^'
                   << (((int)ba.MapQuality > 93) ? (char)126 : (char)((int)ba.MapQuality + 33));
+        }
 
         // if current base is not a DELETION
         if (!pa.IsCurrentDeletion) {
@@ -1078,8 +1151,9 @@ void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData)
             }
 
             // mismatches reference
-            else
+            else {
                 base = (ba.IsReverseStrand() ? std::tolower(base) : std::toupper(base));
+            }
 
             // store base
             bases << base;
@@ -1116,19 +1190,23 @@ void ConvertPileupFormatVisitor::Visit(const PileupPosition& pileupData)
         }
 
         // otherwise, DELETION
-        else
+        else {
             bases << '*';
+        }
 
         // if end of read segment
-        if (pa.IsSegmentEnd) bases << '$';
+        if (pa.IsSegmentEnd) {
+            bases << '$';
+        }
 
         // store current base quality
         baseQualities << ba.Qualities.at(pa.PositionInAlignment);
 
         // save alignment map quality if desired
-        if (m_isPrintingMapQualities)
+        if (m_isPrintingMapQualities) {
             mapQualities << (((int)ba.MapQuality > 93) ? (char)126
                                                        : (char)((int)ba.MapQuality + 33));
+        }
     }
 
     // ----------------------

@@ -128,8 +128,9 @@ int IndexTool::Run(int argc, char* argv[])
     m_impl = new IndexToolPrivate(m_settings);
 
     // run IndexTool, return success/fail
-    if (m_impl->Run())
+    if (m_impl->Run()) {
         return 0;
-    else
+    } else {
         return 1;
+    }
 }

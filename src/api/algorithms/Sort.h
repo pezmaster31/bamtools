@@ -133,11 +133,17 @@ struct API_EXPORT Sort
         {
 
             // force unmapped aligmnents to end
-            if (lhs.RefID == -1) return false;
-            if (rhs.RefID == -1) return true;
+            if (lhs.RefID == -1) {
+                return false;
+            }
+            if (rhs.RefID == -1) {
+                return true;
+            }
 
             // if on same reference, sort on position
-            if (lhs.RefID == rhs.RefID) return sort_helper(m_order, lhs.Position, rhs.Position);
+            if (lhs.RefID == rhs.RefID) {
+                return sort_helper(m_order, lhs.Position, rhs.Position);
+            }
 
             // otherwise sort on reference ID
             return sort_helper(m_order, lhs.RefID, rhs.RefID);
@@ -187,8 +193,12 @@ struct API_EXPORT Sort
             // force alignments without tag to end
             T lhsTagValue;
             T rhsTagValue;
-            if (!lhs.GetTag(m_tag, lhsTagValue)) return false;
-            if (!rhs.GetTag(m_tag, rhsTagValue)) return true;
+            if (!lhs.GetTag(m_tag, lhsTagValue)) {
+                return false;
+            }
+            if (!rhs.GetTag(m_tag, rhsTagValue)) {
+                return true;
+            }
 
             // otherwise compare on tag values
             return sort_helper(m_order, lhsTagValue, rhsTagValue);
@@ -301,14 +311,19 @@ struct API_EXPORT Sort
                                                      const Compare& comp = Compare())
     {
         // return empty container if unable to find region
-        if (!reader.IsOpen()) return std::vector<BamAlignment>();
-        if (!reader.SetRegion(region)) return std::vector<BamAlignment>();
+        if (!reader.IsOpen()) {
+            return std::vector<BamAlignment>();
+        }
+        if (!reader.SetRegion(region)) {
+            return std::vector<BamAlignment>();
+        }
 
         // iterate through region, grabbing alignments
         BamAlignment al;
         std::vector<BamAlignment> results;
-        while (reader.GetNextAlignmentCore(al))
+        while (reader.GetNextAlignmentCore(al)) {
             results.push_back(al);
+        }
 
         // sort & return alignments
         SortAlignments(results, comp);
@@ -341,14 +356,19 @@ struct API_EXPORT Sort
                                                      const Compare& comp = Compare())
     {
         // return empty container if unable to find region
-        if (!reader.HasOpenReaders()) return std::vector<BamAlignment>();
-        if (!reader.SetRegion(region)) return std::vector<BamAlignment>();
+        if (!reader.HasOpenReaders()) {
+            return std::vector<BamAlignment>();
+        }
+        if (!reader.SetRegion(region)) {
+            return std::vector<BamAlignment>();
+        }
 
         // iterate through region, grabbing alignments
         BamAlignment al;
         std::vector<BamAlignment> results;
-        while (reader.GetNextAlignmentCore(al))
+        while (reader.GetNextAlignmentCore(al)) {
             results.push_back(al);
+        }
 
         // sort & return alignments
         SortAlignments(results, comp);

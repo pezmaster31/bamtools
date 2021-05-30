@@ -68,19 +68,45 @@ AbstractTool* CreateTool(const std::string& arg)
 {
 
     // determine tool type based on arg
-    if (arg == CONVERT) return new ConvertTool;
-    if (arg == COUNT) return new CountTool;
-    if (arg == COVERAGE) return new CoverageTool;
-    if (arg == FILTER) return new FilterTool;
-    if (arg == HEADER) return new HeaderTool;
-    if (arg == INDEX) return new IndexTool;
-    if (arg == MERGE) return new MergeTool;
-    if (arg == RANDOM) return new RandomTool;
-    if (arg == RESOLVE) return new ResolveTool;
-    if (arg == REVERT) return new RevertTool;
-    if (arg == SORT) return new SortTool;
-    if (arg == SPLIT) return new SplitTool;
-    if (arg == STATS) return new StatsTool;
+    if (arg == CONVERT) {
+        return new ConvertTool;
+    }
+    if (arg == COUNT) {
+        return new CountTool;
+    }
+    if (arg == COVERAGE) {
+        return new CoverageTool;
+    }
+    if (arg == FILTER) {
+        return new FilterTool;
+    }
+    if (arg == HEADER) {
+        return new HeaderTool;
+    }
+    if (arg == INDEX) {
+        return new IndexTool;
+    }
+    if (arg == MERGE) {
+        return new MergeTool;
+    }
+    if (arg == RANDOM) {
+        return new RandomTool;
+    }
+    if (arg == RESOLVE) {
+        return new ResolveTool;
+    }
+    if (arg == REVERT) {
+        return new RevertTool;
+    }
+    if (arg == SORT) {
+        return new SortTool;
+    }
+    if (arg == SPLIT) {
+        return new SplitTool;
+    }
+    if (arg == STATS) {
+        return new StatsTool;
+    }
 
     // unknown arg
     return 0;
@@ -97,7 +123,9 @@ int Help(int argc, char* argv[])
         AbstractTool* tool = CreateTool(argv[2]);
 
         // if tool known, print its help screen
-        if (tool) return tool->Help();
+        if (tool) {
+            return tool->Help();
+        }
     }
 
     // print general BamTools help message
@@ -157,17 +185,25 @@ int main(int argc, char* argv[])
 {
 
     // just 'bamtools'
-    if (argc == 1) return Help(argc, argv);
+    if (argc == 1) {
+        return Help(argc, argv);
+    }
 
     // 'bamtools help', 'bamtools --help', or 'bamtools -h'
-    if (IsHelp(argv[1])) return Help(argc, argv);
+    if (IsHelp(argv[1])) {
+        return Help(argc, argv);
+    }
 
     // 'bamtools version', 'bamtools --version', or 'bamtools -v'
-    if (IsVersion(argv[1])) return Version();
+    if (IsVersion(argv[1])) {
+        return Version();
+    }
 
     // determine desired sub-tool, run if found
     AbstractTool* tool = CreateTool(argv[1]);
-    if (tool) return tool->Run(argc, argv);
+    if (tool) {
+        return tool->Run(argc, argv);
+    }
     delete tool;
 
     // no tool matched, show help

@@ -125,7 +125,9 @@ void MultiMerger<Compare>::Add(MergeItem item)
     // N.B. - any future custom Compare types must define this method
     //        see algorithms/Sort.h
 
-    if (CompareType::UsesCharData()) item.Alignment->BuildCharData();
+    if (CompareType::UsesCharData()) {
+        item.Alignment->BuildCharData();
+    }
     m_data.insert(item);
 }
 
@@ -151,7 +153,9 @@ template <typename Compare>
 void MultiMerger<Compare>::Remove(BamReader* reader)
 {
 
-    if (reader == 0) return;
+    if (reader == 0) {
+        return;
+    }
     const std::string& filenameToRemove = reader->GetFilename();
 
     // iterate over readers in cache
@@ -160,7 +164,9 @@ void MultiMerger<Compare>::Remove(BamReader* reader)
     for (; dataIter != dataEnd; ++dataIter) {
         const MergeItem& item = (*dataIter);
         const BamReader* itemReader = item.Reader;
-        if (itemReader == 0) continue;
+        if (itemReader == 0) {
+            continue;
+        }
 
         // remove iterator on match
         if (itemReader->GetFilename() == filenameToRemove) {
@@ -234,7 +240,9 @@ inline bool MultiMerger<Algorithms::Sort::Unsorted>::IsEmpty() const
 inline void MultiMerger<Algorithms::Sort::Unsorted>::Remove(BamReader* reader)
 {
 
-    if (reader == 0) return;
+    if (reader == 0) {
+        return;
+    }
     const std::string filenameToRemove = reader->GetFilename();
 
     // iterate over readers in cache
@@ -243,7 +251,9 @@ inline void MultiMerger<Algorithms::Sort::Unsorted>::Remove(BamReader* reader)
     for (; dataIter != dataEnd; ++dataIter) {
         const MergeItem& item = (*dataIter);
         const BamReader* itemReader = item.Reader;
-        if (itemReader == 0) continue;
+        if (itemReader == 0) {
+            continue;
+        }
 
         // remove iterator on match
         if (itemReader->GetFilename() == filenameToRemove) {

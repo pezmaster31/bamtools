@@ -70,10 +70,11 @@ bool PileupEngine::PileupEnginePrivate::AddAlignment(const BamAlignment& al)
     if (al.RefID == CurrentId) {
 
         // if same position, store and move on
-        if (al.Position == CurrentPosition) CurrentAlignments.push_back(al);
+        if (al.Position == CurrentPosition) {
+            CurrentAlignments.push_back(al);
 
-        // if less than CurrentPosition - sorting error => ABORT
-        else if (al.Position < CurrentPosition) {
+            // if less than CurrentPosition - sorting error => ABORT
+        } else if (al.Position < CurrentPosition) {
             std::cerr << "Pileup::Run() : Data not sorted correctly!" << std::endl;
             return false;
         }
@@ -122,8 +123,9 @@ void PileupEngine::PileupEnginePrivate::ApplyVisitors()
     // apply all visitors to current alignment set
     std::vector<PileupVisitor*>::const_iterator visitorIter = Visitors.begin();
     std::vector<PileupVisitor*>::const_iterator visitorEnd = Visitors.end();
-    for (; visitorIter != visitorEnd; ++visitorIter)
+    for (; visitorIter != visitorEnd; ++visitorIter) {
         (*visitorIter)->Visit(CurrentPileupData);
+    }
 }
 
 void PileupEngine::PileupEnginePrivate::ClearOldData()
@@ -149,7 +151,9 @@ void PileupEngine::PileupEnginePrivate::ClearOldData()
 
         // otherwise alignment ends after CurrentPosition
         // move it towards vector beginning, at index j
-        if (i != j) CurrentAlignments[j] = CurrentAlignments[i];
+        if (i != j) {
+            CurrentAlignments[j] = CurrentAlignments[i];
+        }
 
         // increment our indices
         ++i;
@@ -174,8 +178,9 @@ void PileupEngine::PileupEnginePrivate::CreatePileupData()
     // parse CIGAR data in remaining alignments
     std::vector<BamAlignment>::const_iterator alIter = CurrentAlignments.begin();
     std::vector<BamAlignment>::const_iterator alEnd = CurrentAlignments.end();
-    for (; alIter != alEnd; ++alIter)
+    for (; alIter != alEnd; ++alIter) {
         ParseAlignmentCigar((*alIter));
+    }
 }
 
 void PileupEngine::PileupEnginePrivate::Flush()
@@ -190,7 +195,9 @@ void PileupEngine::PileupEnginePrivate::ParseAlignmentCigar(const BamAlignment& 
 {
 
     // skip if unmapped
-    if (!al.IsMapped()) return;
+    if (!al.IsMapped()) {
+        return;
+    }
 
     // intialize local variables
     int genomePosition = al.Position;
@@ -218,8 +225,9 @@ void PileupEngine::PileupEnginePrivate::ParseAlignmentCigar(const BamAlignment& 
                     positionInAlignment + (CurrentPosition - genomePosition);
 
                 // check for beginning of read segment
-                if (genomePosition == CurrentPosition && isNewReadSegment)
+                if (genomePosition == CurrentPosition && isNewReadSegment) {
                     pileupAlignment.IsSegmentBegin = true;
+                }
 
                 // if we're at the end of a match operation
                 if (genomePosition + (int)op.Length - 1 == CurrentPosition) {
@@ -251,14 +259,17 @@ void PileupEngine::PileupEnginePrivate::ParseAlignmentCigar(const BamAlignment& 
 
                                 // if next CIGAR op is clipping or ref_skip
                                 if (nextNextOp.Type == 'S' || nextNextOp.Type == 'N' ||
-                                    nextNextOp.Type == 'H')
+                                    nextNextOp.Type == 'H') {
                                     pileupAlignment.IsSegmentEnd = true;
+                                }
                             } else {
                                 pileupAlignment.IsSegmentEnd = true;
 
                                 // if next CIGAR op is clipping or ref_skip
-                                if (nextOp.Type == 'S' || nextOp.Type == 'N' || nextOp.Type == 'H')
+                                if (nextOp.Type == 'S' || nextOp.Type == 'N' ||
+                                    nextOp.Type == 'H') {
                                     pileupAlignment.IsSegmentEnd = true;
+                                }
                             }
                         }
 
@@ -266,14 +277,16 @@ void PileupEngine::PileupEnginePrivate::ParseAlignmentCigar(const BamAlignment& 
                         else {
 
                             // if next CIGAR op is clipping or ref_skip
-                            if (nextOp.Type == 'S' || nextOp.Type == 'N' || nextOp.Type == 'H')
+                            if (nextOp.Type == 'S' || nextOp.Type == 'N' || nextOp.Type == 'H') {
                                 pileupAlignment.IsSegmentEnd = true;
+                            }
                         }
                     }
 
                     // else this is last operation
-                    else
+                    else {
                         pileupAlignment.IsSegmentEnd = true;
+                    }
                 }
             }
 
@@ -311,20 +324,25 @@ void PileupEngine::PileupEnginePrivate::ParseAlignmentCigar(const BamAlignment& 
         }
 
         // checl for beginning of new read segment
-        if (op.Type == 'N' || op.Type == 'S' || op.Type == 'H')
+        if (op.Type == 'N' || op.Type == 'S' || op.Type == 'H') {
             isNewReadSegment = true;
-        else
+        } else {
             isNewReadSegment = false;
+        }
 
         // if we've moved beyond current position
         if (genomePosition > CurrentPosition) {
-            if (op.Type == 'N') saveAlignment = false;  // ignore alignment if REF_SKIP
+            if (op.Type == 'N') {
+                saveAlignment = false;  // ignore alignment if REF_SKIP
+            }
             break;
         }
     }
 
     // save pileup position if flag is true
-    if (saveAlignment) CurrentPileupData.PileupAlignments.push_back(pileupAlignment);
+    if (saveAlignment) {
+        CurrentPileupData.PileupAlignments.push_back(pileupAlignment);
+    }
 }
 
 // ---------------------------------------------

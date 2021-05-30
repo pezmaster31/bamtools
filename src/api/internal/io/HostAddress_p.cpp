@@ -31,8 +31,9 @@ static std::vector<std::string> Split(const std::string& source, char delim)
     std::stringstream ss(source);
     std::string field;
     std::vector<std::string> fields;
-    while (std::getline(ss, field, delim))
+    while (std::getline(ss, field, delim)) {
         fields.push_back(field);
+    }
     return fields;
 }
 
@@ -54,7 +55,9 @@ static bool ParseIp4(const std::string& address, uint32_t& maybeIp4)
 
     // split IP address into string fields
     std::vector<std::string> addressFields = Split(address, '.');
-    if (addressFields.size() != 4) return false;
+    if (addressFields.size() != 4) {
+        return false;
+    }
 
     // convert each field to integer value
     uint32_t ipv4(0);
@@ -63,11 +66,15 @@ static bool ParseIp4(const std::string& address, uint32_t& maybeIp4)
         const std::string& field = addressFields.at(i);
         const std::size_t fieldSize = field.size();
         for (std::size_t j = 0; j < fieldSize; ++j) {
-            if (!std::isdigit(field[j])) return false;
+            if (!std::isdigit(field[j])) {
+                return false;
+            }
         }
 
         int value = std::atoi(addressFields.at(i).c_str());
-        if (value < 0 || value > 255) return false;
+        if (value < 0 || value > 255) {
+            return false;
+        }
 
         // append byte value
         ipv4 <<= 8;
@@ -87,28 +94,38 @@ static bool ParseIp6(const std::string& address, uint8_t* maybeIp6)
     // look for '%' char (if found, lop off that part of address)
     // we're going to ignore any link-local zone index, for now at least
     const std::size_t percentFound = tmp.rfind('%');
-    if (percentFound != std::string::npos) tmp = tmp.substr(0, percentFound);
+    if (percentFound != std::string::npos) {
+        tmp = tmp.substr(0, percentFound);
+    }
 
     // split IP address into string fields
     std::vector<std::string> fields = Split(tmp, ':');
     const uint8_t numFields = fields.size();
-    if (numFields < 3 || numFields > 8) return false;
+    if (numFields < 3 || numFields > 8) {
+        return false;
+    }
 
     // get number of '::' separators
     const uint8_t numColonColons = CountHits(tmp, "::");
-    if (numFields == 8 && numColonColons > 1) return false;
+    if (numFields == 8 && numColonColons > 1) {
+        return false;
+    }
 
     // check valid IPv6 'compression'
     // must be valid 'pure' IPv6 or mixed IPv4/6 notation
     const std::size_t dotFound = tmp.find('.');
     const bool isMixed = (dotFound != std::string::npos);
-    if (numColonColons != 1 && (numFields < (isMixed ? 7 : 8))) return false;
+    if (numColonColons != 1 && (numFields < (isMixed ? 7 : 8))) {
+        return false;
+    }
 
     // iterate over provided fields
     std::size_t index = 16;
     std::size_t fillCount = 9 - numFields;
     for (int8_t i = numFields - 1; i >= 0; --i) {
-        if (index == 0) return false;
+        if (index == 0) {
+            return false;
+        }
         const std::string& field = fields.at(i);
 
         // if field empty
@@ -117,7 +134,9 @@ static bool ParseIp6(const std::string& address, uint8_t* maybeIp6)
             // if last field empty
             if (i == numFields - 1) {
                 const std::string& previousField = fields.at(i - 1);
-                if (previousField.empty()) return false;
+                if (previousField.empty()) {
+                    return false;
+                }
                 maybeIp6[--index] = 0;
                 maybeIp6[--index] = 0;
             }
@@ -126,7 +145,9 @@ static bool ParseIp6(const std::string& address, uint8_t* maybeIp6)
             else if (i == 0) {
                 // make sure ':' isn't first character
                 const std::string& nextField = fields.at(i + 1);
-                if (nextField.empty()) return false;
+                if (nextField.empty()) {
+                    return false;
+                }
                 maybeIp6[--index] = 0;
                 maybeIp6[--index] = 0;
             }
@@ -134,7 +155,9 @@ static bool ParseIp6(const std::string& address, uint8_t* maybeIp6)
             // fill in 'compressed' 0s
             else {
                 for (uint8_t j = 0; j < fillCount; ++j) {
-                    if (index == 0) return false;
+                    if (index == 0) {
+                        return false;
+                    }
                     maybeIp6[--index] = 0;
                     maybeIp6[--index] = 0;
                 }
@@ -154,11 +177,15 @@ static bool ParseIp6(const std::string& address, uint8_t* maybeIp6)
             else {
 
                 // mixed field must be last
-                if (i != numFields - 1) return false;
+                if (i != numFields - 1) {
+                    return false;
+                }
 
                 // parse the IPv4 section
                 uint32_t maybeIp4;
-                if (!ParseIp4(field, maybeIp4)) return false;
+                if (!ParseIp4(field, maybeIp4)) {
+                    return false;
+                }
 
                 // store IPv4 fields in IPv6 container
                 maybeIp6[--index] = maybeIp4 & 0xff;
@@ -234,8 +261,9 @@ bool HostAddress::operator==(const HostAddress& other) const
     }
 
     // otherwise compare protocols
-    else
+    else {
         return m_protocol == other.m_protocol;
+    }
 }
 
 bool HostAddress::operator<(const HostAddress& other) const
@@ -243,13 +271,16 @@ bool HostAddress::operator<(const HostAddress& other) const
 
     // if self is IPv4
     if (m_protocol == HostAddress::IPv4Protocol) {
-        if (other.m_protocol == HostAddress::IPv4Protocol) return m_ip4Address < other.m_ip4Address;
+        if (other.m_protocol == HostAddress::IPv4Protocol) {
+            return m_ip4Address < other.m_ip4Address;
+        }
     }
 
     // if self is IPv6
     else if (m_protocol == HostAddress::IPv6Protocol) {
-        if (other.m_protocol == HostAddress::IPv6Protocol)
+        if (other.m_protocol == HostAddress::IPv6Protocol) {
             return (std::memcmp(&m_ip6Address, &other.m_ip6Address, sizeof(IPv6Address)) < 0);
+        }
     }
 
     // otherwise compare protocol types
@@ -306,7 +337,9 @@ std::string HostAddress::GetIPString() const
     // IPv6 format
     else if (m_protocol == HostAddress::IPv6Protocol) {
         for (uint8_t i = 0; i < 8; ++i) {
-            if (i != 0) ss << ':';
+            if (i != 0) {
+                ss << ':';
+            }
             ss << std::hex
                << ((uint16_t(m_ip6Address[2 * i]) << 8) | (uint16_t(m_ip6Address[2 * i + 1])));
         }
@@ -363,8 +396,9 @@ void HostAddress::SetAddress(const uint32_t ip4Address)
 
 void HostAddress::SetAddress(const uint8_t* ip6Address)
 {
-    for (uint8_t i = 0; i < 16; ++i)
+    for (uint8_t i = 0; i < 16; ++i) {
         m_ip6Address[i] = ip6Address[i];
+    }
     m_protocol = HostAddress::IPv6Protocol;
     m_hasIpAddress = true;
 }

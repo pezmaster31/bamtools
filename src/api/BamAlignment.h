@@ -200,7 +200,9 @@ bool BamAlignment::AddTag(const std::string& tag, const std::string& type, const
 {
 
     // if char data not populated, do that first
-    if (SupportData.HasCoreOnly) BuildCharData();
+    if (SupportData.HasCoreOnly) {
+        BuildCharData();
+    }
 
     // check tag/type size
     if (!IsValidSize(tag, type)) {
@@ -257,7 +259,9 @@ inline bool BamAlignment::AddTag<std::string>(const std::string& tag, const std:
                                               const std::string& value)
 {
     // if char data not populated, do that first
-    if (SupportData.HasCoreOnly) BuildCharData();
+    if (SupportData.HasCoreOnly) {
+        BuildCharData();
+    }
 
     // check tag/type size
     if (!IsValidSize(tag, type)) {
@@ -315,10 +319,14 @@ bool BamAlignment::AddTag(const std::string& tag, const std::vector<T>& values)
 {
 
     // if char data not populated, do that first
-    if (SupportData.HasCoreOnly) BuildCharData();
+    if (SupportData.HasCoreOnly) {
+        BuildCharData();
+    }
 
     // check for valid tag name length
-    if (tag.size() != Constants::BAM_TAG_TAGSIZE) return false;
+    if (tag.size() != Constants::BAM_TAG_TAGSIZE) {
+        return false;
+    }
 
     // localize the tag data
     char* pTagData = (char*)TagData.data();
@@ -385,10 +393,14 @@ bool BamAlignment::EditTag(const std::string& tag, const std::string& type, cons
 {
 
     // if char data not populated, do that first
-    if (SupportData.HasCoreOnly) BuildCharData();
+    if (SupportData.HasCoreOnly) {
+        BuildCharData();
+    }
 
     // remove existing tag if present, then append tag with new value
-    if (HasTag(tag)) RemoveTag(tag);
+    if (HasTag(tag)) {
+        RemoveTag(tag);
+    }
     return AddTag(tag, type, value);
 }
 
@@ -408,10 +420,14 @@ bool BamAlignment::EditTag(const std::string& tag, const std::vector<T>& values)
 {
 
     // if char data not populated, do that first
-    if (SupportData.HasCoreOnly) BuildCharData();
+    if (SupportData.HasCoreOnly) {
+        BuildCharData();
+    }
 
     // remove existing tag if present, then append tag with new values
-    if (HasTag(tag)) RemoveTag(tag);
+    if (HasTag(tag)) {
+        RemoveTag(tag);
+    }
     return AddTag(tag, values);
 }
 

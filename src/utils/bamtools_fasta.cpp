@@ -84,13 +84,17 @@ void Fasta::FastaPrivate::Chomp(char* sequence)
     static const int CHAR_CR = 13;
 
     int seqLength = std::strlen(sequence);
-    if (seqLength == 0) return;
+    if (seqLength == 0) {
+        return;
+    }
     --seqLength;  // ignore null terminator
 
     while (sequence[seqLength] == CHAR_LF || sequence[seqLength] == CHAR_CR) {
         sequence[seqLength] = 0;
         --seqLength;
-        if (seqLength < 0) break;
+        if (seqLength < 0) {
+            break;
+        }
     }
 }
 
@@ -144,7 +148,9 @@ bool Fasta::FastaPrivate::CreateIndex(const std::string& indexFilename)
         std::cerr << "FASTA error : could not read from file" << std::endl;
         return false;
     }
-    if (feof(Stream)) return false;
+    if (feof(Stream)) {
+        return false;
+    }
     if (buffer[0] != '>') {
         std::cerr << "FASTA error : expected header ('>'), instead : " << buffer[0] << std::endl;
         return false;
@@ -154,7 +160,9 @@ bool Fasta::FastaPrivate::CreateIndex(const std::string& indexFilename)
     char c = fgetc(Stream);
     while ((c >= 0) && (c != '\n')) {
         ++byteLength;
-        if (std::isgraph(c)) ++lineLength;
+        if (std::isgraph(c)) {
+            ++lineLength;
+        }
         c = fgetc(Stream);
     }
     ++byteLength;  // store newline
@@ -215,7 +223,9 @@ bool Fasta::FastaPrivate::CreateIndex(const std::string& indexFilename)
     }
 
     // write index data
-    if (!WriteIndexData()) return false;
+    if (!WriteIndexData()) {
+        return false;
+    }
     HasIndex = true;
 
     // close index file
@@ -321,7 +331,9 @@ bool Fasta::FastaPrivate::GetNameFromHeader(const std::string& header, std::stri
     while ((pName[start] == 32) || (pName[start] == 9) || (pName[start] == 10) ||
            (pName[start] == 13)) {
         start++;
-        if (start == nameLen) break;
+        if (start == nameLen) {
+            break;
+        }
     }
 
     unsigned int stop = start;
@@ -329,7 +341,9 @@ bool Fasta::FastaPrivate::GetNameFromHeader(const std::string& header, std::stri
         while ((pName[stop] != 32) && (pName[stop] != 9) && (pName[stop] != 10) &&
                (pName[stop] != 13)) {
             stop++;
-            if (stop == nameLen) break;
+            if (stop == nameLen) {
+                break;
+            }
         }
     }
 
@@ -346,7 +360,9 @@ bool Fasta::FastaPrivate::GetNextHeader(std::string& header)
 {
 
     // validate input stream
-    if (!IsOpen || feof(Stream)) return false;
+    if (!IsOpen || feof(Stream)) {
+        return false;
+    }
 
     // read in header line
     char buffer[1024];
@@ -374,7 +390,9 @@ bool Fasta::FastaPrivate::GetNextSequence(std::string& sequence)
 {
 
     // validate input stream
-    if (!IsOpen || feof(Stream)) return false;
+    if (!IsOpen || feof(Stream)) {
+        return false;
+    }
 
     // read in sequence
     char buffer[1024];
@@ -383,7 +401,9 @@ bool Fasta::FastaPrivate::GetNextSequence(std::string& sequence)
 
         char ch = fgetc(Stream);
         ungetc(ch, Stream);
-        if ((ch == '>') || feof(Stream)) break;
+        if ((ch == '>') || feof(Stream)) {
+            break;
+        }
 
         if (fgets(buffer, 1024, Stream) == 0) {
             std::cerr << "FASTA error : could not read from file" << std::endl;
@@ -493,7 +513,9 @@ bool Fasta::FastaPrivate::LoadIndexData()
 {
 
     // skip if no index file available
-    if (!IsIndexOpen) return false;
+    if (!IsIndexOpen) {
+        return false;
+    }
 
     // clear any prior index data
     Index.clear();
@@ -503,7 +525,9 @@ bool Fasta::FastaPrivate::LoadIndexData()
     while (true) {
 
         char c = fgetc(IndexStream);
-        if ((c == '\n') || feof(IndexStream)) break;
+        if ((c == '\n') || feof(IndexStream)) {
+            break;
+        }
         ungetc(c, IndexStream);
 
         // clear index buffer
@@ -571,7 +595,9 @@ bool Fasta::FastaPrivate::Open(const std::string& filename, const std::string& i
 
 bool Fasta::FastaPrivate::Rewind()
 {
-    if (!IsOpen) return false;
+    if (!IsOpen) {
+        return false;
+    }
     return (fseek64(Stream, 0, SEEK_SET) == 0);
 }
 
@@ -579,7 +605,9 @@ bool Fasta::FastaPrivate::WriteIndexData()
 {
 
     // skip if no index file available
-    if (!IsIndexOpen) return false;
+    if (!IsIndexOpen) {
+        return false;
+    }
 
     // iterate over index entries
     bool success = true;

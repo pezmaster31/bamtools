@@ -130,17 +130,21 @@ HostInfo HostInfo::Lookup(const std::string& hostname, const std::string& port)
         }
 
         // unknown (should be unreachable)
-        else
+        else {
             BT_ASSERT_X(false, "HostInfo::Lookup: unknown network protocol");
+        }
 
         // lookup name for IP
         char hbuf[NI_MAXHOST];
         char serv[NI_MAXSERV];
-        if (sa && (getnameinfo(sa, saSize, hbuf, sizeof(hbuf), serv, sizeof(serv), 0) == 0))
+        if (sa && (getnameinfo(sa, saSize, hbuf, sizeof(hbuf), serv, sizeof(serv), 0) == 0)) {
             result.SetHostName(std::string(hbuf));
+        }
 
         // if no domain name found, just use the original address's IP string
-        if (result.HostName().empty()) result.SetHostName(address.GetIPString());
+        if (result.HostName().empty()) {
+            result.SetHostName(address.GetIPString());
+        }
 
         // store address in HostInfo
         uniqueAddresses.insert(address);

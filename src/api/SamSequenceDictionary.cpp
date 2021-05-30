@@ -65,8 +65,9 @@ void SamSequenceDictionary::Add(const SamSequenceDictionary& sequences)
 {
     SamSequenceConstIterator seqIter = sequences.ConstBegin();
     SamSequenceConstIterator seqEnd = sequences.ConstEnd();
-    for (; seqIter != seqEnd; ++seqIter)
+    for (; seqIter != seqEnd; ++seqIter) {
         Add(*seqIter);
+    }
 }
 
 /*! \fn void SamSequenceDictionary::Add(const std::vector<SamSequence>& sequences)
@@ -81,8 +82,9 @@ void SamSequenceDictionary::Add(const std::vector<SamSequence>& sequences)
 {
     std::vector<SamSequence>::const_iterator seqIter = sequences.begin();
     std::vector<SamSequence>::const_iterator seqEnd = sequences.end();
-    for (; seqIter != seqEnd; ++seqIter)
+    for (; seqIter != seqEnd; ++seqIter) {
         Add(*seqIter);
+    }
 }
 
 /*! \fn void SamSequenceDictionary::Add(const std::map<std::string, int>& sequenceMap)
@@ -228,7 +230,9 @@ void SamSequenceDictionary::Remove(const std::string& sequenceName)
 {
 
     // skip if empty dictionary or if name unknown
-    if (IsEmpty() || !Contains(sequenceName)) return;
+    if (IsEmpty() || !Contains(sequenceName)) {
+        return;
+    }
 
     // update 'lookup index' for every entry after @sequenceName
     const std::size_t indexToRemove = m_lookupData[sequenceName];
@@ -255,8 +259,9 @@ void SamSequenceDictionary::Remove(const std::vector<SamSequence>& sequences)
 {
     std::vector<SamSequence>::const_iterator rgIter = sequences.begin();
     std::vector<SamSequence>::const_iterator rgEnd = sequences.end();
-    for (; rgIter != rgEnd; ++rgIter)
+    for (; rgIter != rgEnd; ++rgIter) {
         Remove(*rgIter);
+    }
 }
 
 /*! \fn void SamSequenceDictionary::Remove(const std::vector<std::string>& sequenceNames)
@@ -271,8 +276,9 @@ void SamSequenceDictionary::Remove(const std::vector<std::string>& sequenceNames
 {
     std::vector<std::string>::const_iterator rgIter = sequenceNames.begin();
     std::vector<std::string>::const_iterator rgEnd = sequenceNames.end();
-    for (; rgIter != rgEnd; ++rgIter)
+    for (; rgIter != rgEnd; ++rgIter) {
         Remove(*rgIter);
+    }
 }
 
 /*! \fn int SamSequenceDictionary::Size() const

@@ -35,21 +35,29 @@ public:
 
     Variant(const Variant& other)
     {
-        if (other.data != NULL) other.data->AddRef();
+        if (other.data != NULL) {
+            other.data->AddRef();
+        }
         data = other.data;
     }
 
     ~Variant()
     {
-        if (data != NULL) data->Release();
+        if (data != NULL) {
+            data->Release();
+        }
     }
 
     // NOTE: This code takes care of self-assignment.
     // DO NOT CHANGE THE ORDER of the statements.
     Variant& operator=(const Variant& rhs)
     {
-        if (rhs.data != NULL) rhs.data->AddRef();
-        if (data != NULL) data->Release();
+        if (rhs.data != NULL) {
+            rhs.data->AddRef();
+        }
+        if (data != NULL) {
+            data->Release();
+        }
         data = rhs.data;
         return *this;
     }
@@ -109,7 +117,9 @@ private:
         void Release()
         {
             --refs;
-            if (refs == 0) delete this;
+            if (refs == 0) {
+                delete this;
+            }
         }
 
         std::size_t refs;
@@ -132,8 +142,9 @@ private:
         // This upcast will fail if T is other than the T used
         // with the constructor of variant_t.
         Impl<T>* p = dynamic_cast<Impl<T>*>(v);
-        if (p == NULL)
+        if (p == NULL) {
             throw std::invalid_argument(typeid(T).name() + std::string(" is not a valid type"));
+        }
         return p;
     }
 

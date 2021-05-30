@@ -54,7 +54,9 @@ TcpSocket::TcpSocket()
 
 TcpSocket::~TcpSocket()
 {
-    if (m_state == TcpSocket::ConnectedState) DisconnectFromHost();
+    if (m_state == TcpSocket::ConnectedState) {
+        DisconnectFromHost();
+    }
 }
 
 std::size_t TcpSocket::BufferBytesAvailable() const
@@ -159,10 +161,11 @@ bool TcpSocket::ConnectToHost(const std::string& hostName, const std::string& po
     // if host name was IP address ("x.x.x.x" or IPv6 format)
     // otherwise host name was 'plain-text' ("www.foo.bar")
     // we need to look up IP address(es)
-    if (hostAddress.HasIPAddress())
+    if (hostAddress.HasIPAddress()) {
         info.SetAddresses(std::vector<HostAddress>(1, hostAddress));
-    else
+    } else {
         info = HostInfo::Lookup(hostName, port);
+    }
 
     // attempt connection on requested port
     return ConnectImpl(info, port, mode);
@@ -172,7 +175,9 @@ void TcpSocket::DisconnectFromHost()
 {
 
     // close socket engine & delete
-    if (m_state == TcpSocket::ConnectedState) ResetSocketEngine();
+    if (m_state == TcpSocket::ConnectedState) {
+        ResetSocketEngine();
+    }
 
     // reset connection state
     //    m_localPort = 0;
@@ -233,7 +238,9 @@ bool TcpSocket::InitializeSocketEngine(HostAddress::NetworkProtocol protocol)
 
 bool TcpSocket::IsConnected() const
 {
-    if (m_engine == 0) return false;
+    if (m_engine == 0) {
+        return false;
+    }
     return (m_engine->IsValid() && (m_state == TcpSocket::ConnectedState));
 }
 
@@ -338,7 +345,9 @@ std::string TcpSocket::ReadLine(int64_t max)
     int64_t readBytes(0);
     if (result.Size() == 0) {
 
-        if (bufferMax == 0) bufferMax = UINT_MAX;
+        if (bufferMax == 0) {
+            bufferMax = UINT_MAX;
+        }
 
         result.Resize(1);
 
@@ -347,18 +356,22 @@ std::string TcpSocket::ReadLine(int64_t max)
             result.Resize(
                 static_cast<std::size_t>(std::min(bufferMax, result.Size() + DEFAULT_BUFFER_SIZE)));
             readResult = ReadLine(result.Data() + readBytes, result.Size() - readBytes);
-            if (readResult > 0 || readBytes == 0) readBytes += readResult;
+            if (readResult > 0 || readBytes == 0) {
+                readBytes += readResult;
+            }
         } while (readResult == DEFAULT_BUFFER_SIZE64 &&
                  result[static_cast<std::size_t>(readBytes - 1)] != '\n');
 
-    } else
+    } else {
         readBytes = ReadLine(result.Data(), result.Size());
+    }
 
     // clean up byte buffer
-    if (readBytes <= 0)
+    if (readBytes <= 0) {
         result.Clear();
-    else
+    } else {
         result.Resize(static_cast<std::size_t>(readBytes));
+    }
 
     // return byte buffer as string
     return std::string(result.ConstData(), result.Size());
@@ -374,7 +387,9 @@ int64_t TcpSocket::ReadLine(char* dest, std::size_t max)
     }
 
     // leave room for null term
-    if (max < 2) return -1;
+    if (max < 2) {
+        return -1;
+    }
     --max;
 
     // read from buffer, handle newlines
@@ -413,7 +428,9 @@ bool TcpSocket::WaitForReadLine()
 
     // wait until we can read a line (will return immediately if already capable)
     while (!CanReadLine()) {
-        if (!ReadFromSocket()) return false;
+        if (!ReadFromSocket()) {
+            return false;
+        }
     }
 
     // if we get here, success
@@ -431,7 +448,9 @@ int64_t TcpSocket::Write(const char* data, const unsigned int numBytes)
     const bool isReadyWrite = m_engine->WaitForWrite(3000, &timedOut);
 
     // if ready, return number of bytes written
-    if (isReadyWrite) return m_engine->Write(data, numBytes);
+    if (isReadyWrite) {
+        return m_engine->Write(data, numBytes);
+    }
 
     // otherwise, socket not ready for writing
     // set error string depending on reason & return failure

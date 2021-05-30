@@ -77,8 +77,9 @@ bool MergeTool::MergeToolPrivate::Run()
 {
 
     // set to default input if none provided
-    if (!m_settings->HasInput && !m_settings->HasInputFilelist)
+    if (!m_settings->HasInput && !m_settings->HasInputFilelist) {
         m_settings->InputFiles.push_back(Options::StandardIn());
+    }
 
     // add files in the filelist to the input file list
     if (m_settings->HasInputFilelist) {
@@ -91,8 +92,9 @@ bool MergeTool::MergeToolPrivate::Run()
         }
 
         std::string line;
-        while (std::getline(filelist, line))
+        while (std::getline(filelist, line)) {
             m_settings->InputFiles.push_back(line);
+        }
     }
 
     // opens the BAM files (by default without checking for indexes)
@@ -111,7 +113,9 @@ bool MergeTool::MergeToolPrivate::Run()
     bool writeUncompressed =
         (m_settings->OutputFilename == Options::StandardOut() && !m_settings->IsForceCompression);
     BamWriter::CompressionMode compressionMode = BamWriter::Compressed;
-    if (writeUncompressed) compressionMode = BamWriter::Uncompressed;
+    if (writeUncompressed) {
+        compressionMode = BamWriter::Uncompressed;
+    }
 
     // open BamWriter
     BamWriter writer;
@@ -126,8 +130,9 @@ bool MergeTool::MergeToolPrivate::Run()
     // if no region specified, store entire contents of file(s)
     if (!m_settings->HasRegion) {
         BamAlignment al;
-        while (reader.GetNextAlignmentCore(al))
+        while (reader.GetNextAlignmentCore(al)) {
             writer.SaveAlignment(al);
+        }
     }
 
     // otherwise attempt to use region as constraint
@@ -155,8 +160,9 @@ bool MergeTool::MergeToolPrivate::Run()
 
                 // everything checks out, just iterate through specified region, storing alignments
                 BamAlignment al;
-                while (reader.GetNextAlignmentCore(al))
+                while (reader.GetNextAlignmentCore(al)) {
                     writer.SaveAlignment(al);
+                }
             }
 
             // no index data available, we have to iterate through until we
@@ -248,8 +254,9 @@ int MergeTool::Run(int argc, char* argv[])
     m_impl = new MergeToolPrivate(m_settings);
 
     // run MergeTool, return success/fail
-    if (m_impl->Run())
+    if (m_impl->Run()) {
         return 0;
-    else
+    } else {
         return 1;
+    }
 }

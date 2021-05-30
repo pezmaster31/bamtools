@@ -64,8 +64,9 @@ static std::vector<std::string> split(const std::string& source, const char deli
     std::string field;
     std::vector<std::string> fields;
 
-    while (std::getline(ss, field, delim))
+    while (std::getline(ss, field, delim)) {
         fields.push_back(field);
+    }
     return fields;
 }
 
@@ -79,8 +80,9 @@ static std::string toLower(const std::string& s)
     std::string out;
     const std::size_t sSize = s.size();
     out.resize(sSize);
-    for (std::size_t i = 0; i < sSize; ++i)
+    for (std::size_t i = 0; i < sSize; ++i) {
         out[i] = std::tolower(s[i]);
+    }
     return out;
 }
 
@@ -110,8 +112,12 @@ BamFtp::~BamFtp()
 
     // close connection & clean up
     Close();
-    if (m_commandSocket) delete m_commandSocket;
-    if (m_dataSocket) delete m_dataSocket;
+    if (m_commandSocket) {
+        delete m_commandSocket;
+    }
+    if (m_dataSocket) {
+        delete m_dataSocket;
+    }
 }
 
 void BamFtp::Close()
@@ -177,11 +183,15 @@ bool BamFtp::ConnectDataSocket()
 
     // failure if can't connect to command socket first
     if (!m_commandSocket->IsConnected()) {
-        if (!ConnectCommandSocket()) return false;
+        if (!ConnectCommandSocket()) {
+            return false;
+        }
     }
 
     // make sure we're starting with a fresh data channel
-    if (m_dataSocket->IsConnected()) m_dataSocket->DisconnectFromHost();
+    if (m_dataSocket->IsConnected()) {
+        m_dataSocket->DisconnectFromHost();
+    }
 
     // send passive connection command
     const std::string passiveCommand = PASV_CMD + FTP_NEWLINE;
@@ -270,12 +280,16 @@ bool BamFtp::ParsePassiveResponse()
 {
 
     // fail if empty
-    if (m_response.empty()) return false;
+    if (m_response.empty()) {
+        return false;
+    }
 
     // find parentheses
     const std::size_t leftParenFound = m_response.find(PASV_REPLY_PREFIX);
     const std::size_t rightParenFound = m_response.find(PASV_REPLY_SUFFIX);
-    if (leftParenFound == std::string::npos || rightParenFound == std::string::npos) return false;
+    if (leftParenFound == std::string::npos || rightParenFound == std::string::npos) {
+        return false;
+    }
 
     // grab everything between ( should be "h1,h2,h3,h4,p1,p2" )
     std::string::const_iterator responseBegin = m_response.begin();
@@ -284,7 +298,9 @@ bool BamFtp::ParsePassiveResponse()
 
     // parse into string fields
     std::vector<std::string> fields = split(hostAndPort, PASV_REPLY_SEPARATOR);
-    if (fields.size() != 6) return false;
+    if (fields.size() != 6) {
+        return false;
+    }
 
     // fetch passive connection IP
     m_dataHostname =
@@ -309,7 +325,9 @@ void BamFtp::ParseUrl(const std::string& url)
     std::string tempUrl(url);
     toLower(tempUrl);
     const std::size_t prefixFound = tempUrl.find(FTP_PREFIX);
-    if (prefixFound == std::string::npos) return;
+    if (prefixFound == std::string::npos) {
+        return;
+    }
 
     // find end of host name portion (first '/' hit after the prefix)
     const std::size_t firstSlashFound = tempUrl.find(HOST_SEPARATOR, FTP_PREFIX_LENGTH);
@@ -324,7 +342,9 @@ void BamFtp::ParseUrl(const std::string& url)
 
     // store remainder of URL as filename (must be non-empty)
     std::string filename = tempUrl.substr(firstSlashFound);
-    if (filename.empty()) return;
+    if (filename.empty()) {
+        return;
+    }
     m_filename = filename;
 
     // set parsed OK flag
@@ -335,7 +355,9 @@ int64_t BamFtp::Read(char* data, const unsigned int numBytes)
 {
 
     // if BamHttp not in a valid state
-    if (!IsOpen()) return -1;
+    if (!IsOpen()) {
+        return -1;
+    }
 
     // read until hit desired @numBytes
     int64_t bytesReadSoFar = 0;
@@ -354,10 +376,11 @@ int64_t BamFtp::Read(char* data, const unsigned int numBytes)
 
         // read bytes from data socket
         const int64_t socketBytesRead = ReadDataSocket(data + bytesReadSoFar, remainingBytes);
-        if (socketBytesRead < 0)  // error
+        if (socketBytesRead < 0) {  // error
             return -1;
-        else if (socketBytesRead == 0)  // EOF
+        } else if (socketBytesRead == 0) {  // EOF
             return bytesReadSoFar;
+        }
         bytesReadSoFar += socketBytesRead;
         m_filePosition += socketBytesRead;
     }
@@ -427,11 +450,11 @@ bool BamFtp::Seek(const int64_t& position, const int origin)
     m_commandSocket->DisconnectFromHost();
 
     // update file position & return success
-    if (origin == SEEK_CUR)
+    if (origin == SEEK_CUR) {
         m_filePosition += position;
-    else if (origin == SEEK_SET)
+    } else if (origin == SEEK_SET) {
         m_filePosition = position;
-    else {
+    } else {
         // TODO: set error string
         return false;
     }
@@ -455,7 +478,9 @@ bool BamFtp::SendCommand(const std::string& command, bool waitForReply)
     }
 
     // if we sent a command that receives a response
-    if (waitForReply) return ReceiveReply();
+    if (waitForReply) {
+        return ReceiveReply();
+    }
 
     // return success
     return true;
@@ -477,7 +502,9 @@ int64_t BamFtp::Write(const char* data, const unsigned int numBytes)
 
 int64_t BamFtp::WriteCommandSocket(const char* data, const unsigned int numBytes)
 {
-    if (!m_commandSocket->IsConnected()) return -1;
+    if (!m_commandSocket->IsConnected()) {
+        return -1;
+    }
     m_commandSocket->ClearBuffer();
     return m_commandSocket->Write(data, numBytes);
 }

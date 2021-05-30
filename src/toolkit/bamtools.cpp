@@ -124,7 +124,9 @@ int Help(int argc, char* argv[])
 
         // if tool known, print its help screen
         if (tool) {
-            return tool->Help();
+            const int result = tool->Help();
+            delete tool;
+            return result;
         }
     }
 
@@ -202,9 +204,10 @@ int main(int argc, char* argv[])
     // determine desired sub-tool, run if found
     AbstractTool* tool = CreateTool(argv[1]);
     if (tool) {
-        return tool->Run(argc, argv);
+        const int result = tool->Run(argc, argv);
+        delete tool;
+        return result;
     }
-    delete tool;
 
     // no tool matched, show help
     return Help(argc, argv);

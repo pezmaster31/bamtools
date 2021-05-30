@@ -370,6 +370,9 @@ void BgzfStream::ReadBlock()
     std::memcpy(m_compressedBlock.Buffer, header, Constants::BGZF_BLOCK_HEADER_LENGTH);
 
     // read remainder of block
+    if (blockLength < Constants::BGZF_BLOCK_HEADER_LENGTH)
+        throw BamException("BgzfStream::ReadBlock", "invalid BSIZE");
+
     const std::size_t remaining = blockLength - Constants::BGZF_BLOCK_HEADER_LENGTH;
     numBytesRead =
         m_device->Read(&m_compressedBlock.Buffer[Constants::BGZF_BLOCK_HEADER_LENGTH], remaining);

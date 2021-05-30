@@ -168,6 +168,7 @@ int main(int argc, char* argv[])
     // determine desired sub-tool, run if found
     AbstractTool* tool = CreateTool(argv[1]);
     if (tool) return tool->Run(argc, argv);
+    delete tool;
 
     // no tool matched, show help
     return Help(argc, argv);

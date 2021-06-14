@@ -57,6 +57,9 @@ public:
     bool GetNextAlignmentCore(BamAlignment& alignment);
     bool Tag2Cigar(BamAlignment& alignment, RaiiBuffer& buf);
 
+	int64_t GetPointer() const;
+	void SetPointer(int64_t);
+
     // access auxiliary data
     std::string GetHeaderText() const;
     const SamHeader& GetConstSamHeader() const;

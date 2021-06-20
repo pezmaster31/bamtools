@@ -8,6 +8,7 @@
 // ***************************************************************************
 
 #include "api/SamProgramChain.h"
+#include "api/internal/utils/BamException_p.h"
 using namespace BamTools;
 
 #include <algorithm>
@@ -192,8 +193,8 @@ SamProgram& SamProgramChain::First()
     }
 
     // otherwise error
-    std::cerr << "SamProgramChain::First: could not find any record without a PP tag" << std::endl;
-    std::exit(EXIT_FAILURE);
+    throw Internal::BamException("SamProgramChain::First",
+                                 "could not find any record without a PP tag");
 }
 
 /*! \fn const SamProgram& SamProgramChain::First() const
@@ -221,8 +222,8 @@ const SamProgram& SamProgramChain::First() const
     }
 
     // otherwise error
-    std::cerr << "SamProgramChain::First: could not find any record without a PP tag" << std::endl;
-    std::exit(EXIT_FAILURE);
+    throw Internal::BamException("SamProgramChain::First",
+                                 "could not find any record without a PP tag");
 }
 
 /*! \fn int SamProgramChain::IndexOf(const std::string& programId) const
@@ -275,8 +276,7 @@ SamProgram& SamProgramChain::Last()
     }
 
     // otherwise error
-    std::cerr << "SamProgramChain::Last: could not determine last record" << std::endl;
-    std::exit(EXIT_FAILURE);
+    throw Internal::BamException("SamProgramChain::Last", "could not determine last record");
 }
 
 /*! \fn const SamProgram& SamProgramChain::Last() const
@@ -303,8 +303,7 @@ const SamProgram& SamProgramChain::Last() const
     }
 
     // otherwise error
-    std::cerr << "SamProgramChain::Last: could not determine last record" << std::endl;
-    std::exit(EXIT_FAILURE);
+    throw Internal::BamException("SamProgramChain::Last", "could not determine last record");
 }
 
 /*! \fn const std::string SamProgramChain::NextIdFor(const std::string& programId) const
@@ -357,8 +356,8 @@ SamProgram& SamProgramChain::operator[](const std::string& programId)
 
     // if record not found
     if (index == (int)m_data.size()) {
-        std::cerr << "SamProgramChain::operator[] - unknown programId: " << programId << std::endl;
-        std::exit(EXIT_FAILURE);
+        throw Internal::BamException("SamProgramChain::operator[]",
+                                     "unknown programId: " + programId);
     }
 
     // otherwise return program record at index

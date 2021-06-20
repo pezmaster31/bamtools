@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.0)
 project(
     BamTools
     LANGUAGES CXX
-    VERSION 2.5.1)
+    VERSION 2.5.2)
 
 # Set Release type for builds where CMAKE_BUILD_TYPE is unset
 # This is usually a good default as this implictly enables

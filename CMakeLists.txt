@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.11)
+# need 3.11 for INCLUDE_GUARD_NAME in GENERATE_EXPORT_HEADER
 
 project(
     BamTools

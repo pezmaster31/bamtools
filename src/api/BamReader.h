@@ -53,6 +53,8 @@ public:
     // sets the target region of interest
     bool SetRegion(const int& leftRefID, const int& leftPosition, const int& rightRefID,
                    const int& rightPosition);
+    int64_t Tell() const;
+
 
     // ----------------------
     // access alignment data

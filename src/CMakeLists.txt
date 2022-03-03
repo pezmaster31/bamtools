@@ -87,6 +87,9 @@ target_include_directories(
     BamTools PRIVATE
     ${ZLIB_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR}
+    SYSTEM INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(
     BamTools PRIVATE

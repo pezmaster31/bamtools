@@ -400,3 +400,8 @@ bool BamReader::SetRegion(const int& leftRefID, const int& leftBound, const int&
 {
     return d->SetRegion(BamRegion(leftRefID, leftBound, rightRefID, rightBound));
 }
+
+int64_t BamReader::Tell() const
+{
+    return d->Tell();
+}

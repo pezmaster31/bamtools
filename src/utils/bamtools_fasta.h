@@ -32,6 +32,7 @@ public:
 public:
     bool GetBase(const int& refID, const int& position, char& base);
     bool GetSequence(const int& refId, const int& start, const int& stop, std::string& sequence);
+    bool GetLength(const int& refId, int& length);
 
     // index-handling methods
 public:

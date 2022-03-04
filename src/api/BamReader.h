@@ -55,7 +55,6 @@ public:
                    const int& rightPosition);
     int64_t Tell() const;
 
-
     // ----------------------
     // access alignment data
     // ----------------------

@@ -52,6 +52,7 @@ struct Fasta::FastaPrivate
     bool CreateIndex(const std::string& indexFilename);
     bool GetBase(const int& refId, const int& position, char& base);
     bool GetSequence(const int& refId, const int& start, const int& stop, std::string& sequence);
+    bool GetLength(const int& refId, int& length);
     bool Open(const std::string& filename, const std::string& indexFilename);
 
     // internal methods
@@ -509,6 +510,26 @@ bool Fasta::FastaPrivate::GetSequence(const int& refId, const int& start, const 
     return true;
 }
 
+bool Fasta::FastaPrivate::GetLength(const int& refId, int& length)
+{
+    // make sure FASTA file is open
+    if (!IsOpen) {
+        std::cerr << "FASTA error : file not open for reading\n";
+        return false;
+    }
+
+    // make sure index if available
+    if (!HasIndex && Index.empty()) {
+        std::cerr << "FASTA error : could not read from index file\n";
+        return false;
+    }
+
+    length = Index.at(refId).Length;
+
+    // return success
+    return true;
+}
+
 bool Fasta::FastaPrivate::LoadIndexData()
 {
 
@@ -669,4 +690,9 @@ bool Fasta::GetSequence(const int& refId, const int& start, const int& stop, std
 bool Fasta::Open(const std::string& filename, const std::string& indexFilename)
 {
     return d->Open(filename, indexFilename);
+}
+
+bool Fasta::GetLength(const int& refId, int& length)
+{
+    return d->GetLength(refId, length);
 }

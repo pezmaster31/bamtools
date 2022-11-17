@@ -60,7 +60,7 @@ private:
     void Chomp(char* sequence);
     bool GetNameFromHeader(const std::string& header, std::string& name);
     bool GetNextHeader(std::string& header);
-    bool GetNextSequence(std::string& sequence);
+    bool GetNextSequence(std::string& sequence, size_t count = -1);
     bool LoadIndexData();
     bool Rewind();
     bool WriteIndexData();
@@ -387,9 +387,10 @@ bool Fasta::FastaPrivate::GetNextHeader(std::string& header)
     return true;
 }
 
-bool Fasta::FastaPrivate::GetNextSequence(std::string& sequence)
+bool Fasta::FastaPrivate::GetNextSequence(std::string& sequence, size_t count)
 {
 
+    sequence.clear();
     // validate input stream
     if (!IsOpen || feof(Stream)) {
         return false;
@@ -397,8 +398,7 @@ bool Fasta::FastaPrivate::GetNextSequence(std::string& sequence)
 
     // read in sequence
     char buffer[1024];
-    std::ostringstream seqBuffer;
-    while (true) {
+    while (sequence.size() < count) {
 
         char ch = fgetc(Stream);
         ungetc(ch, Stream);
@@ -412,11 +412,8 @@ bool Fasta::FastaPrivate::GetNextSequence(std::string& sequence)
         }
 
         Chomp(buffer);
-        seqBuffer << buffer;
+        sequence.append(buffer);
     }
-
-    // import buffer contents to sequence string
-    sequence = seqBuffer.str();
 
     // return success
     return true;
@@ -459,13 +456,13 @@ bool Fasta::FastaPrivate::GetSequence(const int& refId, const int& start, const 
 
         // retrieve full sequence
         std::string fullSequence;
-        if (!GetNextSequence(fullSequence)) {
+        const int seqLength = (stop - start) + 1;
+        if (!GetNextSequence(fullSequence, stop + 1)) {
             std::cerr << "FASTA error : could not retrieve sequence from FASTA file" << std::endl;
             return false;
         }
 
         // set sub-sequence & return success
-        const int seqLength = (stop - start) + 1;
         sequence = fullSequence.substr(start, seqLength);
         return true;
     }

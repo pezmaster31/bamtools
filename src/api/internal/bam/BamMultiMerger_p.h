@@ -49,7 +49,7 @@ struct API_NO_EXPORT MergeItem
 };
 
 template <typename Compare>
-struct API_NO_EXPORT MergeItemSorter : public std::binary_function<MergeItem, MergeItem, bool>
+struct API_NO_EXPORT MergeItemSorter
 {
 
 public:

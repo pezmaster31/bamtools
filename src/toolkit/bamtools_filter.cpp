@@ -1020,7 +1020,7 @@ FilterTool::FilterTool()
     const std::string isFirstMateDesc = "keep only alignments marked as first mate?";
     const std::string isMappedDesc = "keep only alignments that were mapped?";
     const std::string isMateMappedDesc = "keep only alignments with mates that mapped";
-    const std::string isMateReverseDesc = "keep only alignments with mate on reverese strand?";
+    const std::string isMateReverseDesc = "keep only alignments with mate on reverse strand?";
     const std::string isPairedDesc = "keep only alignments that were sequenced as paired?";
     const std::string isPrimaryDesc = "keep only alignments marked as primary?";
     const std::string isProperPairDesc = "keep only alignments that passed PE resolution?";

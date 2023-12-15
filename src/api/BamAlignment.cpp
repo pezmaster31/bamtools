@@ -870,7 +870,6 @@ void BamAlignment::RemoveTag(const std::string& tag)
     char* pOriginalTagData = (char*)TagData.data();
     char* pTagData = pOriginalTagData;
     const unsigned int originalTagDataLength = TagData.size();
-    unsigned int newTagDataLength = 0;
     unsigned int numBytesParsed = 0;
 
     // skip if tag not found
@@ -885,7 +884,6 @@ void BamAlignment::RemoveTag(const std::string& tag)
     pTagData -= 3;
     numBytesParsed -= 3;
     const unsigned int beginningTagDataLength = numBytesParsed;
-    newTagDataLength += beginningTagDataLength;
     std::memcpy(newTagData.Buffer, pOriginalTagData, numBytesParsed);
 
     // attemp to skip to next tag

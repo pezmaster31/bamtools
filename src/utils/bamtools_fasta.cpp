@@ -175,7 +175,6 @@ bool Fasta::FastaPrivate::CreateIndex(const std::string& indexFilename)
     }
 
     // iterate through fasta entries
-    int currentId = 0;
     std::string header;
     std::string sequence;
     while (GetNextHeader(header)) {
@@ -207,9 +206,6 @@ bool Fasta::FastaPrivate::CreateIndex(const std::string& indexFilename)
 
         // store index entry
         Index.push_back(data);
-
-        // update ref Id
-        ++currentId;
     }
 
     // open index file

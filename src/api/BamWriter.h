@@ -40,6 +40,10 @@ public:
 public:
     BamWriter();
     ~BamWriter();
+    BamWriter(const BamWriter& bw);
+    BamWriter(BamWriter&& bw) noexcept;
+    BamWriter& operator=(const BamWriter& bw);
+    BamWriter& operator=(BamWriter&& bw) noexcept;
 
     // public interface
 public:

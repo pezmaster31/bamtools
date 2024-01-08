@@ -40,6 +40,10 @@ class API_NO_EXPORT BamWriterPrivate
 public:
     BamWriterPrivate();
     ~BamWriterPrivate();
+    BamWriterPrivate(const BamWriterPrivate&) = default;
+    BamWriterPrivate(BamWriterPrivate&&) = default;
+    BamWriterPrivate& operator=(const BamWriterPrivate&) = delete;
+    BamWriterPrivate& operator=(const BamWriterPrivate&&) = delete;
 
     // interface methods
 public:

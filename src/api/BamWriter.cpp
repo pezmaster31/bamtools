@@ -43,8 +43,47 @@ BamWriter::BamWriter()
 */
 BamWriter::~BamWriter()
 {
-    delete d;
-    d = 0;
+    if (d) delete d;
+    d = nullptr;
+}
+
+/*! \fn BamWriter::BamWriter(const BamWriter& bw)
+    \brief copy constructor, deep copy
+*/
+BamWriter::BamWriter(const BamWriter& bw)
+    : d(nullptr)
+{
+    if (bw.d) d = new BamWriterPrivate(*bw.d);
+}
+
+/*! \fn BamWriter::BamWriter()
+    \brief move constructor, shallow copy
+*/
+BamWriter::BamWriter(BamWriter&& bw) noexcept
+    : d(bw.d)
+{
+    bw.d = nullptr;
+}
+
+/*! \fn BamWriter::operator=(const BamWriter& bw)
+    \brief copy assignement operator, deep copy
+*/
+BamWriter& BamWriter::operator=(const BamWriter& bw)
+{
+    if (d) delete d;
+    if (bw.d) d = new BamWriterPrivate(*bw.d);
+    return *this;
+}
+
+/*! \fn BamWriter::operator=(const BamWriter& bw)
+    \brief move assignement operator, shallow copy
+*/
+BamWriter& BamWriter::operator=(BamWriter&& bw) noexcept
+{
+    if (d) delete d;
+    d    = bw.d;
+    bw.d = nullptr;
+    return *this;
 }
 
 /*! \fn BamWriter::Close()

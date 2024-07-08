@@ -349,7 +349,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
             char* cigarData = new char[packedCigarLength]();
             std::memcpy(cigarData, packedCigar.data(), packedCigarLength);
             if (m_isBigEndian) {
-                for (size_t i = 0; i < packedCigarLength; ++i) {
+                for (size_t i = 0; i < packedCigarLength; i += sizeof(uint32_t)) {
                     BamTools::SwapEndian_32p(&cigarData[i]);
                 }
             }
@@ -500,8 +500,7 @@ void BamWriterPrivate::WriteAlignment(const BamAlignment& al)
             char* cigarData = new char[packedCigarLength]();
             std::memcpy(cigarData, packedCigar.data(), packedCigarLength);
             if (m_isBigEndian) {
-                for (size_t i = 0; i < packedCigarLength;
-                     ++i) {  // FIXME: similarly, this should be "i += 4", not "++i"
+                for (size_t i = 0; i < packedCigarLength; i += sizeof(uint32_t)) {
                     BamTools::SwapEndian_32p(&cigarData[i]);
                 }
             }

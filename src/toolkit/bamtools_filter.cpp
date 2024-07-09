@@ -540,22 +540,18 @@ const std::string FilterTool::FilterToolPrivate::GetScriptContents()
     // read in entire script contents
     char buffer[1024];
     std::ostringstream docStream;
-    while (true) {
-
-        // peek ahead, make sure there is data available
-        char ch = fgetc(inFile);
-        ungetc(ch, inFile);
-        if (feof(inFile)) {
+    while (!feof(inFile)) {
+        // read next block of data
+        char *data = fgets(buffer, 1024, inFile);
+        if (data == 0) {
             break;
         }
-
-        // read next block of data
-        if (fgets(buffer, 1024, inFile) == 0) {
+        if (ferror(inFile)) {
             std::cerr << "bamtools filter ERROR: could not read script contents" << std::endl;
             return std::string();
         }
 
-        docStream << buffer;
+        docStream << data;
     }
 
     // close script file

@@ -55,6 +55,12 @@ public:
                    const int& rightPosition);
     int64_t Tell() const;
 
+    // returns current file pointer
+	int64_t GetPointer() const; 
+	
+	// set the current file pointer
+	void SetPointer(int64_t);
+
     // ----------------------
     // access alignment data
     // ----------------------
